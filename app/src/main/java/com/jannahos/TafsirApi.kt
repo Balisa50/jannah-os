@@ -4,8 +4,7 @@ import org.json.JSONObject
 import java.net.HttpURLConnection
 import java.net.URL
 
-// Tafsir via quran.com. Their API returns the tafsir text under data.tafsir.text.
-// Edition 169 = Ibn Kathir (abridged, English).
+// Tafsir via quran.com API. Ibn Kathir (abridged, English), edition 169.
 object TafsirApi {
 
     private const val TAFSIR_ID = 169
@@ -24,9 +23,27 @@ object TafsirApi {
             conn.disconnect()
             val root = JSONObject(body)
             val tafsir = root.optJSONObject("tafsir") ?: return null
-            tafsir.optString("text", null)
+            val raw = tafsir.optString("text", null) ?: return null
+            stripHtml(raw)
         } catch (e: Exception) {
             null
         }
+    }
+
+    // quran.com returns tafsir as HTML. We render plain text.
+    private fun stripHtml(input: String): String {
+        var s = input
+        s = s.replace(Regex("(?i)<br\\s*/?>"), "\n")
+        s = s.replace(Regex("(?i)</p>"), "\n\n")
+        s = s.replace(Regex("(?i)</h[1-6]>"), "\n\n")
+        s = s.replace(Regex("<[^>]+>"), "")
+        s = s.replace("&nbsp;", " ")
+        s = s.replace("&amp;", "&")
+        s = s.replace("&lt;", "<")
+        s = s.replace("&gt;", ">")
+        s = s.replace("&quot;", "\"")
+        s = s.replace("&#39;", "'")
+        s = s.replace(Regex("\n{3,}"), "\n\n")
+        return s.trim()
     }
 }
