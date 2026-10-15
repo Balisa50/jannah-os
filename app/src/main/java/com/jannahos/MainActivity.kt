@@ -197,6 +197,53 @@ class MainActivity : ComponentActivity() {
                     textAlign = TextAlign.Center)
             }
 
+            Spacer(Modifier.height(28.dp))
+
+            val formationLevel = TahajjudPlan.level(this@MainActivity)
+            val (prayedWeek, target) = TahajjudPlan.weekProgress(this@MainActivity)
+            val onTonight = TahajjudPlan.isOnTonight(this@MainActivity)
+
+            Text("Formation", color = NightMuted, fontSize = 12.sp, letterSpacing = 1.sp)
+            Spacer(Modifier.height(8.dp))
+            Text(
+                when (formationLevel) {
+                    1 -> "Level 1 · One night a week"
+                    2 -> "Level 2 · Two nights a week"
+                    3 -> "Level 3 · Three nights a week"
+                    else -> "Level 4 · Every night"
+                },
+                color = NightText, fontSize = 16.sp
+            )
+            Spacer(Modifier.height(6.dp))
+            Text(
+                if (onTonight) "Tonight is a scheduled night."
+                else "Tonight is a rest night.",
+                color = NightMuted, fontSize = 12.sp
+            )
+            Spacer(Modifier.height(4.dp))
+            Text("This week: $prayedWeek of $target", color = NightMuted, fontSize = 12.sp)
+
+            val readyToLevelUp = when (formationLevel) {
+                1 -> prayedWeek >= 1
+                2 -> prayedWeek >= 2
+                3 -> prayedWeek >= 3
+                else -> false
+            }
+            if (readyToLevelUp) {
+                Spacer(Modifier.height(12.dp))
+                Button(
+                    onClick = {
+                        val next = when (formationLevel) { 1 -> 2; 2 -> 3; 3 -> 7; else -> 7 }
+                        TahajjudPlan.setLevel(this@MainActivity, next)
+                        refresh.value = refresh.value + 1
+                    },
+                    modifier = Modifier.fillMaxWidth(),
+                    colors = ButtonDefaults.buttonColors(containerColor = NightSurface, contentColor = GoldAccent)
+                ) {
+                    Text("Level up next week", fontSize = 13.sp)
+                }
+            }
+
             Spacer(Modifier.height(32.dp))
 
             // Today's five prayers
