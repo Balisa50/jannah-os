@@ -2,10 +2,22 @@ package com.jannahos
 
 import android.content.ContentValues
 import android.content.Context
-import android.database.sqlite.SQLiteDatabase
-import android.database.sqlite.SQLiteOpenHelper
+import net.zetetic.database.DatabaseErrorHandler
+import net.zetetic.database.sqlcipher.SQLiteDatabase
+import net.zetetic.database.sqlcipher.SQLiteDatabaseHook
+import net.zetetic.database.sqlcipher.SQLiteOpenHelper
 
-class StruggleLog(context: Context) : SQLiteOpenHelper(context, DB, null, 1) {
+class StruggleLog(context: Context) : SQLiteOpenHelper(
+    context,
+    DB,
+    DbKey.get(context),
+    null as SQLiteDatabase.CursorFactory?,
+    2,
+    0,
+    null as DatabaseErrorHandler?,
+    null as SQLiteDatabaseHook?,
+    false
+) {
 
     override fun onCreate(db: SQLiteDatabase) {
         db.execSQL("""
@@ -60,6 +72,6 @@ class StruggleLog(context: Context) : SQLiteOpenHelper(context, DB, null, 1) {
     }
 
     companion object {
-        private const val DB = "jannah_struggle.db"
+        private const val DB = "jannah_struggle_enc.db"
     }
 }

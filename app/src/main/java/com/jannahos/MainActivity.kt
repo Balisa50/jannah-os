@@ -246,6 +246,33 @@ class MainActivity : ComponentActivity() {
 
             Spacer(Modifier.height(32.dp))
 
+            // Friction insight: what's actually blocking, from real data
+            val insight = FrictionMap.topInsight(this@MainActivity)
+            val misses = FrictionMap.missesLast7Days(this@MainActivity)
+            val prayed7 = FrictionMap.prayedLast7Days(this@MainActivity)
+
+            if (insight != null || misses > 0 || prayed7 > 0) {
+                Text("Pattern", color = NightMuted, fontSize = 12.sp, letterSpacing = 1.sp)
+                Spacer(Modifier.height(8.dp))
+
+                if (prayed7 > 0) {
+                    Text("$prayed7 of the last 7 nights prayed",
+                        color = NightText, fontSize = 14.sp)
+                    Spacer(Modifier.height(6.dp))
+                }
+
+                if (insight != null) {
+                    Text("Most common block: ${insight.label} (${insight.count}x)",
+                        color = NightText, fontSize = 13.sp,
+                        textAlign = TextAlign.Center)
+                    Spacer(Modifier.height(6.dp))
+                    Text(insight.suggestion, color = GoldAccent, fontSize = 12.sp,
+                        textAlign = TextAlign.Center, lineHeight = 18.sp)
+                }
+            }
+
+            Spacer(Modifier.height(32.dp))
+
             // Today's five prayers
             val times = SalahScheduler.todayTimes(lat, lon)
             val hhmm = SimpleDateFormat("HH:mm", Locale.getDefault())

@@ -31,5 +31,7 @@ dependencies {
     implementation("androidx.lifecycle:lifecycle-runtime-compose:2.8.6")
     implementation("androidx.security:security-crypto:1.1.0-alpha06")
     implementation("com.batoulapps.adhan:adhan:1.2.1")
+    implementation("net.zetetic:sqlcipher-android:4.5.4")
+    implementation("androidx.sqlite:sqlite-ktx:2.4.0")
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.8.0")
 }

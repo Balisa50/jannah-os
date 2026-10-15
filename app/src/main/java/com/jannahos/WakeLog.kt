@@ -2,10 +2,22 @@ package com.jannahos
 
 import android.content.ContentValues
 import android.content.Context
-import android.database.sqlite.SQLiteDatabase
-import android.database.sqlite.SQLiteOpenHelper
+import net.zetetic.database.DatabaseErrorHandler
+import net.zetetic.database.sqlcipher.SQLiteDatabase
+import net.zetetic.database.sqlcipher.SQLiteDatabaseHook
+import net.zetetic.database.sqlcipher.SQLiteOpenHelper
 
-class WakeLog(context: Context) : SQLiteOpenHelper(context, DB, null, 2) {
+class WakeLog(context: Context) : SQLiteOpenHelper(
+    context,
+    DB,
+    DbKey.get(context),
+    null as SQLiteDatabase.CursorFactory?,
+    3,
+    0,
+    null as DatabaseErrorHandler?,
+    null as SQLiteDatabaseHook?,
+    false
+) {
 
     override fun onCreate(db: SQLiteDatabase) {
         db.execSQL("""
@@ -21,7 +33,6 @@ class WakeLog(context: Context) : SQLiteOpenHelper(context, DB, null, 2) {
 
     override fun onUpgrade(db: SQLiteDatabase, oldV: Int, newV: Int) {
         db.execSQL("DROP TABLE IF EXISTS events")
-        db.execSQL("DROP TABLE IF EXISTS wake_events")
         onCreate(db)
     }
 
@@ -50,7 +61,6 @@ class WakeLog(context: Context) : SQLiteOpenHelper(context, DB, null, 2) {
         return out
     }
 
-    // Most recent missed event that has no proper reason yet (just "not_now" or null).
     fun pendingFollowUp(): Event? {
         readableDatabase.rawQuery(
             "SELECT id, ts, outcome, reason, voice_path FROM events WHERE outcome='missed' AND (reason IS NULL OR reason='not_now') ORDER BY ts DESC LIMIT 1",
@@ -87,7 +97,7 @@ class WakeLog(context: Context) : SQLiteOpenHelper(context, DB, null, 2) {
     }
 
     companion object {
-        private const val DB = "jannah_v2.db"
+        private const val DB = "jannah_v3_enc.db"
 
         fun todayStamp(): String {
             val fmt = java.text.SimpleDateFormat("yyyy-MM-dd", java.util.Locale.US)

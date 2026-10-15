@@ -10,6 +10,7 @@
     <uses-permission android:name="android.permission.INTERNET" />
 
     <application
+        android:name=".App"
         android:label="Jannah OS"
         android:theme="@android:style/Theme.Material.Light.NoActionBar">
         <activity
