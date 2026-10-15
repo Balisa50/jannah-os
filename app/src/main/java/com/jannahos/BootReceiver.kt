@@ -14,5 +14,6 @@ class BootReceiver : BroadcastReceiver() {
             TahajjudScheduler.schedule(context, Date(next))
         }
         BedtimeScheduler.schedule(context)
+        SalahScheduler.schedule(context, Settings.lat(context), Settings.lon(context))
     }
 }

@@ -17,6 +17,7 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
@@ -84,6 +85,12 @@ class MainActivity : ComponentActivity() {
     private fun FollowUpScreen(event: WakeLog.Event) {
         val log = remember { WakeLog(this) }
         val answered = remember { mutableStateOf(false) }
+        val showDashboard = remember { mutableStateOf(false) }
+
+        if (showDashboard.value) {
+            Dashboard()
+            return
+        }
 
         Column(
             modifier = Modifier
@@ -119,7 +126,10 @@ class MainActivity : ComponentActivity() {
                 }
 
                 Spacer(Modifier.height(JannahSpacing.l))
-                TextButton(onClick = { answered.value = true }) {
+                TextButton(onClick = {
+                    log.setReason(event.id, "skipped")
+                    answered.value = true
+                }) {
                     Text("Skip", style = JannahType.tertiary, color = JannahColors.DayMuted)
                 }
             } else {
@@ -129,7 +139,7 @@ class MainActivity : ComponentActivity() {
                     style = JannahType.secondary, color = JannahColors.DayMuted)
                 Spacer(Modifier.height(JannahSpacing.xl))
                 Button(
-                    onClick = { recreate() },
+                    onClick = { showDashboard.value = true },
                     modifier = Modifier.fillMaxWidth(),
                     colors = ButtonDefaults.buttonColors(
                         containerColor = JannahColors.Accent,
@@ -216,11 +226,9 @@ class MainActivity : ComponentActivity() {
             )
 
             // ---- Formation ----
-            Spacer(Modifier.height(JannahSpacing.xl))
             SectionDivider()
-            Spacer(Modifier.height(JannahSpacing.l))
 
-            Text("Formation", style = JannahType.section, color = JannahColors.DayMuted)
+            SectionLabel("Formation")
             Spacer(Modifier.height(JannahSpacing.s))
             Text(
                 when (level) {
@@ -267,7 +275,7 @@ class MainActivity : ComponentActivity() {
                 SectionDivider()
                 Spacer(Modifier.height(JannahSpacing.l))
 
-                Text("Pattern", style = JannahType.section, color = JannahColors.DayMuted)
+                SectionLabel("Pattern")
                 Spacer(Modifier.height(JannahSpacing.s))
 
                 if (prayed7 > 0) {
@@ -289,9 +297,7 @@ class MainActivity : ComponentActivity() {
             }
 
             // ---- Today's prayers ----
-            Spacer(Modifier.height(JannahSpacing.xl))
             SectionDivider()
-            Spacer(Modifier.height(JannahSpacing.l))
 
             Row(
                 modifier = Modifier.fillMaxWidth(),
@@ -358,11 +364,9 @@ class MainActivity : ComponentActivity() {
             }
 
             // ---- Tools ----
-            Spacer(Modifier.height(JannahSpacing.xl))
             SectionDivider()
-            Spacer(Modifier.height(JannahSpacing.l))
 
-            Text("Tools", style = JannahType.section, color = JannahColors.DayMuted)
+            SectionLabel("Tools")
             Spacer(Modifier.height(JannahSpacing.s))
 
             ToolRow(
@@ -398,9 +402,6 @@ class MainActivity : ComponentActivity() {
                 TextButton(onClick = {
                     startActivity(Intent(this@MainActivity, SettingsActivity::class.java))
                 }) { Text("Settings", style = JannahType.tertiary, color = JannahColors.DayMuted) }
-                TextButton(onClick = {
-                    startActivity(Intent(this@MainActivity, TahajjudAlarmActivity::class.java))
-                }) { Text("Preview wake flow", style = JannahType.tertiary, color = JannahColors.DayMuted) }
             }
 
             Spacer(Modifier.height(JannahSpacing.xl))
@@ -411,13 +412,20 @@ class MainActivity : ComponentActivity() {
 
     @Composable
     private fun SectionDivider() {
-        Row(
+        Spacer(Modifier.height(JannahSpacing.l))
+        HorizontalDivider(color = JannahColors.Divider, thickness = 0.5.dp)
+        Spacer(Modifier.height(JannahSpacing.l))
+    }
+
+    @Composable
+    private fun SectionLabel(text: String) {
+        Text(
+            text,
+            style = JannahType.section,
+            color = JannahColors.DayMuted,
             modifier = Modifier.fillMaxWidth(),
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            Text("", modifier = Modifier.fillMaxWidth(),
-                style = JannahType.tertiary)
-        }
+            textAlign = TextAlign.Left
+        )
     }
 
     @Composable

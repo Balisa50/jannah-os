@@ -29,7 +29,7 @@ object FrictionMap {
         val map = mutableMapOf<String, Int>()
 
         db.rawQuery(
-            "SELECT reason FROM events WHERE outcome='missed' AND reason IS NOT NULL AND reason != 'not_now' AND ts > ?",
+            "SELECT reason FROM events WHERE outcome='missed' AND reason IS NOT NULL AND reason != 'not_now' AND reason != 'skipped' AND ts > ?",
             arrayOf(cutoff.toString())
         ).use { c ->
             while (c.moveToNext()) {

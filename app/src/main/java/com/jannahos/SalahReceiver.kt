@@ -13,8 +13,8 @@ class SalahReceiver : BroadcastReceiver() {
         val prayer = intent.getStringExtra("prayer") ?: return
 
         if (prayer == "reschedule") {
-            // Re-arm tomorrow's prayers using default coordinates.
-            SalahScheduler.schedule(context, 13.4549, -16.5790)
+            // Re-arm tomorrow's prayers using the user's saved location.
+            SalahScheduler.schedule(context, Settings.lat(context), Settings.lon(context))
             return
         }
 
