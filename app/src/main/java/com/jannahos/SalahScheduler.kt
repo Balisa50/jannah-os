@@ -21,6 +21,14 @@ object SalahScheduler {
         "isha" to 5105
     )
 
+    // Returns true if exact alarms are allowed. If false, the caller should send the user
+    // to Settings → Special access → Alarms & reminders.
+    fun canUseExactAlarms(context: Context): Boolean {
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.S) return true
+        val am = context.getSystemService(Context.ALARM_SERVICE) as AlarmManager
+        return am.canScheduleExactAlarms()
+    }
+
     fun schedule(context: Context, lat: Double, lon: Double) {
         val map = todayTimesMs(lat, lon)
         val am = context.getSystemService(Context.ALARM_SERVICE) as AlarmManager

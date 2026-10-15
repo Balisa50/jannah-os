@@ -24,6 +24,8 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.setValue
+import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -54,6 +56,14 @@ class MainActivity : ComponentActivity() {
 
     private val lat: Double get() = Settings.lat(this)
     private val lon: Double get() = Settings.lon(this)
+
+    // Bumped on every resume so child screens' writes show up when we come back.
+    private val resumeTick = mutableStateOf(0)
+
+    override fun onResume() {
+        super.onResume()
+        resumeTick.value = resumeTick.value + 1
+    }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -155,7 +165,9 @@ class MainActivity : ComponentActivity() {
     @Composable
     private fun Dashboard() {
         val refresh = remember { mutableStateOf(0) }
-        val ignore = refresh.value
+        // Reading resumeTick ensures we recompose every time MainActivity resumes.
+        val tick = resumeTick.value
+        val ignore = refresh.value + tick
 
         val log = WakeLog(this)
         val history = log.lastNights(7)
@@ -326,14 +338,34 @@ class MainActivity : ComponentActivity() {
 
             Spacer(Modifier.height(JannahSpacing.m))
 
+            var reminderMsg by remember { mutableStateOf<String?>(null) }
             Button(
-                onClick = { SalahScheduler.schedule(this@MainActivity, lat, lon) },
+                onClick = {
+                    if (!SalahScheduler.canUseExactAlarms(this@MainActivity)) {
+                        // Send the user to system settings to allow exact alarms.
+                        val intent = Intent(
+                            android.provider.Settings.ACTION_REQUEST_SCHEDULE_EXACT_ALARM,
+                            android.net.Uri.parse("package:$packageName")
+                        )
+                        startActivity(intent)
+                        reminderMsg = "Allow 'Alarms & reminders' for accurate times."
+                    } else {
+                        SalahScheduler.schedule(this@MainActivity, lat, lon)
+                        reminderMsg = "Prayer reminders set for today."
+                    }
+                },
                 modifier = Modifier.fillMaxWidth(),
                 colors = ButtonDefaults.buttonColors(
                     containerColor = JannahColors.DaySurface,
                     contentColor = JannahColors.DayText
                 )
             ) { Text("Set prayer reminders", style = JannahType.secondary) }
+
+            if (reminderMsg != null) {
+                Spacer(Modifier.height(JannahSpacing.s))
+                Text(reminderMsg!!, style = JannahType.tertiary,
+                    color = JannahColors.Accent, textAlign = TextAlign.Center)
+            }
 
             // ---- Recent nights ----
             if (history.isNotEmpty()) {
