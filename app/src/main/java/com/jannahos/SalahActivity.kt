@@ -16,7 +16,6 @@ import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
-import androidx.compose.material3.darkColorScheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -24,34 +23,21 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-
-private val NightBg = Color(0xFF0E1116)
-private val NightSurface = Color(0xFF161A22)
-private val NightText = Color(0xFFE8E5DC)
-private val NightMuted = Color(0xFF8B8F98)
-private val GoldAccent = Color(0xFFC9A961)
-
-private val Colors = darkColorScheme(
-    background = NightBg,
-    surface = NightSurface,
-    onBackground = NightText,
-    onSurface = NightText,
-    primary = GoldAccent,
-    onPrimary = NightBg
-)
+import com.jannahos.ui.theme.JannahColors
+import com.jannahos.ui.theme.JannahSpacing
+import com.jannahos.ui.theme.JannahTheme
+import com.jannahos.ui.theme.JannahType
 
 class SalahActivity : ComponentActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContent {
-            MaterialTheme(colorScheme = Colors) {
-                Surface(modifier = Modifier.fillMaxSize(), color = NightBg) {
+            JannahTheme {
+                Surface(modifier = Modifier.fillMaxSize(), color = MaterialTheme.colorScheme.background) {
                     SalahScreen()
                 }
             }
@@ -66,51 +52,54 @@ class SalahActivity : ComponentActivity() {
         val done = today.count { it.value }
 
         Column(
-            modifier = Modifier.fillMaxSize().padding(horizontal = 32.dp),
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(horizontal = JannahSpacing.screenGutter),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            Spacer(Modifier.height(56.dp))
+            Spacer(Modifier.height(JannahSpacing.xxl))
 
-            Text("Today's prayers", color = NightText, fontSize = 26.sp,
-                fontWeight = FontWeight.Light, letterSpacing = 2.sp)
+            Text("Today's prayers", style = JannahType.screenTitle, color = JannahColors.DayText)
 
-            Spacer(Modifier.height(16.dp))
+            Spacer(Modifier.height(JannahSpacing.m))
 
-            Text("$done of 5", color = NightMuted, fontSize = 14.sp, letterSpacing = 1.sp)
+            Text("$done of 5", style = JannahType.secondary, color = JannahColors.DayMuted)
 
-            Spacer(Modifier.height(40.dp))
+            Spacer(Modifier.height(JannahSpacing.xl))
 
             today.forEach { (key, completed) ->
                 Row(
-                    modifier = Modifier.fillMaxWidth().padding(vertical = 5.dp),
+                    modifier = Modifier.fillMaxWidth().padding(vertical = JannahSpacing.xs),
                     verticalAlignment = Alignment.CenterVertically,
                     horizontalArrangement = Arrangement.SpaceBetween
                 ) {
-                    Text(SalahTracker.label(key), color = NightText, fontSize = 16.sp)
+                    Text(SalahTracker.label(key), style = JannahType.primary, color = JannahColors.DayText)
                     Button(
                         onClick = {
                             SalahTracker.toggle(this@SalahActivity, key)
                             refresh = refresh + 1
                         },
                         colors = ButtonDefaults.buttonColors(
-                            containerColor = if (completed) GoldAccent else NightSurface,
-                            contentColor = if (completed) NightBg else NightText
+                            containerColor = if (completed) JannahColors.Accent else JannahColors.DaySurface,
+                            contentColor = if (completed) JannahColors.AccentInk else JannahColors.DayText
                         )
                     ) {
-                        Text(if (completed) "Prayed" else "Mark", fontSize = 13.sp)
+                        Text(if (completed) "Prayed" else "Mark", style = JannahType.secondary)
                     }
                 }
             }
 
-            Spacer(Modifier.height(40.dp))
+            Spacer(Modifier.height(JannahSpacing.xl))
 
             Text(
                 "A private record. No streak resets. No punishment. Return, always.",
-                color = NightMuted, fontSize = 12.sp,
-                textAlign = TextAlign.Center, lineHeight = 18.sp
+                style = JannahType.tertiary,
+                color = JannahColors.DayMuted,
+                textAlign = TextAlign.Center,
+                lineHeight = 18.sp
             )
 
-            Spacer(Modifier.height(40.dp))
+            Spacer(Modifier.height(JannahSpacing.xl))
         }
     }
 }

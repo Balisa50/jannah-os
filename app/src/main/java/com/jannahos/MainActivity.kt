@@ -21,35 +21,22 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
-import androidx.compose.material3.darkColorScheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.jannahos.ui.theme.JannahColors
+import com.jannahos.ui.theme.JannahSpacing
+import com.jannahos.ui.theme.JannahTheme
+import com.jannahos.ui.theme.JannahType
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
-
-private val NightBg = Color(0xFF0E1116)
-private val NightSurface = Color(0xFF161A22)
-private val NightText = Color(0xFFE8E5DC)
-private val NightMuted = Color(0xFF8B8F98)
-private val GoldAccent = Color(0xFFC9A961)
-
-private val JannahColors = darkColorScheme(
-    background = NightBg,
-    surface = NightSurface,
-    onBackground = NightText,
-    onSurface = NightText,
-    primary = GoldAccent,
-    onPrimary = NightBg
-)
 
 private val REASONS = listOf(
     "slept_late" to "I slept too late",
@@ -78,8 +65,8 @@ class MainActivity : ComponentActivity() {
             )
         }
         setContent {
-            MaterialTheme(colorScheme = JannahColors) {
-                Surface(modifier = Modifier.fillMaxSize(), color = NightBg) {
+            JannahTheme {
+                Surface(modifier = Modifier.fillMaxSize(), color = MaterialTheme.colorScheme.background) {
                     val pending = remember { WakeLog(this).pendingFollowUp() }
                     if (pending != null) {
                         FollowUpScreen(pending)
@@ -91,27 +78,31 @@ class MainActivity : ComponentActivity() {
         }
     }
 
+    // ---------- Follow-up screen (missed last night) ----------
+
     @Composable
     private fun FollowUpScreen(event: WakeLog.Event) {
         val log = remember { WakeLog(this) }
         val answered = remember { mutableStateOf(false) }
-        val dayFmt = SimpleDateFormat("EEEE", Locale.getDefault())
 
         Column(
-            modifier = Modifier.fillMaxSize().padding(horizontal = 32.dp),
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(horizontal = JannahSpacing.screenGutter),
             verticalArrangement = Arrangement.Center,
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
             if (!answered.value) {
-                Text("Last night", color = NightMuted, fontSize = 13.sp, letterSpacing = 1.sp)
-                Spacer(Modifier.height(12.dp))
-                Text("What got in the way?", color = NightText, fontSize = 24.sp,
-                    fontWeight = FontWeight.Light, textAlign = TextAlign.Center)
-                Spacer(Modifier.height(10.dp))
+                Text("Last night", style = JannahType.section, color = JannahColors.DayMuted)
+                Spacer(Modifier.height(JannahSpacing.m))
+                Text("What got in the way?", style = JannahType.screenTitle,
+                    color = JannahColors.DayText, textAlign = TextAlign.Center)
+                Spacer(Modifier.height(JannahSpacing.s))
                 Text("This shapes tonight's plan. It is not a punishment.",
-                    color = NightMuted, fontSize = 13.sp, textAlign = TextAlign.Center)
+                    style = JannahType.secondary, color = JannahColors.DayMuted,
+                    textAlign = TextAlign.Center)
 
-                Spacer(Modifier.height(40.dp))
+                Spacer(Modifier.height(JannahSpacing.xl))
 
                 REASONS.forEach { (code, label) ->
                     Button(
@@ -119,37 +110,37 @@ class MainActivity : ComponentActivity() {
                             log.setReason(event.id, code)
                             answered.value = true
                         },
-                        modifier = Modifier.fillMaxWidth().padding(vertical = 5.dp),
+                        modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp),
                         colors = ButtonDefaults.buttonColors(
-                            containerColor = NightSurface,
-                            contentColor = NightText
+                            containerColor = JannahColors.DaySurface,
+                            contentColor = JannahColors.DayText
                         )
-                    ) {
-                        Text(label, fontSize = 14.sp)
-                    }
+                    ) { Text(label, style = JannahType.secondary) }
                 }
 
-                Spacer(Modifier.height(24.dp))
-
+                Spacer(Modifier.height(JannahSpacing.l))
                 TextButton(onClick = { answered.value = true }) {
-                    Text("Skip", color = NightMuted, fontSize = 12.sp)
+                    Text("Skip", style = JannahType.tertiary, color = JannahColors.DayMuted)
                 }
             } else {
-                Text("Recorded.", color = NightText, fontSize = 22.sp,
-                    fontWeight = FontWeight.Light)
-                Spacer(Modifier.height(12.dp))
-                Text("Tonight's plan adjusts.", color = NightMuted, fontSize = 14.sp)
-                Spacer(Modifier.height(40.dp))
+                Text("Recorded.", style = JannahType.screenTitle, color = JannahColors.DayText)
+                Spacer(Modifier.height(JannahSpacing.m))
+                Text("Tonight's plan adjusts.",
+                    style = JannahType.secondary, color = JannahColors.DayMuted)
+                Spacer(Modifier.height(JannahSpacing.xl))
                 Button(
                     onClick = { recreate() },
                     modifier = Modifier.fillMaxWidth(),
-                    colors = ButtonDefaults.buttonColors(containerColor = GoldAccent, contentColor = NightBg)
-                ) {
-                    Text("Continue", fontSize = 15.sp)
-                }
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = JannahColors.Accent,
+                        contentColor = JannahColors.AccentInk
+                    )
+                ) { Text("Continue", style = JannahType.button) }
             }
         }
     }
+
+    // ---------- Dashboard ----------
 
     @Composable
     private fun Dashboard() {
@@ -163,185 +154,189 @@ class MainActivity : ComponentActivity() {
 
         val next = TahajjudScheduler.computeTonight(lat, lon)
         val scheduled = TahajjudScheduler.nextScheduled(this)
-        val fmt = SimpleDateFormat("EEE d MMM, HH:mm", Locale.getDefault())
+        val timeFmt = SimpleDateFormat("HH:mm", Locale.getDefault())
+        val fullFmt = SimpleDateFormat("EEE d MMM · HH:mm", Locale.getDefault())
         val dayFmt = SimpleDateFormat("EEE", Locale.getDefault())
 
-        // Adaptive hint: if we know the pattern, adjust the suggestion.
-        val adaptiveHint = when (common) {
-            "slept_late" -> "Try to sleep earlier tonight."
-            "alarm_missed" -> "Consider a louder alarm or a second alarm."
-            "phone_far" -> "Keep your phone near your bed."
-            "went_back" -> "Plan to sit up for one minute before deciding."
-            "too_tired" -> "Consider a nap today, or shorten tonight's plan."
-            else -> null
-        }
+        val insight = FrictionMap.topInsight(this)
+        val misses = FrictionMap.missesLast7Days(this)
+        val prayed7 = FrictionMap.prayedLast7Days(this)
+
+        val level = TahajjudPlan.level(this)
+        val (prayedWeek, target) = TahajjudPlan.weekProgress(this)
+        val onTonight = TahajjudPlan.isOnTonight(this)
+
+        val prayerTimes = SalahScheduler.todayTimes(lat, lon)
+        val prayersDone = SalahTracker.today(this).count { it.value }
 
         Column(
-            modifier = Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(horizontal = 28.dp),
+            modifier = Modifier
+                .fillMaxSize()
+                .verticalScroll(rememberScrollState())
+                .padding(horizontal = JannahSpacing.screenGutter),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            Spacer(Modifier.height(56.dp))
+            Spacer(Modifier.height(JannahSpacing.xxl))
 
-            Text("Tonight", color = NightText, fontSize = 30.sp,
-                fontWeight = FontWeight.Light, letterSpacing = 2.sp)
+            // Title
+            Text("Tonight", style = JannahType.screenTitle, color = JannahColors.DayText)
 
-            Spacer(Modifier.height(28.dp))
+            Spacer(Modifier.height(JannahSpacing.l))
 
-            Text("Last third begins", color = NightMuted, fontSize = 12.sp, letterSpacing = 1.sp)
-            Spacer(Modifier.height(6.dp))
-            Text(fmt.format(next), color = NightText, fontSize = 20.sp)
+            // Hero: tonight's tahajjud time
+            Text("Last third begins", style = JannahType.section, color = JannahColors.DayMuted)
+            Spacer(Modifier.height(JannahSpacing.s))
+            Text(fullFmt.format(next),
+                color = JannahColors.DayText,
+                fontSize = 26.sp,
+                fontWeight = FontWeight.Light)
 
-            if (adaptiveHint != null) {
-                Spacer(Modifier.height(20.dp))
-                Text(adaptiveHint, color = GoldAccent, fontSize = 13.sp,
-                    textAlign = TextAlign.Center)
-            }
+            Spacer(Modifier.height(JannahSpacing.l))
 
-            Spacer(Modifier.height(28.dp))
+            // Primary action
+            Button(
+                onClick = {
+                    TahajjudScheduler.schedule(this@MainActivity, next)
+                    refresh.value = refresh.value + 1
+                },
+                modifier = Modifier.fillMaxWidth().height(52.dp),
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = JannahColors.Accent,
+                    contentColor = JannahColors.AccentInk
+                )
+            ) { Text("Set tahajjud alarm", style = JannahType.button) }
 
-            val formationLevel = TahajjudPlan.level(this@MainActivity)
-            val (prayedWeek, target) = TahajjudPlan.weekProgress(this@MainActivity)
-            val onTonight = TahajjudPlan.isOnTonight(this@MainActivity)
+            Spacer(Modifier.height(JannahSpacing.s))
 
-            Text("Formation", color = NightMuted, fontSize = 12.sp, letterSpacing = 1.sp)
-            Spacer(Modifier.height(8.dp))
             Text(
-                when (formationLevel) {
+                if (scheduled > 0L) "Alarm set · " + fullFmt.format(Date(scheduled)) else "No alarm set",
+                style = JannahType.tertiary,
+                color = JannahColors.DayMuted,
+                textAlign = TextAlign.Center
+            )
+
+            // ---- Formation ----
+            Spacer(Modifier.height(JannahSpacing.xl))
+            SectionDivider()
+            Spacer(Modifier.height(JannahSpacing.l))
+
+            Text("Formation", style = JannahType.section, color = JannahColors.DayMuted)
+            Spacer(Modifier.height(JannahSpacing.s))
+            Text(
+                when (level) {
                     1 -> "Level 1 · One night a week"
                     2 -> "Level 2 · Two nights a week"
                     3 -> "Level 3 · Three nights a week"
                     else -> "Level 4 · Every night"
                 },
-                color = NightText, fontSize = 16.sp
+                style = JannahType.primary,
+                color = JannahColors.DayText
             )
-            Spacer(Modifier.height(6.dp))
+            Spacer(Modifier.height(JannahSpacing.xs))
             Text(
-                if (onTonight) "Tonight is a scheduled night."
-                else "Tonight is a rest night.",
-                color = NightMuted, fontSize = 12.sp
+                (if (onTonight) "Scheduled tonight. " else "Rest tonight. ") +
+                    "$prayedWeek of $target this week",
+                style = JannahType.secondary, color = JannahColors.DayMuted
             )
-            Spacer(Modifier.height(4.dp))
-            Text("This week: $prayedWeek of $target", color = NightMuted, fontSize = 12.sp)
 
-            val readyToLevelUp = when (formationLevel) {
+            val readyToLevelUp = when (level) {
                 1 -> prayedWeek >= 1
                 2 -> prayedWeek >= 2
                 3 -> prayedWeek >= 3
                 else -> false
             }
             if (readyToLevelUp) {
-                Spacer(Modifier.height(12.dp))
+                Spacer(Modifier.height(JannahSpacing.m))
                 Button(
                     onClick = {
-                        val next = when (formationLevel) { 1 -> 2; 2 -> 3; 3 -> 7; else -> 7 }
-                        TahajjudPlan.setLevel(this@MainActivity, next)
+                        val nextL = when (level) { 1 -> 2; 2 -> 3; 3 -> 7; else -> 7 }
+                        TahajjudPlan.setLevel(this@MainActivity, nextL)
                         refresh.value = refresh.value + 1
                     },
                     modifier = Modifier.fillMaxWidth(),
-                    colors = ButtonDefaults.buttonColors(containerColor = NightSurface, contentColor = GoldAccent)
-                ) {
-                    Text("Level up next week", fontSize = 13.sp)
-                }
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = JannahColors.DaySurface,
+                        contentColor = JannahColors.Accent
+                    )
+                ) { Text("Level up next week", style = JannahType.secondary) }
             }
 
-            Spacer(Modifier.height(32.dp))
-
-            // Friction insight: what's actually blocking, from real data
-            val insight = FrictionMap.topInsight(this@MainActivity)
-            val misses = FrictionMap.missesLast7Days(this@MainActivity)
-            val prayed7 = FrictionMap.prayedLast7Days(this@MainActivity)
-
+            // ---- Pattern ----
             if (insight != null || misses > 0 || prayed7 > 0) {
-                Text("Pattern", color = NightMuted, fontSize = 12.sp, letterSpacing = 1.sp)
-                Spacer(Modifier.height(8.dp))
+                Spacer(Modifier.height(JannahSpacing.xl))
+                SectionDivider()
+                Spacer(Modifier.height(JannahSpacing.l))
+
+                Text("Pattern", style = JannahType.section, color = JannahColors.DayMuted)
+                Spacer(Modifier.height(JannahSpacing.s))
 
                 if (prayed7 > 0) {
-                    Text("$prayed7 of the last 7 nights prayed",
-                        color = NightText, fontSize = 14.sp)
-                    Spacer(Modifier.height(6.dp))
+                    Text("$prayed7 of last 7 nights prayed",
+                        style = JannahType.primary, color = JannahColors.DayText)
+                    Spacer(Modifier.height(JannahSpacing.xs))
                 }
-
                 if (insight != null) {
-                    Text("Most common block: ${insight.label} (${insight.count}x)",
-                        color = NightText, fontSize = 13.sp,
-                        textAlign = TextAlign.Center)
-                    Spacer(Modifier.height(6.dp))
-                    Text(insight.suggestion, color = GoldAccent, fontSize = 12.sp,
-                        textAlign = TextAlign.Center, lineHeight = 18.sp)
+                    Text("Common block: ${insight.label}",
+                        style = JannahType.secondary, color = JannahColors.DayMuted)
+                    Spacer(Modifier.height(JannahSpacing.s))
+                    Text(insight.suggestion,
+                        style = JannahType.secondary, color = JannahColors.Accent,
+                        lineHeight = 20.sp)
+                } else if (common != null) {
+                    Text("Last miss: ${readableReason(common)}",
+                        style = JannahType.secondary, color = JannahColors.DayMuted)
                 }
             }
 
-            Spacer(Modifier.height(32.dp))
+            // ---- Today's prayers ----
+            Spacer(Modifier.height(JannahSpacing.xl))
+            SectionDivider()
+            Spacer(Modifier.height(JannahSpacing.l))
 
-            // Today's five prayers
-            val times = SalahScheduler.todayTimes(lat, lon)
-            val hhmm = SimpleDateFormat("HH:mm", Locale.getDefault())
-            Text("Today's prayers", color = NightMuted, fontSize = 12.sp, letterSpacing = 1.sp)
-            Spacer(Modifier.height(10.dp))
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Text("Today's prayers", style = JannahType.section, color = JannahColors.DayMuted)
+                TextButton(onClick = {
+                    startActivity(Intent(this@MainActivity, SalahActivity::class.java))
+                }) {
+                    Text("$prayersDone of 5 →", style = JannahType.tertiary, color = JannahColors.Accent)
+                }
+            }
 
-            times.forEach { (key, t) ->
+            Spacer(Modifier.height(JannahSpacing.s))
+
+            prayerTimes.forEach { (key, t) ->
                 Row(
-                    modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp),
+                    modifier = Modifier.fillMaxWidth().padding(vertical = 3.dp),
                     horizontalArrangement = Arrangement.SpaceBetween
                 ) {
-                    Text(SalahTracker.label(key), color = NightText, fontSize = 14.sp)
-                    Text(hhmm.format(t), color = NightMuted, fontSize = 14.sp)
+                    Text(SalahTracker.label(key), style = JannahType.secondary, color = JannahColors.DayText)
+                    Text(timeFmt.format(t), style = JannahType.secondary, color = JannahColors.DayMuted)
                 }
             }
 
-            Spacer(Modifier.height(16.dp))
+            Spacer(Modifier.height(JannahSpacing.m))
 
             Button(
                 onClick = { SalahScheduler.schedule(this@MainActivity, lat, lon) },
                 modifier = Modifier.fillMaxWidth(),
-                colors = ButtonDefaults.buttonColors(containerColor = NightSurface, contentColor = NightText)
-            ) {
-                Text("Set prayer reminders", fontSize = 13.sp)
-            }
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = JannahColors.DaySurface,
+                    contentColor = JannahColors.DayText
+                )
+            ) { Text("Set prayer reminders", style = JannahType.secondary) }
 
-            Spacer(Modifier.height(32.dp))
-
-            Button(
-                onClick = {
-                    TahajjudScheduler.schedule(this@MainActivity, next)
-                    refresh.value = refresh.value + 1
-                },
-                modifier = Modifier.fillMaxWidth(),
-                colors = ButtonDefaults.buttonColors(containerColor = GoldAccent, contentColor = NightBg)
-            ) {
-                Text("Set tahajjud alarm", fontSize = 15.sp, fontWeight = FontWeight.Medium)
-            }
-
-            Spacer(Modifier.height(10.dp))
-
-            Button(
-                onClick = {
-                    TahajjudScheduler.cancel(this@MainActivity)
-                    refresh.value = refresh.value + 1
-                },
-                modifier = Modifier.fillMaxWidth(),
-                colors = ButtonDefaults.buttonColors(containerColor = NightSurface, contentColor = NightText)
-            ) {
-                Text("Cancel alarm", fontSize = 14.sp)
-            }
-
-            Spacer(Modifier.height(10.dp))
-
-            Text(
-                text = if (scheduled > 0L) "Alarm set: " + fmt.format(Date(scheduled)) else "No alarm set",
-                color = NightMuted, fontSize = 12.sp, textAlign = TextAlign.Center
-            )
-
-            Spacer(Modifier.height(36.dp))
-
-            if (prayed > 0) {
-                Text("Nights prayed: $prayed", color = NightMuted, fontSize = 12.sp)
-                Spacer(Modifier.height(24.dp))
-            }
-
+            // ---- Recent nights ----
             if (history.isNotEmpty()) {
-                Text("Last 7 nights", color = NightMuted, fontSize = 12.sp, letterSpacing = 1.sp)
-                Spacer(Modifier.height(12.dp))
+                Spacer(Modifier.height(JannahSpacing.xl))
+                SectionDivider()
+                Spacer(Modifier.height(JannahSpacing.l))
+
+                Text("Last 7 nights", style = JannahType.section, color = JannahColors.DayMuted)
+                Spacer(Modifier.height(JannahSpacing.s))
 
                 history.forEach { e ->
                     val day = dayFmt.format(Date(e.ts))
@@ -350,95 +345,108 @@ class MainActivity : ComponentActivity() {
                         "missed" -> "Missed"
                         else -> e.outcome
                     }
-                    val statusColor = if (e.outcome == "prayed") GoldAccent else NightMuted
+                    val statusColor = if (e.outcome == "prayed") JannahColors.Accent else JannahColors.DayMuted
 
                     Row(
-                        modifier = Modifier.fillMaxWidth().padding(vertical = 6.dp),
-                        horizontalArrangement = Arrangement.SpaceBetween,
-                        verticalAlignment = Alignment.CenterVertically
+                        modifier = Modifier.fillMaxWidth().padding(vertical = 3.dp),
+                        horizontalArrangement = Arrangement.SpaceBetween
                     ) {
-                        Text(day, color = NightMuted, fontSize = 13.sp)
-                        Text(status, color = statusColor, fontSize = 13.sp)
+                        Text(day, style = JannahType.secondary, color = JannahColors.DayMuted)
+                        Text(status, style = JannahType.secondary, color = statusColor)
                     }
                 }
             }
 
-            Spacer(Modifier.height(36.dp))
+            // ---- Tools ----
+            Spacer(Modifier.height(JannahSpacing.xl))
+            SectionDivider()
+            Spacer(Modifier.height(JannahSpacing.l))
 
-            Button(
-                onClick = { startActivity(Intent(this@MainActivity, SalahActivity::class.java)) },
-                modifier = Modifier.fillMaxWidth(),
-                colors = ButtonDefaults.buttonColors(containerColor = NightSurface, contentColor = NightText)
-            ) {
-                val done = SalahTracker.today(this@MainActivity).count { it.value }
-                Text("Today's prayers ($done/5)", fontSize = 14.sp)
-            }
+            Text("Tools", style = JannahType.section, color = JannahColors.DayMuted)
+            Spacer(Modifier.height(JannahSpacing.s))
 
-            Spacer(Modifier.height(10.dp))
-
-            Button(
-                onClick = { startActivity(Intent(this@MainActivity, BedtimeActivity::class.java)) },
-                modifier = Modifier.fillMaxWidth(),
-                colors = ButtonDefaults.buttonColors(containerColor = NightSurface, contentColor = NightText)
-            ) {
-                Text("Tonight's plan", fontSize = 14.sp)
-            }
-
-            Spacer(Modifier.height(10.dp))
-
-            Button(
-                onClick = { startActivity(Intent(this@MainActivity, IstighfarActivity::class.java)) },
-                modifier = Modifier.fillMaxWidth(),
-                colors = ButtonDefaults.buttonColors(containerColor = NightSurface, contentColor = NightText)
-            ) {
-                Text("Istighfar", fontSize = 14.sp)
-            }
-
-            Spacer(Modifier.height(10.dp))
-
-            Button(
-                onClick = { startActivity(Intent(this@MainActivity, QuranActivity::class.java)) },
-                modifier = Modifier.fillMaxWidth(),
-                colors = ButtonDefaults.buttonColors(containerColor = NightSurface, contentColor = NightText)
-            ) {
-                Text("Quran", fontSize = 14.sp)
-            }
-
-            Spacer(Modifier.height(10.dp))
-
-            Button(
-                onClick = { startActivity(Intent(this@MainActivity, PlannerActivity::class.java)) },
-                modifier = Modifier.fillMaxWidth(),
-                colors = ButtonDefaults.buttonColors(containerColor = NightSurface, contentColor = NightText)
-            ) {
-                Text("Planner", fontSize = 14.sp)
-            }
-
-            Spacer(Modifier.height(10.dp))
-
+            ToolRow(
+                leftLabel = "Quran",
+                onLeft = { startActivity(Intent(this@MainActivity, QuranActivity::class.java)) },
+                rightLabel = "Planner",
+                onRight = { startActivity(Intent(this@MainActivity, PlannerActivity::class.java)) }
+            )
+            Spacer(Modifier.height(JannahSpacing.s))
+            ToolRow(
+                leftLabel = "Istighfar",
+                onLeft = { startActivity(Intent(this@MainActivity, IstighfarActivity::class.java)) },
+                rightLabel = "Tonight's plan",
+                onRight = { startActivity(Intent(this@MainActivity, BedtimeActivity::class.java)) }
+            )
+            Spacer(Modifier.height(JannahSpacing.s))
             Button(
                 onClick = { startActivity(Intent(this@MainActivity, UrgeActivity::class.java)) },
                 modifier = Modifier.fillMaxWidth(),
-                colors = ButtonDefaults.buttonColors(containerColor = NightSurface, contentColor = NightText)
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = JannahColors.DaySurface,
+                    contentColor = JannahColors.DayText
+                )
+            ) { Text("Not now — urge support", style = JannahType.secondary) }
+
+            // ---- Footer ----
+            Spacer(Modifier.height(JannahSpacing.xl))
+
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.Center
             ) {
-                Text("Not now", fontSize = 14.sp)
+                TextButton(onClick = {
+                    startActivity(Intent(this@MainActivity, SettingsActivity::class.java))
+                }) { Text("Settings", style = JannahType.tertiary, color = JannahColors.DayMuted) }
+                TextButton(onClick = {
+                    startActivity(Intent(this@MainActivity, TahajjudAlarmActivity::class.java))
+                }) { Text("Preview wake flow", style = JannahType.tertiary, color = JannahColors.DayMuted) }
             }
 
-            Spacer(Modifier.height(24.dp))
+            Spacer(Modifier.height(JannahSpacing.xl))
+        }
+    }
 
-            TextButton(onClick = {
-                startActivity(Intent(this@MainActivity, TahajjudAlarmActivity::class.java))
-            }) {
-                Text("Preview wake flow", color = NightMuted, fontSize = 11.sp)
-            }
+    // ---------- Helpers ----------
 
-            TextButton(onClick = {
-                startActivity(Intent(this@MainActivity, SettingsActivity::class.java))
-            }) {
-                Text("Settings", color = NightMuted, fontSize = 11.sp)
-            }
+    @Composable
+    private fun SectionDivider() {
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Text("", modifier = Modifier.fillMaxWidth(),
+                style = JannahType.tertiary)
+        }
+    }
 
-            Spacer(Modifier.height(40.dp))
+    @Composable
+    private fun ToolRow(
+        leftLabel: String,
+        onLeft: () -> Unit,
+        rightLabel: String,
+        onRight: () -> Unit
+    ) {
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.spacedBy(JannahSpacing.s)
+        ) {
+            Button(
+                onClick = onLeft,
+                modifier = Modifier.weight(1f),
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = JannahColors.DaySurface,
+                    contentColor = JannahColors.DayText
+                )
+            ) { Text(leftLabel, style = JannahType.secondary) }
+            Button(
+                onClick = onRight,
+                modifier = Modifier.weight(1f),
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = JannahColors.DaySurface,
+                    contentColor = JannahColors.DayText
+                )
+            ) { Text(rightLabel, style = JannahType.secondary) }
         }
     }
 }

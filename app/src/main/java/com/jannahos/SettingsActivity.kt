@@ -18,7 +18,6 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
-import androidx.compose.material3.darkColorScheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -26,34 +25,20 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
-
-private val NightBg = Color(0xFF0E1116)
-private val NightSurface = Color(0xFF161A22)
-private val NightText = Color(0xFFE8E5DC)
-private val NightMuted = Color(0xFF8B8F98)
-private val GoldAccent = Color(0xFFC9A961)
-
-private val Colors = darkColorScheme(
-    background = NightBg,
-    surface = NightSurface,
-    onBackground = NightText,
-    onSurface = NightText,
-    primary = GoldAccent,
-    onPrimary = NightBg
-)
+import com.jannahos.ui.theme.JannahColors
+import com.jannahos.ui.theme.JannahSpacing
+import com.jannahos.ui.theme.JannahTheme
+import com.jannahos.ui.theme.JannahType
 
 class SettingsActivity : ComponentActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContent {
-            MaterialTheme(colorScheme = Colors) {
-                Surface(modifier = Modifier.fillMaxSize(), color = NightBg) {
+            JannahTheme {
+                Surface(modifier = Modifier.fillMaxSize(), color = MaterialTheme.colorScheme.background) {
                     SettingsScreen()
                 }
             }
@@ -68,55 +53,68 @@ class SettingsActivity : ComponentActivity() {
         var saved by remember { mutableStateOf(false) }
 
         Column(
-            modifier = Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(horizontal = 28.dp),
+            modifier = Modifier
+                .fillMaxSize()
+                .verticalScroll(rememberScrollState())
+                .padding(horizontal = JannahSpacing.screenGutter),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            Spacer(Modifier.height(56.dp))
+            Spacer(Modifier.height(JannahSpacing.xxl))
 
-            Text("Settings", color = NightText, fontSize = 26.sp,
-                fontWeight = FontWeight.Light, letterSpacing = 2.sp)
+            Text("Settings", style = JannahType.screenTitle, color = JannahColors.DayText)
 
-            Spacer(Modifier.height(36.dp))
+            Spacer(Modifier.height(JannahSpacing.xl))
 
-            Text("Location", color = NightMuted, fontSize = 12.sp, letterSpacing = 1.sp,
-                modifier = Modifier.fillMaxWidth())
-            Spacer(Modifier.height(10.dp))
-
+            Text(
+                "Location",
+                style = JannahType.section,
+                color = JannahColors.DayMuted,
+                modifier = Modifier.fillMaxWidth()
+            )
+            Spacer(Modifier.height(JannahSpacing.s))
             OutlinedTextField(
                 value = lat,
                 onValueChange = { lat = it },
-                label = { Text("Latitude", fontSize = 12.sp) },
+                label = { Text("Latitude", style = JannahType.tertiary) },
                 modifier = Modifier.fillMaxWidth()
             )
-            Spacer(Modifier.height(10.dp))
+            Spacer(Modifier.height(JannahSpacing.s))
             OutlinedTextField(
                 value = lon,
                 onValueChange = { lon = it },
-                label = { Text("Longitude", fontSize = 12.sp) },
+                label = { Text("Longitude", style = JannahType.tertiary) },
                 modifier = Modifier.fillMaxWidth()
             )
 
-            Spacer(Modifier.height(36.dp))
+            Spacer(Modifier.height(JannahSpacing.xl))
 
-            Text("Calculation method", color = NightMuted, fontSize = 12.sp, letterSpacing = 1.sp,
-                modifier = Modifier.fillMaxWidth())
-            Spacer(Modifier.height(10.dp))
+            Text(
+                "Calculation method",
+                style = JannahType.section,
+                color = JannahColors.DayMuted,
+                modifier = Modifier.fillMaxWidth()
+            )
+            Spacer(Modifier.height(JannahSpacing.s))
 
             Settings.METHODS.forEach { (code, label) ->
                 Button(
                     onClick = { method = code },
                     modifier = Modifier.fillMaxWidth().padding(vertical = 3.dp),
                     colors = ButtonDefaults.buttonColors(
-                        containerColor = if (method == code) GoldAccent else NightSurface,
-                        contentColor = if (method == code) NightBg else NightText
+                        containerColor = if (method == code) JannahColors.Accent else JannahColors.DaySurface,
+                        contentColor = if (method == code) JannahColors.AccentInk else JannahColors.DayText
                     )
                 ) {
-                    Text(label, fontSize = 13.sp, modifier = Modifier.fillMaxWidth(),
-                        textAlign = TextAlign.Left)
+                    Text(
+                        label,
+                        style = JannahType.secondary,
+                        modifier = Modifier.fillMaxWidth(),
+                        textAlign = TextAlign.Left
+                    )
                 }
             }
 
-            Spacer(Modifier.height(28.dp))
+            Spacer(Modifier.height(JannahSpacing.l))
 
             Button(
                 onClick = {
@@ -126,17 +124,20 @@ class SettingsActivity : ComponentActivity() {
                     saved = true
                 },
                 modifier = Modifier.fillMaxWidth(),
-                colors = ButtonDefaults.buttonColors(containerColor = GoldAccent, contentColor = NightBg)
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = JannahColors.Accent,
+                    contentColor = JannahColors.AccentInk
+                )
             ) {
-                Text("Save", fontSize = 15.sp, fontWeight = FontWeight.Medium)
+                Text("Save", style = JannahType.button)
             }
 
             if (saved) {
-                Spacer(Modifier.height(12.dp))
-                Text("Saved.", color = GoldAccent, fontSize = 13.sp)
+                Spacer(Modifier.height(JannahSpacing.s))
+                Text("Saved.", style = JannahType.secondary, color = JannahColors.Accent)
             }
 
-            Spacer(Modifier.height(48.dp))
+            Spacer(Modifier.height(JannahSpacing.xxl))
         }
     }
 }

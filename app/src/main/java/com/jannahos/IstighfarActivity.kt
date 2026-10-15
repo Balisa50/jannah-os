@@ -4,7 +4,6 @@ import android.content.Context
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
-import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
@@ -19,7 +18,6 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
-import androidx.compose.material3.darkColorScheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -27,26 +25,13 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-
-private val NightBg = Color(0xFF0E1116)
-private val NightSurface = Color(0xFF161A22)
-private val NightText = Color(0xFFE8E5DC)
-private val NightMuted = Color(0xFF8B8F98)
-private val GoldAccent = Color(0xFFC9A961)
-
-private val Colors = darkColorScheme(
-    background = NightBg,
-    surface = NightSurface,
-    onBackground = NightText,
-    onSurface = NightText,
-    primary = GoldAccent,
-    onPrimary = NightBg
-)
+import com.jannahos.ui.theme.JannahColors
+import com.jannahos.ui.theme.JannahSpacing
+import com.jannahos.ui.theme.JannahTheme
+import com.jannahos.ui.theme.JannahType
 
 object IstighfarStore {
     private const val PREFS = "jannah_istighfar"
@@ -81,8 +66,8 @@ class IstighfarActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContent {
-            MaterialTheme(colorScheme = Colors) {
-                Surface(modifier = Modifier.fillMaxSize(), color = NightBg) {
+            JannahTheme {
+                Surface(modifier = Modifier.fillMaxSize(), color = MaterialTheme.colorScheme.background) {
                     IstighfarScreen()
                 }
             }
@@ -95,58 +80,65 @@ class IstighfarActivity : ComponentActivity() {
         val dua = Duas.istighfar
 
         Column(
-            modifier = Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(horizontal = 32.dp),
+            modifier = Modifier
+                .fillMaxSize()
+                .verticalScroll(rememberScrollState())
+                .padding(horizontal = JannahSpacing.screenGutter),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            Spacer(Modifier.height(56.dp))
+            Spacer(Modifier.height(JannahSpacing.xxl))
 
-            Text("Istighfar", color = NightText, fontSize = 26.sp,
-                fontWeight = FontWeight.Light, letterSpacing = 2.sp)
+            Text("Istighfar", style = JannahType.screenTitle, color = JannahColors.DayText)
 
-            Spacer(Modifier.height(28.dp))
+            Spacer(Modifier.height(JannahSpacing.l))
 
-            Text("Today: $count", color = NightMuted, fontSize = 13.sp, letterSpacing = 1.sp)
+            Text("Today: $count", style = JannahType.section, color = JannahColors.DayMuted)
 
-            Spacer(Modifier.height(40.dp))
+            Spacer(Modifier.height(JannahSpacing.xl))
 
-            Text(dua.arabic, color = NightText, fontSize = 22.sp,
-                textAlign = TextAlign.Center, lineHeight = 38.sp)
-            Spacer(Modifier.height(18.dp))
-            Text(dua.transliteration, color = NightMuted, fontSize = 14.sp,
+            Text(dua.arabic, style = JannahType.arabic, color = JannahColors.DayText, textAlign = TextAlign.Center)
+            Spacer(Modifier.height(JannahSpacing.m))
+            Text(dua.transliteration, style = JannahType.secondary, color = JannahColors.DayMuted,
                 textAlign = TextAlign.Center, lineHeight = 22.sp)
-            Spacer(Modifier.height(14.dp))
-            Text(dua.translation, color = NightText, fontSize = 15.sp,
+            Spacer(Modifier.height(JannahSpacing.s))
+            Text(dua.translation, style = JannahType.primary, color = JannahColors.DayText,
                 textAlign = TextAlign.Center, lineHeight = 24.sp)
-            Spacer(Modifier.height(12.dp))
-            Text(dua.source, color = NightMuted, fontSize = 11.sp)
+            Spacer(Modifier.height(JannahSpacing.s))
+            Text(dua.source, style = JannahType.tertiary, color = JannahColors.DayMuted)
 
-            Spacer(Modifier.height(48.dp))
+            Spacer(Modifier.height(JannahSpacing.xl))
 
             Button(
                 onClick = { count = IstighfarStore.increment(this@IstighfarActivity) },
-                modifier = Modifier.fillMaxWidth().height(64.dp),
-                colors = ButtonDefaults.buttonColors(containerColor = GoldAccent, contentColor = NightBg)
+                modifier = Modifier.fillMaxWidth().height(60.dp),
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = JannahColors.Accent,
+                    contentColor = JannahColors.AccentInk
+                )
             ) {
-                Text("Recite one", fontSize = 16.sp, fontWeight = FontWeight.Medium)
+                Text("Recite one", style = JannahType.button)
             }
 
-            Spacer(Modifier.height(28.dp))
+            Spacer(Modifier.height(JannahSpacing.l))
 
             Text(
                 "The Prophet ﷺ sought forgiveness more than seventy times a day. This counter is a private reminder. It is not a score.",
-                color = NightMuted, fontSize = 12.sp, textAlign = TextAlign.Center, lineHeight = 18.sp
+                style = JannahType.tertiary,
+                color = JannahColors.DayMuted,
+                textAlign = TextAlign.Center,
+                lineHeight = 18.sp
             )
 
-            Spacer(Modifier.height(24.dp))
+            Spacer(Modifier.height(JannahSpacing.m))
 
             TextButton(onClick = {
                 IstighfarStore.reset(this@IstighfarActivity)
                 count = 0
             }) {
-                Text("Reset today", color = NightMuted, fontSize = 11.sp)
+                Text("Reset today", style = JannahType.tertiary, color = JannahColors.DayMuted)
             }
 
-            Spacer(Modifier.height(40.dp))
+            Spacer(Modifier.height(JannahSpacing.xl))
         }
     }
 }
