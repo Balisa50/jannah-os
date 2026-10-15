@@ -3,6 +3,7 @@ package com.jannahos
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
@@ -76,6 +77,8 @@ class QuranActivity : ComponentActivity() {
 
     @Composable
     private fun SurahList(onPick: (Int) -> Unit) {
+        val last = remember { QuranBookmarks.lastSurah(this@QuranActivity) }
+
         Column(
             modifier = Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(horizontal = 32.dp),
             horizontalAlignment = Alignment.CenterHorizontally
@@ -85,6 +88,19 @@ class QuranActivity : ComponentActivity() {
                 fontWeight = FontWeight.Light, letterSpacing = 2.sp)
             Spacer(Modifier.height(10.dp))
             Text("Uthmani text · Sahih International", color = NightMuted, fontSize = 12.sp)
+
+            if (last != null) {
+                Spacer(Modifier.height(24.dp))
+                Button(
+                    onClick = { onPick(last) },
+                    modifier = Modifier.fillMaxWidth(),
+                    colors = ButtonDefaults.buttonColors(containerColor = GoldAccent, contentColor = NightBg)
+                ) {
+                    val name = QuranCache.SURAHS.firstOrNull { it.first == last }?.second ?: "Surah $last"
+                    Text("Continue: $name", fontSize = 14.sp, fontWeight = FontWeight.Medium)
+                }
+            }
+
             Spacer(Modifier.height(36.dp))
 
             QuranCache.SURAHS.forEach { (num, name) ->
@@ -108,8 +124,13 @@ class QuranActivity : ComponentActivity() {
         var loading by remember { mutableStateOf(true) }
         var error by remember { mutableStateOf<String?>(null) }
 
+        var tafsirAyah by remember { mutableStateOf<Int?>(null) }
+        var tafsirText by remember { mutableStateOf<String?>(null) }
+        var tafsirLoading by remember { mutableStateOf(false) }
+
         LaunchedEffect(surah) {
             loading = true
+            QuranBookmarks.setLastSurah(this@QuranActivity, surah)
             try {
                 val list = withContext(Dispatchers.IO) {
                     if (cache.isCached(surah)) cache.load(surah)
@@ -125,6 +146,13 @@ class QuranActivity : ComponentActivity() {
                 error = "No connection. Try again when online."
             }
             loading = false
+        }
+
+        LaunchedEffect(tafsirAyah) {
+            val a = tafsirAyah ?: return@LaunchedEffect
+            tafsirLoading = true
+            tafsirText = withContext(Dispatchers.IO) { TafsirApi.fetch(surah, a) }
+            tafsirLoading = false
         }
 
         Column(
@@ -165,6 +193,36 @@ class QuranActivity : ComponentActivity() {
                             textAlign = TextAlign.Center,
                             lineHeight = 22.sp
                         )
+                        Spacer(Modifier.height(8.dp))
+                        Text(
+                            "tap for tafsir",
+                            color = GoldAccent,
+                            fontSize = 11.sp,
+                            modifier = Modifier.clickable {
+                                tafsirAyah = a.number
+                            }
+                        )
+
+                        if (tafsirAyah == a.number) {
+                            Spacer(Modifier.height(12.dp))
+                            if (tafsirLoading) {
+                                Text("Loading tafsir...", color = NightMuted, fontSize = 12.sp)
+                            } else if (tafsirText != null) {
+                                Text(
+                                    tafsirText!!,
+                                    color = NightText,
+                                    fontSize = 13.sp,
+                                    textAlign = TextAlign.Left,
+                                    lineHeight = 20.sp
+                                )
+                                Spacer(Modifier.height(6.dp))
+                                Text("Ibn Kathir (abridged) · via alquran.cloud",
+                                    color = NightMuted, fontSize = 10.sp)
+                            } else {
+                                Text("Tafsir unavailable (offline).",
+                                    color = NightMuted, fontSize = 12.sp)
+                            }
+                        }
                     }
                 }
             }
