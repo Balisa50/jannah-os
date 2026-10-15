@@ -13,5 +13,6 @@ class BootReceiver : BroadcastReceiver() {
         if (next > System.currentTimeMillis()) {
             TahajjudScheduler.schedule(context, Date(next))
         }
+        BedtimeScheduler.schedule(context)
     }
 }

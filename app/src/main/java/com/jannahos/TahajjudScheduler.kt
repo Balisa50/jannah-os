@@ -15,6 +15,8 @@ object TahajjudScheduler {
     private const val KEY_NEXT = "next_tahajjud_ms"
 
     fun schedule(context: Context, at: Date) {
+        if (!TahajjudPlan.isOnTonight(context)) return
+
         val am = context.getSystemService(Context.ALARM_SERVICE) as AlarmManager
         val pi = pendingIntent(context)
 

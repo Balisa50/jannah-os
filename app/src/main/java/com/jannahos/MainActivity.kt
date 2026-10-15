@@ -64,8 +64,8 @@ private fun readableReason(code: String): String =
 
 class MainActivity : ComponentActivity() {
 
-    private val lat = 13.4549
-    private val lon = -16.5790
+    private val lat: Double get() = Settings.lat(this)
+    private val lon: Double get() = Settings.lon(this)
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -356,6 +356,12 @@ class MainActivity : ComponentActivity() {
                 startActivity(Intent(this@MainActivity, TahajjudAlarmActivity::class.java))
             }) {
                 Text("Preview wake flow", color = NightMuted, fontSize = 11.sp)
+            }
+
+            TextButton(onClick = {
+                startActivity(Intent(this@MainActivity, SettingsActivity::class.java))
+            }) {
+                Text("Settings", color = NightMuted, fontSize = 11.sp)
             }
 
             Spacer(Modifier.height(40.dp))

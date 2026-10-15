@@ -121,6 +121,7 @@ class BedtimeActivity : ComponentActivity() {
             Button(
                 onClick = {
                     BedtimeStore.set(this@BedtimeActivity, hour, minute)
+                    BedtimeScheduler.schedule(this@BedtimeActivity)
                     finish()
                 },
                 modifier = Modifier.fillMaxWidth(),
