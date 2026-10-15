@@ -35,24 +35,42 @@ class WakeLog(context: Context) : SQLiteOpenHelper(context, DB, null, 2) {
         writableDatabase.insert("events", null, values)
     }
 
-    data class Event(val ts: Long, val outcome: String, val reason: String?, val voicePath: String?)
+    data class Event(val id: Long, val ts: Long, val outcome: String, val reason: String?, val voicePath: String?)
 
     fun lastNights(n: Int = 7): List<Event> {
         val out = mutableListOf<Event>()
         readableDatabase.rawQuery(
-            "SELECT ts, outcome, reason, voice_path FROM events ORDER BY ts DESC LIMIT ?",
+            "SELECT id, ts, outcome, reason, voice_path FROM events ORDER BY ts DESC LIMIT ?",
             arrayOf(n.toString())
         ).use { c ->
             while (c.moveToNext()) {
-                out.add(Event(c.getLong(0), c.getString(1), c.getString(2), c.getString(3)))
+                out.add(Event(c.getLong(0), c.getLong(1), c.getString(2), c.getString(3), c.getString(4)))
             }
         }
         return out
     }
 
+    // Most recent missed event that has no proper reason yet (just "not_now" or null).
+    fun pendingFollowUp(): Event? {
+        readableDatabase.rawQuery(
+            "SELECT id, ts, outcome, reason, voice_path FROM events WHERE outcome='missed' AND (reason IS NULL OR reason='not_now') ORDER BY ts DESC LIMIT 1",
+            null
+        ).use { c ->
+            if (c.moveToFirst()) {
+                return Event(c.getLong(0), c.getLong(1), c.getString(2), c.getString(3), c.getString(4))
+            }
+        }
+        return null
+    }
+
+    fun setReason(id: Long, reason: String) {
+        val values = ContentValues().apply { put("reason", reason) }
+        writableDatabase.update("events", values, "id = ?", arrayOf(id.toString()))
+    }
+
     fun commonReason(): String? {
         readableDatabase.rawQuery(
-            "SELECT reason, COUNT(*) as cnt FROM events WHERE reason IS NOT NULL AND ts > ? GROUP BY reason ORDER BY cnt DESC LIMIT 1",
+            "SELECT reason, COUNT(*) as cnt FROM events WHERE reason IS NOT NULL AND reason != 'not_now' AND ts > ? GROUP BY reason ORDER BY cnt DESC LIMIT 1",
             arrayOf((System.currentTimeMillis() - 30L * 24 * 60 * 60 * 1000).toString())
         ).use { c ->
             if (c.moveToFirst()) return c.getString(0)
@@ -60,7 +78,20 @@ class WakeLog(context: Context) : SQLiteOpenHelper(context, DB, null, 2) {
         return null
     }
 
+    fun prayedCount(): Int {
+        readableDatabase.rawQuery(
+            "SELECT COUNT(*) FROM events WHERE outcome='prayed'",
+            null
+        ).use { c -> if (c.moveToFirst()) return c.getInt(0) }
+        return 0
+    }
+
     companion object {
         private const val DB = "jannah_v2.db"
+
+        fun todayStamp(): String {
+            val fmt = java.text.SimpleDateFormat("yyyy-MM-dd", java.util.Locale.US)
+            return fmt.format(java.util.Date())
+        }
     }
 }

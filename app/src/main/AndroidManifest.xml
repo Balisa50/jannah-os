@@ -7,6 +7,7 @@
     <uses-permission android:name="android.permission.WAKE_LOCK" />
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
     <uses-permission android:name="android.permission.RECORD_AUDIO" />
+    <uses-permission android:name="android.permission.INTERNET" />
 
     <application
         android:label="Jannah OS"
@@ -20,12 +21,35 @@
             </intent-filter>
         </activity>
         <activity
+            android:name=".PlannerActivity"
+            android:exported="false" />
+        <activity
+            android:name=".QuranActivity"
+            android:exported="false" />
+        <activity
+            android:name=".SalahActivity"
+            android:exported="false" />
+        <activity
+            android:name=".UrgeActivity"
+            android:exported="false"
+            android:showOnLockScreen="true"
+            android:turnScreenOn="true" />
+        <activity
+            android:name=".IstighfarActivity"
+            android:exported="false" />
+        <activity
+            android:name=".BedtimeActivity"
+            android:exported="false" />
+        <activity
             android:name=".TahajjudAlarmActivity"
             android:exported="false"
             android:showOnLockScreen="true"
             android:turnScreenOn="true" />
         <receiver
             android:name=".TahajjudAlarmReceiver"
+            android:exported="false" />
+        <receiver
+            android:name=".SalahReceiver"
             android:exported="false" />
         <receiver
             android:name=".BootReceiver"

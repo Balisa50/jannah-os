@@ -51,6 +51,17 @@ private val JannahColors = darkColorScheme(
     onPrimary = NightBg
 )
 
+private val REASONS = listOf(
+    "slept_late" to "I slept too late",
+    "alarm_missed" to "The alarm did not wake me",
+    "phone_far" to "The phone was too far",
+    "went_back" to "I woke but went back",
+    "too_tired" to "I was too exhausted"
+)
+
+private fun readableReason(code: String): String =
+    REASONS.firstOrNull { it.first == code }?.second ?: code
+
 class MainActivity : ComponentActivity() {
 
     private val lat = 13.4549
@@ -69,7 +80,72 @@ class MainActivity : ComponentActivity() {
         setContent {
             MaterialTheme(colorScheme = JannahColors) {
                 Surface(modifier = Modifier.fillMaxSize(), color = NightBg) {
-                    Dashboard()
+                    val pending = remember { WakeLog(this).pendingFollowUp() }
+                    if (pending != null) {
+                        FollowUpScreen(pending)
+                    } else {
+                        Dashboard()
+                    }
+                }
+            }
+        }
+    }
+
+    @Composable
+    private fun FollowUpScreen(event: WakeLog.Event) {
+        val log = remember { WakeLog(this) }
+        val answered = remember { mutableStateOf(false) }
+        val dayFmt = SimpleDateFormat("EEEE", Locale.getDefault())
+
+        Column(
+            modifier = Modifier.fillMaxSize().padding(horizontal = 32.dp),
+            verticalArrangement = Arrangement.Center,
+            horizontalAlignment = Alignment.CenterHorizontally
+        ) {
+            if (!answered.value) {
+                Text("Last night", color = NightMuted, fontSize = 13.sp, letterSpacing = 1.sp)
+                Spacer(Modifier.height(12.dp))
+                Text("What got in the way?", color = NightText, fontSize = 24.sp,
+                    fontWeight = FontWeight.Light, textAlign = TextAlign.Center)
+                Spacer(Modifier.height(10.dp))
+                Text("This shapes tonight's plan. It is not a punishment.",
+                    color = NightMuted, fontSize = 13.sp, textAlign = TextAlign.Center)
+
+                Spacer(Modifier.height(40.dp))
+
+                REASONS.forEach { (code, label) ->
+                    Button(
+                        onClick = {
+                            log.setReason(event.id, code)
+                            answered.value = true
+                        },
+                        modifier = Modifier.fillMaxWidth().padding(vertical = 5.dp),
+                        colors = ButtonDefaults.buttonColors(
+                            containerColor = NightSurface,
+                            contentColor = NightText
+                        )
+                    ) {
+                        Text(label, fontSize = 14.sp)
+                    }
+                }
+
+                Spacer(Modifier.height(24.dp))
+
+                TextButton(onClick = { answered.value = true }) {
+                    Text("Skip", color = NightMuted, fontSize = 12.sp)
+                }
+            } else {
+                Text("Recorded.", color = NightText, fontSize = 22.sp,
+                    fontWeight = FontWeight.Light)
+                Spacer(Modifier.height(12.dp))
+                Text("Tonight's plan adjusts.", color = NightMuted, fontSize = 14.sp)
+                Spacer(Modifier.height(40.dp))
+                Button(
+                    onClick = { recreate() },
+                    modifier = Modifier.fillMaxWidth(),
+                    colors = ButtonDefaults.buttonColors(containerColor = GoldAccent, contentColor = NightBg)
+                ) {
+                    Text("Continue", fontSize = 15.sp)
                 }
             }
         }
@@ -83,17 +159,25 @@ class MainActivity : ComponentActivity() {
         val log = WakeLog(this)
         val history = log.lastNights(7)
         val common = log.commonReason()
+        val prayed = log.prayedCount()
 
         val next = TahajjudScheduler.computeTonight(lat, lon)
         val scheduled = TahajjudScheduler.nextScheduled(this)
         val fmt = SimpleDateFormat("EEE d MMM, HH:mm", Locale.getDefault())
         val dayFmt = SimpleDateFormat("EEE", Locale.getDefault())
 
+        // Adaptive hint: if we know the pattern, adjust the suggestion.
+        val adaptiveHint = when (common) {
+            "slept_late" -> "Try to sleep earlier tonight."
+            "alarm_missed" -> "Consider a louder alarm or a second alarm."
+            "phone_far" -> "Keep your phone near your bed."
+            "went_back" -> "Plan to sit up for one minute before deciding."
+            "too_tired" -> "Consider a nap today, or shorten tonight's plan."
+            else -> null
+        }
+
         Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .verticalScroll(rememberScrollState())
-                .padding(horizontal = 28.dp),
+            modifier = Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(horizontal = 28.dp),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
             Spacer(Modifier.height(56.dp))
@@ -107,15 +191,41 @@ class MainActivity : ComponentActivity() {
             Spacer(Modifier.height(6.dp))
             Text(fmt.format(next), color = NightText, fontSize = 20.sp)
 
-            Spacer(Modifier.height(28.dp))
-
-            if (common != null) {
-                Text("Recent pattern", color = NightMuted, fontSize = 12.sp, letterSpacing = 1.sp)
-                Spacer(Modifier.height(6.dp))
-                Text("You most often miss because: " + readableReason(common),
-                    color = NightText, fontSize = 14.sp, textAlign = TextAlign.Center)
-                Spacer(Modifier.height(28.dp))
+            if (adaptiveHint != null) {
+                Spacer(Modifier.height(20.dp))
+                Text(adaptiveHint, color = GoldAccent, fontSize = 13.sp,
+                    textAlign = TextAlign.Center)
             }
+
+            Spacer(Modifier.height(32.dp))
+
+            // Today's five prayers
+            val times = SalahScheduler.todayTimes(lat, lon)
+            val hhmm = SimpleDateFormat("HH:mm", Locale.getDefault())
+            Text("Today's prayers", color = NightMuted, fontSize = 12.sp, letterSpacing = 1.sp)
+            Spacer(Modifier.height(10.dp))
+
+            times.forEach { (key, t) ->
+                Row(
+                    modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp),
+                    horizontalArrangement = Arrangement.SpaceBetween
+                ) {
+                    Text(SalahTracker.label(key), color = NightText, fontSize = 14.sp)
+                    Text(hhmm.format(t), color = NightMuted, fontSize = 14.sp)
+                }
+            }
+
+            Spacer(Modifier.height(16.dp))
+
+            Button(
+                onClick = { SalahScheduler.schedule(this@MainActivity, lat, lon) },
+                modifier = Modifier.fillMaxWidth(),
+                colors = ButtonDefaults.buttonColors(containerColor = NightSurface, contentColor = NightText)
+            ) {
+                Text("Set prayer reminders", fontSize = 13.sp)
+            }
+
+            Spacer(Modifier.height(32.dp))
 
             Button(
                 onClick = {
@@ -148,7 +258,12 @@ class MainActivity : ComponentActivity() {
                 color = NightMuted, fontSize = 12.sp, textAlign = TextAlign.Center
             )
 
-            Spacer(Modifier.height(40.dp))
+            Spacer(Modifier.height(36.dp))
+
+            if (prayed > 0) {
+                Text("Nights prayed: $prayed", color = NightMuted, fontSize = 12.sp)
+                Spacer(Modifier.height(24.dp))
+            }
 
             if (history.isNotEmpty()) {
                 Text("Last 7 nights", color = NightMuted, fontSize = 12.sp, letterSpacing = 1.sp)
@@ -172,11 +287,70 @@ class MainActivity : ComponentActivity() {
                         Text(status, color = statusColor, fontSize = 13.sp)
                     }
                 }
-            } else {
-                Text("No nights recorded yet.", color = NightMuted, fontSize = 12.sp)
             }
 
-            Spacer(Modifier.height(40.dp))
+            Spacer(Modifier.height(36.dp))
+
+            Button(
+                onClick = { startActivity(Intent(this@MainActivity, SalahActivity::class.java)) },
+                modifier = Modifier.fillMaxWidth(),
+                colors = ButtonDefaults.buttonColors(containerColor = NightSurface, contentColor = NightText)
+            ) {
+                val done = SalahTracker.today(this@MainActivity).count { it.value }
+                Text("Today's prayers ($done/5)", fontSize = 14.sp)
+            }
+
+            Spacer(Modifier.height(10.dp))
+
+            Button(
+                onClick = { startActivity(Intent(this@MainActivity, BedtimeActivity::class.java)) },
+                modifier = Modifier.fillMaxWidth(),
+                colors = ButtonDefaults.buttonColors(containerColor = NightSurface, contentColor = NightText)
+            ) {
+                Text("Tonight's plan", fontSize = 14.sp)
+            }
+
+            Spacer(Modifier.height(10.dp))
+
+            Button(
+                onClick = { startActivity(Intent(this@MainActivity, IstighfarActivity::class.java)) },
+                modifier = Modifier.fillMaxWidth(),
+                colors = ButtonDefaults.buttonColors(containerColor = NightSurface, contentColor = NightText)
+            ) {
+                Text("Istighfar", fontSize = 14.sp)
+            }
+
+            Spacer(Modifier.height(10.dp))
+
+            Button(
+                onClick = { startActivity(Intent(this@MainActivity, QuranActivity::class.java)) },
+                modifier = Modifier.fillMaxWidth(),
+                colors = ButtonDefaults.buttonColors(containerColor = NightSurface, contentColor = NightText)
+            ) {
+                Text("Quran", fontSize = 14.sp)
+            }
+
+            Spacer(Modifier.height(10.dp))
+
+            Button(
+                onClick = { startActivity(Intent(this@MainActivity, PlannerActivity::class.java)) },
+                modifier = Modifier.fillMaxWidth(),
+                colors = ButtonDefaults.buttonColors(containerColor = NightSurface, contentColor = NightText)
+            ) {
+                Text("Planner", fontSize = 14.sp)
+            }
+
+            Spacer(Modifier.height(10.dp))
+
+            Button(
+                onClick = { startActivity(Intent(this@MainActivity, UrgeActivity::class.java)) },
+                modifier = Modifier.fillMaxWidth(),
+                colors = ButtonDefaults.buttonColors(containerColor = NightSurface, contentColor = NightText)
+            ) {
+                Text("Not now", fontSize = 14.sp)
+            }
+
+            Spacer(Modifier.height(24.dp))
 
             TextButton(onClick = {
                 startActivity(Intent(this@MainActivity, TahajjudAlarmActivity::class.java))
@@ -186,14 +360,5 @@ class MainActivity : ComponentActivity() {
 
             Spacer(Modifier.height(40.dp))
         }
-    }
-
-    private fun readableReason(code: String): String = when (code) {
-        "not_now" -> "you tapped \"Not now\""
-        "slept_late" -> "you slept too late"
-        "alarm_missed" -> "the alarm did not wake you"
-        "phone_far" -> "the phone was too far"
-        "went_back" -> "you went back to sleep"
-        else -> code
     }
 }

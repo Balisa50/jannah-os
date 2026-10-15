@@ -11,8 +11,8 @@ android {
         applicationId = "com.jannahos"
         minSdk = 26
         targetSdk = 34
-        versionCode = 5
-        versionName = "0.5.0"
+        versionCode = 6
+        versionName = "0.6.0"
     }
     buildFeatures { compose = true }
     compileOptions {
@@ -29,5 +29,7 @@ dependencies {
     implementation("androidx.compose.material3:material3")
     implementation("androidx.activity:activity-compose:1.9.2")
     implementation("androidx.lifecycle:lifecycle-runtime-compose:2.8.6")
+    implementation("androidx.security:security-crypto:1.1.0-alpha06")
     implementation("com.batoulapps.adhan:adhan:1.2.1")
+    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.8.0")
 }
