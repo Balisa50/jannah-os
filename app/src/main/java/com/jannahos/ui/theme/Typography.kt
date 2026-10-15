@@ -1,54 +1,90 @@
 package com.jannahos.ui.theme
 
 import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.sp
 
-// One type scale. Weight and size carry hierarchy; nothing is bold for decoration.
+// One scale, editorial in feel. Serif for large display; sans for body.
 object JannahType {
 
-    // Screen title — the one heading at the top of a full screen.
-    val screenTitle = TextStyle(
-        fontSize = 26.sp,
+    // Very large, editorial. Used for hero numbers (e.g. countdown).
+    val display = TextStyle(
+        fontFamily = FontFamily.Serif,
+        fontSize = 44.sp,
         fontWeight = FontWeight.Light,
+        letterSpacing = (-0.5).sp,
+        lineHeight = 52.sp
+    )
+
+    // Page title. Serif — gives warmth.
+    val title = TextStyle(
+        fontFamily = FontFamily.Serif,
+        fontSize = 34.sp,
+        fontWeight = FontWeight.Normal,
+        letterSpacing = (-0.3).sp,
+        lineHeight = 42.sp
+    )
+
+    // Section header — small caps feel, wide tracking.
+    val eyebrow = TextStyle(
+        fontSize = 11.sp,
+        fontWeight = FontWeight.Medium,
         letterSpacing = 2.sp
     )
 
-    // Section header — small, uppercase-feeling label above a block.
-    val section = TextStyle(
+    // Primary content.
+    val body = TextStyle(
+        fontSize = 16.sp,
+        fontWeight = FontWeight.Normal,
+        lineHeight = 24.sp
+    )
+
+    val bodySmall = TextStyle(
+        fontSize = 14.sp,
+        fontWeight = FontWeight.Normal,
+        lineHeight = 20.sp
+    )
+
+    val caption = TextStyle(
         fontSize = 12.sp,
-        fontWeight = FontWeight.Medium,
-        letterSpacing = 1.2.sp
+        fontWeight = FontWeight.Normal,
+        lineHeight = 16.sp
     )
 
-    // Primary content — the value the user came to read.
-    val primary = TextStyle(
-        fontSize = 17.sp,
-        fontWeight = FontWeight.Normal
+    val micro = TextStyle(
+        fontSize = 10.sp,
+        fontWeight = FontWeight.Normal,
+        letterSpacing = 0.5.sp
     )
 
-    // Secondary — labels, hints, timestamps.
-    val secondary = TextStyle(
-        fontSize = 13.sp,
-        fontWeight = FontWeight.Normal
-    )
-
-    // Tertiary — the smallest supporting text; use sparingly.
-    val tertiary = TextStyle(
-        fontSize = 11.sp,
-        fontWeight = FontWeight.Normal
-    )
-
-    // Button label — consistent across every button in the app.
+    // Button label.
     val button = TextStyle(
         fontSize = 15.sp,
-        fontWeight = FontWeight.Medium
+        fontWeight = FontWeight.SemiBold,
+        letterSpacing = 0.3.sp
     )
 
-    // Arabic text — larger line height to give diacritics room.
+    // Arabic. Generous line height for diacritics.
     val arabic = TextStyle(
-        fontSize = 24.sp,
+        fontSize = 26.sp,
         fontWeight = FontWeight.Normal,
-        lineHeight = 44.sp
+        lineHeight = 52.sp,
+        textAlign = TextAlign.Center
     )
+
+    val arabicLarge = TextStyle(
+        fontSize = 34.sp,
+        fontWeight = FontWeight.Normal,
+        lineHeight = 64.sp,
+        textAlign = TextAlign.Center
+    )
+
+    // --- Backwards-compatible aliases ---
+    val screenTitle = title
+    val section     = eyebrow
+    val primary     = body
+    val secondary   = bodySmall
+    val tertiary    = caption
 }

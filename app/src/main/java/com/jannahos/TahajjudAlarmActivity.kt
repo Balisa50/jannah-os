@@ -62,7 +62,7 @@ class TahajjudAlarmActivity : ComponentActivity() {
         }
 
         setContent {
-            JannahTheme(night = true) {
+            JannahTheme() {
                 Surface(modifier = Modifier.fillMaxSize(), color = MaterialTheme.colorScheme.background) {
                     Flow(onDone = { finish() })
                 }
