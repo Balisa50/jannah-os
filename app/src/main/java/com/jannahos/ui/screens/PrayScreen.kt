@@ -1,5 +1,6 @@
 package com.jannahos.ui.screens
 
+import android.content.Intent
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -10,11 +11,10 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Text
@@ -34,6 +34,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.jannahos.QiblaActivity
 import com.jannahos.SalahScheduler
 import com.jannahos.SalahTracker
 import com.jannahos.Settings
@@ -42,7 +43,6 @@ import com.jannahos.ui.theme.JannahSpacing
 import com.jannahos.ui.theme.JannahType
 import kotlinx.coroutines.delay
 import java.text.SimpleDateFormat
-import java.util.Date
 import java.util.Locale
 
 @Composable
@@ -58,8 +58,8 @@ fun PrayScreen() {
     val times = SalahScheduler.todayTimes(lat, lon)
     val hhmm = SimpleDateFormat("HH:mm", Locale.getDefault())
     val today = SalahTracker.today(ctx)
-    val done = today.count { it.value }
     val ordered = listOf("fajr", "dhuhr", "asr", "maghrib", "isha")
+    val done = today.count { it.value }
 
     val now = System.currentTimeMillis()
     val nextKey = ordered.firstOrNull { (times[it]?.time ?: 0L) > now }
@@ -71,118 +71,147 @@ fun PrayScreen() {
             .verticalScroll(rememberScrollState())
             .background(JannahColors.Cream)
     ) {
-        // Banner
+        // Header
         Box(
             Modifier
                 .fillMaxWidth()
-                .clip(RoundedCornerShape(bottomStart = 28.dp, bottomEnd = 28.dp))
-                .background(JannahColors.Orange)
                 .padding(horizontal = JannahSpacing.gutter)
-                .padding(top = JannahSpacing.xl, bottom = JannahSpacing.l)
+                .padding(top = JannahSpacing.l, bottom = JannahSpacing.m)
         ) {
             Column {
-                Text("SALAH",
-                    style = JannahType.eyebrow,
-                    color = JannahColors.OnOrange.copy(alpha = 0.75f))
-                Spacer(Modifier.height(JannahSpacing.xs))
-                Row {
-                    Text("$done of 5 ", style = JannahType.title.copy(fontSize = 24.sp),
-                        color = JannahColors.OnOrange)
-                    Text("prayed.", style = JannahType.titleItalic.copy(fontSize = 24.sp),
-                        color = JannahColors.OnOrange)
-                }
+                Text("Pray",
+                    fontFamily = FontFamily.Serif,
+                    fontSize = 26.sp,
+                    fontWeight = FontWeight.Bold,
+                    color = JannahColors.Ink)
+                Spacer(Modifier.height(2.dp))
+                Text("$done of 5 marked",
+                    style = JannahType.caption, color = JannahColors.Muted)
             }
         }
 
         Column(Modifier.padding(horizontal = JannahSpacing.gutter)) {
-            Spacer(Modifier.height(JannahSpacing.l))
 
-            // Next prayer hero
+            // Next-prayer summary card (only if there is one)
             if (nextKey != null && nextTime != null) {
-                Text("Next", style = JannahType.eyebrow, color = JannahColors.OrangeDeep)
-                Spacer(Modifier.height(JannahSpacing.xs))
-                Text(
-                    SalahTracker.label(nextKey),
-                    style = JannahType.display,
-                    color = JannahColors.Ink
-                )
-                Spacer(Modifier.height(JannahSpacing.xs))
-                Text(
-                    hhmm.format(Date(nextTime)),
-                    style = JannahType.title.copy(fontSize = 22.sp),
-                    color = JannahColors.Orange
-                )
-                Spacer(Modifier.height(JannahSpacing.l))
-            }
-
-            // Times list
-            Text("TODAY'S TIMES", style = JannahType.eyebrow, color = JannahColors.OrangeDeep)
-            Spacer(Modifier.height(JannahSpacing.s))
-
-            ordered.forEachIndexed { i, key ->
-                val t = times[key]
-                val done = today[key] == true
-                Row(
+                Box(
                     Modifier
                         .fillMaxWidth()
-                        .padding(vertical = 14.dp),
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.SpaceBetween
+                        .clip(RoundedCornerShape(JannahSpacing.cardRadius))
+                        .background(JannahColors.Orange)
+                        .padding(JannahSpacing.l)
                 ) {
-                    Row(verticalAlignment = Alignment.CenterVertically) {
-                        Box(
-                            Modifier
-                                .size(8.dp)
-                                .clip(CircleShape)
-                                .background(if (done) JannahColors.Orange else JannahColors.Border)
-                        )
-                        Spacer(Modifier.width(14.dp))
-                        Text(
-                            SalahTracker.label(key),
-                            fontFamily = FontFamily.Serif,
-                            fontSize = 20.sp,
-                            fontWeight = FontWeight.Bold,
-                            color = JannahColors.Ink
-                        )
+                    Column {
+                        Text("NEXT",
+                            style = JannahType.eyebrow,
+                            color = JannahColors.OnOrange.copy(alpha = 0.75f))
+                        Spacer(Modifier.height(4.dp))
+                        Row(verticalAlignment = Alignment.Bottom) {
+                            Text(SalahTracker.label(nextKey),
+                                fontFamily = FontFamily.Serif,
+                                fontSize = 24.sp,
+                                fontWeight = FontWeight.Bold,
+                                color = JannahColors.OnOrange)
+                            Spacer(Modifier.width(8.dp))
+                            Text(hhmm.format(nextTime),
+                                fontFamily = FontFamily.Serif,
+                                fontStyle = FontStyle.Italic,
+                                fontSize = 18.sp,
+                                color = JannahColors.OnOrange.copy(alpha = 0.85f),
+                                modifier = Modifier.padding(bottom = 4.dp))
+                        }
                     }
-                    Text(
-                        t?.let { hhmm.format(it) } ?: "—",
-                        style = JannahType.body,
-                        color = if (done) JannahColors.Orange else JannahColors.Muted
-                    )
                 }
-                if (i < ordered.size - 1) {
-                    Box(Modifier.fillMaxWidth().height(1.dp).background(JannahColors.Divider))
-                }
+                Spacer(Modifier.height(JannahSpacing.m))
             }
 
-            Spacer(Modifier.height(JannahSpacing.l))
-
-            // Qibla quick action
+            // Prayer list — name + time + status in one row
             Box(
                 Modifier
                     .fillMaxWidth()
                     .clip(RoundedCornerShape(JannahSpacing.cardRadius))
                     .background(JannahColors.Card)
-                    .clickable { ctx.startActivity(android.content.Intent(ctx, com.jannahos.QiblaActivity::class.java)) }
+            ) {
+                Column {
+                    ordered.forEachIndexed { i, key ->
+                        val t = times[key]
+                        val isDone = today[key] == true
+                        Row(
+                            Modifier
+                                .fillMaxWidth()
+                                .clickable { SalahTracker.toggle(ctx, key); tick++ }
+                                .padding(horizontal = JannahSpacing.l, vertical = 16.dp),
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Column(Modifier.weight(1f)) {
+                                Text(SalahTracker.label(key),
+                                    fontFamily = FontFamily.Serif,
+                                    fontSize = 18.sp,
+                                    fontWeight = FontWeight.Bold,
+                                    color = JannahColors.Ink)
+                                Spacer(Modifier.height(2.dp))
+                                Text(t?.let { hhmm.format(it) } ?: "—",
+                                    style = JannahType.bodySmall,
+                                    color = JannahColors.Muted)
+                            }
+                            Box(
+                                Modifier
+                                    .clip(RoundedCornerShape(JannahSpacing.pillRadius))
+                                    .background(
+                                        if (isDone) JannahColors.Orange else JannahColors.Cream
+                                    )
+                                    .padding(horizontal = 16.dp, vertical = 8.dp)
+                            ) {
+                                Text(
+                                    if (isDone) "✓ Marked" else "Mark",
+                                    style = JannahType.caption,
+                                    color = if (isDone) JannahColors.OnOrange else JannahColors.Muted,
+                                    fontWeight = FontWeight.SemiBold
+                                )
+                            }
+                        }
+                        if (i < ordered.size - 1) {
+                            Box(Modifier.fillMaxWidth().height(1.dp).background(JannahColors.Divider))
+                        }
+                    }
+                }
+            }
+
+            Spacer(Modifier.height(JannahSpacing.m))
+
+            // Qibla — labelled card
+            Box(
+                Modifier
+                    .fillMaxWidth()
+                    .clip(RoundedCornerShape(JannahSpacing.cardRadius))
+                    .background(JannahColors.Card)
+                    .clickable {
+                        ctx.startActivity(Intent(ctx, QiblaActivity::class.java))
+                    }
                     .padding(JannahSpacing.l)
             ) {
                 Row(verticalAlignment = Alignment.CenterVertically) {
-                    Text("Qibla",
-                        fontFamily = FontFamily.Serif,
-                        fontSize = 17.sp,
-                        fontWeight = FontWeight.Bold,
-                        color = JannahColors.Ink,
-                        modifier = Modifier.weight(1f))
+                    Column(Modifier.weight(1f)) {
+                        Text("Qibla direction",
+                            fontFamily = FontFamily.Serif,
+                            fontSize = 17.sp,
+                            fontWeight = FontWeight.Bold,
+                            color = JannahColors.Ink)
+                        Spacer(Modifier.height(2.dp))
+                        Text("Tap to open the compass",
+                            style = JannahType.caption, color = JannahColors.Muted)
+                    }
                     Text("→", style = JannahType.title, color = JannahColors.Orange)
                 }
             }
 
-            Spacer(Modifier.height(JannahSpacing.s))
+            Spacer(Modifier.height(JannahSpacing.m))
 
-            // Set reminders pill
+            // Reminders
             Box(
                 Modifier
+                    .fillMaxWidth()
+                    .height(52.dp)
                     .clip(RoundedCornerShape(JannahSpacing.pillRadius))
                     .background(JannahColors.Ink)
                     .clickable {
@@ -192,66 +221,23 @@ fun PrayScreen() {
                             SalahScheduler.schedule(ctx, lat, lon)
                             reminderMsg = "Reminders set for today."
                         }
-                    }
-                    .padding(horizontal = 24.dp, vertical = 14.dp)
+                    },
+                contentAlignment = Alignment.Center
             ) {
-                Text("Set prayer reminders  →",
+                Text("Set prayer reminders",
                     style = JannahType.button, color = JannahColors.OnOrange)
             }
 
             if (reminderMsg != null) {
                 Spacer(Modifier.height(JannahSpacing.s))
-                Text(reminderMsg!!, style = JannahType.caption, color = JannahColors.Orange)
+                Text(reminderMsg!!,
+                    style = JannahType.caption, color = JannahColors.Orange,
+                    textAlign = TextAlign.Center,
+                    modifier = Modifier.fillMaxWidth())
             }
 
-            Spacer(Modifier.height(JannahSpacing.xl))
-
-            // Mark today
-            Text("MARK TODAY", style = JannahType.eyebrow, color = JannahColors.OrangeDeep)
-            Spacer(Modifier.height(JannahSpacing.s))
-
-            ordered.forEachIndexed { i, key ->
-                val done = today[key] == true
-                Row(
-                    Modifier
-                        .fillMaxWidth()
-                        .padding(vertical = 12.dp),
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.SpaceBetween
-                ) {
-                    Text(
-                        SalahTracker.label(key),
-                        fontFamily = FontFamily.Serif,
-                        fontSize = 20.sp,
-                        fontWeight = FontWeight.Bold,
-                        color = JannahColors.Ink
-                    )
-                    Box(
-                        Modifier
-                            .clip(RoundedCornerShape(JannahSpacing.pillRadius))
-                            .background(if (done) JannahColors.Orange else JannahColors.Card)
-                            .clickable { SalahTracker.toggle(ctx, key); tick++ }
-                            .padding(horizontal = 20.dp, vertical = 8.dp)
-                    ) {
-                        Text(
-                            if (done) "✓  Prayed" else "Mark",
-                            style = JannahType.caption,
-                            color = if (done) JannahColors.OnOrange else JannahColors.Muted
-                        )
-                    }
-                }
-                if (i < ordered.size - 1) {
-                    Box(Modifier.fillMaxWidth().height(1.dp).background(JannahColors.Divider))
-                }
-            }
-
-            Spacer(Modifier.height(JannahSpacing.xl))
-            Text(
-                "Between you and Allah.",
-                style = JannahType.caption, color = JannahColors.Faint,
-                textAlign = TextAlign.Center, modifier = Modifier.fillMaxWidth()
-            )
-            Spacer(Modifier.height(JannahSpacing.xl))
+            Spacer(Modifier.height(96.dp))
+            Spacer(Modifier.navigationBarsPadding())
         }
     }
 }
