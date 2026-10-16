@@ -52,6 +52,7 @@ fun YouScreen() {
     val showFast = remember { mutableStateOf(false) }
     val showSleep = remember { mutableStateOf(false) }
     val showBackup = remember { mutableStateOf(false) }
+    val showDuas = remember { mutableStateOf(false) }
 
     if (showFormation.value) {
         FormationScreen(onBack = { showFormation.value = false })
@@ -75,6 +76,10 @@ fun YouScreen() {
     }
     if (showBackup.value) {
         BackupScreen(onBack = { showBackup.value = false })
+        return
+    }
+    if (showDuas.value) {
+        DuaLibraryScreen(onBack = { showDuas.value = false })
         return
     }
 
@@ -198,6 +203,8 @@ fun YouScreen() {
                     ListRow("Fasting") { showFast.value = true }
                     Box(Modifier.fillMaxWidth().height(1.dp).background(JannahColors.Divider))
                     ListRow("Sleep log") { showSleep.value = true }
+                    Box(Modifier.fillMaxWidth().height(1.dp).background(JannahColors.Divider))
+                    ListRow("Dua library") { showDuas.value = true }
                     Box(Modifier.fillMaxWidth().height(1.dp).background(JannahColors.Divider))
                     ListRow("Tonight's plan") { ctx.startActivity(Intent(ctx, BedtimeActivity::class.java)) }
                     Box(Modifier.fillMaxWidth().height(1.dp).background(JannahColors.Divider))
