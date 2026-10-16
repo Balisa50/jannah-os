@@ -125,14 +125,14 @@ fun GraduationScreen(onBack: () -> Unit) {
                         style = JannahType.eyebrow, color = JannahColors.OrangeDeep)
                     Spacer(Modifier.height(JannahSpacing.s))
                     Text(
-                        "The app was never the point. Your practice was. The data you have written here stays on your phone — encrypted, private, yours. If you leave the app uninstalled tomorrow, your habits stay. If you come back in a year, everything is here.",
+                        "The app was never the point. Your practice was. Everything you wrote stays on your phone. Uninstall tomorrow and the habit stays. Come back in a year and it is all still here.",
                         style = JannahType.bodySmall,
                         color = JannahColors.Body,
                         lineHeight = 20.sp
                     )
                     Spacer(Modifier.height(JannahSpacing.s))
                     Text(
-                        "This is not goodbye. It is the door left unlocked.",
+                        "The door is unlocked.",
                         fontFamily = FontFamily.Serif,
                         fontStyle = FontStyle.Italic,
                         fontSize = 15.sp,

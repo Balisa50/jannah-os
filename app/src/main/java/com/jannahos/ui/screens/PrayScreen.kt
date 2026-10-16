@@ -247,7 +247,7 @@ fun PrayScreen() {
 
             Spacer(Modifier.height(JannahSpacing.xl))
             Text(
-                "A private record. No streak resets. No punishment.",
+                "Between you and Allah.",
                 style = JannahType.caption, color = JannahColors.Faint,
                 textAlign = TextAlign.Center, modifier = Modifier.fillMaxWidth()
             )

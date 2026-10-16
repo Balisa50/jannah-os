@@ -167,7 +167,7 @@ fun FormationScreen(onBack: () -> Unit) {
                             style = JannahType.eyebrow, color = JannahColors.OrangeDeep)
                         Spacer(Modifier.height(JannahSpacing.s))
                         Text(
-                            "The app has noticed recent hardness and has softened its expectations. Numbers are still recorded, but you will not see them pushed. " + CareMode.CAVEAT,
+                            "Something has been heavy. Numbers still log, but nothing is pushed. This pass, rest. " + CareMode.CAVEAT,
                             style = JannahType.bodySmall,
                             color = JannahColors.Body,
                             lineHeight = 20.sp
@@ -287,7 +287,7 @@ fun FormationScreen(onBack: () -> Unit) {
                         }
                         Spacer(Modifier.height(JannahSpacing.s))
                         Text(
-                            "This is observation, not a score. No points, no streaks. The app simply learns what helps you move.",
+                            "No points. No streaks. Just what works for you.",
                             style = JannahType.micro, color = JannahColors.Faint,
                             lineHeight = 14.sp
                         )

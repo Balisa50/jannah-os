@@ -4,8 +4,10 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.platform.LocalContext
+import com.jannahos.ComebackCheck
 import com.jannahos.EveningReckoning
 import com.jannahos.ReflectionPrompt
+import com.jannahos.ui.screens.ComebackScreen
 import com.jannahos.ui.screens.EveningScreen
 import com.jannahos.ui.screens.MorningReflectionScreen
 import androidx.compose.foundation.background
@@ -60,8 +62,17 @@ private val TABS = listOf(
 fun JannahApp() {
     val ctx = LocalContext.current
     val nav = rememberNavController()
+    val comebackState = remember { ComebackCheck.check(ctx) }
     var showReflection by remember { mutableStateOf(ReflectionPrompt.shouldPrompt(ctx)) }
     var showEvening by remember { mutableStateOf(EveningReckoning.shouldShow(ctx)) }
+    var showComeback by remember { mutableStateOf(comebackState.show) }
+
+    if (showComeback) {
+        ScreenScaffold {
+            ComebackScreen(comebackState, onDismiss = { showComeback = false })
+        }
+        return
+    }
 
     if (showReflection) {
         ScreenScaffold {
