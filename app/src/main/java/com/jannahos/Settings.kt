@@ -29,6 +29,15 @@ object Settings {
             .apply()
     }
 
+    fun displayName(context: Context): String =
+        context.getSharedPreferences(PREFS, Context.MODE_PRIVATE)
+            .getString("name", "") ?: ""
+
+    fun setDisplayName(context: Context, name: String) {
+        context.getSharedPreferences(PREFS, Context.MODE_PRIVATE)
+            .edit().putString("name", name.trim()).apply()
+    }
+
     fun onboardingComplete(context: Context): Boolean =
         context.getSharedPreferences(PREFS, Context.MODE_PRIVATE)
             .getBoolean("onboarded", false)

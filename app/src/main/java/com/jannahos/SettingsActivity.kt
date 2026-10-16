@@ -60,6 +60,7 @@ class SettingsActivity : ComponentActivity() {
     @Composable
     private fun SettingsScreen() {
         val ctx = LocalContext.current
+        var displayName by remember { mutableStateOf(Settings.displayName(ctx)) }
         var lat by remember { mutableStateOf(Settings.lat(ctx).toString()) }
         var lon by remember { mutableStateOf(Settings.lon(ctx).toString()) }
         var method by remember { mutableStateOf(Settings.method(ctx)) }
@@ -79,6 +80,25 @@ class SettingsActivity : ComponentActivity() {
             Spacer(Modifier.height(JannahSpacing.xs))
             Text("Location, calculation, and app state.",
                 style = JannahType.caption, color = JannahColors.Muted)
+
+            Spacer(Modifier.height(JannahSpacing.l))
+
+            // --- NAME ---
+            GlassCard {
+                Column(Modifier.padding(JannahSpacing.m)) {
+                    Text("YOUR NAME", style = JannahType.eyebrow, color = JannahColors.Muted)
+                    Spacer(Modifier.height(JannahSpacing.s))
+                    OutlinedTextField(
+                        value = displayName,
+                        onValueChange = {
+                            displayName = it
+                            Settings.setDisplayName(ctx, it)
+                        },
+                        label = { Text("First name") },
+                        modifier = Modifier.fillMaxWidth()
+                    )
+                }
+            }
 
             Spacer(Modifier.height(JannahSpacing.l))
 

@@ -44,6 +44,7 @@ fun OnboardingFlow(onDone: () -> Unit) {
     val ctx = LocalContext.current
     var step by remember { mutableStateOf(0) }
 
+    var name by remember { mutableStateOf("") }
     var lat by remember { mutableStateOf("13.4549") }
     var lon by remember { mutableStateOf("-16.5790") }
     var method by remember { mutableStateOf("MWL") }
@@ -60,7 +61,7 @@ fun OnboardingFlow(onDone: () -> Unit) {
 
             // Step dots
             Row(horizontalArrangement = Arrangement.spacedBy(JannahSpacing.xs)) {
-                repeat(4) { i ->
+                repeat(5) { i ->
                     Box(
                         Modifier
                             .size(if (i == step) 24.dp else 6.dp, 6.dp)
@@ -77,19 +78,18 @@ fun OnboardingFlow(onDone: () -> Unit) {
             Box(Modifier.weight(1f).fillMaxWidth()) {
                 when (step) {
                     0 -> Welcome()
-                    1 -> Location(lat, lon, method,
+                    1 -> AskName(name, onChange = { name = it })
+                    2 -> Location(lat, lon, method,
                         onLat = { lat = it }, onLon = { lon = it }, onMethod = { method = it })
-                    2 -> ChooseLevel(level, onPick = { level = it })
-                    3 -> DoneScreen()
+                    3 -> ChooseLevel(level, onPick = { level = it })
+                    else -> DoneScreen()
                 }
             }
 
             // Bottom bar with action
             val label = when (step) {
                 0 -> "Begin"
-                1 -> "Continue"
-                2 -> "Continue"
-                else -> "Open the app"
+                else -> if (step == 4) "Open the app" else "Continue"
             }
 
             Box(
@@ -99,11 +99,11 @@ fun OnboardingFlow(onDone: () -> Unit) {
                     .clip(RoundedCornerShape(JannahSpacing.buttonRadius))
                     .background(JannahBrushes.goldButton)
                     .clickable {
-                        if (step == 3) {
-                            // Persist everything.
+                        if (step == 4) {
                             val latD = lat.toDoubleOrNull() ?: 13.4549
                             val lonD = lon.toDoubleOrNull() ?: -16.5790
                             Settings.set(ctx, latD, lonD, method)
+                            Settings.setDisplayName(ctx, name)
                             TahajjudPlan.setLevel(ctx, level)
                             onDone()
                         } else {
@@ -243,6 +243,31 @@ private fun ChooseLevel(level: Int, onPick: (Int) -> Unit) {
             }
             Spacer(Modifier.height(JannahSpacing.s))
         }
+    }
+}
+
+@Composable
+private fun AskName(current: String, onChange: (String) -> Unit) {
+    Column(
+        modifier = Modifier.fillMaxSize().verticalScroll(rememberScrollState()),
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.Center
+    ) {
+        Text("What should we call you?",
+            style = JannahType.title, color = JannahColors.Ink)
+        Spacer(Modifier.height(JannahSpacing.s))
+        Text("Just a first name is fine. You can leave it blank.",
+            style = JannahType.caption, color = JannahColors.Muted,
+            textAlign = TextAlign.Center)
+
+        Spacer(Modifier.height(JannahSpacing.l))
+
+        OutlinedTextField(
+            value = current,
+            onValueChange = onChange,
+            label = { Text("Your name") },
+            modifier = Modifier.fillMaxWidth()
+        )
     }
 }
 

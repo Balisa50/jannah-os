@@ -114,8 +114,10 @@ fun TodayScreen(onNavigate: (String) -> Unit = {}) {
                     color = JannahColors.OnOrange.copy(alpha = 0.75f)
                 )
                 Spacer(Modifier.height(JannahSpacing.xs))
+                val storedName = Settings.displayName(ctx)
                 Text(
-                    greeting + ", Abdoulie.",
+                    if (storedName.isBlank()) greeting + "."
+                    else greeting + ", " + storedName + ".",
                     style = JannahType.title.copy(fontSize = 24.sp),
                     color = JannahColors.OnOrange
                 )
