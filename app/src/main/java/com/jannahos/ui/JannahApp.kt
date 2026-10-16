@@ -4,7 +4,9 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.platform.LocalContext
+import com.jannahos.EveningReckoning
 import com.jannahos.ReflectionPrompt
+import com.jannahos.ui.screens.EveningScreen
 import com.jannahos.ui.screens.MorningReflectionScreen
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
@@ -59,10 +61,18 @@ fun JannahApp() {
     val ctx = LocalContext.current
     val nav = rememberNavController()
     var showReflection by remember { mutableStateOf(ReflectionPrompt.shouldPrompt(ctx)) }
+    var showEvening by remember { mutableStateOf(EveningReckoning.shouldShow(ctx)) }
 
     if (showReflection) {
         ScreenScaffold {
             MorningReflectionScreen(onDismiss = { showReflection = false })
+        }
+        return
+    }
+
+    if (showEvening) {
+        ScreenScaffold {
+            EveningScreen(onDismiss = { showEvening = false })
         }
         return
     }
