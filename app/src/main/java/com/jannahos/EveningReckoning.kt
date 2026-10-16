@@ -55,7 +55,7 @@ object EveningReckoning {
             DiaryStore(context).latestTagIn24h() != null
         } catch (e: Exception) { false }
 
-        // Compassionate lines — only mention what actually happened
+        // Compassionate lines, only mention what actually happened
         val lines = mutableListOf<String>()
         if (prayersMarked == 5) lines.add("All five prayers marked. A complete day.")
         else if (prayersMarked >= 3) lines.add("$prayersMarked prayers marked. Steady.")

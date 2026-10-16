@@ -190,7 +190,7 @@ fun YouScreen() {
                 Spacer(Modifier.height(JannahSpacing.xs))
                 Text(
                     if (name.isBlank()) "Your formation."
-                    else "$name — your formation.",
+                    else "$name, your formation.",
                     fontFamily = FontFamily.Serif,
                     fontSize = 26.sp,
                     fontWeight = FontWeight.Bold,
@@ -209,9 +209,9 @@ fun YouScreen() {
         Column(Modifier.padding(horizontal = JannahSpacing.gutter)) {
             Spacer(Modifier.height(JannahSpacing.l))
 
-            // ==== TIER 1 — the five pillars of the product ====
+            // ==== TIER 1, the five pillars of the product ====
 
-            // Formation — the hero of this screen
+            // Formation, the hero of this screen
             BigTile(
                 eyebrow = "TAHAJJUD FORMATION",
                 title = when (level) {
@@ -248,7 +248,7 @@ fun YouScreen() {
 
             Spacer(Modifier.height(JannahSpacing.s))
 
-            // Your Time — the deeds engine
+            // Your Time, the deeds engine
             SmallTile(
                 modifier = Modifier.fillMaxWidth(),
                 eyebrow = "EVERY MINUTE COUNTS",
@@ -279,7 +279,7 @@ fun YouScreen() {
 
             Spacer(Modifier.height(JannahSpacing.s))
 
-            // Companion — the doorway
+            // Companion, the doorway
             SmallTile(
                 modifier = Modifier.fillMaxWidth(),
                 eyebrow = "TELL ME",
@@ -303,7 +303,7 @@ fun YouScreen() {
             SmallTile(
                 modifier = Modifier.fillMaxWidth(),
                 eyebrow = "RECORD",
-                title = "Dua journal — answered duas",
+                title = "Dua journal, answered duas",
                 onClick = { showDuaJournal.value = true }
             )
 
@@ -311,7 +311,7 @@ fun YouScreen() {
 
             Spacer(Modifier.height(JannahSpacing.xl))
 
-            // ==== SETTINGS — always visible, not buried ====
+            // ==== SETTINGS, always visible, not buried ====
             Text("SETTINGS", style = JannahType.eyebrow, color = JannahColors.OrangeDeep)
             Spacer(Modifier.height(JannahSpacing.s))
             Box(
@@ -335,7 +335,7 @@ fun YouScreen() {
                 }
             }
 
-            // ==== TIER 2 — additional tools, hidden by default ====
+            // ==== TIER 2, additional tools, hidden by default ====
             if (showMore) {
                 Spacer(Modifier.height(JannahSpacing.l))
                 Text("ADDITIONAL TOOLS",
@@ -368,13 +368,13 @@ fun YouScreen() {
                         Divider()
                         ListRow("Sunnah prayers") { showSunnah.value = true }
                         Divider()
-                        ListRow("Hifdh — memorize Quran") { showHifdh.value = true }
+                        ListRow("Hifdh, memorize Quran") { showHifdh.value = true }
                         Divider()
                         ListRow("Character & daily hadith") { showCharacter.value = true }
                         Divider()
                         ListRow("Sleep log") { showSleep.value = true }
                         Divider()
-                        ListRow("Finance — the middle path") { showFinance.value = true }
+                        ListRow("Finance, the middle path") { showFinance.value = true }
                         Divider()
                         ListRow("Graduation") { showGraduation.value = true }
                         Divider()

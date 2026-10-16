@@ -3,7 +3,7 @@ package com.jannahos
 import android.content.Context
 
 // After 90 days of data, if the habit is holding without needing the app's
-// scaffolding, the app offers the user a Graduation — a respectful exit.
+// scaffolding, the app offers the user a Graduation, a respectful exit.
 // This is not a feature that punishes; it is the ultimate respect.
 // The data is never deleted. They can always return.
 object GraduationCheck {

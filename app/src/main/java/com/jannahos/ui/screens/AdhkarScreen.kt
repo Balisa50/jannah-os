@@ -181,9 +181,7 @@ private fun AdhkarDetail(item: MorningEveningAdhkar.Item, onBack: () -> Unit) {
     ) {
         Spacer(Modifier.height(JannahSpacing.l))
 
-        Text("← Back", style = JannahType.bodySmall, color = JannahColors.Muted,
-            modifier = Modifier.clickable(onClick = onBack))
-
+        
         Spacer(Modifier.height(JannahSpacing.l))
 
         Box(

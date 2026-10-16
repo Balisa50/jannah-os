@@ -4,7 +4,7 @@ import org.json.JSONObject
 import java.net.HttpURLConnection
 import java.net.URL
 
-// Talks to api.alquran.cloud — a free public service, no auth required.
+// Talks to api.alquran.cloud, a free public service, no auth required.
 // We cache every response in QuranCache so the app works offline after first read.
 object QuranApi {
 

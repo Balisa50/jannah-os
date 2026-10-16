@@ -144,6 +144,6 @@ class FinanceStore(context: Context) : SQLiteOpenHelper(
             CATEGORIES.firstOrNull { it.first == code }?.second ?: code
 
         // Framing for the wastage category.
-        const val WASTE_CAVEAT = "The Qur'an says: \"Indeed, the wasteful are brothers of the devils.\" (Qur'an 17:27). Tracking waste is not about guilt — it is about returning money to where it belongs."
+        const val WASTE_CAVEAT = "The Qur'an says: \"Indeed, the wasteful are brothers of the devils.\" (Qur'an 17:27). Tracking waste is not about guilt, it is about returning money to where it belongs."
     }
 }

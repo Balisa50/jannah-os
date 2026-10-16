@@ -54,7 +54,7 @@ class JannahWidget : AppWidgetProvider() {
             views.setTextViewText(R.id.widget_time, hhmm.format(t))
         } else {
             views.setTextViewText(R.id.widget_prayer, "Fajr tomorrow")
-            views.setTextViewText(R.id.widget_time, "—")
+            views.setTextViewText(R.id.widget_time, ", ")
         }
 
         // Tahajjud time

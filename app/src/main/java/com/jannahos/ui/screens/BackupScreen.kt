@@ -204,7 +204,7 @@ fun BackupScreen(onBack: () -> Unit) {
                         style = JannahType.eyebrow, color = JannahColors.OrangeDeep)
                     Spacer(Modifier.height(JannahSpacing.s))
                     Text(
-                        "The file is written only where you choose. Nothing is ever uploaded. If you restore on another phone, your new device inherits your data — but nothing leaves your control.",
+                        "The file is written only where you choose. Nothing is ever uploaded. If you restore on another phone, your new device inherits your data, but nothing leaves your control.",
                         style = JannahType.bodySmall,
                         color = JannahColors.Body,
                         lineHeight = 20.sp

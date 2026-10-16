@@ -186,7 +186,7 @@ private fun TheFourPillars() {
 
         Pillar(
             "1", "Formation",
-            "Tahajjud, built as a habit — not a streak. Start with one night a week. The plan adapts when you miss, without guilt."
+            "Tahajjud, built as a habit, not a streak. Start with one night a week. The plan adapts when you miss, without guilt."
         )
         Pillar(
             "2", "Witness",
@@ -203,7 +203,7 @@ private fun TheFourPillars() {
 
         Spacer(Modifier.height(JannahSpacing.l))
         Text(
-            "There are more tools — Quran, adhkar, hifdh, duas, fasting. They are there when you need them. They will not compete for your attention.",
+            "There are more tools, Quran, adhkar, hifdh, duas, fasting. They are there when you need them. They will not compete for your attention.",
             style = JannahType.bodySmall,
             color = JannahColors.Muted,
             textAlign = TextAlign.Center,

@@ -9,7 +9,7 @@ import net.zetetic.database.sqlcipher.SQLiteOpenHelper
 
 // Personal record of duas and their answers.
 // The user names what they are asking for. When Allah answers, they record it.
-// Over months, this becomes an honest archive of answered duas — a lifeline
+// Over months, this becomes an honest archive of answered duas, a lifeline
 // in moments of doubt or hardship.
 class DuaJournalStore(context: Context) : SQLiteOpenHelper(
     context, DB, DbKey.get(context),

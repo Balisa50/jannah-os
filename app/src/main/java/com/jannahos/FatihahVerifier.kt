@@ -40,7 +40,7 @@ object FatihahVerifier {
         AYAH_MARKERS.forEach { markers ->
             if (markers.any { lower.contains(it) }) matched++
         }
-        // Require at least 3 of 7 ayah markers — this is generous enough
+        // Require at least 3 of 7 ayah markers, this is generous enough
         // that partial recitation still verifies, strict enough that
         // random speech does not.
         val verified = matched >= 3

@@ -59,7 +59,7 @@ object RamadanMode {
         )
     }
 
-    // Today's suhoor/iftar context — informational only.
+    // Today's suhoor/iftar context, informational only.
     data class DayGuidance(val suhoorNote: String, val iftarDuaArabic: String, val iftarDuaTranslation: String, val iftarSource: String)
 
     val dayGuidance = DayGuidance(
@@ -69,7 +69,7 @@ object RamadanMode {
         iftarSource = "Sunan Abi Dawud 2357 (graded hasan)"
     )
 
-    // The last ten nights — what to do each night
+    // The last ten nights, what to do each night
     data class NightFocus(val night: Int, val note: String)
 
     val lastTenFocus = listOf(
@@ -85,7 +85,7 @@ object RamadanMode {
         NightFocus(30, "The month closes. Thank Allah for reaching it.")
     )
 
-    // The dua Aisha asked about — narrated in Tirmidhi
+    // The dua Aisha asked about, narrated in Tirmidhi
     val laylatulQadrDua = Triple(
         "اللَّهُمَّ إِنَّكَ عَفُوٌّ تُحِبُّ الْعَفْوَ فَاعْفُ عَنِّي",
         "Allahumma innaka 'afuwwun tuhibbu-l-'afwa fa-'fu 'anni",

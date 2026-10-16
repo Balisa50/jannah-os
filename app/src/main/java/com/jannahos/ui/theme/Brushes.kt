@@ -10,7 +10,7 @@ object JannahBrushes {
         colors = listOf(Color(0xFFFFF4E6), JannahColors.Cream)
     )
 
-    // Orange gradient — for the one hero pill only.
+    // Orange gradient, for the one hero pill only.
     val orangeButton = Brush.verticalGradient(
         colors = listOf(Color(0xFFFF8033), JannahColors.Orange)
     )
@@ -18,7 +18,7 @@ object JannahBrushes {
     // Alias used by screens we haven't migrated yet.
     val goldButton = orangeButton
 
-    // Card edge — hairline at top, lighter at bottom.
+    // Card edge, hairline at top, lighter at bottom.
     val cardEdge = Brush.verticalGradient(
         colors = listOf(Color(0x0F000000), Color(0x00000000))
     )

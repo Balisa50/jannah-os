@@ -11,7 +11,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 
-// Warm cream card. No shadows — subtle border only. UniDash style.
+// Warm cream card. No shadows, subtle border only. UniDash style.
 @Composable
 fun GlassCard(
     modifier: Modifier = Modifier,

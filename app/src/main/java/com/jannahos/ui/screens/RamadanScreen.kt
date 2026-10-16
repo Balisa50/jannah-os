@@ -134,7 +134,7 @@ fun RamadanScreen(onBack: () -> Unit) {
                 style = JannahType.caption, color = JannahColors.Muted, lineHeight = 18.sp)
             Spacer(Modifier.height(JannahSpacing.s))
 
-            // Laylatul Qadr dua — the one to memorise
+            // Laylatul Qadr dua, the one to memorise
             Box(
                 Modifier
                     .fillMaxWidth()

@@ -77,7 +77,7 @@ class DiaryStore(context: Context) : SQLiteOpenHelper(
         return out
     }
 
-    // The most recent tag within 24 hours, if any — used by the dashboard.
+    // The most recent tag within 24 hours, if any, used by the dashboard.
     fun latestTagIn24h(): Entry? {
         val cutoff = System.currentTimeMillis() - 24L * 60 * 60 * 1000
         readableDatabase.rawQuery(

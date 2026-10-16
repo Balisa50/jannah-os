@@ -18,7 +18,7 @@ import androidx.compose.ui.graphics.graphicsLayer
 import kotlinx.coroutines.delay
 
 // A subtle fade-in-and-up entrance. Delay lets screens stagger their content.
-// No bouncing — the app is quiet.
+// No bouncing, the app is quiet.
 @Composable
 fun RevealIn(
     modifier: Modifier = Modifier,

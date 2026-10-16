@@ -40,7 +40,7 @@ object ComebackCheck {
         val prior = SalahTracker.prayersLastNDays(context, 7, 7)
         val totalEver = prior + recent
 
-        // Beginner or genuinely starting fresh — welcome, do not admonish.
+        // Beginner or genuinely starting fresh, welcome, do not admonish.
         if (totalEver == 0) {
             prefs.edit().putLong("last_shown", now).apply()
             return State(
@@ -49,14 +49,14 @@ object ComebackCheck {
                 recentPrayers = 0,
                 priorPrayers = 0,
                 headline = "You're back.",
-                body = "Let's start simple. One prayer today. Not five — one. Then the next one.",
+                body = "Let's start simple. One prayer today. Not five, one. Then the next one.",
                 verse = "\"And He it is who accepts repentance from His servants.\"",
                 verseSource = "Qur'an 42:25",
                 cta = "Open prayers"
             )
         }
 
-        // Admonish — direct, but not cruel.
+        // Admonish, direct, but not cruel.
         val headline = when {
             daysAway >= 14 -> "$daysAway days. That's not nothing."
             daysAway >= 7 -> "A week. Almost."
@@ -70,7 +70,7 @@ object ComebackCheck {
                 append("Not judging you. Just saying it out loud, because you wrote it down yourself.")
             } else if (recent == 0) {
                 append("No prayers marked in a week. The obligation didn't change. ")
-                append("You didn't change either — you're still the person who opened this.")
+                append("You didn't change either, you're still the person who opened this.")
             } else {
                 append("You've been off. The prayer is still fard. ")
                 append("I'm not going to lecture. But let's be honest.")

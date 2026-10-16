@@ -65,7 +65,7 @@ fun TasbeehScreen(onDone: () -> Unit) {
             if (count < STEPS[stepIndex].target) {
                 count++
                 if (count >= STEPS[stepIndex].target) {
-                    // Auto-advance after a short pause — just increment index
+                    // Auto-advance after a short pause, just increment index
                     // next tap will start the new step.
                 }
             }

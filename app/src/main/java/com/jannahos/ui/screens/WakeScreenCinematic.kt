@@ -140,7 +140,7 @@ fun WakeScreenCinematic(
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.Center
         ) {
-            // Crescent — slow breathing, soft orange
+            // Crescent, slow breathing, soft orange
             Box(
                 modifier = Modifier
                     .size(140.dp)
@@ -211,7 +211,7 @@ fun WakeScreenCinematic(
 
             Spacer(Modifier.height(JannahSpacing.xxl))
 
-            // Primary action — pulsing
+            // Primary action, pulsing
             Box(
                 Modifier
                     .fillMaxWidth()
@@ -245,7 +245,7 @@ fun WakeScreenCinematic(
 
             Spacer(Modifier.height(JannahSpacing.l))
 
-            // Secondary — softer, textual
+            // Secondary, softer, textual
             Column(
                 horizontalAlignment = Alignment.CenterHorizontally,
                 modifier = Modifier.graphicsLayer { alpha = buttonAlpha * 0.85f }

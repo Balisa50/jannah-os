@@ -23,7 +23,7 @@ object Evidence {
             id = "quran_2_186",
             arabic = "وَإِذَا سَأَلَكَ عِبَادِي عَنِّي فَإِنِّي قَرِيبٌ ۖ أُجِيبُ دَعْوَةَ الدَّاعِ إِذَا دَعَانِ",
             transliteration = "Wa idha sa'alaka 'ibadi 'anni fa-inni qarib, ujibu da'wata-d-da'i idha da'an",
-            english = "And when My servants ask you concerning Me — indeed I am near. I respond to the invocation of the supplicant when he calls upon Me.",
+            english = "And when My servants ask you concerning Me, indeed I am near. I respond to the invocation of the supplicant when he calls upon Me.",
             reference = "Qur'an 2:186",
             grade = "Qur'an"
         ),
@@ -61,7 +61,7 @@ object Evidence {
             english = "Our Lord, Blessed and Most High, descends every night to the lowest heaven when the last third of the night remains.",
             reference = "Sahih al-Bukhari 1145, Sahih Muslim 758",
             grade = "Sahih (authentic)",
-            caveat = "The descent is affirmed in the text. Scholars differ on the modality — how it occurs — but agree it is real. The app does not attempt to explain this."
+            caveat = "The descent is affirmed in the text. Scholars differ on the modality, how it occurs, but agree it is real. The app does not attempt to explain this."
         ),
         Source(
             id = "muslim_769_full",

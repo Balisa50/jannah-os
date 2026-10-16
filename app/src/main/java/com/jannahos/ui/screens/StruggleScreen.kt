@@ -91,7 +91,7 @@ fun StruggleScreen(onBack: () -> Unit) {
         Column(Modifier.padding(horizontal = JannahSpacing.gutter)) {
             Spacer(Modifier.height(JannahSpacing.l))
 
-            // Slip mercy message — after user reports a slip
+            // Slip mercy message, after user reports a slip
             if (slipMessage != null) {
                 Box(
                     Modifier

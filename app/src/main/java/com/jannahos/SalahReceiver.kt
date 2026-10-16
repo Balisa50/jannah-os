@@ -65,6 +65,10 @@ class SalahReceiver : BroadcastReceiver() {
             flags = flags or PendingIntent.FLAG_IMMUTABLE
         val contentPi = PendingIntent.getActivity(context, prayer.hashCode() + 1, launchIntent, flags)
 
+        if (PrayerLock.enabled(context)) {
+            PrayerLock.startSession(context, prayer)
+        }
+
         val label = SalahTracker.label(prayer)
         val builder = NotificationCompat.Builder(context, channelId)
             .setSmallIcon(android.R.drawable.ic_lock_idle_alarm)

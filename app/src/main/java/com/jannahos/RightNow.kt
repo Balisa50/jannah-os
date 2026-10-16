@@ -25,7 +25,7 @@ object RightNow {
         val ordered = listOf("fajr", "dhuhr", "asr", "maghrib", "isha")
 
         // Does the user actually act on any particular kind of nudge?
-        // If so, we elevate that one priority — but only within reason.
+        // If so, we elevate that one priority, but only within reason.
         // Prayer-related kinds are always permitted regardless.
         val log = InterventionLog(context)
         val best = log.bestKind()
@@ -61,7 +61,7 @@ object RightNow {
             )
         }
 
-        // Pre-dawn window — tahajjud opportunity
+        // Pre-dawn window, tahajjud opportunity
         if (hour in 2..5) {
             val inNight = TahajjudPlan.isOnTonight(context)
             return Suggestion(
@@ -76,7 +76,7 @@ object RightNow {
             )
         }
 
-        // Late evening — bed time
+        // Late evening, bed time
         if (hour in 22..23 || hour in 0..1) {
             val (bh, _) = BedtimeStore.get(context)
             if (hour >= bh || hour == 0 || hour == 1) {
@@ -90,7 +90,7 @@ object RightNow {
             }
         }
 
-        // Mid-morning — dhikr opportunity
+        // Mid-morning, dhikr opportunity
         if (hour in 9..11) {
             val istighfarToday = DhikrStore.countToday(context, "istighfar")
             if (istighfarToday < 10) {
@@ -104,7 +104,7 @@ object RightNow {
             }
         }
 
-        // Afternoon — Quran
+        // Afternoon, Quran
         if (hour in 14..16) {
             return Suggestion(
                 title = "A page of Quran",

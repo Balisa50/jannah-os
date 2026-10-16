@@ -11,7 +11,7 @@ object AdhanSettings {
     val options = listOf(
         Option("adhan_short", "Adhan tone"),
         Option("system", "System notification"),
-        Option("silent", "Silent — vibrate only")
+        Option("silent", "Silent, vibrate only")
     )
 
     fun current(context: Context): String =

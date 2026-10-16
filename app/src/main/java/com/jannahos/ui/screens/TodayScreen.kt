@@ -90,7 +90,7 @@ fun TodayScreen(onNavigate: (String) -> Unit = {}) {
 
     val userName = Settings.displayName(ctx)
 
-    // Right Now — one intelligent suggestion
+    // Right Now, one intelligent suggestion
     val prayerMs = prayerTimes.mapValues { it.value.time }
     val rightNow = remember(tick / 60) { RightNow.decide(ctx, prayerMs) }
 
@@ -210,7 +210,7 @@ fun TodayScreen(onNavigate: (String) -> Unit = {}) {
             Spacer(Modifier.height(4.dp))
             Row(verticalAlignment = Alignment.Bottom) {
                 Text(
-                    nextKey?.let { SalahTracker.label(it) } ?: "—",
+                    nextKey?.let { SalahTracker.label(it) } ?: ", ",
                     fontFamily = FontFamily.Serif,
                     fontSize = 26.sp,
                     fontWeight = FontWeight.Bold,

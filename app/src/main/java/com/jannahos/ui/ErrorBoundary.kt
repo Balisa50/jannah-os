@@ -32,7 +32,7 @@ import com.jannahos.ui.theme.JannahSpacing
 import com.jannahos.ui.theme.JannahType
 
 // Wraps any Composable. If it throws, shows a quiet fallback and lets the
-// user retry — the app never dies. Nothing is logged to a remote service.
+// user retry, the app never dies. Nothing is logged to a remote service.
 @Composable
 fun ErrorBoundary(
     screenName: String = "this screen",

@@ -50,7 +50,7 @@ fun SleepScreen(onBack: () -> Unit) {
     val nights = log.lastNights(7)
     val avgHours = log.averageHours(7)
 
-    // Default bed / wake times — 22:30 and 05:00 in minutes-from-midnight
+    // Default bed / wake times, 22:30 and 05:00 in minutes-from-midnight
     var bedHour by remember { mutableStateOf(today?.let { hourOf(it.bedtime) } ?: 22) }
     var bedMin by remember { mutableStateOf(today?.let { minOf(it.bedtime) } ?: 30) }
     var wakeHour by remember { mutableStateOf(today?.let { hourOf(it.waketime) } ?: 5) }

@@ -323,7 +323,7 @@ fun LettersScreen(onBack: () -> Unit) {
                             color = JannahColors.Ink)
                         Spacer(Modifier.height(JannahSpacing.s))
                         Text(
-                            "The person you are in 90 days is not the person you are today. Write to them. Say what you hope for, what you fear. When the day arrives, you will read it and recognise yourself — or realise how far you have come.",
+                            "The person you are in 90 days is not the person you are today. Write to them. Say what you hope for, what you fear. When the day arrives, you will read it and recognise yourself, or realise how far you have come.",
                             style = JannahType.bodySmall,
                             color = JannahColors.Body,
                             lineHeight = 20.sp

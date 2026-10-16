@@ -5,7 +5,7 @@ import java.time.chrono.HijrahDate
 import java.time.temporal.ChronoUnit
 
 // Computes upcoming Islamic dates from the Hijri calendar.
-// Dates can differ by a day depending on moon sighting — we flag this.
+// Dates can differ by a day depending on moon sighting, we flag this.
 object IslamicCalendar {
 
     data class Event(
@@ -18,12 +18,12 @@ object IslamicCalendar {
     )
 
     private val FIXED_EVENTS = listOf(
-        Triple(1, 1, "Muharram — new year"),
+        Triple(1, 1, "Muharram, new year"),
         Triple(1, 10, "Ashura (recommended fast)"),
         Triple(1, 9, "Tasu'a (day before Ashura)"),
-        Triple(3, 12, "Mawlid — scholarly differences exist"),
+        Triple(3, 12, "Mawlid, scholarly differences exist"),
         Triple(9, 1, "Ramadan begins"),
-        Triple(9, 27, "Laylat al-Qadr — most likely of the odd nights"),
+        Triple(9, 27, "Laylat al-Qadr, most likely of the odd nights"),
         Triple(10, 1, "Eid al-Fitr"),
         Triple(12, 9, "Day of Arafah (recommended fast)"),
         Triple(12, 10, "Eid al-Adha"),

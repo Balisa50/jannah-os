@@ -179,7 +179,7 @@ fun ZakatScreen(onBack: () -> Unit) {
             }
             Spacer(Modifier.height(JannahSpacing.xs))
             Text(
-                "Silver is lower, so it applies to more people — many scholars prefer it for that reason.",
+                "Silver is lower, so it applies to more people, many scholars prefer it for that reason.",
                 style = JannahType.caption, color = JannahColors.Muted, lineHeight = 16.sp
             )
 

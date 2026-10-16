@@ -57,8 +57,8 @@ fun FinanceScreen(onBack: () -> Unit) {
     var newNote by remember { mutableStateOf("") }
 
     val salary = month?.salary ?: 0.0
-    val floor = salary * 0.5      // 0.5x — essentials floor
-    val ceiling = salary * 1.5    // 1.5x — total spending ceiling
+    val floor = salary * 0.5      // 0.5x, essentials floor
+    val ceiling = salary * 1.5    // 1.5x, total spending ceiling
     val spentRatio = if (salary > 0) spent / salary else 0.0
 
     val statusColor = when {
@@ -101,7 +101,7 @@ fun FinanceScreen(onBack: () -> Unit) {
                         color = JannahColors.OnOrange)
                 }
                 Spacer(Modifier.height(4.dp))
-                Text("Between waste and stinginess — Qur'an 25:67",
+                Text("Between waste and stinginess, Qur'an 25:67",
                     style = JannahType.caption,
                     color = JannahColors.OnOrange.copy(alpha = 0.85f))
             }
@@ -164,7 +164,7 @@ fun FinanceScreen(onBack: () -> Unit) {
                 }
                 Spacer(Modifier.height(JannahSpacing.l))
             } else if (month != null) {
-                // Balance card — the heart of the module
+                // Balance card, the heart of the module
                 Box(
                     Modifier
                         .fillMaxWidth()
@@ -270,7 +270,7 @@ fun FinanceScreen(onBack: () -> Unit) {
                 )
                 Spacer(Modifier.height(JannahSpacing.s))
 
-                // Category grid — 3 per row
+                // Category grid, 3 per row
                 Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
                     FinanceStore.CATEGORIES.chunked(2).forEach { row ->
                         Row(

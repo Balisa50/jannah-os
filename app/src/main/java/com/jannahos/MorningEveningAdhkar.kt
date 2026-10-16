@@ -19,7 +19,7 @@ object MorningEveningAdhkar {
             id = "m_ayat_kursi",
             arabic = "اللَّهُ لَا إِلَٰهَ إِلَّا هُوَ الْحَيُّ الْقَيُّومُ ۚ لَا تَأْخُذُهُ سِنَةٌ وَلَا نَوْمٌ",
             transliteration = "Allahu la ilaha illa huwa-l-Hayyu-l-Qayyum...",
-            translation = "Allah — there is no deity except Him, the Ever-Living, the Sustainer of existence. (Ayat al-Kursi)",
+            translation = "Allah, there is no deity except Him, the Ever-Living, the Sustainer of existence. (Ayat al-Kursi)",
             source = "Qur'an 2:255. The Prophet ﷺ said whoever recites it in the morning is protected until evening.",
             count = 1
         ),
@@ -62,7 +62,7 @@ object MorningEveningAdhkar {
             id = "e_ayat_kursi",
             arabic = "اللَّهُ لَا إِلَٰهَ إِلَّا هُوَ الْحَيُّ الْقَيُّومُ",
             transliteration = "Allahu la ilaha illa huwa-l-Hayyu-l-Qayyum...",
-            translation = "Allah — there is no deity except Him, the Ever-Living, the Sustainer. (Ayat al-Kursi)",
+            translation = "Allah, there is no deity except Him, the Ever-Living, the Sustainer. (Ayat al-Kursi)",
             source = "Qur'an 2:255. Reciting it in the evening protects until morning.",
             count = 1
         ),

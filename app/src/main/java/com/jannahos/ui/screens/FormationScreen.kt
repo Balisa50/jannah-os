@@ -30,6 +30,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.jannahos.CareMode
 import com.jannahos.FrictionMap
+import com.jannahos.SafeStore
 import com.jannahos.InterventionLog
 import com.jannahos.TahajjudPlan
 import com.jannahos.WakeLog
@@ -43,10 +44,9 @@ import java.util.Locale
 @Composable
 fun FormationScreen(onBack: () -> Unit) {
     val ctx = LocalContext.current
-    val log = remember { WakeLog(ctx) }
-    val stats = remember { log.formationStats(30) }
-    val history = remember { log.lastNights(14) }
-    val insight = remember { FrictionMap.topInsight(ctx) }
+    val stats = remember { SafeStore.stats(ctx, 30) }
+    val history = remember { SafeStore.lastNights(ctx, 14) }
+    val insight = remember { SafeStore.frictionInsight(ctx) }
     val level = TahajjudPlan.level(ctx)
     val (prayedWeek, target) = TahajjudPlan.weekProgress(ctx)
     val dayFmt = SimpleDateFormat("EEE d MMM", Locale.getDefault())
@@ -76,7 +76,7 @@ fun FormationScreen(onBack: () -> Unit) {
                         color = JannahColors.OnOrange)
                 }
                 Spacer(Modifier.height(4.dp))
-                Text("Your honest record — nothing is uploaded.",
+                Text("Your honest record, nothing is uploaded.",
                     style = JannahType.caption,
                     color = JannahColors.OnOrange.copy(alpha = 0.85f))
             }
@@ -250,7 +250,7 @@ fun FormationScreen(onBack: () -> Unit) {
             }
 
             // What you actually act on
-            val statsList = remember { InterventionLog(ctx).stats(30).filter { it.shown >= 2 } }
+            val statsList = remember { SafeStore.interventionStats(ctx, 30).filter { it.shown >= 2 } }
             if (statsList.isNotEmpty()) {
                 Spacer(Modifier.height(JannahSpacing.l))
                 Text("WHAT MOVES YOU", style = JannahType.eyebrow, color = JannahColors.OrangeDeep)

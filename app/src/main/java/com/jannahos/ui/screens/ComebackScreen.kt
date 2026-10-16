@@ -84,7 +84,7 @@ fun ComebackScreen(state: ComebackCheck.State, onDismiss: () -> Unit) {
 
         Spacer(Modifier.height(JannahSpacing.l))
 
-        // The evidence — direct and specific
+        // The evidence, direct and specific
         if (state.recentPrayers + state.priorPrayers > 0) {
             Row(
                 Modifier.fillMaxWidth(),

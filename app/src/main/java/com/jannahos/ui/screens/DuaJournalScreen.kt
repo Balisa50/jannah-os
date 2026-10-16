@@ -279,7 +279,7 @@ fun DuaJournalScreen(onBack: () -> Unit) {
                 Spacer(Modifier.height(JannahSpacing.l))
             }
 
-            // List — answered first
+            // List, answered first
             if (duas.isNotEmpty()) {
                 Text("YOUR RECORD", style = JannahType.eyebrow, color = JannahColors.OrangeDeep)
                 Spacer(Modifier.height(JannahSpacing.s))

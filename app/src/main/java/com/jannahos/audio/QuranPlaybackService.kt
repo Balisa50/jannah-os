@@ -34,7 +34,7 @@ class QuranPlaybackService : Service() {
     override fun onCreate() {
         super.onCreate()
         // Absolutely first: register as foreground. Nothing else before this.
-        // If this fails, Android kills the process — so we log and stop cleanly.
+        // If this fails, Android kills the process, so we log and stop cleanly.
         try {
             ensureChannel()
             startForeground(NOTIF_ID, buildNotification())
@@ -150,7 +150,7 @@ class QuranPlaybackService : Service() {
     }
 
     private fun buildNotification(): Notification {
-        // Use a system icon — guaranteed valid on every device.
+        // Use a system icon, guaranteed valid on every device.
         val icon = android.R.drawable.ic_media_play
 
         val open = Intent(this, MainActivity::class.java)
@@ -219,7 +219,7 @@ class QuranPlaybackService : Service() {
                 else context.startService(i)
             } catch (t: Throwable) {
                 // Fallback: plain startService. On Android 8+ the service
-                // must still call startForeground() within 5s of onCreate —
+                // must still call startForeground() within 5s of onCreate , 
                 // which it does.
                 try { context.startService(i) } catch (_: Throwable) {}
             }

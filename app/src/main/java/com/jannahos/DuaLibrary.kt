@@ -153,7 +153,7 @@ object DuaLibrary {
         Dua(
             id = "forgive_1",
             moment = "Forgiveness",
-            title = "Sayyid al-Istighfar — the master of asking forgiveness",
+            title = "Sayyid al-Istighfar, the master of asking forgiveness",
             arabic = "اللَّهُمَّ أَنْتَ رَبِّي لَا إِلَٰهَ إِلَّا أَنْتَ، خَلَقْتَنِي وَأَنَا عَبْدُكَ، وَأَنَا عَلَى عَهْدِكَ وَوَعْدِكَ مَا اسْتَطَعْتُ، أَعُوذُ بِكَ مِنْ شَرِّ مَا صَنَعْتُ، أَبُوءُ لَكَ بِنِعْمَتِكَ عَلَيَّ، وَأَبُوءُ بِذَنْبِي فَاغْفِرْ لِي فَإِنَّهُ لَا يَغْفِرُ الذُّنُوبَ إِلَّا أَنْتَ",
             transliteration = "Allahumma anta Rabbi la ilaha illa anta, khalaqtani wa ana 'abduka, wa ana 'ala 'ahdika wa wa'dika ma-stata'tu. A'udhu bika min sharri ma sana'tu. Abu'u laka bi ni'matika 'alayya, wa abu'u bi dhanbi fa-ghfir li fa-innahu la yaghfiru-dh-dhunuba illa anta",
             translation = "O Allah, You are my Lord. There is no god but You. You created me and I am Your servant. I keep Your covenant and promise as much as I am able. I seek refuge in You from the evil I have done. I acknowledge Your favour upon me, and I acknowledge my sin. Forgive me, for none forgives sins but You.",

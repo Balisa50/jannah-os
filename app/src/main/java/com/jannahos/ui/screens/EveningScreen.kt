@@ -125,12 +125,12 @@ fun EveningScreen(onDismiss: () -> Unit) {
             StatTile(
                 Modifier.weight(1f),
                 "QURAN",
-                if (summary.quranRead) "opened" else "—"
+                if (summary.quranRead) "opened" else ", "
             )
             StatTile(
                 Modifier.weight(1f),
                 "GAVE",
-                if (summary.gifted) "yes" else "—"
+                if (summary.gifted) "yes" else ", "
             )
         }
 
@@ -159,7 +159,7 @@ fun EveningScreen(onDismiss: () -> Unit) {
 
         Spacer(Modifier.height(JannahSpacing.l))
 
-        // Closing — the compassionate line
+        // Closing, the compassionate line
         Box(
             Modifier
                 .fillMaxWidth()

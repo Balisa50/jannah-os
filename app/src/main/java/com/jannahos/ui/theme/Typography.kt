@@ -26,7 +26,7 @@ object JannahType {
         lineHeight = 34.sp
     )
 
-    // Italic serif — for emphasised words, matches UniDash's accent phrasing.
+    // Italic serif, for emphasised words, matches UniDash's accent phrasing.
     val titleItalic = TextStyle(
         fontFamily = FontFamily.Serif,
         fontSize = 28.sp,

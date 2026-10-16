@@ -119,7 +119,7 @@ class BedtimeActivity : ComponentActivity() {
             Text("Surah Al-Mulk before sleep", style = JannahType.primary, color = JannahColors.DayText)
             Spacer(Modifier.height(JannahSpacing.s))
             Text(
-                "\"Whoever recites Surah Al-Mulk before sleeping is protected from the punishment of the grave.\" (Jami' at-Tirmidhi 2891; graded hasan by some scholars, da'if by others — differences exist.)",
+                "\"Whoever recites Surah Al-Mulk before sleeping is protected from the punishment of the grave.\" (Jami' at-Tirmidhi 2891; graded hasan by some scholars, da'if by others, differences exist.)",
                 style = JannahType.tertiary,
                 color = JannahColors.DayMuted,
                 textAlign = TextAlign.Center,

@@ -29,8 +29,8 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.jannahos.FrictionMap
+import com.jannahos.SafeStore
 import com.jannahos.TahajjudPlan
-import com.jannahos.WakeLog
 import com.jannahos.ui.theme.JannahColors
 import com.jannahos.ui.theme.JannahSpacing
 import com.jannahos.ui.theme.JannahType
@@ -41,10 +41,9 @@ import java.util.Locale
 @Composable
 fun WeeklyReviewScreen(onBack: () -> Unit) {
     val ctx = LocalContext.current
-    val log = remember { WakeLog(ctx) }
-    val stats = remember { log.formationStats(7) }
-    val history = remember { log.lastNights(7) }
-    val insight = remember { FrictionMap.topInsight(ctx) }
+    val stats = remember { SafeStore.stats(ctx, 7) }
+    val history = remember { SafeStore.lastNights(ctx, 7) }
+    val insight = remember { SafeStore.frictionInsight(ctx) }
     val level = TahajjudPlan.level(ctx)
     val (prayedWeek, target) = TahajjudPlan.weekProgress(ctx)
     val dayFmt = SimpleDateFormat("EEE", Locale.getDefault())

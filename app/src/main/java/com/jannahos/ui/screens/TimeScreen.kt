@@ -52,7 +52,7 @@ fun TimeScreen(onBack: () -> Unit) {
     val nextKey = ordered.firstOrNull { (times[it]?.time ?: 0L) > now }
     val nextMs = nextKey?.let { times[it] }?.time
     val gapMin = if (nextMs != null) ((nextMs - now) / 60_000L).toInt() else 0
-    val nextLabel = nextKey?.let { com.jannahos.SalahTracker.label(it) } ?: "—"
+    val nextLabel = nextKey?.let { com.jannahos.SalahTracker.label(it) } ?: ", "
 
     Column(
         modifier = Modifier

@@ -89,6 +89,18 @@ object SafeStore {
     fun sadaqahTotals(context: Context): Map<String, Double> =
         read(emptyMap()) { Stores.sadaqah(context).totalByCurrency() }
 
+    fun interventionStats(context: Context, days: Int): List<InterventionLog.KindStat> =
+        read(emptyList()) { Stores.intervention(context).stats(days) }
+
+    fun frictionInsight(context: Context): FrictionMap.Insight? =
+        read(null) { FrictionMap.topInsight(context) }
+
+    fun frictionPrayed7(context: Context): Int =
+        read(0) { FrictionMap.prayedLast7Days(context) }
+
+    fun frictionMissed7(context: Context): Int =
+        read(0) { FrictionMap.missesLast7Days(context) }
+
     fun sadaqahCount30(context: Context): Int =
         read(0) { Stores.sadaqah(context).countLast30() }
 }

@@ -10,7 +10,7 @@ object Mercy {
             "Qur'an 39:53"
         ),
         Reminder(
-            "\"And when My servants ask you concerning Me — indeed I am near. I respond to the invocation of the supplicant when he calls upon Me.\"",
+            "\"And when My servants ask you concerning Me, indeed I am near. I respond to the invocation of the supplicant when he calls upon Me.\"",
             "Qur'an 2:186"
         ),
         Reminder(

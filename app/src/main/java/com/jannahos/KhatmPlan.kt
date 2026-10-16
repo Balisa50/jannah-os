@@ -3,7 +3,7 @@ package com.jannahos
 import android.content.Context
 
 // A reading plan to complete the entire Quran in 30, 60, or 90 days.
-// Progress stored per-day. Missed days accumulate but never punish — the
+// Progress stored per-day. Missed days accumulate but never punish, the
 // plan catches up by folding missed portions into the next reading.
 object KhatmPlan {
 

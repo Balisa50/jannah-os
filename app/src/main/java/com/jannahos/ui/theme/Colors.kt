@@ -4,7 +4,7 @@ import androidx.compose.ui.graphics.Color
 
 object JannahColors {
 
-    // Sand/cream canvas, deep warm ink — UniDash palette
+    // Sand/cream canvas, deep warm ink, UniDash palette
     val Cream     = Color(0xFFEFE6D6)
     val Card      = Color(0xFFF8F2E8)
     val Surface   = Color(0xFFFBF7EF)

@@ -10,7 +10,7 @@ import net.zetetic.database.sqlcipher.SQLiteOpenHelper
 // Private tracker for habits the user is trying to leave.
 // Labels are chosen from neutral codes (Habit A/B/C) or user-typed words
 // the user controls. Never shared. Never uploaded.
-// No streaks that shame — clean-day count is informational only.
+// No streaks that shame, clean-day count is informational only.
 class StruggleTracker(context: Context) : SQLiteOpenHelper(
     context, DB, DbKey.get(context),
     null as SQLiteDatabase.CursorFactory?,

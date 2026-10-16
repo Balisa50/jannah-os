@@ -125,7 +125,7 @@ fun PrayScreen() {
                 Spacer(Modifier.height(JannahSpacing.m))
             }
 
-            // Prayer list — name + time + status in one row
+            // Prayer list, name + time + status in one row
             Box(
                 Modifier
                     .fillMaxWidth()
@@ -150,7 +150,7 @@ fun PrayScreen() {
                                     fontWeight = FontWeight.Bold,
                                     color = JannahColors.Ink)
                                 Spacer(Modifier.height(2.dp))
-                                Text(t?.let { hhmm.format(it) } ?: "—",
+                                Text(t?.let { hhmm.format(it) } ?: ", ",
                                     style = JannahType.bodySmall,
                                     color = JannahColors.Muted)
                             }
@@ -179,7 +179,7 @@ fun PrayScreen() {
 
             Spacer(Modifier.height(JannahSpacing.m))
 
-            // Qibla — labelled card
+            // Qibla, labelled card
             Box(
                 Modifier
                     .fillMaxWidth()

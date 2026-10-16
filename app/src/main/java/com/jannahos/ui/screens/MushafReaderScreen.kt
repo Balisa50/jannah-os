@@ -105,7 +105,7 @@ fun MushafReaderScreen(
         val targetIndex = (idx + headerOffset).coerceAtLeast(0)
 
         // Only scroll when the playing ayah has drifted toward the bottom of the
-        // viewport. This keeps the motion rare and gentle — like a page turn.
+        // viewport. This keeps the motion rare and gentle, like a page turn.
         val layout = listState.layoutInfo
         val target = layout.visibleItemsInfo.firstOrNull { it.index == targetIndex }
         val viewportEnd = layout.viewportEndOffset
@@ -256,7 +256,7 @@ fun MushafReaderScreen(
                     Spacer(Modifier.height(JannahSpacing.l))
                 }
 
-                // Basmalah — separate header line
+                // Basmalah, separate header line
                 if (!isTawbah && !isFatihah) {
                     item {
                         Text(
@@ -272,7 +272,7 @@ fun MushafReaderScreen(
                     }
                 }
 
-                // Ayah list — flowing but scrollable
+                // Ayah list, flowing but scrollable
                 items(
                     count = ayahs.size,
                     key = { i -> ayahs[i].number }

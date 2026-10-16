@@ -54,7 +54,7 @@ object CompanionIndex {
                 ),
                 Verse(
                     "وَمَن يَتَوَكَّلْ عَلَى اللَّهِ فَهُوَ حَسْبُهُ",
-                    "And whoever relies upon Allah — then He is sufficient for him.",
+                    "And whoever relies upon Allah, then He is sufficient for him.",
                     "Qur'an 65:3"
                 )
             ),
@@ -117,7 +117,7 @@ object CompanionIndex {
             verses = listOf(
                 Verse(
                     "وَمَن يَتَّقِ اللَّهَ يَجْعَل لَّهُ مَخْرَجًا ۝ وَيَرْزُقْهُ مِنْ حَيْثُ لَا يَحْتَسِبُ",
-                    "And whoever fears Allah — He will make a way out for him, and provide for him from where he does not expect.",
+                    "And whoever fears Allah, He will make a way out for him, and provide for him from where he does not expect.",
                     "Qur'an 65:2-3"
                 ),
                 Verse(

@@ -17,7 +17,7 @@ object WordByWordApi {
         val grammar: String?
     )
 
-    // Cache in memory per surah. Not persisted — reloads on app restart.
+    // Cache in memory per surah. Not persisted, reloads on app restart.
     private val cache = mutableMapOf<Int, List<List<Word>>>()
 
     fun cached(surah: Int): List<List<Word>>? = cache[surah]

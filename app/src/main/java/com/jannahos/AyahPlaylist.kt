@@ -7,7 +7,7 @@ import android.util.Log
 
 // Continuous surah playback with gapless transitions.
 // Uses MediaPlayer.setNextMediaPlayer so the next ayah starts the moment
-// the current one ends — no silence between verses.
+// the current one ends, no silence between verses.
 class AyahPlaylist(private val context: Context) {
 
     interface Listener {
@@ -74,7 +74,7 @@ class AyahPlaylist(private val context: Context) {
     private fun chainNext(current: MediaPlayer, localAyah: Int) {
         val nextLocal = localAyah + 1
         if (nextLocal > lastAyah) {
-            // End of surah — fire finished when current completes.
+            // End of surah, fire finished when current completes.
             current.setOnCompletionListener {
                 playing = false
                 listener?.onSurahFinished(surah)

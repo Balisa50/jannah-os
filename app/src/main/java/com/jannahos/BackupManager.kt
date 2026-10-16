@@ -129,7 +129,7 @@ object BackupManager {
                 Reciters.all.firstOrNull { it.id == recId }?.let { Reciters.set(context, it) }
             }
 
-            // Wake events — recreate table then insert
+            // Wake events, recreate table then insert
             val wakeDb = WakeLog(context).writableDatabase
             wakeDb.delete("events", null, null)
             root.optJSONArray("wake_events")?.let { arr ->
@@ -146,7 +146,7 @@ object BackupManager {
                 }
             }
 
-            // Struggle — recreate
+            // Struggle, recreate
             val stDb = StruggleLog(context).writableDatabase
             stDb.delete("entries", null, null)
             root.optJSONArray("struggle")?.let { arr ->

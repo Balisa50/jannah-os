@@ -50,6 +50,6 @@ object CareMode {
         "You're carrying something. Nothing here is urgent."
 
     // In Care Mode, we cap the formation suggestion to one night/week
-    // and hide any "level up" prompt. Not a permanent change — just for the season.
+    // and hide any "level up" prompt. Not a permanent change, just for the season.
     const val CAVEAT = "This passes."
 }

@@ -1,7 +1,7 @@
 package com.jannahos
 
 // Every act here is verifiable from an authentic source. The reward is
-// described exactly as the source states it — no amplification, no invention.
+// described exactly as the source states it, no amplification, no invention.
 // The point is not points. The point is showing the user, honestly, that a
 // spare two minutes is not empty.
 object DeedsEngine {
