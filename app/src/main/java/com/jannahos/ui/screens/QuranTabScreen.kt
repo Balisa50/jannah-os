@@ -75,7 +75,7 @@ fun QuranTabScreen() {
         onOpenKhatm = { showKhatm = true },
         onOpenSearch = { showSearch = true }
     )
-    else MushafReaderScreen(surah = selected!!, onBack = { selected = null })
+    else MushafPageScreen(startSurah = selected!!, onBack = { selected = null })
 }
 
 @Composable

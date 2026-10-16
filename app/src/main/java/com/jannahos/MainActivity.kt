@@ -35,6 +35,10 @@ class MainActivity : ComponentActivity() {
                 var showCrash by remember { mutableStateOf(crash != null) }
 
                 Surface(modifier = Modifier.fillMaxSize(), color = MaterialTheme.colorScheme.background) {
+                    val needsQuran = remember {
+                        try { !com.jannahos.QuranStore.isDownloaded(this) } catch (t: Throwable) { false }
+                    }
+                    var setupDone by remember { mutableStateOf(!needsQuran) }
                     val lockActive = remember {
                         try { QuranReadingLock.shouldLock(this) } catch (t: Throwable) { false }
                     }
@@ -45,6 +49,9 @@ class MainActivity : ComponentActivity() {
                     when {
                         showCrash && crash != null -> {
                             CrashReportScreen(trace = crash, onDismiss = { showCrash = false })
+                        }
+                        onboarded && !setupDone -> {
+                            com.jannahos.ui.screens.OfflineSetupScreen(onReady = { setupDone = true })
                         }
                         onboarded && showLock -> {
                             com.jannahos.ui.screens.QuranLockScreen(onRelease = { showLock = false })
