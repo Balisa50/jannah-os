@@ -221,7 +221,7 @@ fun GraduationScreen(onBack: () -> Unit) {
                     .padding(JannahSpacing.l)
             ) {
                 Text(
-                    "This is not a judgment. Most Muslims take years to establish tahajjud. Return tomorrow, and the day after. The app will not pressure you. It will just witness.",
+                    "This is not a judgment. Most Muslims take years. Come back tomorrow.",
                     style = JannahType.bodySmall,
                     color = JannahColors.Body,
                     lineHeight = 20.sp

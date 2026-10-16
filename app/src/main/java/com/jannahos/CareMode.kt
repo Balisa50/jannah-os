@@ -47,9 +47,9 @@ object CareMode {
 
     // A message shown once per session on the Today screen when Care Mode is on.
     fun message(): Pair<String, String> = "A gentler day" to
-        "Something is weighing on you. Nothing here is urgent. Do what you can."
+        "You're carrying something. Nothing here is urgent."
 
     // In Care Mode, we cap the formation suggestion to one night/week
     // and hide any "level up" prompt. Not a permanent change — just for the season.
-    const val CAVEAT = "This passes. Nothing is lost."
+    const val CAVEAT = "This passes."
 }

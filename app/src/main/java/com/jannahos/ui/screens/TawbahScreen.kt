@@ -76,7 +76,7 @@ fun TawbahScreen(onBack: () -> Unit) {
                         color = JannahColors.Orange)
                 }
                 Spacer(Modifier.height(4.dp))
-                Text("No shame. No exposure. Just you and Him.",
+                Text("Between you and Him.",
                     style = JannahType.caption, color = JannahColors.Muted)
             }
         }

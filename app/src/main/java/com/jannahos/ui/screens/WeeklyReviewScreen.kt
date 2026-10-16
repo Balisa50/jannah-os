@@ -99,7 +99,7 @@ fun WeeklyReviewScreen(onBack: () -> Unit) {
                         color = JannahColors.OnOrange)
                 }
                 Spacer(Modifier.height(4.dp))
-                Text("Not a score. A mirror.",
+                Text("The week in numbers.",
                     style = JannahType.caption,
                     color = JannahColors.OnOrange.copy(alpha = 0.85f))
             }

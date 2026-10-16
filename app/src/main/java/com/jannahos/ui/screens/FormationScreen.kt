@@ -287,7 +287,7 @@ fun FormationScreen(onBack: () -> Unit) {
                         }
                         Spacer(Modifier.height(JannahSpacing.s))
                         Text(
-                            "No points. No streaks. Just what works for you.",
+                            "What actually works for you.",
                             style = JannahType.micro, color = JannahColors.Faint,
                             lineHeight = 14.sp
                         )

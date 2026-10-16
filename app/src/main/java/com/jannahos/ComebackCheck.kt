@@ -73,7 +73,7 @@ object ComebackCheck {
                 append("You didn't change either — you're still the person who opened this.")
             } else {
                 append("You've been off. The prayer is still fard. ")
-                append("Nothing here is going to lecture. Just don't pretend it's fine.")
+                append("I'm not going to lecture. But let's be honest.")
             }
         }
 

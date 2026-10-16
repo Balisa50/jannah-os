@@ -91,7 +91,7 @@ fun EveningScreen(onDismiss: () -> Unit) {
 
         Spacer(Modifier.height(JannahSpacing.s))
 
-        Text("Not a score. A witness.",
+        Text("Before you sleep.",
             fontFamily = FontFamily.Serif,
             fontStyle = FontStyle.Italic,
             fontSize = 16.sp,

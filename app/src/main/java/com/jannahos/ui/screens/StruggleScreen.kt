@@ -82,7 +82,7 @@ fun StruggleScreen(onBack: () -> Unit) {
                         color = JannahColors.OnOrange)
                 }
                 Spacer(Modifier.height(4.dp))
-                Text("Nothing here leaves the phone. No streaks that shame.",
+                Text("Stays on your phone.",
                     style = JannahType.caption,
                     color = JannahColors.OnOrange.copy(alpha = 0.85f))
             }

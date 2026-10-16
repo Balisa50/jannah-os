@@ -125,7 +125,7 @@ fun CharacterScreen(onBack: () -> Unit) {
             Text("CHARACTER CHECK · $done of $total",
                 style = JannahType.eyebrow, color = JannahColors.OrangeDeep)
             Spacer(Modifier.height(JannahSpacing.xs))
-            Text("One tap per trait, kept privately. Not a score.",
+            Text("One tap per trait. Kept on your phone.",
                 style = JannahType.caption, color = JannahColors.Muted)
             Spacer(Modifier.height(JannahSpacing.m))
 

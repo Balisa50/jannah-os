@@ -89,8 +89,7 @@ fun MorningReflectionScreen(onDismiss: () -> Unit) {
         Spacer(Modifier.height(JannahSpacing.l))
 
         if (!saved) {
-            Text("You prayed tahajjud last night. This is your private record — " +
-                "not a score, not a streak.",
+            Text("You prayed tahajjud last night.",
                 style = JannahType.bodySmall, color = JannahColors.Muted, lineHeight = 20.sp)
 
             Spacer(Modifier.height(JannahSpacing.l))
