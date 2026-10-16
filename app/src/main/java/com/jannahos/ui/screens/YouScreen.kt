@@ -65,6 +65,7 @@ fun YouScreen() {
     val showAdhkar = remember { mutableStateOf(false) }
     val showSadaqah = remember { mutableStateOf(false) }
     val showFinance = remember { mutableStateOf(false) }
+    val showTime = remember { mutableStateOf(false) }
     var showMore by remember { mutableStateOf(false) }
 
     // Route the modals
@@ -84,6 +85,7 @@ fun YouScreen() {
     if (showAdhkar.value) { AdhkarScreen(onBack = { showAdhkar.value = false }); return }
     if (showSadaqah.value) { SadaqahScreen(onBack = { showSadaqah.value = false }); return }
     if (showFinance.value) { FinanceScreen(onBack = { showFinance.value = false }); return }
+    if (showTime.value) { TimeScreen(onBack = { showTime.value = false }); return }
 
     val name = Settings.displayName(ctx)
     val level = TahajjudPlan.level(ctx)
@@ -169,6 +171,16 @@ fun YouScreen() {
                     onClick = { showDiary.value = true }
                 )
             }
+
+            Spacer(Modifier.height(JannahSpacing.s))
+
+            // Your Time — the deeds engine
+            SmallTile(
+                modifier = Modifier.fillMaxWidth(),
+                eyebrow = "EVERY MINUTE COUNTS",
+                title = "What can I do right now?",
+                onClick = { showTime.value = true }
+            )
 
             Spacer(Modifier.height(JannahSpacing.s))
 
