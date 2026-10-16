@@ -68,6 +68,7 @@ fun YouScreen() {
     val showTime = remember { mutableStateOf(false) }
     val showLetters = remember { mutableStateOf(false) }
     val showDuaJournal = remember { mutableStateOf(false) }
+    val showGraduation = remember { mutableStateOf(false) }
     var showMore by remember { mutableStateOf(false) }
 
     // Route the modals
@@ -90,10 +91,13 @@ fun YouScreen() {
     if (showTime.value) { TimeScreen(onBack = { showTime.value = false }); return }
     if (showLetters.value) { LettersScreen(onBack = { showLetters.value = false }); return }
     if (showDuaJournal.value) { DuaJournalScreen(onBack = { showDuaJournal.value = false }); return }
+    if (showGraduation.value) { GraduationScreen(onBack = { showGraduation.value = false }); return }
     if (showLetters.value) { LettersScreen(onBack = { showLetters.value = false }); return }
     if (showDuaJournal.value) { DuaJournalScreen(onBack = { showDuaJournal.value = false }); return }
+    if (showGraduation.value) { GraduationScreen(onBack = { showGraduation.value = false }); return }
     if (showLetters.value) { LettersScreen(onBack = { showLetters.value = false }); return }
     if (showDuaJournal.value) { DuaJournalScreen(onBack = { showDuaJournal.value = false }); return }
+    if (showGraduation.value) { GraduationScreen(onBack = { showGraduation.value = false }); return }
 
     val name = Settings.displayName(ctx)
     val level = TahajjudPlan.level(ctx)
@@ -335,6 +339,8 @@ fun YouScreen() {
                         ListRow("Sleep log") { showSleep.value = true }
                         Divider()
                         ListRow("Finance — the middle path") { showFinance.value = true }
+                        Divider()
+                        ListRow("Graduation") { showGraduation.value = true }
                     }
                 }
             }
