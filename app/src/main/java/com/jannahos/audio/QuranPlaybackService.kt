@@ -28,8 +28,9 @@ class QuranPlaybackService : Service() {
 
     override fun onCreate() {
         super.onCreate()
-        createChannel()
-        playlist = AyahPlaylist(this).apply {
+        try {
+            createChannel()
+            playlist = AyahPlaylist(this).apply {
             setListener(object : AyahPlaylist.Listener {
                 override fun onAyahStarted(surah: Int, ayah: Int) {
                     currentSurah = surah
@@ -44,11 +45,42 @@ class QuranPlaybackService : Service() {
                     PlaybackBus.stopped()
                     stopPlaybackAndSelf()
                 }
-            })
+                })
+            }
+        } catch (t: Throwable) {
+            logCrash(t)
+            stopSelf()
         }
     }
 
+    private fun logCrash(t: Throwable) {
+        try {
+            val sw = java.io.StringWriter()
+            t.printStackTrace(java.io.PrintWriter(sw))
+            val stamp = java.text.SimpleDateFormat("yyyy-MM-dd_HH-mm-ss", java.util.Locale.US)
+                .format(java.util.Date())
+            val dir = java.io.File(
+                android.os.Environment.getExternalStoragePublicDirectory(
+                    android.os.Environment.DIRECTORY_DOWNLOADS
+                ),
+                "jannah_crashes"
+            )
+            if (!dir.exists()) dir.mkdirs()
+            java.io.File(dir, "service_crash_$stamp.txt").writeText(sw.toString())
+        } catch (_: Throwable) {}
+    }
+
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
+        try {
+            return handleStart(intent, startId)
+        } catch (t: Throwable) {
+            logCrash(t)
+            stopSelf()
+            return START_NOT_STICKY
+        }
+    }
+
+    private fun handleStart(intent: Intent?, startId: Int): Int {
         when (intent?.action) {
             ACTION_STOP -> { stopPlaybackAndSelf(); return START_NOT_STICKY }
             ACTION_PLAY -> {
