@@ -57,6 +57,7 @@ fun YouScreen() {
     val showZakat = remember { mutableStateOf(false) }
     val showHifdh = remember { mutableStateOf(false) }
     val showCharacter = remember { mutableStateOf(false) }
+    val showSunnah = remember { mutableStateOf(false) }
 
     if (showFormation.value) {
         FormationScreen(onBack = { showFormation.value = false })
@@ -100,6 +101,14 @@ fun YouScreen() {
     }
     if (showCharacter.value) {
         CharacterScreen(onBack = { showCharacter.value = false })
+        return
+    }
+    if (showSunnah.value) {
+        SunnahScreen(onBack = { showSunnah.value = false })
+        return
+    }
+    if (showSunnah.value) {
+        SunnahScreen(onBack = { showSunnah.value = false })
         return
     }
 
@@ -233,6 +242,10 @@ fun YouScreen() {
                     ListRow("Hifdh — memorize Quran") { showHifdh.value = true }
                     Box(Modifier.fillMaxWidth().height(1.dp).background(JannahColors.Divider))
                     ListRow("Character & daily hadith") { showCharacter.value = true }
+                    Box(Modifier.fillMaxWidth().height(1.dp).background(JannahColors.Divider))
+                    ListRow("Sunnah prayers") { showSunnah.value = true }
+                    Box(Modifier.fillMaxWidth().height(1.dp).background(JannahColors.Divider))
+                    ListRow("Sunnah prayers") { showSunnah.value = true }
                     Box(Modifier.fillMaxWidth().height(1.dp).background(JannahColors.Divider))
                     ListRow("Tonight's plan") { ctx.startActivity(Intent(ctx, BedtimeActivity::class.java)) }
                     Box(Modifier.fillMaxWidth().height(1.dp).background(JannahColors.Divider))
