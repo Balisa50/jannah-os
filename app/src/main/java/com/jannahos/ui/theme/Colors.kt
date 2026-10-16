@@ -4,32 +4,31 @@ import androidx.compose.ui.graphics.Color
 
 object JannahColors {
 
-    // Canvas — warm cream, NOT white. This is the single most important value.
-    val Cream      = Color(0xFFF7F4EF)
-    val Card       = Color(0xFFFFFDFC)   // warm white, sits on cream
-    val Surface    = Color(0xFFFFFFFF)   // pure white, used sparingly
-    val SurfaceAlt = Color(0xFFFDF8F0)
+    // Sand/cream canvas, deep warm ink — UniDash palette
+    val Cream     = Color(0xFFEFE6D6)
+    val Card      = Color(0xFFF8F2E8)
+    val Surface   = Color(0xFFFBF7EF)
+    val SurfaceAlt = Color(0xFFF2E8D6)
 
-    // Accent
-    val Orange     = Color(0xFFF97316)
-    val OrangeSoft = Color(0xFFFFE9D1)
-    val OrangeDeep = Color(0xFFB45309)
+    // Burnt orange accent (UniDash)
+    val Orange     = Color(0xFFD9481F)
+    val OrangeSoft = Color(0xFFF4D9C8)
+    val OrangeDeep = Color(0xFFA63414)
 
-    // Ink — warm near-black, not cold navy
-    val Ink    = Color(0xFF141414)   // headings
-    val Body   = Color(0xFF262626)   // body
-    val Muted  = Color(0xFF7A7A7A)   // secondary
-    val Faint  = Color(0xFFA0A0A0)
+    // Warm deep brown ink (not cold navy)
+    val Ink    = Color(0xFF2B1410)
+    val Body   = Color(0xFF3D2A20)
+    val Muted  = Color(0xFF7A6656)
+    val Faint  = Color(0xFFA89885)
 
-    // Hairlines
-    val Border  = Color(0xFFE5DED6)  // warm greige
-    val Divider = Color(0xFFEDE8E0)
+    val Border  = Color(0xFFDDD0BA)
+    val Divider = Color(0xFFE6DBC5)
 
-    val Success = Color(0xFF1F7A5A)
-    val Danger  = Color(0xFFB85454)
-    val OnOrange = Color(0xFFFFFFFF)
+    val Success = Color(0xFF3E6B47)
+    val Danger  = Color(0xFFA83A2E)
+    val OnOrange = Color(0xFFFBF7EF)
 
-    // Aliases for unmigrated screens
+    // Legacy aliases
     val Void = Cream; val Deep = Cream; val Elevated = Card
     val Ivory = Ink; val Gold = Orange; val GoldDeep = OrangeDeep; val GoldInk = OnOrange
     val Emerald = Success; val Crimson = Danger; val Accent = Orange; val AccentInk = OnOrange

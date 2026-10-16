@@ -108,6 +108,35 @@ class WakeLog(context: Context) : SQLiteOpenHelper(
         return 0
     }
 
+    data class FormationStats(
+        val verified: Int,
+        val claimed: Int,
+        val missed: Int,
+        val total: Int,
+        val verificationRate: Float
+    )
+
+    fun formationStats(days: Int = 30): FormationStats {
+        val cutoff = System.currentTimeMillis() - days.toLong() * 24 * 60 * 60 * 1000
+        var verified = 0
+        var claimed = 0
+        var missed = 0
+        readableDatabase.rawQuery(
+            "SELECT outcome, verified FROM events WHERE ts > ?",
+            arrayOf(cutoff.toString())
+        ).use { c ->
+            while (c.moveToNext()) {
+                when (c.getString(0)) {
+                    "prayed" -> if (c.getInt(1) == 1) verified++ else claimed++
+                    "missed" -> missed++
+                }
+            }
+        }
+        val total = verified + claimed + missed
+        val rate = if (verified + claimed > 0) verified.toFloat() / (verified + claimed).toFloat() else 0f
+        return FormationStats(verified, claimed, missed, total, rate)
+    }
+
     companion object {
         private const val DB = "jannah_v3_enc.db"
 
