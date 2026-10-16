@@ -38,6 +38,9 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.runtime.collectAsState
+import com.jannahos.audio.PlaybackBus
+import com.jannahos.audio.QuranPlaybackService
 import com.jannahos.AyahPlaylist
 import com.jannahos.QuranApi
 import com.jannahos.QuranBookmarkStore
@@ -81,26 +84,21 @@ fun MushafReaderScreen(
     var playingAyah by remember { mutableStateOf(0) }
 
     val listState = rememberLazyListState()
-    val player = remember { AyahPlaylist(ctx) }
 
-    DisposableEffect(Unit) {
-        player.setListener(object : AyahPlaylist.Listener {
-            override fun onAyahStarted(s: Int, a: Int) {
-                playingAyah = a
-                // Auto-scroll to center the ayah in view.
-                val idx = ayahs.indexOfFirst { it.number == a }
-                if (idx >= 0) {
-                    scope.launch {
-                        // header offset is +1 for ornamental surah header +1 for basmalah if present
-                        val headerOffset = if (surah != 1 && surah != 9) 2 else 1
-                        val target = (idx + headerOffset).coerceAtLeast(0)
-                        listState.animateScrollToItem(target, scrollOffset = -300)
-                    }
-                }
-            }
-            override fun onSurahFinished(s: Int) { playingAyah = 0 }
-        })
-        onDispose { player.stop() }
+    val playback by PlaybackBus.state.collectAsState()
+
+    LaunchedEffect(playback.surah, playback.ayah, playback.playing) {
+        if (!playback.playing || playback.surah != surah) {
+            if (!playback.playing) playingAyah = 0
+            return@LaunchedEffect
+        }
+        playingAyah = playback.ayah
+        val idx = ayahs.indexOfFirst { it.number == playback.ayah }
+        if (idx >= 0) {
+            val headerOffset = if (surah != 1 && surah != 9) 2 else 1
+            val target = (idx + headerOffset).coerceAtLeast(0)
+            listState.animateScrollToItem(target, scrollOffset = -300)
+        }
     }
 
     // Persist last read ayah as user scrolls.
@@ -339,7 +337,7 @@ fun MushafReaderScreen(
                         horizontalArrangement = Arrangement.spacedBy(JannahSpacing.s)
                     ) {
                         ActionChip(Modifier.weight(1f), "▶ Play from here") {
-                            player.playSurah(surah, a.number, ayahs.lastOrNull()?.number ?: a.number, ayahs)
+                            QuranPlaybackService.play(ctx, surah, a.number, ayahs.lastOrNull()?.number ?: a.number)
                             selectedAyah = null
                         }
                         ActionChip(
@@ -366,10 +364,10 @@ fun MushafReaderScreen(
                             if (playingAyah != 0) "■ Stop" else "Play surah"
                         ) {
                             if (playingAyah != 0) {
-                                player.stop()
+                                QuranPlaybackService.stop(ctx)
                                 playingAyah = 0
                             } else {
-                                player.playSurah(surah, ayahs.first().number, ayahs.last().number, ayahs)
+                                QuranPlaybackService.play(ctx, surah, ayahs.first().number, ayahs.last().number)
                             }
                             selectedAyah = null
                         }
