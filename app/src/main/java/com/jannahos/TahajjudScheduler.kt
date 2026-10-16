@@ -31,6 +31,23 @@ object TahajjudScheduler {
             .edit().putLong(KEY_NEXT, at.time).apply()
     }
 
+    fun scheduleBackup(context: Context, minutesFromNow: Int) {
+        val at = Date(System.currentTimeMillis() + minutesFromNow * 60L * 1000L)
+        val am = context.getSystemService(Context.ALARM_SERVICE) as AlarmManager
+        val intent = Intent(context, TahajjudAlarmReceiver::class.java)
+        var flags = PendingIntent.FLAG_UPDATE_CURRENT
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M)
+            flags = flags or PendingIntent.FLAG_IMMUTABLE
+        val pi = PendingIntent.getBroadcast(context, 4299, intent, flags)
+        val canExact = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S)
+            am.canScheduleExactAlarms() else true
+        if (canExact) {
+            am.setExactAndAllowWhileIdle(AlarmManager.RTC_WAKEUP, at.time, pi)
+        } else {
+            am.setAndAllowWhileIdle(AlarmManager.RTC_WAKEUP, at.time, pi)
+        }
+    }
+
     fun cancel(context: Context) {
         val am = context.getSystemService(Context.ALARM_SERVICE) as AlarmManager
         am.cancel(pendingIntent(context))

@@ -78,6 +78,10 @@ class TahajjudAlarmActivity : ComponentActivity() {
         when (step) {
             0 -> WakeScreen(
                 onAwake = { step = 1 },
+                onSnooze = {
+                    TahajjudScheduler.scheduleBackup(this@TahajjudAlarmActivity, 15)
+                    onDone()
+                },
                 onNotNow = {
                     log.record("missed", "not_now")
                     onDone()
@@ -138,7 +142,7 @@ class TahajjudAlarmActivity : ComponentActivity() {
     }
 
     @Composable
-    private fun WakeScreen(onAwake: () -> Unit, onNotNow: () -> Unit) {
+    private fun WakeScreen(onAwake: () -> Unit, onSnooze: () -> Unit, onNotNow: () -> Unit) {
         Column(
             modifier = Modifier
                 .fillMaxSize()
@@ -160,7 +164,11 @@ class TahajjudAlarmActivity : ComponentActivity() {
                     contentColor = JannahColors.AccentInk
                 )
             ) { Text("I am awake", style = JannahType.button) }
-            Spacer(Modifier.height(JannahSpacing.l))
+            Spacer(Modifier.height(JannahSpacing.s))
+            TextButton(onClick = onSnooze) {
+                Text("Remind me in 15 minutes", style = JannahType.secondary, color = JannahColors.Accent)
+            }
+            Spacer(Modifier.height(JannahSpacing.xs))
             TextButton(onClick = onNotNow) {
                 Text("Not now", style = JannahType.secondary, color = JannahColors.NightMuted)
             }

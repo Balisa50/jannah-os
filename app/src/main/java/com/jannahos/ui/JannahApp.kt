@@ -68,7 +68,7 @@ fun JannahApp() {
                     navController = nav,
                     startDestination = "today"
                 ) {
-                    composable("today") { TodayScreen() }
+                    composable("today") { TodayScreen(onNavigate = { route -> nav.navigate(route) { launchSingleTop = true } }) }
                     composable("pray")  { PrayScreen() }
                     composable("quran") { QuranTabScreen() }
                     composable("dhikr") { DhikrScreen() }

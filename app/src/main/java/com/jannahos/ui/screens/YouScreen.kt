@@ -15,23 +15,27 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material3.Button
-import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import com.jannahos.BedtimeActivity
 import com.jannahos.PlannerActivity
 import com.jannahos.SettingsActivity
 import com.jannahos.TahajjudPlan
 import com.jannahos.UrgeActivity
+import com.jannahos.ui.theme.GlassCard
+import com.jannahos.ui.theme.JannahBrushes
 import com.jannahos.ui.theme.JannahColors
 import com.jannahos.ui.theme.JannahSpacing
 import com.jannahos.ui.theme.JannahType
@@ -39,8 +43,8 @@ import com.jannahos.ui.theme.JannahType
 @Composable
 fun YouScreen() {
     val ctx = LocalContext.current
-    val refresh = remember { mutableStateOf(0) }
-    val ignore = refresh.value
+    var refresh by remember { mutableStateOf(0) }
+    val ignore = refresh
 
     val level = TahajjudPlan.level(ctx)
     val (prayedWeek, target) = TahajjudPlan.weekProgress(ctx)
@@ -49,35 +53,35 @@ fun YouScreen() {
         modifier = Modifier
             .fillMaxSize()
             .verticalScroll(rememberScrollState())
-            .padding(horizontal = JannahSpacing.m),
+            .padding(horizontal = JannahSpacing.gutter),
     ) {
         Spacer(Modifier.height(JannahSpacing.l))
 
-        Text("You", style = JannahType.screenTitle, color = JannahColors.DayText)
+        Text("You", style = JannahType.title, color = JannahColors.Ivory)
         Spacer(Modifier.height(JannahSpacing.xs))
-        Text("Your formation and settings.", style = JannahType.secondary, color = JannahColors.DayMuted)
+        Text("Formation, tools, settings",
+            style = JannahType.caption, color = JannahColors.Muted)
 
-        Spacer(Modifier.height(JannahSpacing.m))
+        Spacer(Modifier.height(JannahSpacing.l))
 
-        // Formation card with level chooser
-        Box(
-            Modifier.fillMaxWidth().clip(RoundedCornerShape(16.dp)).background(JannahColors.DaySurface)
-        ) {
+        // Formation card — emphasised
+        GlassCard {
             Column(Modifier.padding(JannahSpacing.m)) {
-                Text("Formation", style = JannahType.section, color = JannahColors.DayMuted)
+                Text("FORMATION", style = JannahType.eyebrow, color = JannahColors.Muted)
                 Spacer(Modifier.height(JannahSpacing.s))
                 Text(
                     when (level) {
-                        1 -> "Level 1 · One night a week"
-                        2 -> "Level 2 · Two nights a week"
-                        3 -> "Level 3 · Three nights a week"
-                        else -> "Level 4 · Every night"
+                        1 -> "One night a week"
+                        2 -> "Two nights a week"
+                        3 -> "Three nights a week"
+                        else -> "Every night"
                     },
-                    style = JannahType.primary, color = JannahColors.DayText
+                    style = JannahType.body, color = JannahColors.Ivory,
+                    fontSize = 20.sp, fontWeight = FontWeight.Medium
                 )
                 Spacer(Modifier.height(JannahSpacing.xs))
                 Text("$prayedWeek of $target this week",
-                    style = JannahType.secondary, color = JannahColors.DayMuted)
+                    style = JannahType.caption, color = JannahColors.Muted)
 
                 Spacer(Modifier.height(JannahSpacing.m))
 
@@ -86,52 +90,67 @@ fun YouScreen() {
                     horizontalArrangement = Arrangement.spacedBy(JannahSpacing.xs)
                 ) {
                     listOf(1, 2, 3, 7).forEach { lvl ->
-                        Button(
-                            onClick = {
-                                TahajjudPlan.setLevel(ctx, lvl)
-                                refresh.value = refresh.value + 1
-                            },
-                            modifier = Modifier.weight(1f),
-                            colors = ButtonDefaults.buttonColors(
-                                containerColor = if (level == lvl) JannahColors.Accent else JannahColors.DayBg,
-                                contentColor = if (level == lvl) JannahColors.AccentInk else JannahColors.DayText
+                        val selected = level == lvl
+                        Box(
+                            modifier = Modifier
+                                .weight(1f)
+                                .height(44.dp)
+                                .clip(RoundedCornerShape(12.dp))
+                                .background(
+                                    if (selected) JannahColors.Gold
+                                    else JannahColors.Deep
+                                )
+                                .clickable {
+                                    TahajjudPlan.setLevel(ctx, lvl)
+                                    refresh = refresh + 1
+                                },
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Text(
+                                lvl.toString(),
+                                style = JannahType.body,
+                                color = if (selected) JannahColors.GoldInk else JannahColors.Body,
+                                fontWeight = if (selected) FontWeight.SemiBold else FontWeight.Normal
                             )
-                        ) { Text("$lvl", style = JannahType.secondary) }
+                        }
                     }
                 }
                 Spacer(Modifier.height(JannahSpacing.xs))
-                Text("Nights per week", style = JannahType.tertiary, color = JannahColors.DayMuted)
-            }
-        }
-
-        Spacer(Modifier.height(JannahSpacing.m))
-
-        // Tools card — list items, not buttons
-        Box(
-            Modifier.fillMaxWidth().clip(RoundedCornerShape(16.dp)).background(JannahColors.DaySurface)
-        ) {
-            Column(Modifier.padding(vertical = JannahSpacing.s)) {
-                Text("Tools", style = JannahType.section, color = JannahColors.DayMuted,
-                    modifier = Modifier.padding(horizontal = JannahSpacing.m, vertical = JannahSpacing.xs))
-                ListRow("Tonight's plan") { ctx.startActivity(Intent(ctx, BedtimeActivity::class.java)) }
-                ListRow("Planner") { ctx.startActivity(Intent(ctx, PlannerActivity::class.java)) }
-                ListRow("Urge support") { ctx.startActivity(Intent(ctx, UrgeActivity::class.java)) }
-            }
-        }
-
-        Spacer(Modifier.height(JannahSpacing.m))
-
-        Box(
-            Modifier.fillMaxWidth().clip(RoundedCornerShape(16.dp)).background(JannahColors.DaySurface)
-        ) {
-            Column(Modifier.padding(vertical = JannahSpacing.s)) {
-                Text("Settings", style = JannahType.section, color = JannahColors.DayMuted,
-                    modifier = Modifier.padding(horizontal = JannahSpacing.m, vertical = JannahSpacing.xs))
-                ListRow("Location & calculation") { ctx.startActivity(Intent(ctx, SettingsActivity::class.java)) }
+                Text("Nights per week",
+                    style = JannahType.caption, color = JannahColors.Faint)
             }
         }
 
         Spacer(Modifier.height(JannahSpacing.l))
+
+        // Tools
+        Text("TOOLS", style = JannahType.eyebrow, color = JannahColors.Muted,
+            modifier = Modifier.padding(horizontal = JannahSpacing.xs))
+        Spacer(Modifier.height(JannahSpacing.s))
+
+        GlassCard {
+            Column(Modifier.padding(vertical = JannahSpacing.xs)) {
+                ListRow("Tonight's plan") { ctx.startActivity(Intent(ctx, BedtimeActivity::class.java)) }
+                ListRow("Planner")         { ctx.startActivity(Intent(ctx, PlannerActivity::class.java)) }
+                ListRow("Urge support")    { ctx.startActivity(Intent(ctx, UrgeActivity::class.java)) }
+            }
+        }
+
+        Spacer(Modifier.height(JannahSpacing.l))
+
+        Text("SETTINGS", style = JannahType.eyebrow, color = JannahColors.Muted,
+            modifier = Modifier.padding(horizontal = JannahSpacing.xs))
+        Spacer(Modifier.height(JannahSpacing.s))
+
+        GlassCard {
+            Column(Modifier.padding(vertical = JannahSpacing.xs)) {
+                ListRow("Location & calculation") {
+                    ctx.startActivity(Intent(ctx, SettingsActivity::class.java))
+                }
+            }
+        }
+
+        Spacer(Modifier.height(JannahSpacing.xl))
     }
 }
 
@@ -141,11 +160,11 @@ private fun ListRow(label: String, onClick: () -> Unit) {
         modifier = Modifier
             .fillMaxWidth()
             .clickable(onClick = onClick)
-            .padding(horizontal = JannahSpacing.m, vertical = 14.dp),
+            .padding(horizontal = JannahSpacing.m, vertical = 16.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {
-        Text(label, style = JannahType.primary, color = JannahColors.DayText,
+        Text(label, style = JannahType.body, color = JannahColors.Ivory,
             modifier = Modifier.weight(1f))
-        Text("→", style = JannahType.primary, color = JannahColors.DayMuted)
+        Text("→", style = JannahType.body, color = JannahColors.Muted)
     }
 }

@@ -29,6 +29,20 @@ object Settings {
             .apply()
     }
 
+    fun onboardingComplete(context: Context): Boolean =
+        context.getSharedPreferences(PREFS, Context.MODE_PRIVATE)
+            .getBoolean("onboarded", false)
+
+    fun setOnboardingComplete(context: Context) {
+        context.getSharedPreferences(PREFS, Context.MODE_PRIVATE)
+            .edit().putBoolean("onboarded", true).apply()
+    }
+
+    fun resetOnboarding(context: Context) {
+        context.getSharedPreferences(PREFS, Context.MODE_PRIVATE)
+            .edit().putBoolean("onboarded", false).apply()
+    }
+
     val METHODS = listOf(
         "MWL" to "Muslim World League",
         "EGYPT" to "Egyptian General Authority",

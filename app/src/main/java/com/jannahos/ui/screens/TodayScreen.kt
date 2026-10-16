@@ -10,15 +10,19 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Notifications
+import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -31,6 +35,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.platform.LocalContext
@@ -39,14 +44,20 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.jannahos.FrictionMap
+import com.jannahos.HijriDate
+import com.jannahos.SalahScheduler
+import com.jannahos.SalahTracker
 import com.jannahos.Settings
 import com.jannahos.TahajjudPlan
-import com.jannahos.TahajjudScheduler
 import com.jannahos.WakeLog
+import com.jannahos.ui.theme.BeadsGlyph
+import com.jannahos.ui.theme.BookGlyph
 import com.jannahos.ui.theme.GlassCard
+import com.jannahos.ui.theme.JannahBrushes
 import com.jannahos.ui.theme.JannahColors
 import com.jannahos.ui.theme.JannahSpacing
 import com.jannahos.ui.theme.JannahType
+import com.jannahos.ui.theme.MosqueBackdrop
 import kotlinx.coroutines.delay
 import java.text.SimpleDateFormat
 import java.util.Calendar
@@ -54,55 +65,45 @@ import java.util.Date
 import java.util.Locale
 
 @Composable
-fun TodayScreen() {
+fun TodayScreen(onNavigate: (String) -> Unit = {}) {
     val ctx = LocalContext.current
     var tick by remember { mutableStateOf(0) }
 
-    // Refresh every second so the countdown ticks live.
     LaunchedEffect(Unit) {
-        while (true) {
-            delay(1000)
-            tick++
-        }
+        while (true) { delay(1000); tick++ }
     }
 
     val lat = Settings.lat(ctx)
     val lon = Settings.lon(ctx)
-    val nextTahajjud = TahajjudScheduler.computeTonight(lat, lon)
+    val prayerTimes = SalahScheduler.todayTimes(lat, lon)
+    val now = System.currentTimeMillis()
 
-    // "Tonight" meaning: if it's after midnight and before Fajr, we're in tonight.
-    val nowMs = System.currentTimeMillis()
-    val targetMs = nextTahajjud.time
-    val totalMs = (targetMs - nowMs).coerceAtLeast(0)
-    val seconds = (totalMs / 1000) % 60
-    val minutes = (totalMs / (1000 * 60)) % 60
-    val hours = totalMs / (1000 * 60 * 60)
-    val countdown = String.format(Locale.US, "%02d:%02d:%02d", hours, minutes, seconds)
+    val ordered = listOf("fajr", "dhuhr", "asr", "maghrib", "isha")
+    val nextKey = ordered.firstOrNull { (prayerTimes[it]?.time ?: 0L) > now }
+    val nextTime = nextKey?.let { prayerTimes[it] }?.time
 
-    val progress = ((24f * 60f * 60f - totalMs / 1000f) / (24f * 60f * 60f)).coerceIn(0f, 1f)
-    val animProgress by animateFloatAsState(progress, tween(900), label = "ring")
+    val countdown = if (nextTime != null) {
+        val diff = nextTime - now
+        val s = (diff / 1000) % 60
+        val m = (diff / (1000 * 60)) % 60
+        val h = diff / (1000 * 60 * 60)
+        String.format(Locale.US, "%02d:%02d:%02d", h, m, s)
+    } else "--:--:--"
 
-    val level = TahajjudPlan.level(ctx)
-    val (prayedWeek, target) = TahajjudPlan.weekProgress(ctx)
-    val onTonight = TahajjudPlan.isOnTonight(ctx)
-
-    val insight = FrictionMap.topInsight(ctx)
-    val prayed7 = FrictionMap.prayedLast7Days(ctx)
-    val log = WakeLog(ctx)
-    val history = log.lastNights(7)
-    val dayFmt = SimpleDateFormat("EEE", Locale.getDefault())
-
-    // Greeting based on hour
     val hour = Calendar.getInstance().get(Calendar.HOUR_OF_DAY)
     val greeting = when {
-        hour < 5 -> "Late night"
+        hour < 5 -> "Peaceful night"
         hour < 12 -> "Good morning"
         hour < 17 -> "Good afternoon"
         hour < 21 -> "Good evening"
         else -> "Good night"
     }
 
-    val dateFmt = SimpleDateFormat("EEEE · d MMMM", Locale.getDefault())
+    val level = TahajjudPlan.level(ctx)
+    val (prayedWeek, target) = TahajjudPlan.weekProgress(ctx)
+
+    // Weekly dots — last 7 nights, filled if prayed
+    val history = WakeLog(ctx).lastNights(7)
 
     Column(
         modifier = Modifier
@@ -112,149 +113,193 @@ fun TodayScreen() {
     ) {
         Spacer(Modifier.height(JannahSpacing.l))
 
-        // --- Greeting block ---
-        Text(greeting, style = JannahType.title, color = JannahColors.Ivory)
-        Spacer(Modifier.height(JannahSpacing.xs))
-        Text(dateFmt.format(Date()), style = JannahType.caption, color = JannahColors.Muted)
-
-        Spacer(Modifier.height(JannahSpacing.xl))
-
-        // --- Hero countdown with progress ring ---
-        Box(
-            modifier = Modifier
-                .fillMaxWidth()
-                .aspectRatio(1.25f),
-            contentAlignment = Alignment.Center
+        // --- Header ---
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            verticalAlignment = Alignment.Top
         ) {
-            Canvas(modifier = Modifier.size(260.dp)) {
-                val stroke = 3f
-                // Track
-                drawArc(
-                    color = JannahColors.Divider,
-                    startAngle = -90f,
-                    sweepAngle = 360f,
-                    useCenter = false,
-                    topLeft = Offset(stroke, stroke),
-                    size = Size(size.width - stroke * 2, size.height - stroke * 2),
-                    style = Stroke(width = stroke, cap = StrokeCap.Round)
-                )
-                // Progress
-                drawArc(
-                    color = JannahColors.Gold,
-                    startAngle = -90f,
-                    sweepAngle = 360f * animProgress,
-                    useCenter = false,
-                    topLeft = Offset(stroke, stroke),
-                    size = Size(size.width - stroke * 2, size.height - stroke * 2),
-                    style = Stroke(width = stroke, cap = StrokeCap.Round)
-                )
+            Column(Modifier.weight(1f)) {
+                Text("Assalamu Alaikum,",
+                    style = JannahType.caption, color = JannahColors.Muted)
+                Spacer(Modifier.height(2.dp))
+                Text(greeting,
+                    style = JannahType.title, color = JannahColors.Ivory)
             }
-
-            Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                Text("TAHAJJUD IN", style = JannahType.eyebrow, color = JannahColors.Muted)
-                Spacer(Modifier.height(JannahSpacing.s))
-                Text(countdown, style = JannahType.display, color = JannahColors.Ivory)
-                Spacer(Modifier.height(JannahSpacing.s))
-                Text(
-                    SimpleDateFormat("HH:mm", Locale.getDefault()).format(Date(targetMs)),
-                    style = JannahType.bodySmall,
-                    color = JannahColors.Gold
+            Box(
+                Modifier
+                    .size(40.dp)
+                    .clip(CircleShape)
+                    .background(JannahColors.Surface)
+                    .clickable { onNavigate("you") },
+                contentAlignment = Alignment.Center
+            ) {
+                Icon(
+                    Icons.Default.Notifications,
+                    contentDescription = null,
+                    tint = JannahColors.Ivory,
+                    modifier = Modifier.size(18.dp)
                 )
             }
         }
+
+        Spacer(Modifier.height(JannahSpacing.s))
+
+        // Date line with Hijri
+        val greg = SimpleDateFormat("EEE, d MMM yyyy", Locale.getDefault()).format(Date())
+        val hijri = HijriDate.today()
+        Text(
+            if (hijri.isNotEmpty()) "$greg  ·  $hijri" else greg,
+            style = JannahType.caption,
+            color = JannahColors.Muted
+        )
 
         Spacer(Modifier.height(JannahSpacing.l))
 
-        // --- Primary action ---
-        GoldButton(
-            label = "Set tahajjud alarm",
-            onClick = { TahajjudScheduler.schedule(ctx, nextTahajjud); tick++ }
-        )
-
-        val scheduled = TahajjudScheduler.nextScheduled(ctx)
-        Spacer(Modifier.height(JannahSpacing.s))
-        Text(
-            if (scheduled > 0L) "Alarm set · " + SimpleDateFormat("HH:mm", Locale.getDefault()).format(Date(scheduled))
-            else "No alarm set",
-            style = JannahType.caption,
-            color = JannahColors.Muted,
-            modifier = Modifier.fillMaxWidth(),
-            textAlign = TextAlign.Center
-        )
-
-        Spacer(Modifier.height(JannahSpacing.xl))
-
-        // --- Formation card ---
-        GlassCard {
-            Column(Modifier.padding(JannahSpacing.m)) {
-                Text("FORMATION", style = JannahType.eyebrow, color = JannahColors.Muted)
-                Spacer(Modifier.height(JannahSpacing.s))
-                Text(
-                    when (level) {
-                        1 -> "One night a week"
-                        2 -> "Two nights a week"
-                        3 -> "Three nights a week"
-                        else -> "Every night"
-                    },
-                    style = JannahType.body, color = JannahColors.Ivory,
-                    fontSize = 18.sp, fontWeight = FontWeight.Medium
-                )
-                Spacer(Modifier.height(JannahSpacing.xs))
-                Text(
-                    (if (onTonight) "Scheduled tonight · " else "Rest tonight · ") +
-                        "$prayedWeek of $target this week",
-                    style = JannahType.caption, color = JannahColors.Muted
-                )
-            }
-        }
-
-        // --- Pattern card ---
-        if (prayed7 > 0 || insight != null) {
-            Spacer(Modifier.height(JannahSpacing.s))
+        // --- Hero: Next prayer with mosque backdrop ---
+        Box {
             GlassCard {
-                Column(Modifier.padding(JannahSpacing.m)) {
-                    Text("PATTERN", style = JannahType.eyebrow, color = JannahColors.Muted)
-                    Spacer(Modifier.height(JannahSpacing.s))
-                    if (prayed7 > 0) {
+                Box(Modifier.fillMaxWidth()) {
+                    // Backdrop silhouette, top-right of the card
+                    Box(
+                        Modifier
+                            .fillMaxWidth(0.55f)
+                            .height(150.dp)
+                            .align(Alignment.TopEnd)
+                    ) {
+                        MosqueBackdrop(Modifier.fillMaxSize())
+                    }
+
+                    Column(Modifier.padding(JannahSpacing.m)) {
+                        Text("NEXT PRAYER",
+                            style = JannahType.eyebrow, color = JannahColors.Muted)
+                        Spacer(Modifier.height(JannahSpacing.xs))
                         Text(
-                            "$prayed7 of last 7 nights prayed",
-                            style = JannahType.body, color = JannahColors.Ivory
+                            nextKey?.let { SalahTracker.label(it) } ?: "—",
+                            style = JannahType.body, color = JannahColors.Ivory,
+                            fontSize = 18.sp, fontWeight = FontWeight.Medium
                         )
                         Spacer(Modifier.height(JannahSpacing.xs))
-                    }
-                    if (insight != null) {
-                        Text(
-                            insight.suggestion,
-                            style = JannahType.bodySmall, color = JannahColors.Gold,
-                            lineHeight = 20.sp
-                        )
+                        Text(countdown,
+                            style = JannahType.display, color = JannahColors.Ivory)
+                        Spacer(Modifier.height(JannahSpacing.xs))
+                        Text("Time left",
+                            style = JannahType.caption, color = JannahColors.Muted)
+
+                        Spacer(Modifier.height(JannahSpacing.l))
+
+                        Box(
+                            Modifier
+                                .clip(RoundedCornerShape(30.dp))
+                                .background(JannahColors.Gold)
+                                .clickable { onNavigate("pray") }
+                                .padding(horizontal = 16.dp, vertical = 8.dp)
+                        ) {
+                            Text("View prayer times  →",
+                                style = JannahType.caption,
+                                color = JannahColors.GoldInk,
+                                fontWeight = FontWeight.Medium)
+                        }
                     }
                 }
             }
         }
 
-        // --- Recent nights card ---
-        if (history.isNotEmpty()) {
-            Spacer(Modifier.height(JannahSpacing.s))
-            GlassCard {
-                Column(Modifier.padding(JannahSpacing.m)) {
-                    Text("LAST 7 NIGHTS", style = JannahType.eyebrow, color = JannahColors.Muted)
-                    Spacer(Modifier.height(JannahSpacing.s))
-                    history.forEach { e ->
-                        val day = dayFmt.format(Date(e.ts))
-                        val status = when (e.outcome) {
-                            "prayed" -> "Prayed"
-                            "missed" -> "Missed"
-                            else -> e.outcome
-                        }
-                        val sc = if (e.outcome == "prayed") JannahColors.Gold else JannahColors.Muted
-                        Row(
-                            modifier = Modifier.fillMaxWidth().padding(vertical = 6.dp),
-                            horizontalArrangement = Arrangement.SpaceBetween
-                        ) {
-                            Text(day, style = JannahType.bodySmall, color = JannahColors.Muted)
-                            Text(status, style = JannahType.bodySmall, color = sc)
-                        }
+        Spacer(Modifier.height(JannahSpacing.s))
+
+        // --- Tonight's plan ---
+        GlassCard {
+            Row(
+                Modifier
+                    .fillMaxWidth()
+                    .clickable { onNavigate("you") }
+                    .padding(JannahSpacing.m),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Column(Modifier.weight(1f)) {
+                    Text("TONIGHT'S PLAN",
+                        style = JannahType.eyebrow, color = JannahColors.Muted)
+                    Spacer(Modifier.height(JannahSpacing.xs))
+                    Text(
+                        when (level) {
+                            1 -> "Level 1 · One night a week"
+                            2 -> "Level 2 · Two nights a week"
+                            3 -> "Level 3 · Three nights a week"
+                            else -> "Level 4 · Every night"
+                        },
+                        style = JannahType.body, color = JannahColors.Ivory,
+                        fontSize = 15.sp
+                    )
+                    Spacer(Modifier.height(2.dp))
+                    Text("$prayedWeek of $target this week",
+                        style = JannahType.caption, color = JannahColors.Muted)
+                }
+                Text("→", style = JannahType.body, color = JannahColors.Muted)
+            }
+        }
+
+        Spacer(Modifier.height(JannahSpacing.s))
+
+        // --- Quick actions: Quran + Dhikr side by side ---
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.spacedBy(JannahSpacing.s)
+        ) {
+            QuickAction(
+                modifier = Modifier.weight(1f),
+                label = "Quran",
+                sublabel = "Continue reading",
+                glyph = { color -> BookGlyph(color, size = 22.dp) },
+                onClick = { onNavigate("quran") }
+            )
+            QuickAction(
+                modifier = Modifier.weight(1f),
+                label = "Dhikr",
+                sublabel = "Daily remembrance",
+                glyph = { color -> BeadsGlyph(color, size = 22.dp) },
+                onClick = { onNavigate("dhikr") }
+            )
+        }
+
+        Spacer(Modifier.height(JannahSpacing.s))
+
+        // --- Weekly consistency ---
+        GlassCard {
+            Column(Modifier.padding(JannahSpacing.m)) {
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Column {
+                        Text("WEEKLY CONSISTENCY",
+                            style = JannahType.eyebrow, color = JannahColors.Muted)
+                        Spacer(Modifier.height(JannahSpacing.xs))
+                        Text("$prayedWeek of 7 days",
+                            style = JannahType.body, color = JannahColors.Ivory,
+                            fontSize = 15.sp)
+                    }
+                }
+                Spacer(Modifier.height(JannahSpacing.m))
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(JannahSpacing.xs)
+                ) {
+                    val dayFmt = SimpleDateFormat("EEE", Locale.getDefault())
+                    val prayedDays = history.filter { it.outcome == "prayed" }.map { dayFmt.format(Date(it.ts)) }.toSet()
+                    val last7 = (0..6).map {
+                        dayFmt.format(Date(System.currentTimeMillis() - it * 24L * 60 * 60 * 1000))
+                    }.reversed()
+                    last7.forEach { d ->
+                        val filled = prayedDays.contains(d)
+                        Box(
+                            Modifier
+                                .weight(1f)
+                                .height(6.dp)
+                                .clip(CircleShape)
+                                .background(
+                                    if (filled) JannahColors.Gold else JannahColors.Faint.copy(alpha = 0.4f)
+                                )
+                        )
                     }
                 }
             }
@@ -265,16 +310,28 @@ fun TodayScreen() {
 }
 
 @Composable
-private fun GoldButton(label: String, onClick: () -> Unit) {
-    Box(
-        modifier = Modifier
-            .fillMaxWidth()
-            .height(56.dp)
-            .clip(RoundedCornerShape(JannahSpacing.buttonRadius))
-            .background(com.jannahos.ui.theme.JannahBrushes.goldButton)
-            .clickable(onClick = onClick),
-        contentAlignment = Alignment.Center
-    ) {
-        Text(label, style = JannahType.button, color = JannahColors.GoldInk)
+private fun QuickAction(
+    modifier: Modifier = Modifier,
+    label: String,
+    sublabel: String,
+    glyph: @Composable (Color) -> Unit,
+    onClick: () -> Unit
+) {
+    Box(modifier = modifier) {
+        GlassCard {
+            Column(
+                Modifier
+                    .fillMaxWidth()
+                    .clickable(onClick = onClick)
+                    .padding(JannahSpacing.m)
+            ) {
+                glyph(JannahColors.Gold)
+                Spacer(Modifier.height(JannahSpacing.m))
+                Text(label, style = JannahType.body, color = JannahColors.Ivory,
+                    fontSize = 15.sp, fontWeight = FontWeight.Medium)
+                Spacer(Modifier.height(2.dp))
+                Text(sublabel, style = JannahType.caption, color = JannahColors.Muted)
+            }
+        }
     }
 }
