@@ -53,6 +53,7 @@ fun YouScreen() {
     val showSleep = remember { mutableStateOf(false) }
     val showBackup = remember { mutableStateOf(false) }
     val showDuas = remember { mutableStateOf(false) }
+    val showCalendar = remember { mutableStateOf(false) }
 
     if (showFormation.value) {
         FormationScreen(onBack = { showFormation.value = false })
@@ -80,6 +81,10 @@ fun YouScreen() {
     }
     if (showDuas.value) {
         DuaLibraryScreen(onBack = { showDuas.value = false })
+        return
+    }
+    if (showCalendar.value) {
+        CalendarScreen(onBack = { showCalendar.value = false })
         return
     }
 
@@ -205,6 +210,8 @@ fun YouScreen() {
                     ListRow("Sleep log") { showSleep.value = true }
                     Box(Modifier.fillMaxWidth().height(1.dp).background(JannahColors.Divider))
                     ListRow("Dua library") { showDuas.value = true }
+                    Box(Modifier.fillMaxWidth().height(1.dp).background(JannahColors.Divider))
+                    ListRow("Islamic calendar") { showCalendar.value = true }
                     Box(Modifier.fillMaxWidth().height(1.dp).background(JannahColors.Divider))
                     ListRow("Tonight's plan") { ctx.startActivity(Intent(ctx, BedtimeActivity::class.java)) }
                     Box(Modifier.fillMaxWidth().height(1.dp).background(JannahColors.Divider))
