@@ -53,6 +53,8 @@ fun TodayScreen(onNavigate: (String) -> Unit = {}) {
     val ctx = LocalContext.current
     var tick by remember { mutableStateOf(0) }
     LaunchedEffect(Unit) { while (true) { delay(1000); tick++ } }
+    // Read tick so the composable recomposes each second.
+    val ignore = tick
 
     val lat = Settings.lat(ctx)
     val lon = Settings.lon(ctx)
