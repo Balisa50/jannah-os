@@ -365,8 +365,6 @@ fun TodayScreen(onNavigate: (String) -> Unit = {}) {
                 }
             }
 
-            Spacer(Modifier.height(96.dp))
-            Spacer(Modifier.navigationBarsPadding())
         }
     }
 }

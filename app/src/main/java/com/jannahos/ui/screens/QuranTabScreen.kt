@@ -36,6 +36,7 @@ import androidx.compose.ui.unit.sp
 import com.jannahos.AyahPlayer
 import com.jannahos.KhatmPlan
 import com.jannahos.QuranApi
+import com.jannahos.SafeStore
 import com.jannahos.QuranBookmarkStore
 import com.jannahos.QuranBookmarks
 import com.jannahos.QuranCache
@@ -87,7 +88,7 @@ private fun SurahList(
 ) {
     val ctx = LocalContext.current
     val last = remember { QuranBookmarks.lastSurah(ctx) }
-    val bookmarkCount = remember { QuranBookmarkStore(ctx).all().size }
+    val bookmarkCount = remember { SafeStore.quranBookmarks(ctx).size }
     val reciter = remember { Reciters.current(ctx) }
 
     Column(

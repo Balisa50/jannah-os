@@ -236,8 +236,6 @@ fun PrayScreen() {
                     modifier = Modifier.fillMaxWidth())
             }
 
-            Spacer(Modifier.height(96.dp))
-            Spacer(Modifier.navigationBarsPadding())
         }
     }
 }

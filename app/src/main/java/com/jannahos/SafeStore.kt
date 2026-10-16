@@ -12,83 +12,83 @@ object SafeStore {
 
     fun stats30(context: Context): WakeLog.FormationStats =
         read(WakeLog.FormationStats(0, 0, 0, 0, 0f)) {
-            WakeLog(context).formationStats(30)
+            Stores.wake(context).formationStats(30)
         }
 
     fun stats(context: Context, days: Int): WakeLog.FormationStats =
         read(WakeLog.FormationStats(0, 0, 0, 0, 0f)) {
-            WakeLog(context).formationStats(days)
+            Stores.wake(context).formationStats(days)
         }
 
     fun lastNights(context: Context, n: Int): List<WakeLog.Event> =
-        read(emptyList()) { WakeLog(context).lastNights(n) }
+        read(emptyList()) { Stores.wake(context).lastNights(n) }
 
     fun prayedCount(context: Context): Int =
-        read(0) { WakeLog(context).prayedCount() }
+        read(0) { Stores.wake(context).prayedCount() }
 
     fun latestDiary(context: Context): DiaryStore.Entry? =
-        read(null) { DiaryStore(context).latestTagIn24h() }
+        read(null) { Stores.diary(context).latestTagIn24h() }
 
     fun diaryRecent(context: Context, n: Int): List<DiaryStore.Entry> =
-        read(emptyList()) { DiaryStore(context).recent(n) }
+        read(emptyList()) { Stores.diary(context).recent(n) }
 
     fun struggleHabits(context: Context): List<StruggleTracker.Habit> =
-        read(emptyList()) { StruggleTracker(context).habits() }
+        read(emptyList()) { Stores.struggle(context).habits() }
 
     fun fastToday(context: Context): String? =
-        read(null) { FastLog(context).todayKind() }
+        read(null) { Stores.fast(context).todayKind() }
 
     fun fastCount30(context: Context): Int =
-        read(0) { FastLog(context).countLast(30) }
+        read(0) { Stores.fast(context).countLast(30) }
 
     fun sleepNights(context: Context, n: Int): List<SleepLog.Entry> =
-        read(emptyList()) { SleepLog(context).lastNights(n) }
+        read(emptyList()) { Stores.sleep(context).lastNights(n) }
 
     fun sleepAvg(context: Context, n: Int): Float =
-        read(0f) { SleepLog(context).averageHours(n) }
+        read(0f) { Stores.sleep(context).averageHours(n) }
 
     fun duaAll(context: Context): List<DuaJournalStore.Dua> =
-        read(emptyList()) { DuaJournalStore(context).all() }
+        read(emptyList()) { Stores.duaJournal(context).all() }
 
     fun duaAnsweredCount(context: Context): Int =
-        read(0) { DuaJournalStore(context).answeredCount() }
+        read(0) { Stores.duaJournal(context).answeredCount() }
 
     fun duaPendingCount(context: Context): Int =
-        read(0) { DuaJournalStore(context).pendingCount() }
+        read(0) { Stores.duaJournal(context).pendingCount() }
 
     fun lettersReady(context: Context): List<LetterStore.Letter> =
-        read(emptyList()) { LetterStore(context).ready() }
+        read(emptyList()) { Stores.letters(context).ready() }
 
     fun lettersSealed(context: Context): List<LetterStore.Letter> =
-        read(emptyList()) { LetterStore(context).sealed() }
+        read(emptyList()) { Stores.letters(context).sealed() }
 
     fun quranBookmarks(context: Context): List<QuranBookmarkStore.Bookmark> =
-        read(emptyList()) { QuranBookmarkStore(context).all() }
+        read(emptyList()) { Stores.bookmarks(context).all() }
 
     fun hifdhDue(context: Context): List<HifdhLog.Entry> =
-        read(emptyList()) { HifdhLog(context).dueNow() }
+        read(emptyList()) { Stores.hifdh(context).dueNow() }
 
     fun hifdhTotal(context: Context): Int =
-        read(0) { HifdhLog(context).totalMemorised() }
+        read(0) { Stores.hifdh(context).totalMemorised() }
 
     fun hifdhInSurah(context: Context, surah: Int): Int =
-        read(0) { HifdhLog(context).memorisedInSurah(surah) }
+        read(0) { Stores.hifdh(context).memorisedInSurah(surah) }
 
     fun financeMonth(context: Context, key: String): FinanceStore.Month? =
-        read(null) { FinanceStore(context).month(key) }
+        read(null) { Stores.finance(context).month(key) }
 
     fun financeExpenses(context: Context, key: String): List<FinanceStore.Expense> =
-        read(emptyList()) { FinanceStore(context).expenses(key) }
+        read(emptyList()) { Stores.finance(context).expenses(key) }
 
     fun financeSpent(context: Context, key: String): Double =
-        read(0.0) { FinanceStore(context).totalSpent(key) }
+        read(0.0) { Stores.finance(context).totalSpent(key) }
 
     fun sadaqahRecent(context: Context, n: Int): List<SadaqahLog.Gift> =
-        read(emptyList()) { SadaqahLog(context).recent(n) }
+        read(emptyList()) { Stores.sadaqah(context).recent(n) }
 
     fun sadaqahTotals(context: Context): Map<String, Double> =
-        read(emptyMap()) { SadaqahLog(context).totalByCurrency() }
+        read(emptyMap()) { Stores.sadaqah(context).totalByCurrency() }
 
     fun sadaqahCount30(context: Context): Int =
-        read(0) { SadaqahLog(context).countLast30() }
+        read(0) { Stores.sadaqah(context).countLast30() }
 }

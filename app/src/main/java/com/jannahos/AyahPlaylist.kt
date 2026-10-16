@@ -5,7 +5,9 @@ import android.media.AudioAttributes
 import android.media.MediaPlayer
 import android.util.Log
 
-// Continuous surah playback. Preloads the next ayah so transitions are gapless.
+// Continuous surah playback with gapless transitions.
+// Uses MediaPlayer.setNextMediaPlayer so the next ayah starts the moment
+// the current one ends — no silence between verses.
 class AyahPlaylist(private val context: Context) {
 
     interface Listener {
@@ -13,12 +15,9 @@ class AyahPlaylist(private val context: Context) {
         fun onSurahFinished(surah: Int)
     }
 
-    private var player: MediaPlayer? = null
-    private var preloaded: MediaPlayer? = null
-    private var preloadedForAyah: Int = -1
-
-    private var currentSurah: Int = 0
-    private var currentAyah: Int = 0
+    private var currentPlayer: MediaPlayer? = null
+    private var currentLocalAyah: Int = -1
+    private var surah: Int = 0
     private var lastAyah: Int = 0
     private var reciter: Reciters.Reciter? = null
     private var listener: Listener? = null
@@ -30,129 +29,112 @@ class AyahPlaylist(private val context: Context) {
 
     fun playSurah(surah: Int, startAyah: Int, endAyah: Int, ayahs: List<QuranApi.Ayah>) {
         if (ayahs.isEmpty()) return
+        stop()
         reciter = Reciters.current(context)
-        currentSurah = surah
-        lastAyah = endAyah
+        this.surah = surah
+        this.lastAyah = endAyah
         globalAyahByLocal.clear()
         ayahs.forEach { globalAyahByLocal[it.number] = it.globalNumber }
-        playAyah(surah, startAyah)
+        startAyah(startAyah)
     }
 
-    private fun playAyah(surah: Int, ayah: Int) {
+    private fun startAyah(localAyah: Int) {
         releaseCurrent()
-        val rec = reciter ?: Reciters.current(context).also { reciter = it }
-
-        // If we have the right ayah preloaded, use it. Otherwise load fresh.
-        if (preloaded != null && preloadedForAyah == ayah) {
-            player = preloaded
-            preloaded = null
-            preloadedForAyah = -1
-            currentAyah = ayah
-            player?.setOnCompletionListener {
-                playing = false
-                if (currentAyah < lastAyah) playAyah(surah, currentAyah + 1)
-                else finished(surah)
-            }
-            try {
-                player?.start()
-                playing = true
-                listener?.onAyahStarted(surah, ayah)
-                preloadNext(surah, ayah, rec)
-                return
-            } catch (e: Exception) {
-                Log.w("AyahPlaylist", "preloaded start failed, fresh loading")
-                releaseCurrent()
-            }
-        }
-
-        val global = globalAyahByLocal[ayah]
-        if (global == null || global == 0) {
-            if (ayah < lastAyah) playAyah(surah, ayah + 1) else finished(surah)
+        if (localAyah > lastAyah) {
+            playing = false
+            listener?.onSurahFinished(surah)
             return
         }
-
-        currentAyah = ayah
-        val url = Reciters.audioUrl(rec, global)
+        currentLocalAyah = localAyah
+        val global = globalAyahByLocal[localAyah] ?: return
+        val rec = reciter ?: return
+        if (global == 0) { startAyah(localAyah + 1); return }
 
         try {
-            val mp = MediaPlayer()
-            mp.setAudioAttributes(
-                AudioAttributes.Builder()
-                    .setContentType(AudioAttributes.CONTENT_TYPE_SPEECH)
-                    .setUsage(AudioAttributes.USAGE_MEDIA)
-                    .build()
-            )
-            mp.setDataSource(url)
-            mp.setOnPreparedListener {
+            val mp = newPlayer(rec, global)
+            mp.setOnPreparedListener { prepared ->
+                prepared.start()
                 playing = true
-                it.start()
-                listener?.onAyahStarted(surah, ayah)
-                preloadNext(surah, ayah, rec)
-            }
-            mp.setOnCompletionListener {
-                playing = false
-                if (currentAyah < lastAyah) playAyah(surah, currentAyah + 1)
-                else finished(surah)
+                listener?.onAyahStarted(surah, localAyah)
+                chainNext(prepared, localAyah)
             }
             mp.setOnErrorListener { _, _, _ ->
                 playing = false
-                if (currentAyah < lastAyah) playAyah(surah, currentAyah + 1)
-                else finished(surah)
+                startAyah(localAyah + 1)
                 true
             }
             mp.prepareAsync()
-            player = mp
+            currentPlayer = mp
         } catch (e: Exception) {
             Log.w("AyahPlaylist", "play failed: ${e.message}")
-            playing = false
+            startAyah(localAyah + 1)
         }
     }
 
-    private fun preloadNext(surah: Int, currentLocalAyah: Int, rec: Reciters.Reciter) {
-        val nextAyah = currentLocalAyah + 1
-        if (nextAyah > lastAyah) return
-        val global = globalAyahByLocal[nextAyah] ?: return
-        if (global == 0) return
-
-        try {
-            preloaded?.release()
-        } catch (_: Exception) {}
-        preloaded = null
-
-        try {
-            val mp = MediaPlayer()
-            mp.setAudioAttributes(
-                AudioAttributes.Builder()
-                    .setContentType(AudioAttributes.CONTENT_TYPE_SPEECH)
-                    .setUsage(AudioAttributes.USAGE_MEDIA)
-                    .build()
-            )
-            mp.setDataSource(Reciters.audioUrl(rec, global))
-            mp.prepareAsync()
-            preloaded = mp
-            preloadedForAyah = nextAyah
-        } catch (e: Exception) {
-            preloaded = null
-            preloadedForAyah = -1
+    private fun chainNext(current: MediaPlayer, localAyah: Int) {
+        val nextLocal = localAyah + 1
+        if (nextLocal > lastAyah) {
+            // End of surah — fire finished when current completes.
+            current.setOnCompletionListener {
+                playing = false
+                listener?.onSurahFinished(surah)
+            }
+            return
         }
+        val nextGlobal = globalAyahByLocal[nextLocal] ?: run {
+            current.setOnCompletionListener { startAyah(nextLocal) }
+            return
+        }
+        val rec = reciter ?: return
+
+        try {
+            val next = newPlayer(rec, nextGlobal)
+            next.setOnPreparedListener { preparedNext ->
+                try {
+                    // Attach to the current player so it plays seamlessly after.
+                    current.setNextMediaPlayer(preparedNext)
+                    // When current completes, preparedNext starts.
+                    // onCompletion fires at the transition moment.
+                    current.setOnCompletionListener {
+                        currentLocalAyah = nextLocal
+                        currentPlayer = preparedNext
+                        listener?.onAyahStarted(surah, nextLocal)
+                        chainNext(preparedNext, nextLocal)
+                    }
+                } catch (t: Throwable) {
+                    // Fallback: on completion start next explicitly.
+                    try { preparedNext.release() } catch (_: Exception) {}
+                    current.setOnCompletionListener { startAyah(nextLocal) }
+                }
+            }
+            next.setOnErrorListener { _, _, _ -> true }
+            next.prepareAsync()
+        } catch (e: Exception) {
+            current.setOnCompletionListener { startAyah(nextLocal) }
+        }
+    }
+
+    private fun newPlayer(rec: Reciters.Reciter, globalAyah: Int): MediaPlayer {
+        val mp = MediaPlayer()
+        mp.setAudioAttributes(
+            AudioAttributes.Builder()
+                .setContentType(AudioAttributes.CONTENT_TYPE_SPEECH)
+                .setUsage(AudioAttributes.USAGE_MEDIA)
+                .build()
+        )
+        mp.setDataSource(Reciters.audioUrl(rec, globalAyah))
+        return mp
     }
 
     fun stop() {
         releaseCurrent()
-        try { preloaded?.release() } catch (_: Exception) {}
-        preloaded = null
-        preloadedForAyah = -1
         playing = false
+        currentLocalAyah = -1
     }
 
     private fun releaseCurrent() {
-        try { player?.stop() } catch (_: Exception) {}
-        try { player?.release() } catch (_: Exception) {}
-        player = null
-    }
-
-    private fun finished(surah: Int) {
-        playing = false
-        listener?.onSurahFinished(surah)
+        try { currentPlayer?.stop() } catch (_: Exception) {}
+        try { currentPlayer?.release() } catch (_: Exception) {}
+        currentPlayer = null
     }
 }

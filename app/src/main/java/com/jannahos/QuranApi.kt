@@ -55,22 +55,32 @@ object QuranApi {
         return out
     }
 
-    // The Uthmani basmalah as returned by the API. We strip this prefix.
-    private val BASMALAH_PREFIXES = listOf(
-        "بِسْمِ اللَّهِ الرَّحْمَٰنِ الرَّحِيمِ",
-        "بِسْمِ ٱللَّهِ ٱلرَّحْمَٰنِ ٱلرَّحِيمِ",
-        "بِسْمِ اللَّهِ الرَّحْمَنِ الرَّحِيمِ"
-    )
-
+    // Robust basmalah strip. The API returns Uthmani text that may have
+    // varying diacritics, so we match by shape rather than exact string.
     private fun stripBasmalahPrefix(text: String): String {
-        var t = text
-        for (p in BASMALAH_PREFIXES) {
-            if (t.startsWith(p)) {
-                t = t.removePrefix(p).trimStart()
-                break
+        val trimmed = text.trimStart()
+        // Must start with "بسم" or "بِسْمِ" (ba-seen-meem).
+        val startsWithBism = trimmed.startsWith("بِسْمِ") ||
+            trimmed.startsWith("بِسْم") ||
+            trimmed.startsWith("بسم")
+        if (!startsWithBism) return text
+
+        // Search only the first 80 characters for a "الرحيم" / "الرَّحِيمِ" marker.
+        val searchIn = if (trimmed.length > 80) trimmed.substring(0, 80) else trimmed
+        val endMarkers = listOf(
+            "الرَّحِيمِ", "ٱلرَّحِيمِ", "الرَّحِيم", "ٱلرَّحِيم",
+            "الرحيم", "الرَّحِيمِ"
+        )
+        var endPos = -1
+        for (m in endMarkers) {
+            val idx = searchIn.indexOf(m)
+            if (idx >= 0) {
+                val candidate = idx + m.length
+                if (candidate > endPos) endPos = candidate
             }
         }
-        return t
+        if (endPos < 0) return text
+        return trimmed.substring(endPos).trimStart()
     }
 
     private fun get(url: String): String {
