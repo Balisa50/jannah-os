@@ -46,6 +46,12 @@ fun YouScreen() {
 
     val level = TahajjudPlan.level(ctx)
     val (prayedWeek, target) = TahajjudPlan.weekProgress(ctx)
+    val showFormation = remember { mutableStateOf(false) }
+
+    if (showFormation.value) {
+        FormationScreen(onBack = { showFormation.value = false })
+        return
+    }
 
     Column(
         modifier = Modifier
@@ -160,6 +166,8 @@ fun YouScreen() {
                     .background(JannahColors.Card)
             ) {
                 Column {
+                    ListRow("Formation record") { showFormation.value = true }
+                    Box(Modifier.fillMaxWidth().height(1.dp).background(JannahColors.Divider))
                     ListRow("Tonight's plan") { ctx.startActivity(Intent(ctx, BedtimeActivity::class.java)) }
                     Box(Modifier.fillMaxWidth().height(1.dp).background(JannahColors.Divider))
                     ListRow("Planner") { ctx.startActivity(Intent(ctx, PlannerActivity::class.java)) }
