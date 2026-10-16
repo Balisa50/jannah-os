@@ -13,6 +13,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import com.jannahos.ui.JannahApp
+import com.jannahos.ui.screens.CrashReportScreen
 import com.jannahos.ui.OnboardingFlow
 import com.jannahos.ui.theme.JannahTheme
 
@@ -30,8 +31,13 @@ class MainActivity : ComponentActivity() {
         setContent {
             JannahTheme {
                 var onboarded by remember { mutableStateOf(Settings.onboardingComplete(this)) }
+                val crash = remember { App.latestCrash(application) }
+                var showCrash by remember { mutableStateOf(crash != null) }
+
                 Surface(modifier = Modifier.fillMaxSize(), color = MaterialTheme.colorScheme.background) {
-                    if (onboarded) {
+                    if (showCrash && crash != null) {
+                        CrashReportScreen(trace = crash, onDismiss = { showCrash = false })
+                    } else if (onboarded) {
                         JannahApp()
                     } else {
                         OnboardingFlow(onDone = {
