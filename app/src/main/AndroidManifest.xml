@@ -100,5 +100,9 @@
                 android:name="android.appwidget.provider"
                 android:resource="@xml/jannah_widget_info" />
         </receiver>
+            <service
+            android:name=".audio.QuranPlaybackService"
+            android:exported="false"
+            android:foregroundServiceType="mediaPlayback" />
     </application>
 </manifest>
