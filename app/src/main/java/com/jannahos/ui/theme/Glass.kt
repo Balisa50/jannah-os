@@ -13,7 +13,7 @@ import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 
-// Clean white card with a soft shadow. No glassmorphism — light mode done well.
+// White card, visible warm border, soft shadow. Reads as intentional, not washed.
 @Composable
 fun GlassCard(
     modifier: Modifier = Modifier,
@@ -23,14 +23,18 @@ fun GlassCard(
     val shape = RoundedCornerShape(radius)
     Box(
         modifier = modifier
-            .shadow(elevation = 2.dp, shape = shape, ambientColor = JannahColors.Border, spotColor = JannahColors.Border)
+            .shadow(
+                elevation = 3.dp,
+                shape = shape,
+                ambientColor = JannahColors.Border,
+                spotColor = JannahColors.Border
+            )
             .clip(shape)
             .background(JannahColors.Surface, shape)
-            .border(width = 0.5.dp, color = JannahColors.Border, shape = shape)
+            .border(width = 1.dp, color = JannahColors.Border, shape = shape)
     ) { content() }
 }
 
-// Screen scaffold — cream background, no glow.
 @Composable
 fun ScreenScaffold(
     modifier: Modifier = Modifier,

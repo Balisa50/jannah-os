@@ -10,32 +10,56 @@ object JannahType {
 
     val display = TextStyle(
         fontFamily = FontFamily.SansSerif,
-        fontSize = 40.sp,
-        fontWeight = FontWeight.SemiBold,
-        letterSpacing = (-1).sp,
+        fontSize = 42.sp,
+        fontWeight = FontWeight.Bold,
+        letterSpacing = (-1.2).sp,
         lineHeight = 46.sp
     )
 
     val title = TextStyle(
         fontFamily = FontFamily.SansSerif,
-        fontSize = 28.sp,
-        fontWeight = FontWeight.SemiBold,
-        letterSpacing = (-0.5).sp,
-        lineHeight = 34.sp
+        fontSize = 26.sp,
+        fontWeight = FontWeight.Bold,
+        letterSpacing = (-0.4).sp,
+        lineHeight = 32.sp
     )
 
+    // Orange eyebrows. This alone kills the "washed" feel.
     val eyebrow = TextStyle(
         fontSize = 11.sp,
-        fontWeight = FontWeight.SemiBold,
-        letterSpacing = 1.8.sp
+        fontWeight = FontWeight.Bold,
+        letterSpacing = 2.sp
     )
 
-    val body = TextStyle(fontSize = 16.sp, fontWeight = FontWeight.Normal, lineHeight = 24.sp)
-    val bodySmall = TextStyle(fontSize = 14.sp, fontWeight = FontWeight.Normal, lineHeight = 20.sp)
-    val caption = TextStyle(fontSize = 12.sp, fontWeight = FontWeight.Normal, lineHeight = 16.sp)
-    val micro = TextStyle(fontSize = 10.sp, fontWeight = FontWeight.Medium, letterSpacing = 0.6.sp)
+    val body = TextStyle(
+        fontSize = 15.sp,
+        fontWeight = FontWeight.Medium,
+        lineHeight = 22.sp
+    )
 
-    val button = TextStyle(fontSize = 15.sp, fontWeight = FontWeight.SemiBold, letterSpacing = 0.2.sp)
+    val bodySmall = TextStyle(
+        fontSize = 13.sp,
+        fontWeight = FontWeight.Medium,
+        lineHeight = 18.sp
+    )
+
+    val caption = TextStyle(
+        fontSize = 12.sp,
+        fontWeight = FontWeight.Normal,
+        lineHeight = 16.sp
+    )
+
+    val micro = TextStyle(
+        fontSize = 10.sp,
+        fontWeight = FontWeight.SemiBold,
+        letterSpacing = 0.6.sp
+    )
+
+    val button = TextStyle(
+        fontSize = 15.sp,
+        fontWeight = FontWeight.SemiBold,
+        letterSpacing = 0.2.sp
+    )
 
     val arabic = TextStyle(
         fontSize = 28.sp,
@@ -50,7 +74,7 @@ object JannahType {
         textAlign = TextAlign.Center
     )
 
-    // Aliases for unmigrated screens.
+    // Aliases for unmigrated screens
     val screenTitle = title
     val section     = eyebrow
     val primary     = body

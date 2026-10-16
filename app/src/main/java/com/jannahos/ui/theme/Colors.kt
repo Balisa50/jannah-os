@@ -4,37 +4,37 @@ import androidx.compose.ui.graphics.Color
 
 object JannahColors {
 
-    // Light surfaces
-    val Cream     = Color(0xFFFFF9F2)
+    // Backgrounds — deeper cream so white cards actually stand out
+    val Cream     = Color(0xFFF8EEDC)
     val Surface   = Color(0xFFFFFFFF)
-    val SurfaceTint = Color(0xFFFFF1E4)
+    val SurfaceAlt = Color(0xFFFDF8F0)
 
     // Accent
-    val Orange    = Color(0xFFFF6A00)
-    val OrangeSoft = Color(0xFFFFE4CE)
-    val OrangeDeep = Color(0xFFC45200)
+    val Orange     = Color(0xFFF97316)
+    val OrangeSoft = Color(0xFFFFE9D1)
+    val OrangeDeep = Color(0xFFB45309)
 
-    // Text
-    val Ink       = Color(0xFF06143B) // headings
-    val Body      = Color(0xFF3D4657)
-    val Muted     = Color(0xFF8A92A2)
-    val Faint     = Color(0xFFBFC5D0)
+    // Text — proper contrast
+    val Ink    = Color(0xFF0B1428)   // headings, nearly black
+    val Body   = Color(0xFF2C3A4F)   // body text, dark slate
+    val Muted  = Color(0xFF6E7686)   // captions, still readable
+    val Faint  = Color(0xFFA0A8B8)
 
     // Lines
-    val Border    = Color(0xFFEFE8DE)
-    val Divider   = Color(0xFFF4EEE4)
+    val Border  = Color(0xFFE8DCC8)
+    val Divider = Color(0xFFF0E6D2)
 
     // Semantic
-    val Success   = Color(0xFF2E7D5B)
-    val Danger    = Color(0xFFB85454)
+    val Success = Color(0xFF2E7D5B)
+    val Danger  = Color(0xFFB85454)
 
-    // On-accent text
-    val OnOrange  = Color(0xFFFFFFFF)
+    // On-accent
+    val OnOrange = Color(0xFFFFFFFF)
 
-    // Legacy aliases used by screens we haven't migrated yet.
+    // Legacy aliases
     val Void      = Cream
     val Deep      = Cream
-    val Elevated  = SurfaceTint
+    val Elevated  = SurfaceAlt
     val Ivory     = Ink
     val Gold      = Orange
     val GoldDeep  = OrangeDeep
