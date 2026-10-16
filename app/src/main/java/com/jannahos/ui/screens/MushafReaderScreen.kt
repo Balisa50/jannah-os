@@ -5,8 +5,6 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.ExperimentalLayoutApi
-import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
@@ -15,8 +13,10 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -25,7 +25,9 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
+import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -47,12 +49,11 @@ import com.jannahos.ui.theme.JannahColors
 import com.jannahos.ui.theme.JannahSpacing
 import com.jannahos.ui.theme.JannahType
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
-// Amiri Quran — proper Uthmani typeface.
 private val AmiriQuran = FontFamily(Font(com.jannahos.R.font.amiri_quran))
 
-@OptIn(ExperimentalLayoutApi::class)
 @Composable
 fun MushafReaderScreen(
     surah: Int,
@@ -61,6 +62,7 @@ fun MushafReaderScreen(
     val ctx = LocalContext.current
     val cache = remember { QuranCache(ctx) }
     val bookmarks = remember { QuranBookmarkStore(ctx) }
+    val scope = rememberCoroutineScope()
 
     var ayahs by remember { mutableStateOf<List<QuranApi.Ayah>>(emptyList()) }
     var loading by remember { mutableStateOf(true) }
@@ -78,14 +80,39 @@ fun MushafReaderScreen(
 
     var playingAyah by remember { mutableStateOf(0) }
 
+    val listState = rememberLazyListState()
     val player = remember { AyahPlaylist(ctx) }
 
     DisposableEffect(Unit) {
         player.setListener(object : AyahPlaylist.Listener {
-            override fun onAyahStarted(s: Int, a: Int) { playingAyah = a }
+            override fun onAyahStarted(s: Int, a: Int) {
+                playingAyah = a
+                // Auto-scroll to center the ayah in view.
+                val idx = ayahs.indexOfFirst { it.number == a }
+                if (idx >= 0) {
+                    scope.launch {
+                        // header offset is +1 for ornamental surah header +1 for basmalah if present
+                        val headerOffset = if (surah != 1 && surah != 9) 2 else 1
+                        val target = (idx + headerOffset).coerceAtLeast(0)
+                        listState.animateScrollToItem(target, scrollOffset = -300)
+                    }
+                }
+            }
             override fun onSurahFinished(s: Int) { playingAyah = 0 }
         })
         onDispose { player.stop() }
+    }
+
+    // Persist last read ayah as user scrolls.
+    LaunchedEffect(listState) {
+        snapshotFlow { listState.firstVisibleItemIndex }.collect { idx ->
+            val headerOffset = if (surah != 1 && surah != 9) 2 else 1
+            val ayahIdx = (idx - headerOffset).coerceAtLeast(0)
+            ayahs.getOrNull(ayahIdx)?.let { a ->
+                QuranReaderPrefs.setLastSurah(ctx, surah)
+                QuranReaderPrefs.setLastAyah(ctx, a.number)
+            }
+        }
     }
 
     LaunchedEffect(surah) {
@@ -124,7 +151,7 @@ fun MushafReaderScreen(
             .fillMaxSize()
             .background(JannahColors.Cream)
     ) {
-        // Top bar
+        // Top toolbar
         Row(
             Modifier
                 .fillMaxWidth()
@@ -135,46 +162,25 @@ fun MushafReaderScreen(
             Text("← Back", style = JannahType.bodySmall, color = JannahColors.Muted,
                 modifier = Modifier.clickable(onClick = onBack))
             Spacer(Modifier.weight(1f))
-            Text("${fontSize}sp", style = JannahType.micro, color = JannahColors.Faint)
-            Spacer(Modifier.width(8.dp))
-            Box(
-                Modifier
-                    .clip(RoundedCornerShape(JannahSpacing.pillRadius))
-                    .background(JannahColors.Card)
-                    .clickable {
-                        fontSize = (fontSize + 4).coerceAtMost(48)
-                        QuranReaderPrefs.setFontSize(ctx, fontSize)
-                    }
-                    .padding(horizontal = 10.dp, vertical = 4.dp)
-            ) { Text("A+", style = JannahType.micro, color = JannahColors.Ink) }
+            ToolbarChip("${fontSize}sp", active = false) {}
             Spacer(Modifier.width(4.dp))
-            Box(
-                Modifier
-                    .clip(RoundedCornerShape(JannahSpacing.pillRadius))
-                    .background(JannahColors.Card)
-                    .clickable {
-                        fontSize = (fontSize - 4).coerceAtLeast(18)
-                        QuranReaderPrefs.setFontSize(ctx, fontSize)
-                    }
-                    .padding(horizontal = 10.dp, vertical = 4.dp)
-            ) { Text("A−", style = JannahType.micro, color = JannahColors.Ink) }
+            ToolbarChip("A+", active = false) {
+                fontSize = (fontSize + 4).coerceAtMost(48)
+                QuranReaderPrefs.setFontSize(ctx, fontSize)
+            }
             Spacer(Modifier.width(4.dp))
-            Box(
-                Modifier
-                    .clip(RoundedCornerShape(JannahSpacing.pillRadius))
-                    .background(if (showTranslation) JannahColors.Orange else JannahColors.Card)
-                    .clickable {
-                        showTranslation = !showTranslation
-                        QuranReaderPrefs.setShowTranslation(ctx, showTranslation)
-                    }
-                    .padding(horizontal = 10.dp, vertical = 4.dp)
-            ) {
-                Text("T", style = JannahType.micro,
-                    color = if (showTranslation) JannahColors.OnOrange else JannahColors.Ink)
+            ToolbarChip("A−", active = false) {
+                fontSize = (fontSize - 4).coerceAtLeast(18)
+                QuranReaderPrefs.setFontSize(ctx, fontSize)
+            }
+            Spacer(Modifier.width(4.dp))
+            ToolbarChip("T", active = showTranslation) {
+                showTranslation = !showTranslation
+                QuranReaderPrefs.setShowTranslation(ctx, showTranslation)
             }
         }
 
-        // Surah name + reciter
+        // Surah title
         Column(
             Modifier
                 .fillMaxWidth()
@@ -182,7 +188,7 @@ fun MushafReaderScreen(
                 .padding(bottom = JannahSpacing.m)
         ) {
             Text(surahName,
-                fontFamily = androidx.compose.ui.text.font.FontFamily.Serif,
+                fontFamily = FontFamily.Serif,
                 fontSize = 26.sp,
                 fontWeight = FontWeight.Bold,
                 color = JannahColors.Ink)
@@ -191,123 +197,120 @@ fun MushafReaderScreen(
                 style = JannahType.caption, color = JannahColors.Muted)
         }
 
-        // Mushaf page
-        Column(
-            Modifier
-                .fillMaxWidth()
-                .weight(1f)
-                .verticalScroll(rememberScrollState())
-                .padding(horizontal = JannahSpacing.gutter)
-        ) {
-            if (loading) {
+        // Mushaf body
+        if (loading) {
+            Box(Modifier.weight(1f), contentAlignment = Alignment.Center) {
                 Text("Loading...", style = JannahType.bodySmall, color = JannahColors.Muted)
-            } else if (error != null) {
+            }
+        } else if (error != null) {
+            Box(Modifier.weight(1f).padding(JannahSpacing.gutter), contentAlignment = Alignment.Center) {
                 Text(error!!, style = JannahType.bodySmall,
-                    color = JannahColors.Muted, textAlign = TextAlign.Center,
-                    modifier = Modifier.fillMaxWidth())
-            } else {
+                    color = JannahColors.Muted, textAlign = TextAlign.Center)
+            }
+        } else {
+            LazyColumn(
+                state = listState,
+                modifier = Modifier
+                    .weight(1f)
+                    .fillMaxWidth()
+                    .padding(horizontal = JannahSpacing.gutter),
+                contentPadding = androidx.compose.foundation.layout.PaddingValues(
+                    bottom = 140.dp
+                )
+            ) {
                 // Ornamental surah header
-                Box(
-                    Modifier
-                        .fillMaxWidth()
-                        .clip(RoundedCornerShape(JannahSpacing.cardRadius))
-                        .background(JannahColors.Card)
-                        .padding(vertical = JannahSpacing.m),
-                    contentAlignment = Alignment.Center
-                ) {
-                    Text(surahName,
-                        fontFamily = androidx.compose.ui.text.font.FontFamily.Serif,
-                        fontSize = 22.sp,
-                        fontWeight = FontWeight.Bold,
-                        color = JannahColors.OrangeDeep,
-                        textAlign = TextAlign.Center)
-                }
-
-                // Basmalah — separate header line unless At-Tawbah or Al-Fatihah
-                if (!isTawbah && !isFatihah) {
+                item {
+                    Box(
+                        Modifier
+                            .fillMaxWidth()
+                            .clip(RoundedCornerShape(JannahSpacing.cardRadius))
+                            .background(JannahColors.Card)
+                            .padding(vertical = JannahSpacing.m),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Text(surahName,
+                            fontFamily = FontFamily.Serif,
+                            fontSize = 22.sp,
+                            fontWeight = FontWeight.Bold,
+                            color = JannahColors.OrangeDeep,
+                            textAlign = TextAlign.Center)
+                    }
                     Spacer(Modifier.height(JannahSpacing.l))
-                    Text(
-                        "بِسْمِ اللَّهِ الرَّحْمَٰنِ الرَّحِيمِ",
-                        fontFamily = AmiriQuran,
-                        fontSize = (fontSize + 2).sp,
-                        color = JannahColors.Ink,
-                        textAlign = TextAlign.Center,
-                        modifier = Modifier.fillMaxWidth(),
-                        lineHeight = (fontSize * 1.9f).sp
-                    )
                 }
 
-                Spacer(Modifier.height(JannahSpacing.l))
-
-                // Continuous flowing text
-                FlowRow(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.End
-                ) {
-                    ayahs.forEach { a ->
-                        val isPlaying = playingAyah == a.number
-                        val isSelected = selectedAyah?.number == a.number
-
-                        // Arabic ayah text as an inline span
+                // Basmalah — separate header line
+                if (!isTawbah && !isFatihah) {
+                    item {
                         Text(
-                            text = a.arabic,
+                            "بِسْمِ اللَّهِ الرَّحْمَٰنِ الرَّحِيمِ",
+                            fontFamily = AmiriQuran,
+                            fontSize = (fontSize + 2).sp,
+                            color = JannahColors.Ink,
+                            textAlign = TextAlign.Center,
+                            modifier = Modifier.fillMaxWidth(),
+                            lineHeight = (fontSize * 1.9f).sp
+                        )
+                        Spacer(Modifier.height(JannahSpacing.l))
+                    }
+                }
+
+                // Ayah list — flowing but scrollable
+                items(
+                    count = ayahs.size,
+                    key = { i -> ayahs[i].number }
+                ) { i ->
+                    val a = ayahs[i]
+                    val isPlaying = playingAyah == a.number
+                    val isSelected = selectedAyah?.number == a.number
+
+                    Column(
+                        Modifier
+                            .fillMaxWidth()
+                            .clip(RoundedCornerShape(8.dp))
+                            .background(
+                                when {
+                                    isPlaying -> JannahColors.OrangeSoft
+                                    isSelected -> JannahColors.OrangeSoft
+                                    else -> androidx.compose.ui.graphics.Color.Transparent
+                                }
+                            )
+                            .clickable { selectedAyah = a }
+                            .padding(vertical = 4.dp)
+                    ) {
+                        // Arabic text with inline ayah marker
+                        Text(
+                            text = buildString {
+                                append(a.arabic.trim())
+                                append("   ۝")
+                                append(toArabicIndic(a.number))
+                            },
                             fontFamily = AmiriQuran,
                             fontSize = fontSize.sp,
                             color = when {
-                                isPlaying -> JannahColors.Orange
+                                isPlaying -> JannahColors.OrangeDeep
                                 isSelected -> JannahColors.OrangeDeep
                                 else -> JannahColors.Ink
                             },
                             lineHeight = (fontSize * 1.9f).sp,
-                            modifier = Modifier
-                                .padding(2.dp)
-                                .clip(RoundedCornerShape(6.dp))
-                                .background(
-                                    when {
-                                        isPlaying -> JannahColors.OrangeSoft
-                                        isSelected -> JannahColors.OrangeSoft
-                                        else -> androidx.compose.ui.graphics.Color.Transparent
-                                    }
-                                )
-                                .clickable { selectedAyah = a }
+                            modifier = Modifier.fillMaxWidth()
                         )
 
-                        // Ayah-end marker with Arabic-Indic number
-                        Text(
-                            text = " ۝" + toArabicIndic(a.number) + " ",
-                            fontFamily = AmiriQuran,
-                            fontSize = (fontSize - 4).sp,
-                            color = JannahColors.OrangeDeep,
-                            lineHeight = (fontSize * 1.9f).sp
-                        )
-                    }
-                }
-
-                if (showTranslation) {
-                    Spacer(Modifier.height(JannahSpacing.l))
-                    ayahs.forEach { a ->
-                        Column(
-                            Modifier
-                                .fillMaxWidth()
-                                .padding(vertical = 8.dp)
-                        ) {
-                            Text("(${a.number})",
-                                style = JannahType.micro, color = JannahColors.OrangeDeep)
-                            Spacer(Modifier.height(2.dp))
-                            Text(a.english,
+                        if (showTranslation) {
+                            Spacer(Modifier.height(6.dp))
+                            Text(
+                                "(${a.number}) ${a.english}",
                                 style = JannahType.bodySmall,
                                 color = JannahColors.Body,
-                                lineHeight = 22.sp)
+                                lineHeight = 22.sp
+                            )
                         }
                     }
+                    Spacer(Modifier.height(4.dp))
                 }
-
-                Spacer(Modifier.height(96.dp))
-                Spacer(Modifier.navigationBarsPadding())
             }
         }
 
-        // Selected-ayah bottom sheet (inline card, not a modal)
+        // Selected-ayah sheet
         if (selectedAyah != null) {
             val a = selectedAyah!!
             Box(
@@ -319,7 +322,7 @@ fun MushafReaderScreen(
                 Column {
                     Row(verticalAlignment = Alignment.CenterVertically) {
                         Text("${surahName} · ${surah}:${a.number}",
-                            fontFamily = androidx.compose.ui.text.font.FontFamily.Serif,
+                            fontFamily = FontFamily.Serif,
                             fontSize = 15.sp,
                             fontWeight = FontWeight.Bold,
                             color = JannahColors.Ink,
@@ -385,12 +388,12 @@ fun MushafReaderScreen(
             ) {
                 Column(
                     Modifier
-                        .verticalScroll(rememberScrollState())
                         .height(220.dp)
+                        .verticalScroll(rememberScrollState())
                 ) {
                     Row(verticalAlignment = Alignment.CenterVertically) {
                         Text("Tafsir · ${surah}:${tafsirFor!!.number}",
-                            fontFamily = androidx.compose.ui.text.font.FontFamily.Serif,
+                            fontFamily = FontFamily.Serif,
                             fontSize = 15.sp,
                             fontWeight = FontWeight.Bold,
                             color = JannahColors.Ink,
@@ -424,6 +427,20 @@ fun MushafReaderScreen(
 }
 
 @Composable
+private fun ToolbarChip(label: String, active: Boolean, onClick: () -> Unit) {
+    Box(
+        Modifier
+            .clip(RoundedCornerShape(JannahSpacing.pillRadius))
+            .background(if (active) JannahColors.Orange else JannahColors.Card)
+            .clickable(onClick = onClick)
+            .padding(horizontal = 10.dp, vertical = 5.dp)
+    ) {
+        Text(label, style = JannahType.micro,
+            color = if (active) JannahColors.OnOrange else JannahColors.Ink)
+    }
+}
+
+@Composable
 private fun ActionChip(modifier: Modifier = Modifier, label: String, onClick: () -> Unit) {
     Box(
         modifier
@@ -439,10 +456,8 @@ private fun ActionChip(modifier: Modifier = Modifier, label: String, onClick: ()
     }
 }
 
-// Convert Western digits to Arabic-Indic.
+
 private fun toArabicIndic(n: Int): String {
     val map = charArrayOf('\u0660','\u0661','\u0662','\u0663','\u0664','\u0665','\u0666','\u0667','\u0668','\u0669')
-    return n.toString().map { c ->
-        if (c.isDigit()) map[c - '0'] else c
-    }.joinToString("")
+    return n.toString().map { c -> if (c.isDigit()) map[c - '0'] else c }.joinToString("")
 }
