@@ -135,7 +135,7 @@ fun StruggleScreen(onBack: () -> Unit) {
                 Text("WHAT HAPPENED?",
                     style = JannahType.eyebrow, color = JannahColors.OrangeDeep)
                 Spacer(Modifier.height(JannahSpacing.xs))
-                Text("Not for judgement. Just so the pattern is honest.",
+                Text("So the pattern is honest.",
                     style = JannahType.caption, color = JannahColors.Muted)
                 Spacer(Modifier.height(JannahSpacing.m))
 

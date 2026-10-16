@@ -64,7 +64,7 @@ fun AboutScreen(onBack: () -> Unit) {
         Spacer(Modifier.height(JannahSpacing.m))
 
         Text(
-            "This app is built on a different belief: that the deepest change comes from less, done well, over time. Not more.",
+            "This app is built on a different belief: that the deepest change comes from less, done well, over time.",
             fontFamily = FontFamily.Serif,
             fontStyle = FontStyle.Italic,
             fontSize = 18.sp,
@@ -78,7 +78,7 @@ fun AboutScreen(onBack: () -> Unit) {
             "WHAT WE WILL NEVER DO",
             listOf(
                 "Ask you to create an account. Everything is on your phone.",
-                "Send your data anywhere. Not to us. Not to a server. Not to an advertiser.",
+                "Send your data anywhere.",
                 "Show you ads or sell anything. There is no business model that requires your attention.",
                 "Track your behaviour across other apps.",
                 "Send you a notification that isn't scheduled by you.",
@@ -96,7 +96,7 @@ fun AboutScreen(onBack: () -> Unit) {
                 "Cite hadith by collection and number, with authenticity grades where scholars differ.",
                 "Never invent a reward, a virtue, or a Prophetic quote.",
                 "Tell you when something is our own suggestion, not a religious claim.",
-                "Let you leave. If the habit holds without the app, we will say so, and mean it."
+                "Let you leave. If the habit holds, we will tell you."
             )
         )
 
@@ -109,7 +109,7 @@ fun AboutScreen(onBack: () -> Unit) {
                 "Databases are encrypted at rest with AES-256.",
                 "You can export a backup at any time, as a file you control.",
                 "You can delete everything with one button in Settings.",
-                "We have no copy. There is no copy. Even if we wanted to give one up."
+                "There is no copy to give up."
             )
         )
 

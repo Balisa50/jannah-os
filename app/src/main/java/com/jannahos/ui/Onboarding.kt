@@ -198,7 +198,7 @@ private fun TheFourPillars() {
         )
         Pillar(
             "4", "Learning",
-            "Right Now learns which suggestions actually move you. Over weeks it stops sending what you ignore and elevates what works."
+            "Right Now learns what moves you. It stops sending what you ignore and elevates what works."
         )
 
         Spacer(Modifier.height(JannahSpacing.l))
@@ -410,7 +410,7 @@ private fun DoneScreen(name: String) {
             textAlign = TextAlign.Center,
             lineHeight = 26.sp)
         Spacer(Modifier.height(JannahSpacing.l))
-        Text("The rest of the app waits for you. It will not chase.",
+        Text("The rest is there when you want it.",
             style = JannahType.bodySmall,
             color = JannahColors.Muted,
             textAlign = TextAlign.Center)
