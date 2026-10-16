@@ -67,6 +67,7 @@ fun YouScreen() {
     val showFinance = remember { mutableStateOf(false) }
     val showTime = remember { mutableStateOf(false) }
     val showLetters = remember { mutableStateOf(false) }
+    val showCompanion = remember { mutableStateOf(false) }
     val showDuaJournal = remember { mutableStateOf(false) }
     val showGraduation = remember { mutableStateOf(false) }
     val showAbout = remember { mutableStateOf(false) }
@@ -92,16 +93,67 @@ fun YouScreen() {
     if (showFinance.value) { FinanceScreen(onBack = { showFinance.value = false }); return }
     if (showTime.value) { TimeScreen(onBack = { showTime.value = false }); return }
     if (showLetters.value) { LettersScreen(onBack = { showLetters.value = false }); return }
+    if (showCompanion.value) {
+        CompanionScreen(
+            onBack = { showCompanion.value = false },
+            onNavigate = { r ->
+                showCompanion.value = false
+                when (r) {
+                    "dhikr" -> showStruggle.value = true
+                    "diary" -> showDiary.value = true
+                    "tawbah" -> showStruggle.value = true
+                    "finance" -> showFinance.value = true
+                    "bedtime" -> ctx.startActivity(Intent(ctx, BedtimeActivity::class.java))
+                    "dua_journal" -> showDuaJournal.value = true
+                }
+            }
+        )
+        return
+    }
     if (showDuaJournal.value) { DuaJournalScreen(onBack = { showDuaJournal.value = false }); return }
     if (showGraduation.value) { GraduationScreen(onBack = { showGraduation.value = false }); return }
     if (showAbout.value) { AboutScreen(onBack = { showAbout.value = false }); return }
     if (showRamadan.value) { RamadanScreen(onBack = { showRamadan.value = false }); return }
     if (showLetters.value) { LettersScreen(onBack = { showLetters.value = false }); return }
+    if (showCompanion.value) {
+        CompanionScreen(
+            onBack = { showCompanion.value = false },
+            onNavigate = { r ->
+                showCompanion.value = false
+                when (r) {
+                    "dhikr" -> showStruggle.value = true
+                    "diary" -> showDiary.value = true
+                    "tawbah" -> showStruggle.value = true
+                    "finance" -> showFinance.value = true
+                    "bedtime" -> ctx.startActivity(Intent(ctx, BedtimeActivity::class.java))
+                    "dua_journal" -> showDuaJournal.value = true
+                }
+            }
+        )
+        return
+    }
     if (showDuaJournal.value) { DuaJournalScreen(onBack = { showDuaJournal.value = false }); return }
     if (showGraduation.value) { GraduationScreen(onBack = { showGraduation.value = false }); return }
     if (showAbout.value) { AboutScreen(onBack = { showAbout.value = false }); return }
     if (showRamadan.value) { RamadanScreen(onBack = { showRamadan.value = false }); return }
     if (showLetters.value) { LettersScreen(onBack = { showLetters.value = false }); return }
+    if (showCompanion.value) {
+        CompanionScreen(
+            onBack = { showCompanion.value = false },
+            onNavigate = { r ->
+                showCompanion.value = false
+                when (r) {
+                    "dhikr" -> showStruggle.value = true
+                    "diary" -> showDiary.value = true
+                    "tawbah" -> showStruggle.value = true
+                    "finance" -> showFinance.value = true
+                    "bedtime" -> ctx.startActivity(Intent(ctx, BedtimeActivity::class.java))
+                    "dua_journal" -> showDuaJournal.value = true
+                }
+            }
+        )
+        return
+    }
     if (showDuaJournal.value) { DuaJournalScreen(onBack = { showDuaJournal.value = false }); return }
     if (showGraduation.value) { GraduationScreen(onBack = { showGraduation.value = false }); return }
     if (showAbout.value) { AboutScreen(onBack = { showAbout.value = false }); return }
@@ -222,6 +274,16 @@ fun YouScreen() {
                     onClick = { ctx.startActivity(Intent(ctx, BedtimeActivity::class.java)) }
                 )
             }
+
+            Spacer(Modifier.height(JannahSpacing.s))
+
+            // Companion — the doorway
+            SmallTile(
+                modifier = Modifier.fillMaxWidth(),
+                eyebrow = "TELL ME",
+                title = "What's on your mind?",
+                onClick = { showCompanion.value = true }
+            )
 
             Spacer(Modifier.height(JannahSpacing.s))
 
