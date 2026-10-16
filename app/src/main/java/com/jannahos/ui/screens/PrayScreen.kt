@@ -55,7 +55,8 @@ fun PrayScreen() {
 
     val lat = Settings.lat(ctx)
     val lon = Settings.lon(ctx)
-    val times = SalahScheduler.todayTimes(lat, lon)
+    val todayKey = remember { java.text.SimpleDateFormat("yyyy-MM-dd", Locale.US).format(java.util.Date()) }
+    val times = remember(todayKey, lat, lon) { SalahScheduler.todayTimes(lat, lon) }
     val hhmm = SimpleDateFormat("HH:mm", Locale.getDefault())
     val today = SalahTracker.today(ctx)
     val ordered = listOf("fajr", "dhuhr", "asr", "maghrib", "isha")

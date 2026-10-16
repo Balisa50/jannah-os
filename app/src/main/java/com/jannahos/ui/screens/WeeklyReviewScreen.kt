@@ -30,6 +30,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.jannahos.FrictionMap
 import com.jannahos.SafeStore
+import com.jannahos.ui.TopBar
 import com.jannahos.TahajjudPlan
 import com.jannahos.ui.theme.JannahColors
 import com.jannahos.ui.theme.JannahSpacing
@@ -78,29 +79,22 @@ fun WeeklyReviewScreen(onBack: () -> Unit) {
             .verticalScroll(rememberScrollState())
             .background(JannahColors.Cream)
     ) {
+        TopBar("Weekly review", onBack = onBack)
         Box(
             Modifier
                 .fillMaxWidth()
-                .clip(RoundedCornerShape(bottomStart = 28.dp, bottomEnd = 28.dp))
-                .background(JannahColors.Orange)
                 .padding(horizontal = JannahSpacing.gutter)
-                .padding(top = JannahSpacing.xl, bottom = JannahSpacing.l)
+                .padding(top = JannahSpacing.s, bottom = JannahSpacing.m)
         ) {
             Column {
-                Text("WEEKLY REVIEW",
-                    style = JannahType.eyebrow,
-                    color = JannahColors.OnOrange.copy(alpha = 0.75f))
-                Spacer(Modifier.height(JannahSpacing.xs))
-                Row {
-                    Text("Your ", style = JannahType.title.copy(fontSize = 24.sp),
-                        color = JannahColors.OnOrange)
-                    Text("week.", style = JannahType.titleItalic.copy(fontSize = 24.sp),
-                        color = JannahColors.OnOrange)
-                }
+                Text("Your week.",
+                    fontFamily = FontFamily.Serif,
+                    fontSize = 24.sp,
+                    fontWeight = FontWeight.Bold,
+                    color = JannahColors.Ink)
                 Spacer(Modifier.height(4.dp))
                 Text("The week in numbers.",
-                    style = JannahType.caption,
-                    color = JannahColors.OnOrange.copy(alpha = 0.85f))
+                    style = JannahType.caption, color = JannahColors.Muted)
             }
         }
 

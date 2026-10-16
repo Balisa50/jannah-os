@@ -57,18 +57,32 @@ fun JannahApp() {
     val ctx = LocalContext.current
     val nav = rememberNavController()
 
-    val comebackState = remember { try { ComebackCheck.check(ctx) } catch (t: Throwable) { null } }
-    val showReflect = remember { try { ReflectionPrompt.shouldPrompt(ctx) } catch (t: Throwable) { false } }
-    val showEvening = remember { try { EveningReckoning.shouldShow(ctx) } catch (t: Throwable) { false } }
+    // Defer every "should this overlay show" check until after first frame.
+    // These hit SharedPreferences and the encrypted DB, which is what made
+    // the launch feel slow. Now the tab bar paints first, then checks run.
+    var comebackState by remember { mutableStateOf<ComebackCheck.State?>(null) }
+    var showReflection by remember { mutableStateOf(false) }
+    var showEv by remember { mutableStateOf(false) }
+    var showComeback by remember { mutableStateOf(false) }
+    var checksRan by remember { mutableStateOf(false) }
 
-    var showComeback by remember { mutableStateOf(comebackState?.show == true) }
-    var showReflection by remember { mutableStateOf(showReflect) }
-    var showEv by remember { mutableStateOf(showEvening) }
+    androidx.compose.runtime.LaunchedEffect(Unit) {
+        kotlinx.coroutines.delay(200)
+        try {
+            val c = ComebackCheck.check(ctx)
+            comebackState = c
+            showComeback = c.show
+        } catch (_: Throwable) {}
+        try { showReflection = ReflectionPrompt.shouldPrompt(ctx) } catch (_: Throwable) {}
+        try { showEv = EveningReckoning.shouldShow(ctx) } catch (_: Throwable) {}
+        checksRan = true
+    }
 
-    if (showComeback && comebackState != null) {
+    val cs = comebackState
+    if (showComeback && cs != null) {
         ScreenScaffold {
             ErrorBoundary("Comeback") {
-                ComebackScreen(comebackState, onDismiss = { showComeback = false })
+                ComebackScreen(cs, onDismiss = { showComeback = false })
             }
         }
         return

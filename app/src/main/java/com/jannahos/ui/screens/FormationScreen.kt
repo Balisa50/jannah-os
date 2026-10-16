@@ -31,6 +31,7 @@ import androidx.compose.ui.unit.sp
 import com.jannahos.CareMode
 import com.jannahos.FrictionMap
 import com.jannahos.SafeStore
+import com.jannahos.ui.TopBar
 import com.jannahos.InterventionLog
 import com.jannahos.TahajjudPlan
 import com.jannahos.WakeLog
@@ -57,28 +58,22 @@ fun FormationScreen(onBack: () -> Unit) {
             .verticalScroll(rememberScrollState())
             .background(JannahColors.Cream)
     ) {
+        TopBar("Formation", onBack = onBack)
         Box(
             Modifier
                 .fillMaxWidth()
-                .clip(RoundedCornerShape(bottomStart = 28.dp, bottomEnd = 28.dp))
-                .background(JannahColors.Orange)
                 .padding(horizontal = JannahSpacing.gutter)
-                .padding(top = JannahSpacing.xl, bottom = JannahSpacing.l)
+                .padding(top = JannahSpacing.s, bottom = JannahSpacing.m)
         ) {
             Column {
-                Text("FORMATION", style = JannahType.eyebrow,
-                    color = JannahColors.OnOrange.copy(alpha = 0.75f))
-                Spacer(Modifier.height(JannahSpacing.xs))
-                Row(verticalAlignment = Alignment.Bottom) {
-                    Text("Thirty ", style = JannahType.title.copy(fontSize = 24.sp),
-                        color = JannahColors.OnOrange)
-                    Text("nights.", style = JannahType.titleItalic.copy(fontSize = 24.sp),
-                        color = JannahColors.OnOrange)
-                }
+                Text("Thirty nights.",
+                    fontFamily = FontFamily.Serif,
+                    fontSize = 24.sp,
+                    fontWeight = FontWeight.Bold,
+                    color = JannahColors.Ink)
                 Spacer(Modifier.height(4.dp))
-                Text("Your honest record, nothing is uploaded.",
-                    style = JannahType.caption,
-                    color = JannahColors.OnOrange.copy(alpha = 0.85f))
+                Text("Your record. Nothing is uploaded.",
+                    style = JannahType.caption, color = JannahColors.Muted)
             }
         }
 

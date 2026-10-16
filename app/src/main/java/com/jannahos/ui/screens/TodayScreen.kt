@@ -63,7 +63,9 @@ fun TodayScreen(onNavigate: (String) -> Unit = {}) {
 
     val lat = Settings.lat(ctx)
     val lon = Settings.lon(ctx)
-    val prayerTimes = SalahScheduler.todayTimes(lat, lon)
+    // Cache prayer times per day. They only change at midnight.
+    val todayKey = remember { java.text.SimpleDateFormat("yyyy-MM-dd", Locale.US).format(java.util.Date()) }
+    val prayerTimes = remember(todayKey, lat, lon) { SalahScheduler.todayTimes(lat, lon) }
     val now = System.currentTimeMillis()
     val ordered = listOf("fajr", "dhuhr", "asr", "maghrib", "isha")
     val nextKey = ordered.firstOrNull { (prayerTimes[it]?.time ?: 0L) > now }
