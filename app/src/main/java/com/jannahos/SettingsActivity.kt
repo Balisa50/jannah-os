@@ -67,6 +67,7 @@ class SettingsActivity : ComponentActivity() {
         var toast by remember { mutableStateOf<String?>(null) }
         var bedReminder by remember { mutableStateOf(TahajjudPlan.bedtimeReminderOn(ctx)) }
         var adhanChoice by remember { mutableStateOf(AdhanSettings.current(ctx)) }
+        var focusEnabled by remember { mutableStateOf(FocusSession.enabled(ctx)) }
 
         Column(
             modifier = Modifier
@@ -181,6 +182,35 @@ class SettingsActivity : ComponentActivity() {
                             if (selected) Text("✓", style = JannahType.bodySmall, color = JannahColors.Accent)
                         }
                         Spacer(Modifier.height(JannahSpacing.xs))
+                    }
+                }
+            }
+
+            Spacer(Modifier.height(JannahSpacing.l))
+
+            // --- PRAYER FOCUS ---
+            GlassCard {
+                Column(Modifier.padding(JannahSpacing.m)) {
+                    Text("PRAYER FOCUS", style = JannahType.eyebrow, color = JannahColors.Muted)
+                    Spacer(Modifier.height(JannahSpacing.s))
+                    Text(
+                        "During a prayer window you start, gently return to the prayer screen if you open a distracting app. Requires enabling the Focus service in system settings.",
+                        style = JannahType.caption, color = JannahColors.DayMuted, lineHeight = 16.sp
+                    )
+                    Spacer(Modifier.height(JannahSpacing.s))
+                    ActionRow(
+                        if (focusEnabled) "Focus mode: ON" else "Focus mode: OFF"
+                    ) {
+                        val next = !focusEnabled
+                        FocusSession.setEnabled(ctx, next)
+                        focusEnabled = next
+                        toast = if (next) "Enabled. Now turn on the service in Settings → Accessibility → Installed apps → Jannah." else "Focus mode disabled."
+                    }
+                    Spacer(Modifier.height(JannahSpacing.xs))
+                    ActionRow("Open Accessibility settings") {
+                        val i = android.content.Intent(android.provider.Settings.ACTION_ACCESSIBILITY_SETTINGS)
+                        i.addFlags(android.content.Intent.FLAG_ACTIVITY_NEW_TASK)
+                        ctx.startActivity(i)
                     }
                 }
             }

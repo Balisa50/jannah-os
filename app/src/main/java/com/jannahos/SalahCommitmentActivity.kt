@@ -45,6 +45,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.jannahos.FocusSession
 import com.jannahos.ui.theme.JannahColors
 import com.jannahos.ui.theme.JannahSpacing
 import com.jannahos.ui.theme.JannahTheme
@@ -68,6 +69,10 @@ class SalahCommitmentActivity : ComponentActivity() {
         }
 
         val prayer = intent.getStringExtra("prayer") ?: "fajr"
+
+        if (FocusSession.enabled(this)) {
+            FocusSession.start(this, prayer, 10)
+        }
 
         setContent {
             JannahTheme {
@@ -180,6 +185,7 @@ class SalahCommitmentActivity : ComponentActivity() {
                     .clip(RoundedCornerShape(JannahSpacing.pillRadius))
                     .background(JannahColors.Orange)
                     .clickable {
+                        FocusSession.stop(ctx)
                         SalahTracker.toggle(ctx, prayer)
                         // Ensure it's marked done (toggle flips, so check)
                         if (SalahTracker.today(ctx)[prayer] != true) {
@@ -199,7 +205,7 @@ class SalahCommitmentActivity : ComponentActivity() {
                     .fillMaxWidth()
                     .height(48.dp)
                     .clip(RoundedCornerShape(JannahSpacing.pillRadius))
-                    .clickable { finish() },
+                    .clickable { FocusSession.stop(ctx); finish() },
                 contentAlignment = Alignment.Center
             ) {
                 Text("I will pray in a moment",

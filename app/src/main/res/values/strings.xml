@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">Jannah</string>
+    <string name="focus_service_description">During a prayer window you have started, Jannah can gently return you to the prayer screen if you open a distracting app. Nothing leaves your phone.</string>
+</resources>
