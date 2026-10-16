@@ -1,5 +1,7 @@
 package com.jannahos.ui
 
+import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -26,14 +28,16 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.text.font.FontFamily
+import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.jannahos.Settings
 import com.jannahos.TahajjudPlan
-import com.jannahos.ui.theme.JannahBrushes
 import com.jannahos.ui.theme.JannahColors
 import com.jannahos.ui.theme.JannahSpacing
 import com.jannahos.ui.theme.JannahType
@@ -59,15 +63,16 @@ fun OnboardingFlow(onDone: () -> Unit) {
         ) {
             Spacer(Modifier.height(JannahSpacing.xxl))
 
-            // Step dots
+            // Step indicator
             Row(horizontalArrangement = Arrangement.spacedBy(JannahSpacing.xs)) {
-                repeat(5) { i ->
+                repeat(6) { i ->
                     Box(
                         Modifier
                             .size(if (i == step) 24.dp else 6.dp, 6.dp)
                             .clip(CircleShape)
                             .background(
-                                if (i <= step) JannahColors.Gold else JannahColors.Faint
+                                if (i <= step) JannahColors.Orange
+                                else JannahColors.Border
                             )
                     )
                 }
@@ -78,28 +83,27 @@ fun OnboardingFlow(onDone: () -> Unit) {
             Box(Modifier.weight(1f).fillMaxWidth()) {
                 when (step) {
                     0 -> Welcome()
-                    1 -> AskName(name, onChange = { name = it })
-                    2 -> Location(lat, lon, method,
-                        onLat = { lat = it }, onLon = { lon = it }, onMethod = { method = it })
-                    3 -> ChooseLevel(level, onPick = { level = it })
-                    else -> DoneScreen()
+                    1 -> TheFourPillars()
+                    2 -> AskName(name) { name = it }
+                    3 -> Location(lat, lon, method, { lat = it }, { lon = it }, { method = it })
+                    4 -> ChooseLevel(level) { level = it }
+                    else -> DoneScreen(name.ifBlank { "friend" })
                 }
             }
 
-            // Bottom bar with action
             val label = when (step) {
-                0 -> "Begin"
-                else -> if (step == 4) "Open the app" else "Continue"
+                0, 1, 2, 3 -> "Continue"
+                else -> "Begin"
             }
 
             Box(
                 modifier = Modifier
                     .fillMaxWidth()
                     .height(56.dp)
-                    .clip(RoundedCornerShape(JannahSpacing.buttonRadius))
-                    .background(JannahBrushes.goldButton)
+                    .clip(RoundedCornerShape(JannahSpacing.pillRadius))
+                    .background(JannahColors.Ink)
                     .clickable {
-                        if (step == 4) {
+                        if (step == 5) {
                             val latD = lat.toDoubleOrNull() ?: 13.4549
                             val lonD = lon.toDoubleOrNull() ?: -16.5790
                             Settings.set(ctx, latD, lonD, method)
@@ -112,7 +116,7 @@ fun OnboardingFlow(onDone: () -> Unit) {
                     },
                 contentAlignment = Alignment.Center
             ) {
-                Text(label, style = JannahType.button, color = JannahColors.GoldInk)
+                Text(label, style = JannahType.button, color = JannahColors.OnOrange)
             }
 
             Spacer(Modifier.height(JannahSpacing.l))
@@ -122,23 +126,150 @@ fun OnboardingFlow(onDone: () -> Unit) {
 
 @Composable
 private fun Welcome() {
+    var visible by remember { mutableStateOf(false) }
+    androidx.compose.runtime.LaunchedEffect(Unit) {
+        kotlinx.coroutines.delay(120)
+        visible = true
+    }
+    val alpha by animateFloatAsState(if (visible) 1f else 0f, tween(900), label = "wa")
+    val offset by animateFloatAsState(if (visible) 0f else 24f, tween(900), label = "wo")
+
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .verticalScroll(rememberScrollState())
+            .graphicsLayer { this.alpha = alpha; translationY = offset },
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.Center
+    ) {
+        Text("Jannah",
+            fontFamily = FontFamily.Serif,
+            fontSize = 44.sp,
+            fontWeight = FontWeight.Bold,
+            letterSpacing = (-1).sp,
+            color = JannahColors.Ink)
+        Spacer(Modifier.height(JannahSpacing.s))
+        Text("A system for a life lived deliberately.",
+            fontFamily = FontFamily.Serif,
+            fontStyle = FontStyle.Italic,
+            fontSize = 17.sp,
+            color = JannahColors.Orange,
+            textAlign = TextAlign.Center)
+        Spacer(Modifier.height(JannahSpacing.xxl))
+        Text(
+            "Most Islamic apps give you more to do. This one gives you less, done deeper. It starts with one thing, and grows only when you are ready.",
+            style = JannahType.body,
+            color = JannahColors.Body,
+            textAlign = TextAlign.Center,
+            lineHeight = 24.sp
+        )
+    }
+}
+
+@Composable
+private fun TheFourPillars() {
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .verticalScroll(rememberScrollState()),
+        horizontalAlignment = Alignment.CenterHorizontally
+    ) {
+        Text("How this works",
+            fontFamily = FontFamily.Serif,
+            fontSize = 28.sp,
+            fontWeight = FontWeight.Bold,
+            color = JannahColors.Ink)
+        Spacer(Modifier.height(JannahSpacing.s))
+        Text("Four things. Nothing else on the surface.",
+            style = JannahType.caption, color = JannahColors.Muted)
+        Spacer(Modifier.height(JannahSpacing.xl))
+
+        Pillar(
+            "1", "Formation",
+            "Tahajjud, built as a habit — not a streak. Start with one night a week. The plan adapts when you miss, without guilt."
+        )
+        Pillar(
+            "2", "Witness",
+            "The diary reshapes your dashboard for 24 hours based on what you wrote. Milestones are celebrated. Struggles get mercy, not shame."
+        )
+        Pillar(
+            "3", "The Middle Path",
+            "Prayer, time, and money share one principle: balance. The app helps you find it, not chase maximums."
+        )
+        Pillar(
+            "4", "Learning",
+            "Right Now learns which suggestions actually move you. Over weeks it stops sending what you ignore and elevates what works."
+        )
+
+        Spacer(Modifier.height(JannahSpacing.l))
+        Text(
+            "There are more tools — Quran, adhkar, hifdh, duas, fasting. They are there when you need them. They will not compete for your attention.",
+            style = JannahType.bodySmall,
+            color = JannahColors.Muted,
+            textAlign = TextAlign.Center,
+            lineHeight = 20.sp
+        )
+    }
+}
+
+@Composable
+private fun Pillar(num: String, title: String, body: String) {
+    Row(
+        Modifier.fillMaxWidth().padding(vertical = JannahSpacing.m),
+        verticalAlignment = Alignment.Top
+    ) {
+        Box(
+            Modifier
+                .size(32.dp)
+                .clip(CircleShape)
+                .background(JannahColors.Orange),
+            contentAlignment = Alignment.Center
+        ) {
+            Text(num,
+                fontFamily = FontFamily.Serif,
+                fontSize = 16.sp,
+                fontWeight = FontWeight.Bold,
+                color = JannahColors.OnOrange)
+        }
+        Spacer(Modifier.padding(horizontal = 6.dp))
+        Column(Modifier.weight(1f)) {
+            Text(title,
+                fontFamily = FontFamily.Serif,
+                fontSize = 18.sp,
+                fontWeight = FontWeight.Bold,
+                color = JannahColors.Ink)
+            Spacer(Modifier.height(4.dp))
+            Text(body,
+                style = JannahType.bodySmall,
+                color = JannahColors.Body,
+                lineHeight = 20.sp)
+        }
+    }
+}
+
+@Composable
+private fun AskName(current: String, onChange: (String) -> Unit) {
     Column(
         modifier = Modifier.fillMaxSize().verticalScroll(rememberScrollState()),
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.Center
     ) {
-        Text("Welcome.", style = JannahType.title, color = JannahColors.Ivory)
-        Spacer(Modifier.height(JannahSpacing.l))
-        Text(
-            "This is not another prayer-times app. It is a system for building one habit at a time — starting with tahajjud, ending with a closer connection to Allah.",
-            style = JannahType.body, color = JannahColors.Body,
-            textAlign = TextAlign.Center, lineHeight = 26.sp
-        )
-        Spacer(Modifier.height(JannahSpacing.l))
-        Text(
-            "Nothing you write here leaves your phone. No account. No cloud. No ads.",
+        Text("What should we call you?",
+            fontFamily = FontFamily.Serif,
+            fontSize = 26.sp,
+            fontWeight = FontWeight.Bold,
+            color = JannahColors.Ink,
+            textAlign = TextAlign.Center)
+        Spacer(Modifier.height(JannahSpacing.s))
+        Text("A first name is fine. You can leave it blank.",
             style = JannahType.caption, color = JannahColors.Muted,
-            textAlign = TextAlign.Center
+            textAlign = TextAlign.Center)
+        Spacer(Modifier.height(JannahSpacing.l))
+        OutlinedTextField(
+            value = current,
+            onValueChange = onChange,
+            label = { Text("Your name") },
+            modifier = Modifier.fillMaxWidth()
         )
     }
 }
@@ -152,7 +283,11 @@ private fun Location(
         modifier = Modifier.fillMaxSize().verticalScroll(rememberScrollState()),
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
-        Text("Where are you?", style = JannahType.title, color = JannahColors.Ivory)
+        Text("Where are you?",
+            fontFamily = FontFamily.Serif,
+            fontSize = 26.sp,
+            fontWeight = FontWeight.Bold,
+            color = JannahColors.Ink)
         Spacer(Modifier.height(JannahSpacing.s))
         Text("Used only for prayer times. Stored on your phone.",
             style = JannahType.caption, color = JannahColors.Muted, textAlign = TextAlign.Center)
@@ -173,7 +308,8 @@ private fun Location(
 
         Spacer(Modifier.height(JannahSpacing.l))
 
-        Text("Calculation method", style = JannahType.eyebrow, color = JannahColors.Muted,
+        Text("Calculation method",
+            style = JannahType.eyebrow, color = JannahColors.OrangeDeep,
             modifier = Modifier.fillMaxWidth(), textAlign = TextAlign.Left)
         Spacer(Modifier.height(JannahSpacing.s))
 
@@ -183,7 +319,7 @@ private fun Location(
                 modifier = Modifier
                     .fillMaxWidth()
                     .clip(RoundedCornerShape(12.dp))
-                    .background(if (selected) JannahColors.Surface else JannahColors.Deep)
+                    .background(if (selected) JannahColors.OrangeSoft else JannahColors.Card)
                     .clickable { onMethod(code) }
                     .padding(JannahSpacing.m),
                 verticalAlignment = Alignment.CenterVertically
@@ -191,10 +327,11 @@ private fun Location(
                 Text(
                     label,
                     style = JannahType.bodySmall,
-                    color = if (selected) JannahColors.Ivory else JannahColors.Muted,
+                    color = if (selected) JannahColors.OrangeDeep else JannahColors.Body,
+                    fontWeight = if (selected) FontWeight.SemiBold else FontWeight.Normal,
                     modifier = Modifier.weight(1f)
                 )
-                if (selected) Text("✓", style = JannahType.bodySmall, color = JannahColors.Gold)
+                if (selected) Text("✓", style = JannahType.bodySmall, color = JannahColors.Orange)
             }
             Spacer(Modifier.height(JannahSpacing.xs))
         }
@@ -209,17 +346,21 @@ private fun ChooseLevel(level: Int, onPick: (Int) -> Unit) {
         modifier = Modifier.fillMaxSize().verticalScroll(rememberScrollState()),
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
-        Text("Start small.", style = JannahType.title, color = JannahColors.Ivory)
+        Text("Start small.",
+            fontFamily = FontFamily.Serif,
+            fontSize = 26.sp,
+            fontWeight = FontWeight.Bold,
+            color = JannahColors.Ink)
         Spacer(Modifier.height(JannahSpacing.s))
-        Text("Choose how many nights a week you want to wake for tahajjud. You can change this anytime.",
+        Text("How many nights a week do you want to wake for tahajjud? You can change this anytime.",
             style = JannahType.caption, color = JannahColors.Muted, textAlign = TextAlign.Center)
 
         Spacer(Modifier.height(JannahSpacing.l))
 
         listOf(
-            1 to "One night a week",
-            2 to "Two nights a week",
-            3 to "Three nights a week",
+            1 to "One night a week · start with Thursday",
+            2 to "Two nights a week · Monday & Thursday",
+            3 to "Three nights a week · Mon, Thu, Sat",
             7 to "Every night"
         ).forEach { (lvl, label) ->
             val selected = level == lvl
@@ -227,7 +368,7 @@ private fun ChooseLevel(level: Int, onPick: (Int) -> Unit) {
                 modifier = Modifier
                     .fillMaxWidth()
                     .clip(RoundedCornerShape(14.dp))
-                    .background(if (selected) JannahColors.Surface else JannahColors.Deep)
+                    .background(if (selected) JannahColors.OrangeSoft else JannahColors.Card)
                     .clickable { onPick(lvl) }
                     .padding(JannahSpacing.m),
                 verticalAlignment = Alignment.CenterVertically
@@ -235,11 +376,11 @@ private fun ChooseLevel(level: Int, onPick: (Int) -> Unit) {
                 Text(
                     label,
                     style = JannahType.body,
-                    color = if (selected) JannahColors.Ivory else JannahColors.Body,
-                    fontWeight = if (selected) FontWeight.Medium else FontWeight.Normal,
+                    color = if (selected) JannahColors.OrangeDeep else JannahColors.Ink,
+                    fontWeight = if (selected) FontWeight.SemiBold else FontWeight.Normal,
                     modifier = Modifier.weight(1f)
                 )
-                if (selected) Text("✓", style = JannahType.body, color = JannahColors.Gold)
+                if (selected) Text("✓", style = JannahType.body, color = JannahColors.Orange)
             }
             Spacer(Modifier.height(JannahSpacing.s))
         }
@@ -247,42 +388,31 @@ private fun ChooseLevel(level: Int, onPick: (Int) -> Unit) {
 }
 
 @Composable
-private fun AskName(current: String, onChange: (String) -> Unit) {
+private fun DoneScreen(name: String) {
     Column(
         modifier = Modifier.fillMaxSize().verticalScroll(rememberScrollState()),
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.Center
     ) {
-        Text("What should we call you?",
-            style = JannahType.title, color = JannahColors.Ink)
-        Spacer(Modifier.height(JannahSpacing.s))
-        Text("Just a first name is fine. You can leave it blank.",
-            style = JannahType.caption, color = JannahColors.Muted,
+        Text("You're set, $name.",
+            fontFamily = FontFamily.Serif,
+            fontSize = 30.sp,
+            fontWeight = FontWeight.Bold,
+            color = JannahColors.Ink,
+            textAlign = TextAlign.Center,
+            lineHeight = 36.sp)
+        Spacer(Modifier.height(JannahSpacing.m))
+        Text("Come back tonight. Set the alarm. Sleep with intention.",
+            fontFamily = FontFamily.Serif,
+            fontStyle = FontStyle.Italic,
+            fontSize = 17.sp,
+            color = JannahColors.Orange,
+            textAlign = TextAlign.Center,
+            lineHeight = 26.sp)
+        Spacer(Modifier.height(JannahSpacing.l))
+        Text("The rest of the app waits for you. It will not chase.",
+            style = JannahType.bodySmall,
+            color = JannahColors.Muted,
             textAlign = TextAlign.Center)
-
-        Spacer(Modifier.height(JannahSpacing.l))
-
-        OutlinedTextField(
-            value = current,
-            onValueChange = onChange,
-            label = { Text("Your name") },
-            modifier = Modifier.fillMaxWidth()
-        )
-    }
-}
-
-@Composable
-private fun DoneScreen() {
-    Column(
-        modifier = Modifier.fillMaxSize().verticalScroll(rememberScrollState()),
-        horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.Center
-    ) {
-        Text("You're set.", style = JannahType.title, color = JannahColors.Ivory)
-        Spacer(Modifier.height(JannahSpacing.l))
-        Text(
-            "Come back tonight. Set the alarm. Sleep with intention.",
-            style = JannahType.body, color = JannahColors.Body, textAlign = TextAlign.Center
-        )
     }
 }
