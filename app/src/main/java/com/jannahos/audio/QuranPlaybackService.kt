@@ -1,5 +1,6 @@
 package com.jannahos.audio
 
+import android.app.Notification
 import android.app.NotificationChannel
 import android.app.NotificationManager
 import android.app.PendingIntent
@@ -15,6 +16,9 @@ import com.jannahos.QuranApi
 import com.jannahos.QuranCache
 import com.jannahos.R
 import com.jannahos.Reciters
+import java.io.File
+import java.io.PrintWriter
+import java.io.StringWriter
 
 class QuranPlaybackService : Service() {
 
@@ -23,83 +27,70 @@ class QuranPlaybackService : Service() {
     private var ayahLabel: String = ""
     private var currentSurah: Int = 0
     private var currentAyah: Int = 0
+    private var started = false
 
     override fun onBind(intent: Intent?): IBinder? = null
 
     override fun onCreate() {
         super.onCreate()
-        // Critical: startForeground must be called within ~5 seconds of
-        // startForegroundService. Do it FIRST, before any slow setup.
+        // Absolutely first: register as foreground. Nothing else before this.
+        // If this fails, Android kills the process — so we log and stop cleanly.
         try {
-            createChannel()
+            ensureChannel()
             startForeground(NOTIF_ID, buildNotification())
-        } catch (_: Throwable) {}
+            started = true
+        } catch (t: Throwable) {
+            writeCrash("startForeground failed", t)
+            stopSelf()
+            return
+        }
+
+        // Now safe to set up the player.
         try {
             playlist = AyahPlaylist(this).apply {
-            setListener(object : AyahPlaylist.Listener {
-                override fun onAyahStarted(surah: Int, ayah: Int) {
-                    currentSurah = surah
-                    currentAyah = ayah
-                    surahName = QuranCache.SURAHS.firstOrNull { it.first == surah }?.second
-                        ?: "Surah $surah"
-                    ayahLabel = "Ayah $ayah"
-                    PlaybackBus.started(surah, ayah)
-                    updateNotification()
-                }
-                override fun onSurahFinished(surah: Int) {
-                    PlaybackBus.stopped()
-                    stopPlaybackAndSelf()
-                }
+                setListener(object : AyahPlaylist.Listener {
+                    override fun onAyahStarted(surah: Int, ayah: Int) {
+                        currentSurah = surah
+                        currentAyah = ayah
+                        surahName = QuranCache.SURAHS.firstOrNull { it.first == surah }?.second
+                            ?: "Surah $surah"
+                        ayahLabel = "Ayah $ayah"
+                        PlaybackBus.started(surah, ayah)
+                        updateNotification()
+                    }
+                    override fun onSurahFinished(surah: Int) {
+                        PlaybackBus.stopped()
+                        shutdown()
+                    }
                 })
             }
         } catch (t: Throwable) {
-            logCrash(t)
-            stopSelf()
+            writeCrash("playlist setup failed", t)
+            shutdown()
         }
-    }
-
-    private fun logCrash(t: Throwable) {
-        try {
-            val sw = java.io.StringWriter()
-            t.printStackTrace(java.io.PrintWriter(sw))
-            val stamp = java.text.SimpleDateFormat("yyyy-MM-dd_HH-mm-ss", java.util.Locale.US)
-                .format(java.util.Date())
-            val dir = java.io.File(
-                android.os.Environment.getExternalStoragePublicDirectory(
-                    android.os.Environment.DIRECTORY_DOWNLOADS
-                ),
-                "jannah_crashes"
-            )
-            if (!dir.exists()) dir.mkdirs()
-            java.io.File(dir, "service_crash_$stamp.txt").writeText(sw.toString())
-        } catch (_: Throwable) {}
     }
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
-        try {
-            return handleStart(intent, startId)
-        } catch (t: Throwable) {
-            logCrash(t)
-            stopSelf()
-            return START_NOT_STICKY
+        // Guarantee we are still foreground (Android checks occasionally).
+        if (!started) {
+            try {
+                ensureChannel()
+                startForeground(NOTIF_ID, buildNotification())
+                started = true
+            } catch (t: Throwable) {
+                writeCrash("onStartCommand startForeground failed", t)
+                stopSelf()
+                return START_NOT_STICKY
+            }
         }
-    }
-
-    private fun handleStart(intent: Intent?, startId: Int): Int {
-        // Ensure we are foreground right away — Android requires this within seconds.
-        try { startForeground(NOTIF_ID, buildNotification()) } catch (_: Throwable) {}
         when (intent?.action) {
-            ACTION_STOP -> { stopPlaybackAndSelf(); return START_NOT_STICKY }
+            ACTION_STOP -> { shutdown(); return START_NOT_STICKY }
             ACTION_PLAY -> {
                 val surah = intent.getIntExtra("surah", 0)
                 val startAyah = intent.getIntExtra("start", 1)
                 val endAyah = intent.getIntExtra("end", 0)
-                if (surah > 0) {
-                    startForeground(NOTIF_ID, buildNotification())
-                    playFromCache(surah, startAyah, endAyah)
-                }
+                if (surah > 0) playFromCache(surah, startAyah, endAyah)
             }
-            else -> startForeground(NOTIF_ID, buildNotification())
         }
         return START_NOT_STICKY
     }
@@ -114,30 +105,31 @@ class QuranPlaybackService : Service() {
                     cache.save(surah, f)
                     f
                 }
-                if (ayahs.isEmpty()) { stopPlaybackAndSelf(); return@Thread }
+                if (ayahs.isEmpty()) { shutdown(); return@Thread }
                 val end = if (endAyah <= 0) ayahs.last().number else endAyah
                 playlist?.playSurah(surah, startAyah, end, ayahs)
-            } catch (e: Exception) {
-                stopPlaybackAndSelf()
+            } catch (t: Throwable) {
+                writeCrash("playFromCache failed", t)
+                shutdown()
             }
         }.start()
     }
 
-    private fun stopPlaybackAndSelf() {
-        playlist?.stop()
+    private fun shutdown() {
+        try { playlist?.stop() } catch (_: Throwable) {}
         PlaybackBus.stopped()
-        stopForeground(STOP_FOREGROUND_REMOVE)
+        try { stopForeground(STOP_FOREGROUND_REMOVE) } catch (_: Throwable) {}
         stopSelf()
     }
 
     override fun onDestroy() {
-        playlist?.stop()
+        try { playlist?.stop() } catch (_: Throwable) {}
         super.onDestroy()
     }
 
     // ---- Notification ----
 
-    private fun createChannel() {
+    private fun ensureChannel() {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             val nm = getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
             if (nm.getNotificationChannel(CHANNEL) == null) {
@@ -149,13 +141,18 @@ class QuranPlaybackService : Service() {
                     ).apply {
                         description = "Reciter playing in the background"
                         setShowBadge(false)
+                        setSound(null, null)
+                        enableVibration(false)
                     }
                 )
             }
         }
     }
 
-    private fun buildNotification(): android.app.Notification {
+    private fun buildNotification(): Notification {
+        // Use a system icon — guaranteed valid on every device.
+        val icon = android.R.drawable.ic_media_play
+
         val open = Intent(this, MainActivity::class.java)
         var flags = PendingIntent.FLAG_UPDATE_CURRENT
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M)
@@ -168,12 +165,15 @@ class QuranPlaybackService : Service() {
             flags
         )
 
-        val reciter = Reciters.current(this)
+        val reciter = try { Reciters.current(this) } catch (_: Throwable) { null }
+
+        val title = if (surahName.isBlank()) "Quran" else surahName
+        val text = if (reciter != null) "${reciter.label} · $ayahLabel" else ayahLabel
 
         return NotificationCompat.Builder(this, CHANNEL)
-            .setSmallIcon(R.drawable.ic_playback)
-            .setContentTitle(if (surahName.isBlank()) "Quran" else surahName)
-            .setContentText("${reciter.label} · $ayahLabel")
+            .setSmallIcon(icon)
+            .setContentTitle(title)
+            .setContentText(text)
             .setContentIntent(pi)
             .addAction(android.R.drawable.ic_media_pause, "Stop", stopIntent)
             .setOngoing(true)
@@ -184,8 +184,20 @@ class QuranPlaybackService : Service() {
     }
 
     private fun updateNotification() {
-        val nm = getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
-        nm.notify(NOTIF_ID, buildNotification())
+        try {
+            val nm = getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
+            nm.notify(NOTIF_ID, buildNotification())
+        } catch (_: Throwable) {}
+    }
+
+    private fun writeCrash(tag: String, t: Throwable) {
+        try {
+            val sw = StringWriter()
+            t.printStackTrace(PrintWriter(sw))
+            val dir = File(filesDir, "crashes")
+            if (!dir.exists()) dir.mkdirs()
+            File(dir, "svc_${System.currentTimeMillis()}.txt").writeText("$tag\n\n$sw")
+        } catch (_: Throwable) {}
     }
 
     companion object {
@@ -206,14 +218,18 @@ class QuranPlaybackService : Service() {
                     context.startForegroundService(i)
                 else context.startService(i)
             } catch (t: Throwable) {
-                // Fall back to a plain background service if the OS refuses.
+                // Fallback: plain startService. On Android 8+ the service
+                // must still call startForeground() within 5s of onCreate —
+                // which it does.
                 try { context.startService(i) } catch (_: Throwable) {}
             }
         }
 
         fun stop(context: Context) {
-            val i = Intent(context, QuranPlaybackService::class.java).setAction(ACTION_STOP)
-            context.startService(i)
+            try {
+                val i = Intent(context, QuranPlaybackService::class.java).setAction(ACTION_STOP)
+                context.startService(i)
+            } catch (_: Throwable) {}
         }
     }
 }

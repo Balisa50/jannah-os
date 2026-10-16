@@ -102,7 +102,6 @@
         </receiver>
             <service
             android:name=".audio.QuranPlaybackService"
-            android:exported="false"
-            android:foregroundServiceType="mediaPlayback" />
+            android:exported="false" />
     </application>
 </manifest>
