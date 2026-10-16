@@ -55,6 +55,7 @@ fun YouScreen() {
     val showDuas = remember { mutableStateOf(false) }
     val showCalendar = remember { mutableStateOf(false) }
     val showZakat = remember { mutableStateOf(false) }
+    val showHifdh = remember { mutableStateOf(false) }
 
     if (showFormation.value) {
         FormationScreen(onBack = { showFormation.value = false })
@@ -90,6 +91,10 @@ fun YouScreen() {
     }
     if (showZakat.value) {
         ZakatScreen(onBack = { showZakat.value = false })
+        return
+    }
+    if (showHifdh.value) {
+        HifdhScreen(onBack = { showHifdh.value = false })
         return
     }
 
@@ -219,6 +224,8 @@ fun YouScreen() {
                     ListRow("Islamic calendar") { showCalendar.value = true }
                     Box(Modifier.fillMaxWidth().height(1.dp).background(JannahColors.Divider))
                     ListRow("Zakat calculator") { showZakat.value = true }
+                    Box(Modifier.fillMaxWidth().height(1.dp).background(JannahColors.Divider))
+                    ListRow("Hifdh — memorize Quran") { showHifdh.value = true }
                     Box(Modifier.fillMaxWidth().height(1.dp).background(JannahColors.Divider))
                     ListRow("Tonight's plan") { ctx.startActivity(Intent(ctx, BedtimeActivity::class.java)) }
                     Box(Modifier.fillMaxWidth().height(1.dp).background(JannahColors.Divider))
