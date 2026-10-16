@@ -40,6 +40,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.jannahos.ui.screens.WakeScreenCinematic
 import com.jannahos.ui.theme.JannahColors
 import com.jannahos.ui.theme.JannahSpacing
 import com.jannahos.ui.theme.JannahTheme
@@ -162,7 +163,7 @@ class TahajjudAlarmActivity : ComponentActivity() {
         val log = remember { WakeLog(this@TahajjudAlarmActivity) }
 
         when (step) {
-            0 -> WakeScreen(
+            0 -> WakeScreenCinematic(
                 onAwake = { step = 1 },
                 onSnooze = {
                     TahajjudScheduler.scheduleBackup(this@TahajjudAlarmActivity, 15)
