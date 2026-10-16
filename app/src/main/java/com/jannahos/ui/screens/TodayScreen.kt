@@ -36,6 +36,8 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.jannahos.Companion
+import com.jannahos.DiaryClassifier
+import com.jannahos.DiaryStore
 import com.jannahos.WeatherApi
 import com.jannahos.HijriDate
 import com.jannahos.RightNow
@@ -88,6 +90,13 @@ fun TodayScreen(onNavigate: (String) -> Unit = {}) {
     val today = SalahTracker.today(ctx)
 
     var companionMsg by remember { mutableStateOf<Companion.Message?>(null) }
+    val diaryLatest = remember { DiaryStore(ctx).latestTagIn24h() }
+    val diaryReaction = remember {
+        diaryLatest?.let { e ->
+            val r = DiaryClassifier.classify(e.text)
+            r.takeIf { it.reactionTitle.isNotBlank() }
+        }
+    }
     val prayerTimesMs = remember { prayerTimes.mapValues { it.value.time } }
     var rightNow by remember { mutableStateOf(RightNow.decide(ctx, prayerTimesMs)) }
     LaunchedEffect(Unit) {
@@ -140,6 +149,69 @@ fun TodayScreen(onNavigate: (String) -> Unit = {}) {
                                 style = JannahType.caption,
                                 color = JannahColors.OnOrange,
                                 fontWeight = androidx.compose.ui.text.font.FontWeight.Bold)
+                        }
+                    }
+                }
+            }
+        }
+
+        // Diary celebration / reaction — shown for 24h after an entry
+        if (diaryReaction != null) {
+            val r = diaryReaction!!
+            val isMilestone = r.tag.startsWith("milestone")
+            Box(
+                Modifier
+                    .fillMaxWidth()
+                    .background(
+                        if (isMilestone) JannahColors.OrangeDeep else JannahColors.OrangeSoft
+                    )
+                    .padding(horizontal = JannahSpacing.gutter)
+                    .padding(vertical = JannahSpacing.m)
+            ) {
+                Column {
+                    Text(
+                        if (isMilestone) "TODAY" else "YOU WROTE",
+                        style = JannahType.eyebrow,
+                        color = if (isMilestone) JannahColors.OnOrange.copy(alpha = 0.7f) else JannahColors.OrangeDeep
+                    )
+                    Spacer(Modifier.height(4.dp))
+                    Text(r.reactionTitle,
+                        fontFamily = androidx.compose.ui.text.font.FontFamily.Serif,
+                        fontSize = 20.sp,
+                        fontWeight = androidx.compose.ui.text.font.FontWeight.Bold,
+                        color = if (isMilestone) JannahColors.OnOrange else JannahColors.Ink,
+                        lineHeight = 26.sp)
+                    Spacer(Modifier.height(4.dp))
+                    Text(r.reactionBody,
+                        style = JannahType.bodySmall,
+                        color = if (isMilestone) JannahColors.OnOrange.copy(alpha = 0.9f) else JannahColors.Body,
+                        lineHeight = 20.sp)
+                    if (r.source.isNotBlank()) {
+                        Spacer(Modifier.height(4.dp))
+                        Text(r.source,
+                            style = JannahType.micro,
+                            color = if (isMilestone) JannahColors.OnOrange.copy(alpha = 0.7f) else JannahColors.Faint)
+                    }
+                    if (r.actionRoute != null) {
+                        Spacer(Modifier.height(JannahSpacing.s))
+                        Box(
+                            Modifier
+                                .clip(RoundedCornerShape(JannahSpacing.pillRadius))
+                                .background(if (isMilestone) JannahColors.OnOrange.copy(alpha = 0.15f) else JannahColors.Ink)
+                                .clickable { onNavigate(r.actionRoute) }
+                                .padding(horizontal = 14.dp, vertical = 8.dp)
+                        ) {
+                            Text(
+                                when (r.actionRoute) {
+                                    "tawbah" -> "Open tawbah"
+                                    "pray" -> "Open prayer"
+                                    "dhikr" -> "Open dhikr"
+                                    else -> "Open"
+                                },
+                                style = JannahType.caption,
+                                color = if (isMilestone) JannahColors.OnOrange else JannahColors.OnOrange,
+                                fontWeight = androidx.compose.ui.text.font.FontWeight.Bold
+                            )
                         }
                     }
                 }

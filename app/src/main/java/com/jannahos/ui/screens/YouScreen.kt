@@ -58,6 +58,7 @@ fun YouScreen() {
     val showHifdh = remember { mutableStateOf(false) }
     val showCharacter = remember { mutableStateOf(false) }
     val showSunnah = remember { mutableStateOf(false) }
+    val showDiary = remember { mutableStateOf(false) }
 
     if (showFormation.value) {
         FormationScreen(onBack = { showFormation.value = false })
@@ -107,8 +108,16 @@ fun YouScreen() {
         SunnahScreen(onBack = { showSunnah.value = false })
         return
     }
+    if (showDiary.value) {
+        DiaryScreen(onBack = { showDiary.value = false })
+        return
+    }
     if (showSunnah.value) {
         SunnahScreen(onBack = { showSunnah.value = false })
+        return
+    }
+    if (showDiary.value) {
+        DiaryScreen(onBack = { showDiary.value = false })
         return
     }
 
@@ -245,7 +254,11 @@ fun YouScreen() {
                     Box(Modifier.fillMaxWidth().height(1.dp).background(JannahColors.Divider))
                     ListRow("Sunnah prayers") { showSunnah.value = true }
                     Box(Modifier.fillMaxWidth().height(1.dp).background(JannahColors.Divider))
+                    ListRow("Diary") { showDiary.value = true }
+                    Box(Modifier.fillMaxWidth().height(1.dp).background(JannahColors.Divider))
                     ListRow("Sunnah prayers") { showSunnah.value = true }
+                    Box(Modifier.fillMaxWidth().height(1.dp).background(JannahColors.Divider))
+                    ListRow("Diary") { showDiary.value = true }
                     Box(Modifier.fillMaxWidth().height(1.dp).background(JannahColors.Divider))
                     ListRow("Tonight's plan") { ctx.startActivity(Intent(ctx, BedtimeActivity::class.java)) }
                     Box(Modifier.fillMaxWidth().height(1.dp).background(JannahColors.Divider))
