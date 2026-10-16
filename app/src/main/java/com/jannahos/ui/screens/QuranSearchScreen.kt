@@ -34,6 +34,7 @@ import androidx.compose.ui.unit.sp
 import com.jannahos.QuranBookmarkStore
 import com.jannahos.QuranCache
 import com.jannahos.QuranSearch
+import com.jannahos.ui.TopBar
 import com.jannahos.ui.theme.JannahColors
 import com.jannahos.ui.theme.JannahSpacing
 import com.jannahos.ui.theme.JannahType
