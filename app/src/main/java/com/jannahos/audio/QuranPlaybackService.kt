@@ -132,7 +132,7 @@ class QuranPlaybackService : Service() {
         val reciter = Reciters.current(this)
 
         return NotificationCompat.Builder(this, CHANNEL)
-            .setSmallIcon(R.drawable.jannah_icon_foreground)
+            .setSmallIcon(R.drawable.ic_playback)
             .setContentTitle(if (surahName.isBlank()) "Quran" else surahName)
             .setContentText("${reciter.label} · $ayahLabel")
             .setContentIntent(pi)
@@ -162,9 +162,14 @@ class QuranPlaybackService : Service() {
                 putExtra("start", startAyah)
                 putExtra("end", endAyah)
             }
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O)
-                context.startForegroundService(i)
-            else context.startService(i)
+            try {
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O)
+                    context.startForegroundService(i)
+                else context.startService(i)
+            } catch (t: Throwable) {
+                // Fall back to a plain background service if the OS refuses.
+                try { context.startService(i) } catch (_: Throwable) {}
+            }
         }
 
         fun stop(context: Context) {

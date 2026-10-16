@@ -337,7 +337,7 @@ fun MushafReaderScreen(
                         horizontalArrangement = Arrangement.spacedBy(JannahSpacing.s)
                     ) {
                         ActionChip(Modifier.weight(1f), "▶ Play from here") {
-                            QuranPlaybackService.play(ctx, surah, a.number, ayahs.lastOrNull()?.number ?: a.number)
+                            try { QuranPlaybackService.play(ctx, surah, a.number, ayahs.lastOrNull()?.number ?: a.number) } catch (_: Throwable) {}
                             selectedAyah = null
                         }
                         ActionChip(
@@ -367,7 +367,7 @@ fun MushafReaderScreen(
                                 QuranPlaybackService.stop(ctx)
                                 playingAyah = 0
                             } else {
-                                QuranPlaybackService.play(ctx, surah, ayahs.first().number, ayahs.last().number)
+                                try { QuranPlaybackService.play(ctx, surah, ayahs.first().number, ayahs.last().number) } catch (_: Throwable) {}
                             }
                             selectedAyah = null
                         }
