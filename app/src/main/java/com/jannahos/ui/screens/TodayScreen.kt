@@ -115,6 +115,10 @@ fun TodayScreen(onNavigate: (String) -> Unit = {}) {
         // "Right Now" card — single intelligent suggestion
         if (rightNow != null) {
             val rn = rightNow!!
+            // Log this suggestion shown once per screen compose
+            androidx.compose.runtime.LaunchedEffect(rn.kind) {
+                com.jannahos.RightNow.trackShown(ctx, rn.kind)
+            }
             Box(
                 Modifier
                     .fillMaxWidth()
@@ -144,7 +148,10 @@ fun TodayScreen(onNavigate: (String) -> Unit = {}) {
                             Modifier
                                 .clip(RoundedCornerShape(JannahSpacing.pillRadius))
                                 .background(JannahColors.OnOrange.copy(alpha = 0.15f))
-                                .clickable { onNavigate(rn.actionRoute) }
+                                .clickable {
+                                    com.jannahos.RightNow.trackActed(ctx, rn.kind)
+                                    onNavigate(rn.actionRoute)
+                                }
                                 .padding(horizontal = 14.dp, vertical = 8.dp)
                         ) {
                             Text(rn.actionLabel,

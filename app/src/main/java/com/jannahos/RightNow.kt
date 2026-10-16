@@ -24,6 +24,12 @@ object RightNow {
         val today = SalahTracker.today(context)
         val ordered = listOf("fajr", "dhuhr", "asr", "maghrib", "isha")
 
+        // Does the user actually act on any particular kind of nudge?
+        // If so, we elevate that one priority — but only within reason.
+        // Prayer-related kinds are always permitted regardless.
+        val log = InterventionLog(context)
+        val best = log.bestKind()
+
         // Are we within 20 minutes of a prayer time?
         val imminent = ordered.firstOrNull { key ->
             val t = prayerTimes[key] ?: return@firstOrNull false
@@ -109,6 +115,46 @@ object RightNow {
             )
         }
 
+        // ---- Personal bias: what has the user actually responded to? ----
+        // If they consistently act on a kind that fits the current hour, prefer it.
+        if (best != null) {
+            val personal = when (best) {
+                "dhikr" -> Suggestion(
+                    title = "A moment of remembrance",
+                    body = "You usually act on these. Thirty seconds of istighfar.",
+                    actionLabel = "Open dhikr",
+                    actionRoute = "dhikr",
+                    kind = "dhikr"
+                )
+                "quran" -> Suggestion(
+                    title = "A page of Quran",
+                    body = "You tend to read when reminded. Ten minutes.",
+                    actionLabel = "Open Quran",
+                    actionRoute = "quran",
+                    kind = "quran"
+                )
+                "tahajjud" -> Suggestion(
+                    title = "Your night rhythm",
+                    body = "You have been consistent when you plan ahead.",
+                    actionLabel = "Tonight's plan",
+                    actionRoute = "you",
+                    kind = "tahajjud"
+                )
+                else -> null
+            }
+            if (personal != null) return personal
+        }
+
         return null
+    }
+
+    // Helper for the UI: call this when a suggestion was shown.
+    fun trackShown(context: Context, kind: String): Long =
+        InterventionLog(context).logShown(kind)
+
+    // Call this when the user actually tapped the action.
+    fun trackActed(context: Context, kind: String) {
+        val id = InterventionLog(context).lastUnacted(kind) ?: return
+        InterventionLog(context).markActed(id)
     }
 }

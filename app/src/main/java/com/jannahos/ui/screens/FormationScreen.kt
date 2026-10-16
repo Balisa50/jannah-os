@@ -29,6 +29,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.jannahos.FrictionMap
+import com.jannahos.InterventionLog
 import com.jannahos.TahajjudPlan
 import com.jannahos.WakeLog
 import com.jannahos.ui.theme.JannahColors
@@ -217,6 +218,52 @@ fun FormationScreen(onBack: () -> Unit) {
                             style = JannahType.bodySmall,
                             color = JannahColors.Orange,
                             lineHeight = 20.sp
+                        )
+                    }
+                }
+            }
+
+            // What you actually act on
+            val statsList = remember { InterventionLog(ctx).stats(30).filter { it.shown >= 2 } }
+            if (statsList.isNotEmpty()) {
+                Spacer(Modifier.height(JannahSpacing.l))
+                Text("WHAT MOVES YOU", style = JannahType.eyebrow, color = JannahColors.OrangeDeep)
+                Spacer(Modifier.height(JannahSpacing.s))
+                Box(
+                    Modifier
+                        .fillMaxWidth()
+                        .clip(RoundedCornerShape(JannahSpacing.cardRadius))
+                        .background(JannahColors.Card)
+                        .padding(JannahSpacing.l)
+                ) {
+                    Column {
+                        Text(
+                            "Over the last 30 days, when the app suggested these, you acted:",
+                            style = JannahType.caption, color = JannahColors.Muted,
+                            lineHeight = 18.sp
+                        )
+                        Spacer(Modifier.height(JannahSpacing.s))
+                        statsList.take(4).forEach { st ->
+                            Row(
+                                Modifier.fillMaxWidth().padding(vertical = 6.dp),
+                                horizontalArrangement = Arrangement.SpaceBetween
+                            ) {
+                                Text(InterventionLog.label(st.kind),
+                                    fontFamily = FontFamily.Serif,
+                                    fontSize = 15.sp,
+                                    fontWeight = FontWeight.Bold,
+                                    color = JannahColors.Ink)
+                                Text("${(st.rate * 100).toInt()}%",
+                                    style = JannahType.bodySmall,
+                                    color = JannahColors.Orange,
+                                    fontWeight = FontWeight.Bold)
+                            }
+                        }
+                        Spacer(Modifier.height(JannahSpacing.s))
+                        Text(
+                            "This is observation, not a score. No points, no streaks. The app simply learns what helps you move.",
+                            style = JannahType.micro, color = JannahColors.Faint,
+                            lineHeight = 14.sp
                         )
                     }
                 }
