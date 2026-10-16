@@ -69,6 +69,7 @@ fun YouScreen() {
     val showLetters = remember { mutableStateOf(false) }
     val showDuaJournal = remember { mutableStateOf(false) }
     val showGraduation = remember { mutableStateOf(false) }
+    val showAbout = remember { mutableStateOf(false) }
     var showMore by remember { mutableStateOf(false) }
 
     // Route the modals
@@ -92,12 +93,15 @@ fun YouScreen() {
     if (showLetters.value) { LettersScreen(onBack = { showLetters.value = false }); return }
     if (showDuaJournal.value) { DuaJournalScreen(onBack = { showDuaJournal.value = false }); return }
     if (showGraduation.value) { GraduationScreen(onBack = { showGraduation.value = false }); return }
+    if (showAbout.value) { AboutScreen(onBack = { showAbout.value = false }); return }
     if (showLetters.value) { LettersScreen(onBack = { showLetters.value = false }); return }
     if (showDuaJournal.value) { DuaJournalScreen(onBack = { showDuaJournal.value = false }); return }
     if (showGraduation.value) { GraduationScreen(onBack = { showGraduation.value = false }); return }
+    if (showAbout.value) { AboutScreen(onBack = { showAbout.value = false }); return }
     if (showLetters.value) { LettersScreen(onBack = { showLetters.value = false }); return }
     if (showDuaJournal.value) { DuaJournalScreen(onBack = { showDuaJournal.value = false }); return }
     if (showGraduation.value) { GraduationScreen(onBack = { showGraduation.value = false }); return }
+    if (showAbout.value) { AboutScreen(onBack = { showAbout.value = false }); return }
 
     val name = Settings.displayName(ctx)
     val level = TahajjudPlan.level(ctx)
@@ -287,6 +291,8 @@ fun YouScreen() {
                     .background(JannahColors.Card)
             ) {
                 Column {
+                    ListRow("About Jannah") { showAbout.value = true }
+                    Box(Modifier.fillMaxWidth().height(1.dp).background(JannahColors.Divider))
                     ListRow("Location & calculation") {
                         ctx.startActivity(Intent(ctx, SettingsActivity::class.java))
                     }
