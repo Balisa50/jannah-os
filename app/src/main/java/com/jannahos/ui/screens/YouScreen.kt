@@ -64,6 +64,7 @@ fun YouScreen() {
     val showSunnah = remember { mutableStateOf(false) }
     val showAdhkar = remember { mutableStateOf(false) }
     val showSadaqah = remember { mutableStateOf(false) }
+    val showFinance = remember { mutableStateOf(false) }
     var showMore by remember { mutableStateOf(false) }
 
     // Route the modals
@@ -82,6 +83,7 @@ fun YouScreen() {
     if (showSunnah.value) { SunnahScreen(onBack = { showSunnah.value = false }); return }
     if (showAdhkar.value) { AdhkarScreen(onBack = { showAdhkar.value = false }); return }
     if (showSadaqah.value) { SadaqahScreen(onBack = { showSadaqah.value = false }); return }
+    if (showFinance.value) { FinanceScreen(onBack = { showFinance.value = false }); return }
 
     val name = Settings.displayName(ctx)
     val level = TahajjudPlan.level(ctx)
@@ -251,6 +253,8 @@ fun YouScreen() {
                         ListRow("Character & daily hadith") { showCharacter.value = true }
                         Divider()
                         ListRow("Sleep log") { showSleep.value = true }
+                        Divider()
+                        ListRow("Finance — the middle path") { showFinance.value = true }
                     }
                 }
             }
