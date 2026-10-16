@@ -28,8 +28,13 @@ class QuranPlaybackService : Service() {
 
     override fun onCreate() {
         super.onCreate()
+        // Critical: startForeground must be called within ~5 seconds of
+        // startForegroundService. Do it FIRST, before any slow setup.
         try {
             createChannel()
+            startForeground(NOTIF_ID, buildNotification())
+        } catch (_: Throwable) {}
+        try {
             playlist = AyahPlaylist(this).apply {
             setListener(object : AyahPlaylist.Listener {
                 override fun onAyahStarted(surah: Int, ayah: Int) {
@@ -81,6 +86,8 @@ class QuranPlaybackService : Service() {
     }
 
     private fun handleStart(intent: Intent?, startId: Int): Int {
+        // Ensure we are foreground right away — Android requires this within seconds.
+        try { startForeground(NOTIF_ID, buildNotification()) } catch (_: Throwable) {}
         when (intent?.action) {
             ACTION_STOP -> { stopPlaybackAndSelf(); return START_NOT_STICKY }
             ACTION_PLAY -> {
