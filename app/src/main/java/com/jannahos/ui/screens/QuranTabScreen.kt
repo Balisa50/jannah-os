@@ -54,8 +54,10 @@ fun QuranTabScreen() {
     var showBookmarks by remember { mutableStateOf(false) }
     var showReciters by remember { mutableStateOf(false) }
     var showKhatm by remember { mutableStateOf(false) }
+    var showSearch by remember { mutableStateOf(false) }
 
     if (showKhatm) { KhatmScreen(onBack = { showKhatm = false }); return }
+    if (showSearch) { QuranSearchScreen(onBack = { showSearch = false }); return }
     if (showReciters) { ReciterPickerScreen(onBack = { showReciters = false }); return }
     if (showBookmarks) {
         BookmarksScreen(
@@ -69,7 +71,8 @@ fun QuranTabScreen() {
         onPick = { selected = it },
         onOpenBookmarks = { showBookmarks = true },
         onOpenReciters = { showReciters = true },
-        onOpenKhatm = { showKhatm = true }
+        onOpenKhatm = { showKhatm = true },
+        onOpenSearch = { showSearch = true }
     )
     else SurahReader(surah = selected!!, onBack = { selected = null })
 }
@@ -79,7 +82,8 @@ private fun SurahList(
     onPick: (Int) -> Unit,
     onOpenBookmarks: () -> Unit,
     onOpenReciters: () -> Unit,
-    onOpenKhatm: () -> Unit
+    onOpenKhatm: () -> Unit,
+    onOpenSearch: () -> Unit
 ) {
     val ctx = LocalContext.current
     val last = remember { QuranBookmarks.lastSurah(ctx) }
@@ -173,6 +177,31 @@ private fun SurahList(
                 }
                 Spacer(Modifier.height(JannahSpacing.s))
             }
+
+            // Search entry
+            Box(
+                Modifier
+                    .fillMaxWidth()
+                    .clip(RoundedCornerShape(JannahSpacing.cardRadius))
+                    .background(JannahColors.Card)
+                    .clickable(onClick = onOpenSearch)
+                    .padding(JannahSpacing.l)
+            ) {
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Column(Modifier.weight(1f)) {
+                        Text("Search the Quran",
+                            fontFamily = FontFamily.Serif,
+                            fontSize = 17.sp,
+                            fontWeight = FontWeight.Bold,
+                            color = JannahColors.Ink)
+                        Spacer(Modifier.height(2.dp))
+                        Text("Find any verse by word",
+                            style = JannahType.caption, color = JannahColors.Muted)
+                    }
+                    Text("→", style = JannahType.title, color = JannahColors.Orange)
+                }
+            }
+            Spacer(Modifier.height(JannahSpacing.s))
 
             // Reading plan entry
             val planDays = KhatmPlan.planDays(ctx)
