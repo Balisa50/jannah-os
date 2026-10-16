@@ -228,6 +228,7 @@ fun TodayScreen(onNavigate: (String) -> Unit = {}) {
         }
 
         // Orange top banner with greeting
+        RevealIn(delayMillis = 60) {
         Box(
             Modifier
                 .fillMaxWidth()
@@ -259,6 +260,7 @@ fun TodayScreen(onNavigate: (String) -> Unit = {}) {
                     color = JannahColors.OnOrange.copy(alpha = 0.85f)
                 )
             }
+        }
         }
 
         Column(Modifier.padding(horizontal = JannahSpacing.gutter)) {

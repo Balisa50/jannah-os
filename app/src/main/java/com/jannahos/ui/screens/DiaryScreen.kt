@@ -25,7 +25,9 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.font.FontWeight
@@ -35,6 +37,8 @@ import androidx.compose.ui.unit.sp
 import com.jannahos.DiaryClassifier
 import com.jannahos.DiaryStore
 import com.jannahos.ui.theme.JannahColors
+import com.jannahos.ui.theme.RevealIn
+import com.jannahos.ui.theme.CelebrationPulse
 import com.jannahos.ui.theme.JannahSpacing
 import com.jannahos.ui.theme.JannahType
 import java.text.SimpleDateFormat
@@ -44,6 +48,7 @@ import java.util.Locale
 @Composable
 fun DiaryScreen(onBack: () -> Unit, onReacted: (String) -> Unit = {}) {
     val ctx = LocalContext.current
+    val haptics = LocalHapticFeedback.current
     val store = remember { DiaryStore(ctx) }
     var refresh by remember { mutableStateOf(0) }
     val ignore = refresh
@@ -92,6 +97,7 @@ fun DiaryScreen(onBack: () -> Unit, onReacted: (String) -> Unit = {}) {
 
             if (lastReaction != null && lastReaction!!.reactionTitle.isNotBlank()) {
                 val r = lastReaction!!
+                val body: @androidx.compose.runtime.Composable () -> Unit = {
                 Box(
                     Modifier
                         .fillMaxWidth()
@@ -120,6 +126,12 @@ fun DiaryScreen(onBack: () -> Unit, onReacted: (String) -> Unit = {}) {
                                 color = if (r.tag.startsWith("milestone")) JannahColors.OnOrange.copy(alpha = 0.7f) else JannahColors.Faint)
                         }
                     }
+                }
+                }
+                if (r.tag.startsWith("milestone")) {
+                    RevealIn(delayMillis = 0) { CelebrationPulse { body() } }
+                } else {
+                    RevealIn(delayMillis = 0) { body() }
                 }
                 Spacer(Modifier.height(JannahSpacing.l))
             }
@@ -176,6 +188,9 @@ fun DiaryScreen(onBack: () -> Unit, onReacted: (String) -> Unit = {}) {
                                     val id = store.add(text.trim(), result.tag, result.reactionTitle)
                                     if (result.tag.startsWith("milestone")) {
                                         store.markCelebrated(id)
+                                        haptics.performHapticFeedback(HapticFeedbackType.LongPress)
+                                    } else {
+                                        haptics.performHapticFeedback(HapticFeedbackType.TextHandleMove)
                                     }
                                     lastReaction = result
                                     text = ""
