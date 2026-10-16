@@ -235,55 +235,6 @@ fun TodayScreen(onNavigate: (String) -> Unit = {}) {
                 letterSpacing = (-1).sp,
                 lineHeight = 46.sp)
 
-            // ── 5-dot prayer status row ───────────────────────
-            Spacer(Modifier.height(JannahSpacing.l))
-            Text(
-                if (pendingCount == 0) "All prayers marked · Alhamdulillah"
-                else if (pendingCount == 1) "1 prayer unmarked"
-                else "$pendingCount prayers unmarked",
-                style = JannahType.bodySmall,
-                color = if (pendingCount == 0) JannahColors.OrangeDeep else JannahColors.Muted
-            )
-            Spacer(Modifier.height(JannahSpacing.s))
-            Row(
-                Modifier
-                    .fillMaxWidth()
-                    .clip(RoundedCornerShape(JannahSpacing.cardRadius))
-                    .background(JannahColors.Card)
-                    .clickable { onNavigate("pray") }
-                    .padding(JannahSpacing.m),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                ordered.forEach { key ->
-                    val done = today[key] == true
-                    val isNext = key == nextKey
-                    Column(
-                        horizontalAlignment = Alignment.CenterHorizontally,
-                        modifier = Modifier.weight(1f)
-                    ) {
-                        Box(
-                            Modifier
-                                .size(14.dp)
-                                .clip(CircleShape)
-                                .background(
-                                    when {
-                                        done -> JannahColors.Orange
-                                        isNext -> JannahColors.OrangeDeep
-                                        else -> JannahColors.Border
-                                    }
-                                )
-                        )
-                        Spacer(Modifier.height(6.dp))
-                        Text(
-                            SalahTracker.label(key).take(3),
-                            style = JannahType.micro,
-                            color = if (done) JannahColors.Ink else JannahColors.Muted
-                        )
-                    }
-                }
-            }
-
             // ── Tonight's plan (compact, honest) ──────────────
             val level = TahajjudPlan.level(ctx)
             val (prayedWeek, target) = TahajjudPlan.weekProgress(ctx)

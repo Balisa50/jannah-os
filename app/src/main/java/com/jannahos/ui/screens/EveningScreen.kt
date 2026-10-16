@@ -4,6 +4,7 @@ import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -62,18 +63,6 @@ fun EveningScreen(onDismiss: () -> Unit) {
     ) {
         Spacer(Modifier.height(JannahSpacing.xxl))
 
-        Row(Modifier.fillMaxWidth(), horizontalArrangement = androidx.compose.foundation.layout.Arrangement.End) {
-            Text("skip", style = JannahType.caption, color = JannahColors.Muted,
-                modifier = Modifier
-                    .clickable {
-                        EveningReckoning.markSeen(ctx)
-                        onDismiss()
-                    }
-                    .padding(6.dp))
-        }
-
-        Spacer(Modifier.height(JannahSpacing.l))
-
         Text("THE DAY IS CLOSING",
             style = JannahType.eyebrow,
             color = JannahColors.OrangeDeep)
@@ -89,54 +78,19 @@ fun EveningScreen(onDismiss: () -> Unit) {
             lineHeight = 38.sp,
             modifier = Modifier.graphicsLayer { this.alpha = alpha })
 
-        Spacer(Modifier.height(JannahSpacing.s))
-
-        Text("Before you sleep.",
-            fontFamily = FontFamily.Serif,
-            fontStyle = FontStyle.Italic,
-            fontSize = 16.sp,
-            color = JannahColors.Orange,
-            textAlign = TextAlign.Center,
-            modifier = Modifier.graphicsLayer { this.alpha = alpha })
-
         Spacer(Modifier.height(JannahSpacing.xxl))
 
-        // Four stat tiles
         Row(
             Modifier.fillMaxWidth(),
-            horizontalArrangement = androidx.compose.foundation.layout.Arrangement.spacedBy(JannahSpacing.s)
+            horizontalArrangement = Arrangement.spacedBy(JannahSpacing.s)
         ) {
-            StatTile(
-                Modifier.weight(1f),
-                "PRAYERS",
-                "${summary.prayersMarked}/${summary.prayersTotal}"
-            )
-            StatTile(
-                Modifier.weight(1f),
-                "DHIKR",
-                "${summary.dhikrTotal}"
-            )
-        }
-        Spacer(Modifier.height(JannahSpacing.s))
-        Row(
-            Modifier.fillMaxWidth(),
-            horizontalArrangement = androidx.compose.foundation.layout.Arrangement.spacedBy(JannahSpacing.s)
-        ) {
-            StatTile(
-                Modifier.weight(1f),
-                "QURAN",
-                if (summary.quranRead) "opened" else ", "
-            )
-            StatTile(
-                Modifier.weight(1f),
-                "GAVE",
-                if (summary.gifted) "yes" else ", "
-            )
+            StatTile(Modifier.weight(1f), "DHIKR", "${summary.dhikrTotal}")
+            StatTile(Modifier.weight(1f), "QURAN",
+                if (summary.quranRead) "opened" else "—")
         }
 
         Spacer(Modifier.height(JannahSpacing.l))
 
-        // Observations
         Box(
             Modifier
                 .fillMaxWidth()
@@ -159,7 +113,6 @@ fun EveningScreen(onDismiss: () -> Unit) {
 
         Spacer(Modifier.height(JannahSpacing.l))
 
-        // Closing, the compassionate line
         Box(
             Modifier
                 .fillMaxWidth()
@@ -207,8 +160,7 @@ private fun StatTile(modifier: Modifier = Modifier, label: String, value: String
             .padding(JannahSpacing.l)
     ) {
         Column {
-            Text(label,
-                style = JannahType.micro, color = JannahColors.OrangeDeep)
+            Text(label, style = JannahType.micro, color = JannahColors.OrangeDeep)
             Spacer(Modifier.height(4.dp))
             Text(value,
                 fontFamily = FontFamily.Serif,

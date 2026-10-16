@@ -50,9 +50,6 @@
             android:showOnLockScreen="true"
             android:turnScreenOn="true" />
         <activity
-            android:name=".IstighfarActivity"
-            android:exported="false" />
-        <activity
             android:name=".BedtimeActivity"
             android:exported="false" />
         <activity
