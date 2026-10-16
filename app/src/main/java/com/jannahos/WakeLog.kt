@@ -26,7 +26,9 @@ class WakeLog(context: Context) : SQLiteOpenHelper(
                 ts INTEGER NOT NULL,
                 outcome TEXT NOT NULL,
                 reason TEXT,
-                voice_path TEXT
+                voice_path TEXT,
+                verified INTEGER NOT NULL DEFAULT 0,
+                transcript TEXT
             )
         """.trimIndent())
     }
@@ -42,6 +44,16 @@ class WakeLog(context: Context) : SQLiteOpenHelper(
             put("outcome", outcome)
             if (reason != null) put("reason", reason)
             if (voicePath != null) put("voice_path", voicePath)
+        }
+        writableDatabase.insert("events", null, values)
+    }
+
+    fun recordVerified(outcome: String, verified: Boolean, transcript: String?) {
+        val values = ContentValues().apply {
+            put("ts", System.currentTimeMillis())
+            put("outcome", outcome)
+            put("verified", if (verified) 1 else 0)
+            if (transcript != null) put("transcript", transcript)
         }
         writableDatabase.insert("events", null, values)
     }

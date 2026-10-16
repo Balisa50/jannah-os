@@ -8,6 +8,13 @@ import android.os.Bundle
 import android.view.WindowManager
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
+import android.content.Intent
+import android.speech.RecognitionListener
+import android.speech.RecognizerIntent
+import android.speech.SpeechRecognizer
+import androidx.core.content.ContextCompat
+import com.jannahos.FatihahVerifier
+import com.jannahos.WakeLog
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
@@ -46,6 +53,85 @@ class TahajjudAlarmActivity : ComponentActivity() {
 
     private var recorder: MediaRecorder? = null
     private var voiceFile: File? = null
+
+    // Fatihah verification
+    private var recognizer: SpeechRecognizer? = null
+    private val transcriptBuffer = StringBuilder()
+    private var listening = false
+
+    private fun startFatihahListening(onUpdate: (String) -> Unit) {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU &&
+            ContextCompat.checkSelfPermission(this, Manifest.permission.RECORD_AUDIO)
+                != PackageManager.PERMISSION_GRANTED) {
+            requestPermissions(arrayOf(Manifest.permission.RECORD_AUDIO), 300)
+            return
+        }
+        if (!SpeechRecognizer.isRecognitionAvailable(this)) {
+            onUpdate("[voice recognizer unavailable]")
+            return
+        }
+        try { recognizer?.destroy() } catch (_: Exception) {}
+        val sr = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S)
+            SpeechRecognizer.createOnDeviceSpeechRecognizer(this)
+        else SpeechRecognizer.createSpeechRecognizer(this)
+
+        val intent = Intent(RecognizerIntent.ACTION_RECOGNIZE_SPEECH).apply {
+            putExtra(RecognizerIntent.EXTRA_LANGUAGE_MODEL,
+                RecognizerIntent.LANGUAGE_MODEL_FREE_FORM)
+            putExtra(RecognizerIntent.EXTRA_LANGUAGE, "en-US")
+            putExtra(RecognizerIntent.EXTRA_PARTIAL_RESULTS, true)
+            putExtra(RecognizerIntent.EXTRA_PREFER_OFFLINE, true)
+        }
+
+        sr.setRecognitionListener(object : RecognitionListener {
+            override fun onReadyForSpeech(p: Bundle?) {}
+            override fun onBeginningOfSpeech() {}
+            override fun onRmsChanged(v: Float) {}
+            override fun onBufferReceived(b: ByteArray?) {}
+            override fun onEndOfSpeech() {}
+            override fun onEvent(t: Int, p: Bundle?) {}
+            override fun onError(error: Int) {
+                if (listening) {
+                    try { sr.startListening(intent) } catch (_: Exception) {}
+                }
+            }
+            override fun onResults(results: Bundle?) {
+                val text = results?.getStringArrayList(SpeechRecognizer.RESULTS_RECOGNITION)
+                    ?.firstOrNull()
+                if (!text.isNullOrBlank()) {
+                    transcriptBuffer.append(" ").append(text)
+                    onUpdate(transcriptBuffer.toString().trim())
+                }
+                if (listening) {
+                    try { sr.startListening(intent) } catch (_: Exception) {}
+                }
+            }
+            override fun onPartialResults(partial: Bundle?) {
+                val text = partial?.getStringArrayList(SpeechRecognizer.RESULTS_RECOGNITION)
+                    ?.firstOrNull()
+                if (!text.isNullOrBlank()) {
+                    onUpdate((transcriptBuffer.toString() + " " + text).trim())
+                }
+            }
+        })
+
+        recognizer = sr
+        listening = true
+        try { sr.startListening(intent) } catch (_: Exception) { listening = false }
+    }
+
+    private fun stopFatihahListening() {
+        listening = false
+        try { recognizer?.stopListening() } catch (_: Exception) {}
+        try { recognizer?.cancel() } catch (_: Exception) {}
+        try { recognizer?.destroy() } catch (_: Exception) {}
+        recognizer = null
+    }
+
+    override fun onDestroy() {
+        super.onDestroy()
+        stopFatihahListening()
+    }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -103,8 +189,8 @@ class TahajjudAlarmActivity : ComponentActivity() {
             4 -> PrayerScreen(
                 onRecordStart = { startRecording() },
                 onRecordStop = { stopRecording() },
-                onDone = { path ->
-                    log.record("prayed", voicePath = path)
+                onDone = { path, verified, transcript ->
+                    log.recordVerified("prayed", verified, transcript)
                     step = 5
                 }
             )
@@ -239,25 +325,120 @@ class TahajjudAlarmActivity : ComponentActivity() {
     }
 
     @Composable
-    private fun PrayerScreen(onRecordStart: () -> Unit, onRecordStop: () -> Unit, onDone: (String?) -> Unit) {
+    private fun PrayerScreen(
+        onRecordStart: () -> Unit,
+        onRecordStop: () -> Unit,
+        onDone: (String?, Boolean, String?) -> Unit
+    ) {
         var recording by remember { mutableStateOf(false) }
+        var verifying by remember { mutableStateOf(false) }
+        var liveTranscript by remember { mutableStateOf("") }
+        var finalResult by remember { mutableStateOf<FatihahVerifier.Result?>(null) }
+
         Column(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(horizontal = JannahSpacing.screenGutter),
+                .padding(horizontal = JannahSpacing.screenGutter)
+                .verticalScroll(rememberScrollState()),
             verticalArrangement = Arrangement.Center,
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
             Text("Pray.", style = JannahType.screenTitle, color = JannahColors.NightText)
             Spacer(Modifier.height(JannahSpacing.m))
-            Text("Two rak'ah. Take your time.", style = JannahType.primary, color = JannahColors.NightMuted)
+            Text("Two rak'ah. Take your time.", style = JannahType.primary,
+                color = JannahColors.NightMuted)
 
-            Spacer(Modifier.height(JannahSpacing.xl))
+            Spacer(Modifier.height(JannahSpacing.l))
 
-            Text("Optional: record your Fatihah as a private record.",
-                style = JannahType.tertiary, color = JannahColors.NightMuted, textAlign = TextAlign.Center)
+            // ---- VERIFICATION BLOCK ----
+            Text("VERIFY YOUR FATIHAH", style = JannahType.section,
+                color = JannahColors.NightMuted)
+            Spacer(Modifier.height(JannahSpacing.s))
+            Text(
+                "Optional. Say Al-Fatihah aloud and the app will match what it hears. " +
+                    "Nothing is recorded to disk. Only the recognised words are stored, privately.",
+                style = JannahType.tertiary,
+                color = JannahColors.NightMuted,
+                textAlign = TextAlign.Center,
+                lineHeight = 18.sp
+            )
+
             Spacer(Modifier.height(JannahSpacing.m))
 
+            Button(
+                onClick = {
+                    if (verifying) {
+                        stopFatihahListening()
+                        verifying = false
+                        val result = FatihahVerifier.verify(liveTranscript)
+                        finalResult = result
+                    } else {
+                        transcriptBuffer.clear()
+                        liveTranscript = ""
+                        finalResult = null
+                        startFatihahListening { update -> liveTranscript = update }
+                        verifying = true
+                    }
+                },
+                modifier = Modifier.fillMaxWidth(),
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = if (verifying) JannahColors.Danger else JannahColors.NightSurface,
+                    contentColor = JannahColors.NightText
+                )
+            ) {
+                Text(
+                    if (verifying) "Stop listening" else "Start Fatihah verification",
+                    style = JannahType.button
+                )
+            }
+
+            if (verifying && liveTranscript.isNotBlank()) {
+                Spacer(Modifier.height(JannahSpacing.s))
+                Text("Heard: “$liveTranscript”",
+                    style = JannahType.tertiary,
+                    color = JannahColors.NightMuted,
+                    textAlign = TextAlign.Center,
+                    lineHeight = 16.sp)
+            }
+
+            if (finalResult != null) {
+                Spacer(Modifier.height(JannahSpacing.s))
+                val r = finalResult!!
+                val scoreColor = if (r.verified) JannahColors.Accent else JannahColors.NightMuted
+                Text(
+                    "${r.matchedAyahs} of ${r.totalAyahs} ayat recognised",
+                    style = JannahType.bodySmall,
+                    color = scoreColor,
+                    textAlign = TextAlign.Center
+                )
+                Spacer(Modifier.height(4.dp))
+                Text(
+                    if (r.verified)
+                        "Verified recitation. Logged as prayed-verified."
+                    else
+                        "Not enough recognised. Will be logged as claimed. No shame either way.",
+                    style = JannahType.tertiary,
+                    color = JannahColors.NightMuted,
+                    textAlign = TextAlign.Center,
+                    lineHeight = 16.sp
+                )
+            }
+
+            Spacer(Modifier.height(JannahSpacing.l))
+
+            // ---- SEPARATOR ----
+            Text("─── or ───", style = JannahType.tertiary, color = JannahColors.NightMuted)
+
+            Spacer(Modifier.height(JannahSpacing.l))
+
+            // ---- OPTIONAL AUDIO RECORDING (unchanged) ----
+            Text(
+                "Optional: record your voice as a private audio note.",
+                style = JannahType.tertiary,
+                color = JannahColors.NightMuted,
+                textAlign = TextAlign.Center
+            )
+            Spacer(Modifier.height(JannahSpacing.s))
             Button(
                 onClick = {
                     if (recording) { onRecordStop(); recording = false }
@@ -269,21 +450,28 @@ class TahajjudAlarmActivity : ComponentActivity() {
                     contentColor = JannahColors.NightText
                 )
             ) {
-                Text(if (recording) "Stop recording" else "Start recording", style = JannahType.secondary)
+                Text(if (recording) "Stop audio recording" else "Record audio note",
+                    style = JannahType.secondary)
             }
 
-            Spacer(Modifier.height(JannahSpacing.xl))
+            Spacer(Modifier.height(JannahSpacing.l))
+
+            // ---- COMPLETE PRAYER ----
             Button(
                 onClick = {
+                    if (verifying) { stopFatihahListening(); verifying = false }
                     if (recording) { onRecordStop(); recording = false }
-                    onDone(voiceFile?.absolutePath)
+                    val result = finalResult
+                    onDone(voiceFile?.absolutePath, result?.verified ?: false, result?.transcript)
                 },
                 modifier = Modifier.fillMaxWidth(),
                 colors = ButtonDefaults.buttonColors(
                     containerColor = JannahColors.Accent,
                     contentColor = JannahColors.AccentInk
                 )
-            ) { Text("I have prayed", style = JannahType.button) }
+            ) {
+                Text("I have prayed", style = JannahType.button)
+            }
         }
     }
 
