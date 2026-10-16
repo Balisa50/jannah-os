@@ -50,6 +50,7 @@ fun YouScreen() {
     val showTawbah = remember { mutableStateOf(false) }
     val showWeekly = remember { mutableStateOf(false) }
     val showFast = remember { mutableStateOf(false) }
+    val showSleep = remember { mutableStateOf(false) }
 
     if (showFormation.value) {
         FormationScreen(onBack = { showFormation.value = false })
@@ -65,6 +66,10 @@ fun YouScreen() {
     }
     if (showFast.value) {
         FastScreen(onBack = { showFast.value = false })
+        return
+    }
+    if (showSleep.value) {
+        SleepScreen(onBack = { showSleep.value = false })
         return
     }
 
@@ -186,6 +191,8 @@ fun YouScreen() {
                     ListRow("Weekly review") { showWeekly.value = true }
                     Box(Modifier.fillMaxWidth().height(1.dp).background(JannahColors.Divider))
                     ListRow("Fasting") { showFast.value = true }
+                    Box(Modifier.fillMaxWidth().height(1.dp).background(JannahColors.Divider))
+                    ListRow("Sleep log") { showSleep.value = true }
                     Box(Modifier.fillMaxWidth().height(1.dp).background(JannahColors.Divider))
                     ListRow("Tonight's plan") { ctx.startActivity(Intent(ctx, BedtimeActivity::class.java)) }
                     Box(Modifier.fillMaxWidth().height(1.dp).background(JannahColors.Divider))
