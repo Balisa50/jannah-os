@@ -59,6 +59,7 @@ fun YouScreen() {
     val showCharacter = remember { mutableStateOf(false) }
     val showSunnah = remember { mutableStateOf(false) }
     val showDiary = remember { mutableStateOf(false) }
+    val showStruggle = remember { mutableStateOf(false) }
 
     if (showFormation.value) {
         FormationScreen(onBack = { showFormation.value = false })
@@ -112,12 +113,20 @@ fun YouScreen() {
         DiaryScreen(onBack = { showDiary.value = false })
         return
     }
+    if (showStruggle.value) {
+        StruggleScreen(onBack = { showStruggle.value = false })
+        return
+    }
     if (showSunnah.value) {
         SunnahScreen(onBack = { showSunnah.value = false })
         return
     }
     if (showDiary.value) {
         DiaryScreen(onBack = { showDiary.value = false })
+        return
+    }
+    if (showStruggle.value) {
+        StruggleScreen(onBack = { showStruggle.value = false })
         return
     }
 
@@ -256,9 +265,13 @@ fun YouScreen() {
                     Box(Modifier.fillMaxWidth().height(1.dp).background(JannahColors.Divider))
                     ListRow("Diary") { showDiary.value = true }
                     Box(Modifier.fillMaxWidth().height(1.dp).background(JannahColors.Divider))
+                    ListRow("Private commitments") { showStruggle.value = true }
+                    Box(Modifier.fillMaxWidth().height(1.dp).background(JannahColors.Divider))
                     ListRow("Sunnah prayers") { showSunnah.value = true }
                     Box(Modifier.fillMaxWidth().height(1.dp).background(JannahColors.Divider))
                     ListRow("Diary") { showDiary.value = true }
+                    Box(Modifier.fillMaxWidth().height(1.dp).background(JannahColors.Divider))
+                    ListRow("Private commitments") { showStruggle.value = true }
                     Box(Modifier.fillMaxWidth().height(1.dp).background(JannahColors.Divider))
                     ListRow("Tonight's plan") { ctx.startActivity(Intent(ctx, BedtimeActivity::class.java)) }
                     Box(Modifier.fillMaxWidth().height(1.dp).background(JannahColors.Divider))
