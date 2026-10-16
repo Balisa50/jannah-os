@@ -103,22 +103,12 @@ private fun JannahBottomBar(nav: NavHostController, modifier: Modifier = Modifie
                     }
                 },
                 icon = {
-                    Box(
-                        modifier = Modifier
-                            .size(32.dp)
-                            .background(
-                                color = if (selected) JannahColors.OrangeSoft else JannahColors.Surface,
-                                shape = CircleShape
-                            ),
-                        contentAlignment = androidx.compose.ui.Alignment.Center
-                    ) {
-                        Icon(
-                            imageVector = tab.icon,
-                            contentDescription = tab.label,
-                            tint = if (selected) JannahColors.Orange else JannahColors.Muted,
-                            modifier = Modifier.size(18.dp)
-                        )
-                    }
+                    Icon(
+                        imageVector = tab.icon,
+                        contentDescription = tab.label,
+                        tint = if (selected) JannahColors.Orange else JannahColors.Muted,
+                        modifier = Modifier.size(22.dp)
+                    )
                 },
                 label = {
                     Text(

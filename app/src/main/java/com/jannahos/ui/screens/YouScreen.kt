@@ -25,8 +25,8 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.jannahos.BedtimeActivity
@@ -34,8 +34,6 @@ import com.jannahos.PlannerActivity
 import com.jannahos.SettingsActivity
 import com.jannahos.TahajjudPlan
 import com.jannahos.UrgeActivity
-import com.jannahos.ui.theme.GlassCard
-import com.jannahos.ui.theme.JannahBrushes
 import com.jannahos.ui.theme.JannahColors
 import com.jannahos.ui.theme.JannahSpacing
 import com.jannahos.ui.theme.JannahType
@@ -53,118 +51,161 @@ fun YouScreen() {
         modifier = Modifier
             .fillMaxSize()
             .verticalScroll(rememberScrollState())
-            .padding(horizontal = JannahSpacing.gutter),
+            .background(JannahColors.Cream)
     ) {
-        Spacer(Modifier.height(JannahSpacing.l))
-
-        Text("You", style = JannahType.title, color = JannahColors.Ivory)
-        Spacer(Modifier.height(JannahSpacing.xs))
-        Text("Formation, tools, settings",
-            style = JannahType.caption, color = JannahColors.Muted)
-
-        Spacer(Modifier.height(JannahSpacing.l))
-
-        // Formation card — emphasised
-        GlassCard {
-            Column(Modifier.padding(JannahSpacing.m)) {
-                Text("FORMATION", style = JannahType.eyebrow, color = JannahColors.Muted)
-                Spacer(Modifier.height(JannahSpacing.s))
-                Text(
-                    when (level) {
-                        1 -> "One night a week"
-                        2 -> "Two nights a week"
-                        3 -> "Three nights a week"
-                        else -> "Every night"
-                    },
-                    style = JannahType.body, color = JannahColors.Ivory,
-                    fontSize = 20.sp, fontWeight = FontWeight.Medium
-                )
+        Box(
+            Modifier
+                .fillMaxWidth()
+                .clip(RoundedCornerShape(bottomStart = 28.dp, bottomEnd = 28.dp))
+                .background(JannahColors.Orange)
+                .padding(horizontal = JannahSpacing.gutter)
+                .padding(top = JannahSpacing.xl, bottom = JannahSpacing.l)
+        ) {
+            Column {
+                Text("YOU",
+                    style = JannahType.eyebrow,
+                    color = JannahColors.OnOrange.copy(alpha = 0.75f))
                 Spacer(Modifier.height(JannahSpacing.xs))
-                Text("$prayedWeek of $target this week",
-                    style = JannahType.caption, color = JannahColors.Muted)
+                Row {
+                    Text("Your ", style = JannahType.title.copy(fontSize = 24.sp),
+                        color = JannahColors.OnOrange)
+                    Text("formation.", style = JannahType.titleItalic.copy(fontSize = 24.sp),
+                        color = JannahColors.OnOrange)
+                }
+            }
+        }
 
-                Spacer(Modifier.height(JannahSpacing.m))
+        Column(Modifier.padding(horizontal = JannahSpacing.gutter)) {
+            Spacer(Modifier.height(JannahSpacing.l))
 
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.spacedBy(JannahSpacing.xs)
-                ) {
-                    listOf(1, 2, 3, 7).forEach { lvl ->
-                        val selected = level == lvl
-                        Box(
-                            modifier = Modifier
-                                .weight(1f)
-                                .height(44.dp)
-                                .clip(RoundedCornerShape(12.dp))
-                                .background(
-                                    if (selected) JannahColors.Gold
-                                    else JannahColors.Deep
+            // Formation card
+            Text("FORMATION", style = JannahType.eyebrow, color = JannahColors.OrangeDeep)
+            Spacer(Modifier.height(JannahSpacing.s))
+            Box(
+                Modifier
+                    .fillMaxWidth()
+                    .clip(RoundedCornerShape(JannahSpacing.cardRadius))
+                    .background(JannahColors.Card)
+                    .padding(JannahSpacing.l)
+            ) {
+                Column {
+                    Row(verticalAlignment = Alignment.Bottom) {
+                        Text(
+                            when (level) {
+                                1 -> "One night "
+                                2 -> "Two nights "
+                                3 -> "Three nights "
+                                else -> "Every night "
+                            },
+                            fontFamily = FontFamily.Serif,
+                            fontSize = 22.sp,
+                            fontWeight = FontWeight.Bold,
+                            color = JannahColors.Ink
+                        )
+                        Text("a week.",
+                            fontFamily = FontFamily.Serif,
+                            fontStyle = androidx.compose.ui.text.font.FontStyle.Italic,
+                            fontSize = 22.sp,
+                            fontWeight = FontWeight.Bold,
+                            color = JannahColors.Orange)
+                    }
+                    Spacer(Modifier.height(JannahSpacing.xs))
+                    Text("$prayedWeek of $target this week",
+                        style = JannahType.caption, color = JannahColors.Muted)
+
+                    Spacer(Modifier.height(JannahSpacing.m))
+
+                    Row(
+                        Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.spacedBy(JannahSpacing.s)
+                    ) {
+                        listOf(1, 2, 3, 7).forEach { lvl ->
+                            val selected = level == lvl
+                            Box(
+                                Modifier
+                                    .weight(1f)
+                                    .height(46.dp)
+                                    .clip(RoundedCornerShape(JannahSpacing.pillRadius))
+                                    .background(if (selected) JannahColors.Orange else JannahColors.SurfaceAlt)
+                                    .clickable {
+                                        TahajjudPlan.setLevel(ctx, lvl)
+                                        refresh = refresh + 1
+                                    },
+                                contentAlignment = Alignment.Center
+                            ) {
+                                Text(
+                                    "$lvl",
+                                    fontFamily = FontFamily.Serif,
+                                    fontSize = 16.sp,
+                                    fontWeight = FontWeight.Bold,
+                                    color = if (selected) JannahColors.OnOrange else JannahColors.Ink
                                 )
-                                .clickable {
-                                    TahajjudPlan.setLevel(ctx, lvl)
-                                    refresh = refresh + 1
-                                },
-                            contentAlignment = Alignment.Center
-                        ) {
-                            Text(
-                                lvl.toString(),
-                                style = JannahType.body,
-                                color = if (selected) JannahColors.GoldInk else JannahColors.Body,
-                                fontWeight = if (selected) FontWeight.SemiBold else FontWeight.Normal
-                            )
+                            }
                         }
                     }
-                }
-                Spacer(Modifier.height(JannahSpacing.xs))
-                Text("Nights per week",
-                    style = JannahType.caption, color = JannahColors.Faint)
-            }
-        }
-
-        Spacer(Modifier.height(JannahSpacing.l))
-
-        // Tools
-        Text("TOOLS", style = JannahType.eyebrow, color = JannahColors.Muted,
-            modifier = Modifier.padding(horizontal = JannahSpacing.xs))
-        Spacer(Modifier.height(JannahSpacing.s))
-
-        GlassCard {
-            Column(Modifier.padding(vertical = JannahSpacing.xs)) {
-                ListRow("Tonight's plan") { ctx.startActivity(Intent(ctx, BedtimeActivity::class.java)) }
-                ListRow("Planner")         { ctx.startActivity(Intent(ctx, PlannerActivity::class.java)) }
-                ListRow("Urge support")    { ctx.startActivity(Intent(ctx, UrgeActivity::class.java)) }
-            }
-        }
-
-        Spacer(Modifier.height(JannahSpacing.l))
-
-        Text("SETTINGS", style = JannahType.eyebrow, color = JannahColors.Muted,
-            modifier = Modifier.padding(horizontal = JannahSpacing.xs))
-        Spacer(Modifier.height(JannahSpacing.s))
-
-        GlassCard {
-            Column(Modifier.padding(vertical = JannahSpacing.xs)) {
-                ListRow("Location & calculation") {
-                    ctx.startActivity(Intent(ctx, SettingsActivity::class.java))
+                    Spacer(Modifier.height(JannahSpacing.xs))
+                    Text("Nights per week", style = JannahType.caption, color = JannahColors.Faint)
                 }
             }
-        }
 
-        Spacer(Modifier.height(JannahSpacing.xl))
+            Spacer(Modifier.height(JannahSpacing.l))
+
+            // Tools
+            Text("TOOLS", style = JannahType.eyebrow, color = JannahColors.OrangeDeep)
+            Spacer(Modifier.height(JannahSpacing.s))
+            Box(
+                Modifier
+                    .fillMaxWidth()
+                    .clip(RoundedCornerShape(JannahSpacing.cardRadius))
+                    .background(JannahColors.Card)
+            ) {
+                Column {
+                    ListRow("Tonight's plan") { ctx.startActivity(Intent(ctx, BedtimeActivity::class.java)) }
+                    Box(Modifier.fillMaxWidth().height(1.dp).background(JannahColors.Divider))
+                    ListRow("Planner") { ctx.startActivity(Intent(ctx, PlannerActivity::class.java)) }
+                    Box(Modifier.fillMaxWidth().height(1.dp).background(JannahColors.Divider))
+                    ListRow("Urge support") { ctx.startActivity(Intent(ctx, UrgeActivity::class.java)) }
+                }
+            }
+
+            Spacer(Modifier.height(JannahSpacing.l))
+
+            // Settings
+            Text("SETTINGS", style = JannahType.eyebrow, color = JannahColors.OrangeDeep)
+            Spacer(Modifier.height(JannahSpacing.s))
+            Box(
+                Modifier
+                    .fillMaxWidth()
+                    .clip(RoundedCornerShape(JannahSpacing.cardRadius))
+                    .background(JannahColors.Card)
+            ) {
+                Column {
+                    ListRow("Location & calculation") {
+                        ctx.startActivity(Intent(ctx, SettingsActivity::class.java))
+                    }
+                }
+            }
+
+            Spacer(Modifier.height(JannahSpacing.xxl))
+        }
     }
 }
 
 @Composable
 private fun ListRow(label: String, onClick: () -> Unit) {
     Row(
-        modifier = Modifier
+        Modifier
             .fillMaxWidth()
             .clickable(onClick = onClick)
-            .padding(horizontal = JannahSpacing.m, vertical = 16.dp),
+            .padding(horizontal = JannahSpacing.l, vertical = 18.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {
-        Text(label, style = JannahType.body, color = JannahColors.Ivory,
+        Text(label,
+            fontFamily = FontFamily.Serif,
+            fontSize = 17.sp,
+            fontWeight = FontWeight.Bold,
+            color = JannahColors.Ink,
             modifier = Modifier.weight(1f))
-        Text("→", style = JannahType.body, color = JannahColors.Muted)
+        Text("→", style = JannahType.body, color = JannahColors.Orange)
     }
 }

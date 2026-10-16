@@ -2,6 +2,7 @@ package com.jannahos.ui.screens
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -10,6 +11,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
@@ -24,6 +26,8 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.text.font.FontFamily
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -31,8 +35,6 @@ import com.jannahos.QuranApi
 import com.jannahos.QuranBookmarks
 import com.jannahos.QuranCache
 import com.jannahos.TafsirApi
-import com.jannahos.ui.theme.GlassCard
-import com.jannahos.ui.theme.JannahBrushes
 import com.jannahos.ui.theme.JannahColors
 import com.jannahos.ui.theme.JannahSpacing
 import com.jannahos.ui.theme.JannahType
@@ -55,72 +57,89 @@ private fun SurahList(onPick: (Int) -> Unit) {
         modifier = Modifier
             .fillMaxSize()
             .verticalScroll(rememberScrollState())
-            .padding(horizontal = JannahSpacing.gutter),
+            .background(JannahColors.Cream)
     ) {
-        Spacer(Modifier.height(JannahSpacing.l))
+        Box(
+            Modifier
+                .fillMaxWidth()
+                .clip(RoundedCornerShape(bottomStart = 28.dp, bottomEnd = 28.dp))
+                .background(JannahColors.Orange)
+                .padding(horizontal = JannahSpacing.gutter)
+                .padding(top = JannahSpacing.xl, bottom = JannahSpacing.l)
+        ) {
+            Column {
+                Text("QURAN",
+                    style = JannahType.eyebrow,
+                    color = JannahColors.OnOrange.copy(alpha = 0.75f))
+                Spacer(Modifier.height(JannahSpacing.xs))
+                Row {
+                    Text("Read. ", style = JannahType.title.copy(fontSize = 24.sp),
+                        color = JannahColors.OnOrange)
+                    Text("Reflect.", style = JannahType.titleItalic.copy(fontSize = 24.sp),
+                        color = JannahColors.OnOrange)
+                }
+            }
+        }
 
-        Text("Quran", style = JannahType.title, color = JannahColors.Ivory)
-        Spacer(Modifier.height(JannahSpacing.xs))
-        Text("Uthmani text · Sahih International",
-            style = JannahType.caption, color = JannahColors.Muted)
-
-        if (last != null) {
+        Column(Modifier.padding(horizontal = JannahSpacing.gutter)) {
             Spacer(Modifier.height(JannahSpacing.l))
-            GlassCard {
-                Row(
-                    modifier = Modifier
+
+            if (last != null) {
+                Text("CONTINUE", style = JannahType.eyebrow, color = JannahColors.OrangeDeep)
+                Spacer(Modifier.height(JannahSpacing.s))
+                Box(
+                    Modifier
                         .fillMaxWidth()
+                        .clip(RoundedCornerShape(JannahSpacing.cardRadius))
+                        .background(JannahColors.Card)
                         .clickable { onPick(last) }
-                        .padding(JannahSpacing.m),
+                        .padding(JannahSpacing.l)
+                ) {
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Column(Modifier.weight(1f)) {
+                            val name = QuranCache.SURAHS.firstOrNull { it.first == last }?.second ?: "Surah $last"
+                            Text(name,
+                                fontFamily = FontFamily.Serif,
+                                fontSize = 22.sp,
+                                fontWeight = FontWeight.Bold,
+                                color = JannahColors.Ink)
+                            Spacer(Modifier.height(2.dp))
+                            Text("Surah $last", style = JannahType.caption, color = JannahColors.Muted)
+                        }
+                        Text("→", style = JannahType.title, color = JannahColors.Orange)
+                    }
+                }
+                Spacer(Modifier.height(JannahSpacing.l))
+            }
+
+            Text("SURAHS", style = JannahType.eyebrow, color = JannahColors.OrangeDeep)
+            Spacer(Modifier.height(JannahSpacing.s))
+
+            QuranCache.SURAHS.forEachIndexed { i, (num, name) ->
+                Row(
+                    Modifier
+                        .fillMaxWidth()
+                        .clickable { onPick(num) }
+                        .padding(vertical = 16.dp),
                     verticalAlignment = Alignment.CenterVertically
                 ) {
-                    Column(Modifier.weight(1f)) {
-                        Text("CONTINUE", style = JannahType.eyebrow, color = JannahColors.Muted)
-                        Spacer(Modifier.height(JannahSpacing.xs))
-                        val name = QuranCache.SURAHS.firstOrNull { it.first == last }?.second ?: "Surah $last"
-                        Text(name, style = JannahType.body, color = JannahColors.Ivory,
-                            fontSize = 18.sp)
-                    }
-                    Text("→", style = JannahType.body, color = JannahColors.Gold)
+                    Text("$num", style = JannahType.caption,
+                        color = JannahColors.Faint, modifier = Modifier.width(36.dp))
+                    Text(name,
+                        fontFamily = FontFamily.Serif,
+                        fontSize = 18.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = JannahColors.Ink,
+                        modifier = Modifier.weight(1f))
+                    Text("→", style = JannahType.bodySmall, color = JannahColors.Muted)
+                }
+                if (i < QuranCache.SURAHS.size - 1) {
+                    Box(Modifier.fillMaxWidth().height(1.dp).background(JannahColors.Divider))
                 }
             }
+
+            Spacer(Modifier.height(JannahSpacing.xl))
         }
-
-        Spacer(Modifier.height(JannahSpacing.l))
-
-        Text("SURAHS", style = JannahType.eyebrow, color = JannahColors.Muted,
-            modifier = Modifier.padding(horizontal = JannahSpacing.xs))
-        Spacer(Modifier.height(JannahSpacing.s))
-
-        GlassCard {
-            Column(Modifier.padding(vertical = JannahSpacing.xs)) {
-                QuranCache.SURAHS.forEachIndexed { idx, (num, name) ->
-                    Row(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .clickable { onPick(num) }
-                            .padding(horizontal = JannahSpacing.m, vertical = 14.dp),
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        Text(
-                            num.toString(),
-                            style = JannahType.caption,
-                            color = JannahColors.Faint,
-                            modifier = Modifier.fillMaxWidth(0.12f)
-                        )
-                        Text(
-                            name,
-                            style = JannahType.body,
-                            color = JannahColors.Ivory,
-                            modifier = Modifier.weight(1f)
-                        )
-                        Text("→", style = JannahType.bodySmall, color = JannahColors.Muted)
-                    }
-                }
-            }
-        }
-
-        Spacer(Modifier.height(JannahSpacing.xl))
     }
 }
 
@@ -166,17 +185,20 @@ private fun SurahReader(surah: Int, onBack: () -> Unit) {
         modifier = Modifier
             .fillMaxSize()
             .verticalScroll(rememberScrollState())
-            .padding(horizontal = JannahSpacing.gutter),
+            .background(JannahColors.Cream)
+            .padding(horizontal = JannahSpacing.gutter)
     ) {
         Spacer(Modifier.height(JannahSpacing.l))
 
-        Text("← Back", style = JannahType.bodySmall, color = JannahColors.Muted,
-            modifier = Modifier.clickable(onClick = onBack))
+        Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
+            Text("← Back", style = JannahType.bodySmall, color = JannahColors.Muted,
+                modifier = Modifier.clickable(onClick = onBack))
+        }
 
-        Spacer(Modifier.height(JannahSpacing.l))
+        Spacer(Modifier.height(JannahSpacing.m))
 
         val name = QuranCache.SURAHS.firstOrNull { it.first == surah }?.second ?: "Surah $surah"
-        Text(name, style = JannahType.title, color = JannahColors.Ivory)
+        Text(name, style = JannahType.title, color = JannahColors.Ink)
 
         Spacer(Modifier.height(JannahSpacing.l))
 
@@ -189,7 +211,7 @@ private fun SurahReader(surah: Int, onBack: () -> Unit) {
                     modifier = Modifier.fillMaxWidth().padding(vertical = JannahSpacing.m),
                     horizontalAlignment = Alignment.CenterHorizontally
                 ) {
-                    Text(a.arabic, style = JannahType.arabic, color = JannahColors.Ivory,
+                    Text(a.arabic, style = JannahType.arabic, color = JannahColors.Ink,
                         textAlign = TextAlign.Center)
                     Spacer(Modifier.height(JannahSpacing.s))
                     Text("(${a.number}) ${a.english}",
@@ -198,23 +220,26 @@ private fun SurahReader(surah: Int, onBack: () -> Unit) {
                     Spacer(Modifier.height(JannahSpacing.s))
                     Text(
                         if (tafsirAyah == a.number) "hide tafsir" else "tap for tafsir",
-                        style = JannahType.caption, color = JannahColors.Gold,
+                        style = JannahType.caption, color = JannahColors.Orange,
                         modifier = Modifier.clickable {
                             tafsirAyah = if (tafsirAyah == a.number) null else a.number
                         }
                     )
-
                     if (tafsirAyah == a.number) {
                         Spacer(Modifier.height(JannahSpacing.s))
-                        GlassCard {
-                            Column(Modifier.padding(JannahSpacing.m)) {
+                        Box(
+                            Modifier
+                                .fillMaxWidth()
+                                .clip(RoundedCornerShape(JannahSpacing.cardRadius))
+                                .background(JannahColors.Card)
+                                .padding(JannahSpacing.m)
+                        ) {
+                            Column {
                                 if (tafsirLoading) {
-                                    Text("Loading tafsir...",
-                                        style = JannahType.caption, color = JannahColors.Muted)
+                                    Text("Loading tafsir...", style = JannahType.caption, color = JannahColors.Muted)
                                 } else if (tafsirText != null) {
                                     Text(tafsirText!!, style = JannahType.bodySmall,
-                                        color = JannahColors.Body,
-                                        textAlign = TextAlign.Left, lineHeight = 22.sp)
+                                        color = JannahColors.Body, textAlign = TextAlign.Left, lineHeight = 22.sp)
                                     Spacer(Modifier.height(JannahSpacing.s))
                                     Text("Ibn Kathir (abridged) · via quran.com",
                                         style = JannahType.micro, color = JannahColors.Faint)

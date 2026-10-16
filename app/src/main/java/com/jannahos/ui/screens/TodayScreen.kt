@@ -92,9 +92,10 @@ fun TodayScreen(onNavigate: (String) -> Unit = {}) {
         Box(
             Modifier
                 .fillMaxWidth()
+                .clip(RoundedCornerShape(bottomStart = 28.dp, bottomEnd = 28.dp))
                 .background(JannahColors.Orange)
                 .padding(horizontal = JannahSpacing.gutter)
-                .padding(top = JannahSpacing.xxl, bottom = JannahSpacing.xl)
+                .padding(top = JannahSpacing.xl, bottom = JannahSpacing.l)
         ) {
             Column {
                 Text(
@@ -103,11 +104,12 @@ fun TodayScreen(onNavigate: (String) -> Unit = {}) {
                     color = JannahColors.OnOrange.copy(alpha = 0.75f)
                 )
                 Spacer(Modifier.height(JannahSpacing.xs))
-                Row {
-                    Text(greeting + ", ", style = JannahType.title, color = JannahColors.OnOrange)
-                    Text("Abdoulie.", style = JannahType.titleItalic, color = JannahColors.OnOrange)
-                }
-                Spacer(Modifier.height(JannahSpacing.xs))
+                Text(
+                    greeting + ", Abdoulie.",
+                    style = JannahType.title.copy(fontSize = 24.sp),
+                    color = JannahColors.OnOrange
+                )
+                Spacer(Modifier.height(2.dp))
                 val greg = SimpleDateFormat("EEE d MMM", Locale.getDefault()).format(Date())
                 val hijri = HijriDate.today()
                 Text(
