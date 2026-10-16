@@ -1,22 +1,7 @@
 package com.jannahos.ui.screens
 
-import android.Manifest
-import android.content.Context
-import android.content.Intent
-import android.content.pm.PackageManager
-import android.os.Build
-import android.os.Bundle
-import android.speech.RecognitionListener
-import android.speech.RecognizerIntent
-import android.speech.SpeechRecognizer
-import androidx.activity.ComponentActivity
-import androidx.activity.compose.setContent
 import androidx.compose.animation.animateColorAsState
-import androidx.compose.animation.core.RepeatMode
-import androidx.compose.animation.core.animateFloat
 import androidx.compose.animation.core.animateFloatAsState
-import androidx.compose.animation.core.infiniteRepeatable
-import androidx.compose.animation.core.rememberInfiniteTransition
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
@@ -36,8 +21,6 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
@@ -50,7 +33,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.platform.LocalContext
@@ -58,171 +40,106 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.core.content.ContextCompat
-import com.jannahos.Duas
-import com.jannahos.IstighfarStore
+import com.jannahos.Adhkar
+import com.jannahos.DhikrStore
+import com.jannahos.ShakeDetector
 import com.jannahos.ui.theme.JannahColors
 import com.jannahos.ui.theme.JannahSpacing
-import com.jannahos.ui.theme.JannahTheme
 import com.jannahos.ui.theme.JannahType
-
-class DhikrActivity : ComponentActivity() {
-    override fun onCreate(savedInstanceState: Bundle?) {
-        super.onCreate(savedInstanceState)
-        setContent {
-            JannahTheme {
-                Surface(Modifier.fillMaxSize(), color = MaterialTheme.colorScheme.background) {
-                    DhikrScreen()
-                }
-            }
-        }
-    }
-}
-
-// ============================================================
-// THE DIFFERENTIATOR: voice-driven dhikr.
-// Say "astaghfirullah" — the counter increments.
-// Uses Android's built-in SpeechRecognizer with offline preference.
-// No network. No Google account required if the device has an
-// offline recognizer installed (most Android phones do).
-// ============================================================
-
-// The recognizer returns natural text; we match any of these stems.
-// Different recognizers spell it differently — Google often returns
-// "astaghfirullah" or "astagfirullah" or "I seek forgiveness".
-private val ISTIGHFAR_STEMS = listOf(
-    "astaghfir", "astagfir", "astaqfir", "astaghfar",
-    "istighfar", "istigfar",
-    "forgiveness", "forgive me"
-)
-
-private fun containsIstighfar(text: String): Boolean {
-    val lower = text.lowercase()
-    return ISTIGHFAR_STEMS.any { lower.contains(it) }
-}
 
 @Composable
 fun DhikrScreen() {
+    var selectedId by remember { mutableStateOf<String?>(null) }
+    if (selectedId == null) {
+        DhikrList(onPick = { selectedId = it })
+    } else {
+        val item = Adhkar.items.first { it.id == selectedId }
+        DhikrDetail(item = item, onBack = { selectedId = null })
+    }
+}
+
+@Composable
+private fun DhikrList(onPick: (String) -> Unit) {
     val ctx = LocalContext.current
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .verticalScroll(rememberScrollState())
+            .padding(horizontal = JannahSpacing.gutter),
+    ) {
+        Spacer(Modifier.height(JannahSpacing.l))
+        Text("Dhikr", style = JannahType.title, color = JannahColors.Ink)
+        Spacer(Modifier.height(JannahSpacing.xs))
+        Text("Remember Allah throughout the day.",
+            style = JannahType.caption, color = JannahColors.Muted)
 
-    var count by remember { mutableStateOf(IstighfarStore.todayCount(ctx)) }
-    var listening by remember { mutableStateOf(false) }
-    var lastHeard by remember { mutableStateOf<String?>(null) }
-    var recognitionAvailable by remember {
-        mutableStateOf(SpeechRecognizer.isRecognitionAvailable(ctx))
-    }
-    var hasAudioPermission by remember {
-        mutableStateOf(
-            ContextCompat.checkSelfPermission(ctx, Manifest.permission.RECORD_AUDIO)
-                == PackageManager.PERMISSION_GRANTED
-        )
-    }
+        Spacer(Modifier.height(JannahSpacing.l))
 
-    // The actual recognizer. Recreated each time we start listening
-    // so that the session is clean.
-    var recognizer by remember { mutableStateOf<SpeechRecognizer?>(null) }
-
-    fun stopListening() {
-        try { recognizer?.stopListening() } catch (_: Exception) {}
-        try { recognizer?.cancel() } catch (_: Exception) {}
-        try { recognizer?.destroy() } catch (_: Exception) {}
-        recognizer = null
-        listening = false
-    }
-
-    fun startListening() {
-        if (!recognitionAvailable || !hasAudioPermission) return
-
-        try { recognizer?.destroy() } catch (_: Exception) {}
-
-        val sr = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
-            SpeechRecognizer.createOnDeviceSpeechRecognizer(ctx)
-        } else {
-            SpeechRecognizer.createSpeechRecognizer(ctx)
-        }
-
-        val intent = Intent(RecognizerIntent.ACTION_RECOGNIZE_SPEECH).apply {
-            putExtra(RecognizerIntent.EXTRA_LANGUAGE_MODEL,
-                RecognizerIntent.LANGUAGE_MODEL_FREE_FORM)
-            putExtra(RecognizerIntent.EXTRA_LANGUAGE, "en-US")
-            putExtra(RecognizerIntent.EXTRA_PARTIAL_RESULTS, true)
-            putExtra(RecognizerIntent.EXTRA_MAX_RESULTS, 3)
-            putExtra(RecognizerIntent.EXTRA_PREFER_OFFLINE, true)
-        }
-
-        sr.setRecognitionListener(object : RecognitionListener {
-            override fun onReadyForSpeech(params: Bundle?) {}
-            override fun onBeginningOfSpeech() {}
-            override fun onRmsChanged(rmsdB: Float) {}
-            override fun onBufferReceived(buffer: ByteArray?) {}
-            override fun onEndOfSpeech() {}
-
-            override fun onError(error: Int) {
-                // Restart unless we were explicitly stopped.
-                if (listening) {
-                    try { sr.cancel() } catch (_: Exception) {}
-                    try { sr.startListening(intent) } catch (_: Exception) {}
+        Adhkar.items.forEachIndexed { index, item ->
+            val today = DhikrStore.countToday(ctx, item.id)
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .clickable { onPick(item.id) }
+                    .padding(vertical = 16.dp),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Column(Modifier.weight(1f)) {
+                    Text(item.transliteration,
+                        style = JannahType.body,
+                        color = JannahColors.Ink,
+                        fontWeight = FontWeight.SemiBold,
+                        fontSize = 16.sp)
+                    Spacer(Modifier.height(2.dp))
+                    Text(item.translation,
+                        style = JannahType.caption,
+                        color = JannahColors.Muted)
                 }
-            }
-
-            override fun onResults(results: Bundle?) {
-                val matches = results?.getStringArrayList(SpeechRecognizer.RESULTS_RECOGNITION)
-                val text = matches?.firstOrNull()
-                if (!text.isNullOrBlank()) {
-                    lastHeard = text
-                    if (containsIstighfar(text)) {
-                        count = IstighfarStore.increment(ctx)
+                Column(horizontalAlignment = Alignment.End) {
+                    Text("$today",
+                        style = JannahType.body,
+                        color = if (today > 0) JannahColors.Orange else JannahColors.Faint,
+                        fontWeight = FontWeight.SemiBold)
+                    if (item.target != null) {
+                        Text("/ ${item.target}",
+                            style = JannahType.micro, color = JannahColors.Faint)
                     }
                 }
-                if (listening) {
-                    try { sr.startListening(intent) } catch (_: Exception) {}
-                }
+                Spacer(Modifier.size(8.dp))
+                Text("→", style = JannahType.bodySmall, color = JannahColors.Muted)
             }
-
-            override fun onPartialResults(partialResults: Bundle?) {
-                val matches = partialResults?.getStringArrayList(SpeechRecognizer.RESULTS_RECOGNITION)
-                val text = matches?.firstOrNull()
-                if (!text.isNullOrBlank()) {
-                    lastHeard = text
-                }
+            if (index < Adhkar.items.size - 1) {
+                Box(Modifier.fillMaxWidth().height(0.5.dp).background(JannahColors.Divider))
             }
-
-            override fun onEvent(eventType: Int, params: Bundle?) {}
-        })
-
-        recognizer = sr
-
-        try {
-            sr.startListening(intent)
-            listening = true
-        } catch (e: Exception) {
-            listening = false
         }
+
+        Spacer(Modifier.height(JannahSpacing.xl))
+    }
+}
+
+@Composable
+private fun DhikrDetail(item: Adhkar.Item, onBack: () -> Unit) {
+    val ctx = LocalContext.current
+    var count by remember { mutableStateOf(DhikrStore.countToday(ctx, item.id)) }
+    var shakeEnabled by remember { mutableStateOf(true) }
+
+    // Shake detector
+    DisposableEffect(shakeEnabled) {
+        val detector = if (shakeEnabled) ShakeDetector(ctx) {
+            count = DhikrStore.increment(ctx, item.id)
+        } else null
+        detector?.start()
+        onDispose { detector?.stop() }
     }
 
-    DisposableEffect(Unit) {
-        onDispose { stopListening() }
-    }
+    val ringProgress = if (item.target != null)
+        (count.toFloat() / item.target.toFloat()).coerceIn(0f, 1f)
+    else 0f
 
-    val dua = Duas.istighfar
-
-    // Subtle pulse while listening.
-    val pulse by rememberInfiniteTransition(label = "pulse").animateFloat(
-        initialValue = 0.9f,
-        targetValue = 1.05f,
-        animationSpec = infiniteRepeatable(
-            animation = tween(1200),
-            repeatMode = RepeatMode.Reverse
-        ),
-        label = "pulseValue"
-    )
-    val ringAlpha by animateFloatAsState(
-        targetValue = if (listening) 1f else 0.5f,
-        label = "ringAlpha"
-    )
+    val ringAnim by animateFloatAsState(ringProgress, tween(400), label = "ring")
     val ringColor by animateColorAsState(
-        targetValue = if (listening) JannahColors.Orange else JannahColors.Border,
-        label = "ringColor"
+        if (item.target != null && count >= item.target) JannahColors.Orange else JannahColors.Border,
+        label = "color"
     )
 
     Column(
@@ -233,13 +150,12 @@ fun DhikrScreen() {
     ) {
         Spacer(Modifier.height(JannahSpacing.l))
 
-        Text("Dhikr", style = JannahType.title, color = JannahColors.Ink)
-        Spacer(Modifier.height(JannahSpacing.xs))
-        Text("Today · $count", style = JannahType.caption, color = JannahColors.Muted)
+        Text("← Back", style = JannahType.bodySmall, color = JannahColors.Muted,
+            modifier = Modifier.clickable(onClick = onBack))
 
         Spacer(Modifier.height(JannahSpacing.l))
 
-        // The dua card
+        // Arabic hero card
         Box(
             Modifier
                 .fillMaxWidth()
@@ -250,146 +166,120 @@ fun DhikrScreen() {
                 Modifier.padding(JannahSpacing.l).fillMaxWidth(),
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
-                Text(dua.arabic, style = JannahType.arabicLarge,
+                Text(item.arabic, style = JannahType.arabicLarge,
                     color = JannahColors.Ink, textAlign = TextAlign.Center)
                 Spacer(Modifier.height(JannahSpacing.m))
-                Text(dua.transliteration, style = JannahType.bodySmall,
+                Text(item.transliteration, style = JannahType.bodySmall,
                     color = JannahColors.Muted, textAlign = TextAlign.Center)
                 Spacer(Modifier.height(JannahSpacing.s))
-                Text(dua.translation, style = JannahType.body,
+                Text(item.translation, style = JannahType.body,
                     color = JannahColors.Body, textAlign = TextAlign.Center, lineHeight = 22.sp)
                 Spacer(Modifier.height(JannahSpacing.s))
-                Text(dua.source, style = JannahType.caption, color = JannahColors.Faint)
+                Text(item.source, style = JannahType.caption, color = JannahColors.Faint)
             }
         }
 
         Spacer(Modifier.height(JannahSpacing.xl))
 
-        // The counter ring — tap to increment, or use voice
+        // Counter ring
         Box(
             modifier = Modifier.fillMaxWidth().aspectRatio(1.1f),
             contentAlignment = Alignment.Center
         ) {
-            Canvas(
-                modifier = Modifier.size(if (listening) (240 * pulse).dp else 240.dp)
-            ) {
-                val stroke = 3f
+            Canvas(modifier = Modifier.size(240.dp)) {
+                val stroke = 4f
                 drawArc(
-                    color = ringColor.copy(alpha = ringAlpha),
+                    color = JannahColors.Border,
                     startAngle = -90f, sweepAngle = 360f, useCenter = false,
                     topLeft = Offset(stroke, stroke),
                     size = Size(size.width - stroke * 2, size.height - stroke * 2),
                     style = Stroke(width = stroke, cap = StrokeCap.Round)
                 )
+                if (item.target != null) {
+                    drawArc(
+                        color = ringColor,
+                        startAngle = -90f, sweepAngle = 360f * ringAnim, useCenter = false,
+                        topLeft = Offset(stroke, stroke),
+                        size = Size(size.width - stroke * 2, size.height - stroke * 2),
+                        style = Stroke(width = stroke, cap = StrokeCap.Round)
+                    )
+                }
             }
 
             Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                Text(count.toString(), color = JannahColors.Ink,
+                    fontSize = 68.sp, fontWeight = FontWeight.Bold,
+                    letterSpacing = (-2).sp)
+                Spacer(Modifier.height(4.dp))
                 Text(
-                    count.toString(),
-                    color = JannahColors.Ink,
-                    fontSize = 64.sp,
-                    fontWeight = FontWeight.Bold,
-                    letterSpacing = (-2).sp
+                    if (item.target != null) "of ${item.target}" else "recitations",
+                    style = JannahType.caption, color = JannahColors.Muted
                 )
-                Spacer(Modifier.height(JannahSpacing.xs))
+                Spacer(Modifier.height(JannahSpacing.s))
                 Text(
-                    if (listening) "LISTENING" else "TAP TO RECITE",
-                    style = JannahType.eyebrow,
-                    color = if (listening) JannahColors.Orange else JannahColors.Muted
+                    if (shakeEnabled) "SHAKE OR TAP" else "TAP TO RECITE",
+                    style = JannahType.eyebrow, color = JannahColors.Orange
                 )
             }
 
-            // Invisible tap target
+            // Tap target
             Box(
                 Modifier
                     .size(240.dp)
                     .clip(CircleShape)
-                    .clickable { count = IstighfarStore.increment(ctx) }
+                    .clickable { count = DhikrStore.increment(ctx, item.id) }
             )
         }
 
         Spacer(Modifier.height(JannahSpacing.l))
 
-        // Voice control — the differentiator
-        if (recognitionAvailable && hasAudioPermission) {
-            Box(
-                Modifier
-                    .fillMaxWidth()
-                    .height(56.dp)
-                    .clip(RoundedCornerShape(JannahSpacing.buttonRadius))
-                    .background(if (listening) JannahColors.OrangeDeep else JannahColors.Orange)
-                    .clickable {
-                        if (listening) stopListening() else startListening()
-                    },
-                contentAlignment = Alignment.Center
-            ) {
-                Text(
-                    if (listening) "Stop listening" else "Start voice dhikr",
-                    style = JannahType.button,
-                    color = JannahColors.OnOrange
-                )
-            }
-            Spacer(Modifier.height(JannahSpacing.s))
-            Text(
-                if (listening)
-                    "Say “Astaghfirullah”. Counts automatically."
-                else
-                    "Voice counts every time you say Astaghfirullah.",
-                style = JannahType.caption,
-                color = JannahColors.Muted,
-                textAlign = TextAlign.Center,
-                modifier = Modifier.fillMaxWidth()
-            )
-            if (lastHeard != null && listening) {
-                Spacer(Modifier.height(JannahSpacing.xs))
-                Text(
-                    "Heard: “$lastHeard”",
-                    style = JannahType.caption,
-                    color = JannahColors.Faint,
-                    textAlign = TextAlign.Center,
-                    modifier = Modifier.fillMaxWidth()
-                )
-            }
-        } else {
-            Text(
-                when {
-                    !recognitionAvailable ->
-                        "Voice recognition is not available on this device."
-                    !hasAudioPermission ->
-                        "Grant microphone permission to use voice dhikr."
-                    else -> ""
-                },
-                style = JannahType.caption,
-                color = JannahColors.Muted,
-                textAlign = TextAlign.Center,
-                modifier = Modifier.fillMaxWidth()
-            )
-        }
-
-        Spacer(Modifier.height(JannahSpacing.l))
-
-        Row(
-            Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.Center
+        // Shake toggle
+        Box(
+            Modifier
+                .fillMaxWidth()
+                .clip(RoundedCornerShape(JannahSpacing.buttonRadius))
+                .background(JannahColors.Card)
+                .clickable { shakeEnabled = !shakeEnabled }
+                .padding(JannahSpacing.m)
         ) {
-            Box(
-                Modifier
-                    .clip(RoundedCornerShape(JannahSpacing.buttonRadius))
-                    .clickable {
-                        IstighfarStore.reset(ctx)
-                        count = 0
-                    }
-                    .padding(horizontal = 20.dp, vertical = 10.dp)
+            Row(
+                Modifier.fillMaxWidth(),
+                verticalAlignment = Alignment.CenterVertically
             ) {
-                Text("Reset today", style = JannahType.caption, color = JannahColors.Muted)
+                Column(Modifier.weight(1f)) {
+                    Text("Shake to count",
+                        style = JannahType.body, color = JannahColors.Ink,
+                        fontWeight = FontWeight.SemiBold)
+                    Spacer(Modifier.height(2.dp))
+                    Text("Shake the phone to add a recitation.",
+                        style = JannahType.caption, color = JannahColors.Muted)
+                }
+                Box(
+                    Modifier
+                        .size(24.dp)
+                        .clip(CircleShape)
+                        .background(if (shakeEnabled) JannahColors.Orange else JannahColors.Border)
+                )
             }
+        }
+
+        Spacer(Modifier.height(JannahSpacing.m))
+
+        Box(
+            Modifier
+                .fillMaxWidth()
+                .clip(RoundedCornerShape(JannahSpacing.buttonRadius))
+                .clickable { DhikrStore.reset(ctx, item.id); count = 0 }
+                .padding(vertical = 12.dp),
+            contentAlignment = Alignment.Center
+        ) {
+            Text("Reset today", style = JannahType.caption, color = JannahColors.Muted)
         }
 
         Spacer(Modifier.height(JannahSpacing.l))
 
         Text(
-            "The Prophet ﷺ sought forgiveness more than seventy times a day. " +
-                "This counter is a private reminder. It is not a score.",
+            "Counting supports remembrance. It does not replace sincerity.",
             style = JannahType.caption, color = JannahColors.Faint,
             textAlign = TextAlign.Center, modifier = Modifier.fillMaxWidth()
         )

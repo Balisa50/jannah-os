@@ -22,9 +22,6 @@
             </intent-filter>
         </activity>
         <activity
-            android:name=".ui.screens.DhikrActivity"
-            android:exported="false" />
-        <activity
             android:name=".SettingsActivity"
             android:exported="false" />
         <activity

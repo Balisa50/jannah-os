@@ -65,12 +65,7 @@ fun JannahApp() {
                 }
                 composable("pray")  { PrayScreen() }
                 composable("quran") { QuranTabScreen() }
-                composable("dhikr") {
-                    val ctx = androidx.compose.ui.platform.LocalContext.current
-                    androidx.compose.runtime.LaunchedEffect(Unit) {
-                        ctx.startActivity(android.content.Intent(ctx, com.jannahos.ui.screens.DhikrActivity::class.java))
-                    }
-                }
+                composable("dhikr") { DhikrScreen() }
                 composable("you")   { YouScreen() }
             }
 
