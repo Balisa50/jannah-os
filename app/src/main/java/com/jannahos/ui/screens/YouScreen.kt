@@ -11,6 +11,7 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -32,6 +33,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.jannahos.BedtimeActivity
 import com.jannahos.PlannerActivity
+import com.jannahos.SafeStore
 import com.jannahos.Settings
 import com.jannahos.SettingsActivity
 import com.jannahos.TahajjudPlan
@@ -162,8 +164,7 @@ fun YouScreen() {
     val name = Settings.displayName(ctx)
     val level = TahajjudPlan.level(ctx)
     val (prayedWeek, target) = TahajjudPlan.weekProgress(ctx)
-    val log = WakeLog(ctx)
-    val stats = log.formationStats(30)
+    val stats = SafeStore.stats30(ctx)
     val nights = stats.verified + stats.claimed
 
     Column(
@@ -171,6 +172,7 @@ fun YouScreen() {
             .fillMaxSize()
             .verticalScroll(rememberScrollState())
             .background(JannahColors.Cream)
+            .navigationBarsPadding()
     ) {
         // ==== HEADER ====
         Box(
