@@ -19,8 +19,13 @@ object QuranApi {
         val arabicAyahs = parseAyahs(arabicJson)
         val englishAyahs = parseAyahs(englishJson)
 
+        // The alquran.cloud API prefixes ayah 1 of most surahs with the basmalah.
+        // We strip it here so the reader can render the basmalah as its own header.
+        val stripBasmalah = surahNumber != 1 && surahNumber != 9
         return arabicAyahs.mapIndexed { i, a ->
-            Ayah(a.number, a.arabic, englishAyahs.getOrNull(i)?.arabic ?: "", a.globalNumber)
+            val arabic = if (stripBasmalah && a.number == 1)
+                stripBasmalahPrefix(a.arabic) else a.arabic
+            Ayah(a.number, arabic, englishAyahs.getOrNull(i)?.arabic ?: "", a.globalNumber)
         }
     }
 
@@ -48,6 +53,24 @@ object QuranApi {
             )
         }
         return out
+    }
+
+    // The Uthmani basmalah as returned by the API. We strip this prefix.
+    private val BASMALAH_PREFIXES = listOf(
+        "بِسْمِ اللَّهِ الرَّحْمَٰنِ الرَّحِيمِ",
+        "بِسْمِ ٱللَّهِ ٱلرَّحْمَٰنِ ٱلرَّحِيمِ",
+        "بِسْمِ اللَّهِ الرَّحْمَنِ الرَّحِيمِ"
+    )
+
+    private fun stripBasmalahPrefix(text: String): String {
+        var t = text
+        for (p in BASMALAH_PREFIXES) {
+            if (t.startsWith(p)) {
+                t = t.removePrefix(p).trimStart()
+                break
+            }
+        }
+        return t
     }
 
     private fun get(url: String): String {

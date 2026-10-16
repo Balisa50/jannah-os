@@ -307,45 +307,7 @@ fun YouScreen() {
                 onClick = { showDuaJournal.value = true }
             )
 
-            Spacer(Modifier.height(JannahSpacing.s))
 
-            // Letters to future self
-            SmallTile(
-                modifier = Modifier.fillMaxWidth(),
-                eyebrow = "SEALED",
-                title = "Letters to future self",
-                onClick = { showLetters.value = true }
-            )
-
-            Spacer(Modifier.height(JannahSpacing.s))
-
-            // Dua journal
-            SmallTile(
-                modifier = Modifier.fillMaxWidth(),
-                eyebrow = "RECORD",
-                title = "Dua journal — answered duas",
-                onClick = { showDuaJournal.value = true }
-            )
-
-            Spacer(Modifier.height(JannahSpacing.s))
-
-            // Letters to future self
-            SmallTile(
-                modifier = Modifier.fillMaxWidth(),
-                eyebrow = "SEALED",
-                title = "Letters to future self",
-                onClick = { showLetters.value = true }
-            )
-
-            Spacer(Modifier.height(JannahSpacing.s))
-
-            // Dua journal
-            SmallTile(
-                modifier = Modifier.fillMaxWidth(),
-                eyebrow = "RECORD",
-                title = "Dua journal — answered duas",
-                onClick = { showDuaJournal.value = true }
-            )
 
             Spacer(Modifier.height(JannahSpacing.xl))
 
