@@ -66,6 +66,7 @@ fun YouScreen() {
     val showSadaqah = remember { mutableStateOf(false) }
     val showFinance = remember { mutableStateOf(false) }
     val showTime = remember { mutableStateOf(false) }
+    val showLetters = remember { mutableStateOf(false) }
     var showMore by remember { mutableStateOf(false) }
 
     // Route the modals
@@ -86,6 +87,9 @@ fun YouScreen() {
     if (showSadaqah.value) { SadaqahScreen(onBack = { showSadaqah.value = false }); return }
     if (showFinance.value) { FinanceScreen(onBack = { showFinance.value = false }); return }
     if (showTime.value) { TimeScreen(onBack = { showTime.value = false }); return }
+    if (showLetters.value) { LettersScreen(onBack = { showLetters.value = false }); return }
+    if (showLetters.value) { LettersScreen(onBack = { showLetters.value = false }); return }
+    if (showLetters.value) { LettersScreen(onBack = { showLetters.value = false }); return }
 
     val name = Settings.displayName(ctx)
     val level = TahajjudPlan.level(ctx)
@@ -202,6 +206,36 @@ fun YouScreen() {
                     onClick = { ctx.startActivity(Intent(ctx, BedtimeActivity::class.java)) }
                 )
             }
+
+            Spacer(Modifier.height(JannahSpacing.s))
+
+            // Letters to future self
+            SmallTile(
+                modifier = Modifier.fillMaxWidth(),
+                eyebrow = "SEALED",
+                title = "Letters to future self",
+                onClick = { showLetters.value = true }
+            )
+
+            Spacer(Modifier.height(JannahSpacing.s))
+
+            // Letters to future self
+            SmallTile(
+                modifier = Modifier.fillMaxWidth(),
+                eyebrow = "SEALED",
+                title = "Letters to future self",
+                onClick = { showLetters.value = true }
+            )
+
+            Spacer(Modifier.height(JannahSpacing.s))
+
+            // Letters to future self
+            SmallTile(
+                modifier = Modifier.fillMaxWidth(),
+                eyebrow = "SEALED",
+                title = "Letters to future self",
+                onClick = { showLetters.value = true }
+            )
 
             Spacer(Modifier.height(JannahSpacing.xl))
 
