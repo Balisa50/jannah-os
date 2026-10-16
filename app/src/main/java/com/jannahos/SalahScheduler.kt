@@ -45,6 +45,17 @@ object SalahScheduler {
             } else {
                 am.setAndAllowWhileIdle(AlarmManager.RTC_WAKEUP, t, pi)
             }
+
+            // Pre-prayer warning 15 minutes earlier
+            val preMs = t - 15L * 60_000L
+            if (preMs > now) {
+                val prePi = prePrayerIntent(context, name, code + 100)
+                if (canExact) {
+                    am.setExactAndAllowWhileIdle(AlarmManager.RTC_WAKEUP, preMs, prePi)
+                } else {
+                    am.setAndAllowWhileIdle(AlarmManager.RTC_WAKEUP, preMs, prePi)
+                }
+            }
         }
 
         val midnight = nextMidnightMs()
@@ -86,6 +97,16 @@ object SalahScheduler {
         cal.set(java.util.Calendar.MINUTE, 5)
         cal.set(java.util.Calendar.SECOND, 0)
         return cal.timeInMillis
+    }
+
+    private fun prePrayerIntent(context: Context, name: String, code: Int): PendingIntent {
+        val intent = Intent(context, PrePrayerReceiver::class.java).apply {
+            putExtra("prayer", name)
+        }
+        var flags = PendingIntent.FLAG_UPDATE_CURRENT
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M)
+            flags = flags or PendingIntent.FLAG_IMMUTABLE
+        return PendingIntent.getBroadcast(context, code, intent, flags)
     }
 
     private fun pendingIntent(context: Context, name: String, code: Int): PendingIntent {
