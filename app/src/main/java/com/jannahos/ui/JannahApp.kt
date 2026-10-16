@@ -1,35 +1,27 @@
 package com.jannahos.ui
 
-import androidx.compose.animation.animateColorAsState
-import androidx.compose.animation.core.animateFloatAsState
-import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
-import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Favorite
 import androidx.compose.material.icons.filled.Home
-import androidx.compose.material.icons.filled.LocationOn
 import androidx.compose.material.icons.filled.Menu
+import androidx.compose.material.icons.filled.DateRange
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.material3.Icon
+import androidx.compose.material3.NavigationBar
+import androidx.compose.material3.NavigationBarItem
+import androidx.compose.material3.NavigationBarItemDefaults
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavHostController
@@ -42,9 +34,7 @@ import com.jannahos.ui.screens.PrayScreen
 import com.jannahos.ui.screens.QuranTabScreen
 import com.jannahos.ui.screens.TodayScreen
 import com.jannahos.ui.screens.YouScreen
-import com.jannahos.ui.theme.JannahBrushes
 import com.jannahos.ui.theme.JannahColors
-import com.jannahos.ui.theme.JannahSpacing
 import com.jannahos.ui.theme.JannahType
 import com.jannahos.ui.theme.ScreenScaffold
 
@@ -52,7 +42,7 @@ private data class Tab(val route: String, val label: String, val icon: ImageVect
 
 private val TABS = listOf(
     Tab("today", "Today", Icons.Default.Home),
-    Tab("pray",  "Pray",  Icons.Default.LocationOn),
+    Tab("pray",  "Pray",  Icons.Default.DateRange),
     Tab("quran", "Quran", Icons.Default.Menu),
     Tab("dhikr", "Dhikr", Icons.Default.Favorite),
     Tab("you",   "You",   Icons.Default.Person)
@@ -62,97 +52,89 @@ private val TABS = listOf(
 fun JannahApp() {
     val nav = rememberNavController()
     ScreenScaffold {
-        Column(Modifier.fillMaxSize()) {
-            Box(Modifier.weight(1f)) {
-                NavHost(
-                    navController = nav,
-                    startDestination = "today"
-                ) {
-                    composable("today") { TodayScreen(onNavigate = { route -> nav.navigate(route) { launchSingleTop = true } }) }
-                    composable("pray")  { PrayScreen() }
-                    composable("quran") { QuranTabScreen() }
-                    composable("dhikr") { DhikrScreen() }
-                    composable("you")   { YouScreen() }
+        Box(Modifier.fillMaxSize()) {
+            NavHost(
+                navController = nav,
+                startDestination = "today",
+                modifier = Modifier.fillMaxSize()
+            ) {
+                composable("today") {
+                    TodayScreen(onNavigate = { route ->
+                        nav.navigate(route) { launchSingleTop = true }
+                    })
                 }
+                composable("pray")  { PrayScreen() }
+                composable("quran") { QuranTabScreen() }
+                composable("dhikr") { DhikrScreen() }
+                composable("you")   { YouScreen() }
             }
-            JannahBottomBar(nav)
+
+            JannahBottomBar(
+                nav = nav,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .align(androidx.compose.ui.Alignment.BottomCenter)
+            )
         }
     }
 }
 
 @Composable
-private fun JannahBottomBar(nav: NavHostController) {
+private fun JannahBottomBar(nav: NavHostController, modifier: Modifier = Modifier) {
     val backStack by nav.currentBackStackEntryAsState()
     val current = backStack?.destination?.route
 
-    Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(horizontal = JannahSpacing.gutter, vertical = JannahSpacing.s),
-        horizontalArrangement = Arrangement.SpaceBetween,
-        verticalAlignment = Alignment.CenterVertically
+    NavigationBar(
+        modifier = modifier,
+        containerColor = JannahColors.Surface,
+        tonalElevation = 0.dp
     ) {
         TABS.forEach { tab ->
-            TabItem(
-                tab = tab,
-                selected = current == tab.route,
+            val selected = current == tab.route
+            NavigationBarItem(
+                selected = selected,
                 onClick = {
-                    if (current != tab.route) {
+                    if (!selected) {
                         nav.navigate(tab.route) {
                             popUpTo(nav.graph.startDestinationId) { saveState = true }
                             launchSingleTop = true
                             restoreState = true
                         }
                     }
-                }
+                },
+                icon = {
+                    Box(
+                        modifier = Modifier
+                            .size(32.dp)
+                            .background(
+                                color = if (selected) JannahColors.OrangeSoft else JannahColors.Surface,
+                                shape = CircleShape
+                            ),
+                        contentAlignment = androidx.compose.ui.Alignment.Center
+                    ) {
+                        Icon(
+                            imageVector = tab.icon,
+                            contentDescription = tab.label,
+                            tint = if (selected) JannahColors.Orange else JannahColors.Muted,
+                            modifier = Modifier.size(18.dp)
+                        )
+                    }
+                },
+                label = {
+                    Text(
+                        tab.label,
+                        style = JannahType.micro,
+                        color = if (selected) JannahColors.Orange else JannahColors.Muted
+                    )
+                },
+                colors = NavigationBarItemDefaults.colors(
+                    indicatorColor = JannahColors.Surface,
+                    selectedIconColor = JannahColors.Orange,
+                    selectedTextColor = JannahColors.Orange,
+                    unselectedIconColor = JannahColors.Muted,
+                    unselectedTextColor = JannahColors.Muted
+                )
             )
         }
-    }
-}
-
-@Composable
-private fun TabItem(tab: Tab, selected: Boolean, onClick: () -> Unit) {
-    val iconColor by animateColorAsState(
-        targetValue = if (selected) JannahColors.Gold else JannahColors.Muted,
-        animationSpec = tween(220),
-        label = "icon"
-    )
-    val labelColor by animateColorAsState(
-        targetValue = if (selected) JannahColors.Gold else JannahColors.Faint,
-        animationSpec = tween(220),
-        label = "label"
-    )
-    val glowAlpha by animateFloatAsState(
-        targetValue = if (selected) 0.14f else 0f,
-        animationSpec = tween(220),
-        label = "glow"
-    )
-
-    Column(
-        modifier = Modifier
-            .clip(RoundedCornerShape(16.dp))
-            .padding(horizontal = 12.dp, vertical = 8.dp),
-        horizontalAlignment = Alignment.CenterHorizontally
-    ) {
-        Box(
-            modifier = Modifier
-                .size(36.dp)
-                .clip(CircleShape)
-                .background(JannahColors.Gold.copy(alpha = glowAlpha)),
-            contentAlignment = Alignment.Center
-        ) {
-            Icon(
-                imageVector = tab.icon,
-                contentDescription = tab.label,
-                tint = iconColor,
-                modifier = Modifier.size(20.dp)
-            )
-        }
-        Spacer(Modifier.height(4.dp))
-        Text(
-            tab.label,
-            style = JannahType.micro,
-            color = labelColor
-        )
     }
 }

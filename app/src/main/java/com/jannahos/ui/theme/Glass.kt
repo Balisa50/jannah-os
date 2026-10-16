@@ -5,16 +5,15 @@ import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxScope
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 
-// A translucent glass surface. Subtle gradient fill + gradient edge highlight.
-// This reads as real glass on OLED without expensive runtime blur.
+// Clean white card with a soft shadow. No glassmorphism — light mode done well.
 @Composable
 fun GlassCard(
     modifier: Modifier = Modifier,
@@ -24,13 +23,14 @@ fun GlassCard(
     val shape = RoundedCornerShape(radius)
     Box(
         modifier = modifier
+            .shadow(elevation = 2.dp, shape = shape, ambientColor = JannahColors.Border, spotColor = JannahColors.Border)
             .clip(shape)
-            .background(JannahBrushes.glassSurface, shape)
-            .border(width = 0.6.dp, brush = JannahBrushes.glassEdge, shape = shape)
+            .background(JannahColors.Surface, shape)
+            .border(width = 0.5.dp, color = JannahColors.Border, shape = shape)
     ) { content() }
 }
 
-// Atmospheric light behind hero content. Wraps the whole screen.
+// Screen scaffold — cream background, no glow.
 @Composable
 fun ScreenScaffold(
     modifier: Modifier = Modifier,
@@ -39,15 +39,6 @@ fun ScreenScaffold(
     Box(
         modifier = modifier
             .fillMaxSize()
-            .background(JannahColors.Deep)
-    ) {
-        // Soft radial gold glow at top — atmosphere, not decoration.
-        Box(
-            Modifier
-                .fillMaxWidth()
-                .fillMaxSize(0.6f)
-                .background(JannahBrushes.goldGlow)
-        )
-        content()
-    }
+            .background(JannahColors.Cream)
+    ) { content() }
 }

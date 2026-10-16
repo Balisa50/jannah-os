@@ -1,17 +1,17 @@
 package com.jannahos.ui.theme
 
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.darkColorScheme
+import androidx.compose.material3.lightColorScheme
 import androidx.compose.runtime.Composable
 
-private val scheme = darkColorScheme(
-    background = JannahColors.Deep,
+private val scheme = lightColorScheme(
+    background = JannahColors.Cream,
     surface = JannahColors.Surface,
-    onBackground = JannahColors.Ivory,
-    onSurface = JannahColors.Ivory,
-    primary = JannahColors.Gold,
-    onPrimary = JannahColors.GoldInk,
-    outline = JannahColors.Divider
+    onBackground = JannahColors.Ink,
+    onSurface = JannahColors.Ink,
+    primary = JannahColors.Orange,
+    onPrimary = JannahColors.OnOrange,
+    outline = JannahColors.Border
 )
 
 @Composable

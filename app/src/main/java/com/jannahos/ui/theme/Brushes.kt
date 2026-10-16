@@ -5,35 +5,26 @@ import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 
 object JannahBrushes {
-
-    // Soft atmospheric light behind hero content. Radial, fades to nothing.
-    val goldGlow = Brush.radialGradient(
-        colors = listOf(
-            JannahColors.Gold.copy(alpha = 0.18f),
-            JannahColors.Gold.copy(alpha = 0.05f),
-            Color.Transparent
-        ),
-        center = Offset(0.5f, 0.3f),
-        radius = 700f
+    // A warm cream wash behind the hero. Very subtle.
+    val creamWash = Brush.verticalGradient(
+        colors = listOf(Color(0xFFFFF4E6), JannahColors.Cream)
     )
 
-    // Frosted glass: subtle vertical gradient from top to bottom.
-    val glassSurface = Brush.verticalGradient(
-        colors = listOf(JannahColors.GlassTop, JannahColors.GlassBottom)
+    // Orange gradient — for the one hero pill only.
+    val orangeButton = Brush.verticalGradient(
+        colors = listOf(Color(0xFFFF8033), JannahColors.Orange)
     )
 
-    // The edge highlight that reads as "glass" — brighter at top.
-    val glassEdge = Brush.verticalGradient(
-        colors = listOf(JannahColors.GlassEdgeTop, JannahColors.GlassEdgeBot)
+    // Alias used by screens we haven't migrated yet.
+    val goldButton = orangeButton
+
+    // Card edge — hairline at top, lighter at bottom.
+    val cardEdge = Brush.verticalGradient(
+        colors = listOf(Color(0x0F000000), Color(0x00000000))
     )
 
-    // Gold gradient for the primary action button — light → dark.
-    val goldButton = Brush.verticalGradient(
-        colors = listOf(Color(0xFFE5CB90), JannahColors.Gold, JannahColors.GoldDeep)
-    )
-
-    // Faint vertical fade under content — gives the composition a base.
-    val surfaceFade = Brush.verticalGradient(
-        colors = listOf(Color.Transparent, JannahColors.Void)
+    // Fade for image overlays.
+    val imageScrim = Brush.verticalGradient(
+        colors = listOf(Color.Transparent, Color(0xCC06143B))
     )
 }

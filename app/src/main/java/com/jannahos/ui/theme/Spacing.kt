@@ -11,9 +11,10 @@ object JannahSpacing {
     val xxl  = 48.dp
 
     val gutter = 20.dp
-    val cardRadius = 22.dp
-    val buttonRadius = 16.dp
-    // Aliases
+    val cardRadius = 18.dp
+    val buttonRadius = 14.dp
+    val pillRadius = 999.dp
+
     val screenGutter = gutter
     val blockGap = l
 }

@@ -2,50 +2,57 @@ package com.jannahos.ui.theme
 
 import androidx.compose.ui.graphics.Color
 
-// A darker, richer palette. Layered surfaces for real depth.
-// Gold is a gradient (see Brushes.kt), never a flat colour.
 object JannahColors {
 
-    // Backgrounds, deepest to lightest — used as a stack.
-    val Void      = Color(0xFF05070A) // behind everything
-    val Deep      = Color(0xFF0A0D13) // app background
-    val Surface   = Color(0xFF11151D) // raised surface
-    val Elevated  = Color(0xFF181D27) // most raised
+    // Light surfaces
+    val Cream     = Color(0xFFFFF9F2)
+    val Surface   = Color(0xFFFFFFFF)
+    val SurfaceTint = Color(0xFFFFF1E4)
 
-    // Text.
-    val Ivory     = Color(0xFFF2ECDF)
-    val Body      = Color(0xFFC7C2B6)
-    val Muted     = Color(0xFF7A7E88)
-    val Faint     = Color(0xFF4A4E58)
+    // Accent
+    val Orange    = Color(0xFFFF6A00)
+    val OrangeSoft = Color(0xFFFFE4CE)
+    val OrangeDeep = Color(0xFFC45200)
 
-    // Accent — champagne gold. Flat value, gradient in Brushes.kt.
-    val Gold      = Color(0xFFD4B677)
-    val GoldDeep  = Color(0xFF9E7F42)
-    val GoldInk   = Color(0xFF0A0D13) // text on gold
+    // Text
+    val Ink       = Color(0xFF06143B) // headings
+    val Body      = Color(0xFF3D4657)
+    val Muted     = Color(0xFF8A92A2)
+    val Faint     = Color(0xFFBFC5D0)
 
-    // Rare, restrained accents.
-    val Emerald   = Color(0xFF5C9C7A)
-    val Crimson   = Color(0xFFA85C5C)
+    // Lines
+    val Border    = Color(0xFFEFE8DE)
+    val Divider   = Color(0xFFF4EEE4)
 
-    // Glass elements — drawn with alpha on top of surfaces.
-    val GlassTop     = Color(0x0FFFFFFF) // 6% white
-    val GlassBottom  = Color(0x05FFFFFF) // 2% white
-    val GlassEdgeTop = Color(0x24FFFFFF) // 14% white
-    val GlassEdgeBot = Color(0x08FFFFFF) // 3% white
+    // Semantic
+    val Success   = Color(0xFF2E7D5B)
+    val Danger    = Color(0xFFB85454)
 
-    val Divider   = Color(0x14FFFFFF)
+    // On-accent text
+    val OnOrange  = Color(0xFFFFFFFF)
 
-    // --- Backwards-compatible aliases ---
-    // Screens still use these names; they map to the new tokens.
-    val DayBg      = Deep
+    // Legacy aliases used by screens we haven't migrated yet.
+    val Void      = Cream
+    val Deep      = Cream
+    val Elevated  = SurfaceTint
+    val Ivory     = Ink
+    val Gold      = Orange
+    val GoldDeep  = OrangeDeep
+    val GoldInk   = OnOrange
+    val Emerald   = Success
+    val Crimson   = Danger
+    val Accent    = Orange
+    val AccentInk = OnOrange
+    val DayBg     = Cream
     val DaySurface = Surface
-    val DayText    = Ivory
-    val DayMuted   = Muted
-    val NightBg      = Void
+    val DayText   = Ink
+    val DayMuted  = Muted
+    val NightBg      = Cream
     val NightSurface = Surface
-    val NightText    = Ivory
+    val NightText    = Ink
     val NightMuted   = Muted
-    val Accent     = Gold
-    val AccentInk  = GoldInk
-    val Danger     = Crimson
+    val GlassTop     = Color(0x14FFFFFF)
+    val GlassBottom  = Color(0x0AFFFFFF)
+    val GlassEdgeTop = Color(0x1A000000)
+    val GlassEdgeBot = Color(0x0A000000)
 }
