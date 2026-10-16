@@ -34,6 +34,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.jannahos.AyahPlayer
+import com.jannahos.KhatmPlan
 import com.jannahos.QuranApi
 import com.jannahos.QuranBookmarkStore
 import com.jannahos.QuranBookmarks
@@ -52,7 +53,9 @@ fun QuranTabScreen() {
     var selected by remember { mutableStateOf<Int?>(null) }
     var showBookmarks by remember { mutableStateOf(false) }
     var showReciters by remember { mutableStateOf(false) }
+    var showKhatm by remember { mutableStateOf(false) }
 
+    if (showKhatm) { KhatmScreen(onBack = { showKhatm = false }); return }
     if (showReciters) { ReciterPickerScreen(onBack = { showReciters = false }); return }
     if (showBookmarks) {
         BookmarksScreen(
@@ -65,7 +68,8 @@ fun QuranTabScreen() {
     if (selected == null) SurahList(
         onPick = { selected = it },
         onOpenBookmarks = { showBookmarks = true },
-        onOpenReciters = { showReciters = true }
+        onOpenReciters = { showReciters = true },
+        onOpenKhatm = { showKhatm = true }
     )
     else SurahReader(surah = selected!!, onBack = { selected = null })
 }
@@ -74,7 +78,8 @@ fun QuranTabScreen() {
 private fun SurahList(
     onPick: (Int) -> Unit,
     onOpenBookmarks: () -> Unit,
-    onOpenReciters: () -> Unit
+    onOpenReciters: () -> Unit,
+    onOpenKhatm: () -> Unit
 ) {
     val ctx = LocalContext.current
     val last = remember { QuranBookmarks.lastSurah(ctx) }
@@ -168,6 +173,34 @@ private fun SurahList(
                 }
                 Spacer(Modifier.height(JannahSpacing.s))
             }
+
+            // Reading plan entry
+            val planDays = KhatmPlan.planDays(ctx)
+            val planDone = KhatmPlan.completedDays(ctx).size
+            val planText = if (planDays == 0) "Start a plan"
+                else "$planDone of $planDays days"
+            Box(
+                Modifier
+                    .fillMaxWidth()
+                    .clip(RoundedCornerShape(JannahSpacing.cardRadius))
+                    .background(JannahColors.Card)
+                    .clickable { onOpenKhatm() }
+                    .padding(JannahSpacing.l)
+            ) {
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Column(Modifier.weight(1f)) {
+                        Text("Reading plan",
+                            fontFamily = FontFamily.Serif,
+                            fontSize = 17.sp,
+                            fontWeight = FontWeight.Bold,
+                            color = JannahColors.Ink)
+                        Spacer(Modifier.height(2.dp))
+                        Text(planText, style = JannahType.caption, color = JannahColors.Muted)
+                    }
+                    Text("→", style = JannahType.title, color = JannahColors.Orange)
+                }
+            }
+            Spacer(Modifier.height(JannahSpacing.s))
 
             if (bookmarkCount > 0) {
                 Box(
