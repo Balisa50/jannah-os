@@ -1,6 +1,7 @@
 package com.jannahos.ui.screens
 
 import androidx.compose.foundation.background
+import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -42,6 +43,8 @@ import java.util.Locale
 
 @Composable
 fun SadaqahScreen(onBack: () -> Unit) {
+    BackHandler(onBack = onBack)
+
     val ctx = LocalContext.current
     val log = remember { SadaqahLog(ctx) }
     var refresh by remember { mutableStateOf(0) }

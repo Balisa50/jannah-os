@@ -1,6 +1,7 @@
 package com.jannahos.ui.screens
 
 import androidx.compose.foundation.background
+import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -41,6 +42,8 @@ import java.util.Locale
 
 @Composable
 fun WeeklyReviewScreen(onBack: () -> Unit) {
+    BackHandler(onBack = onBack)
+
     val ctx = LocalContext.current
     val stats = remember { SafeStore.stats(ctx, 7) }
     val history = remember { SafeStore.lastNights(ctx, 7) }

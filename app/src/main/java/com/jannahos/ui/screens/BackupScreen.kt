@@ -2,6 +2,7 @@ package com.jannahos.ui.screens
 
 import android.content.Intent
 import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.compose.BackHandler
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -40,6 +41,8 @@ import java.io.File
 
 @Composable
 fun BackupScreen(onBack: () -> Unit) {
+    BackHandler(onBack = onBack)
+
     val ctx = LocalContext.current
     var statusMsg by remember { mutableStateOf<String?>(null) }
     var statusOk by remember { mutableStateOf(true) }

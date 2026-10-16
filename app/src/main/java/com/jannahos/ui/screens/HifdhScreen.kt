@@ -1,6 +1,7 @@
 package com.jannahos.ui.screens
 
 import androidx.compose.foundation.background
+import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -43,6 +44,8 @@ import kotlinx.coroutines.withContext
 
 @Composable
 fun HifdhScreen(onBack: () -> Unit) {
+    BackHandler(onBack = onBack)
+
     val ctx = LocalContext.current
     val log = remember { HifdhLog(ctx) }
     var refresh by remember { mutableStateOf(0) }

@@ -1,6 +1,7 @@
 package com.jannahos.ui.screens
 
 import androidx.compose.foundation.background
+import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -36,6 +37,8 @@ import java.util.Locale
 
 @Composable
 fun CalendarScreen(onBack: () -> Unit) {
+    BackHandler(onBack = onBack)
+
     val events = remember { IslamicCalendar.upcoming(400) }
     val today = remember { IslamicCalendar.todayHijriLabel() }
     val fmt = remember { DateTimeFormatter.ofPattern("EEE, d MMM yyyy", Locale.getDefault()) }

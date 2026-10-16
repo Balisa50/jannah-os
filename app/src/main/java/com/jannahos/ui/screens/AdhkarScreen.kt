@@ -1,6 +1,7 @@
 package com.jannahos.ui.screens
 
 import androidx.compose.foundation.background
+import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -36,6 +37,8 @@ import com.jannahos.ui.theme.JannahType
 
 @Composable
 fun AdhkarScreen(onBack: () -> Unit) {
+    BackHandler(onBack = onBack)
+
     var morning by remember { mutableStateOf(true) }
     var selectedIndex by remember { mutableStateOf<Int?>(null) }
 
