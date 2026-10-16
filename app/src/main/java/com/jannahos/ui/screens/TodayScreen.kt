@@ -40,6 +40,7 @@ import com.jannahos.DiaryClassifier
 import com.jannahos.DiaryStore
 import com.jannahos.WeatherApi
 import com.jannahos.HijriDate
+import com.jannahos.RamadanMode
 import com.jannahos.RightNow
 import com.jannahos.SalahScheduler
 import com.jannahos.SalahTracker
@@ -112,6 +113,55 @@ fun TodayScreen(onNavigate: (String) -> Unit = {}) {
             .verticalScroll(rememberScrollState())
             .background(JannahColors.Cream)
     ) {
+        // Ramadan context — active or within 7 days out
+        val ramadan = RamadanMode.current()
+        if (ramadan.active || (ramadan.daysUntil in 1..7)) {
+            Box(
+                Modifier
+                    .fillMaxWidth()
+                    .background(
+                        if (ramadan.isLastTen) JannahColors.OrangeDeep else JannahColors.Orange
+                    )
+                    .padding(horizontal = JannahSpacing.gutter)
+                    .padding(vertical = JannahSpacing.m)
+            ) {
+                Column {
+                    Text(
+                        when {
+                            ramadan.active && ramadan.isLastTen -> "THE LAST TEN · NIGHT ${ramadan.dayOfRamadan}"
+                            ramadan.active -> "RAMADAN · DAY ${ramadan.dayOfRamadan}"
+                            else -> "RAMADAN IN ${ramadan.daysUntil} DAYS"
+                        },
+                        style = JannahType.eyebrow,
+                        color = JannahColors.OnOrange.copy(alpha = 0.75f)
+                    )
+                    Spacer(Modifier.height(4.dp))
+                    Text(
+                        when {
+                            ramadan.isOddNight -> "An odd night. Strive tonight."
+                            ramadan.isLastTen -> "The last ten are here. Every night counts."
+                            ramadan.active -> "Fasting, Quran, and dua. The month is moving."
+                            else -> "Prepare. Fast, read, and set your intention."
+                        },
+                        fontFamily = androidx.compose.ui.text.font.FontFamily.Serif,
+                        fontSize = 18.sp,
+                        fontWeight = androidx.compose.ui.text.font.FontWeight.Bold,
+                        color = JannahColors.OnOrange,
+                        lineHeight = 24.sp
+                    )
+                    if (ramadan.active) {
+                        Spacer(Modifier.height(6.dp))
+                        Text(
+                            RamadanMode.dayGuidance.suhoorNote,
+                            style = JannahType.caption,
+                            color = JannahColors.OnOrange.copy(alpha = 0.85f),
+                            lineHeight = 18.sp
+                        )
+                    }
+                }
+            }
+        }
+
         // "Right Now" card — single intelligent suggestion
         if (rightNow != null) {
             val rn = rightNow!!

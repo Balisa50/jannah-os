@@ -70,6 +70,7 @@ fun YouScreen() {
     val showDuaJournal = remember { mutableStateOf(false) }
     val showGraduation = remember { mutableStateOf(false) }
     val showAbout = remember { mutableStateOf(false) }
+    val showRamadan = remember { mutableStateOf(false) }
     var showMore by remember { mutableStateOf(false) }
 
     // Route the modals
@@ -94,14 +95,17 @@ fun YouScreen() {
     if (showDuaJournal.value) { DuaJournalScreen(onBack = { showDuaJournal.value = false }); return }
     if (showGraduation.value) { GraduationScreen(onBack = { showGraduation.value = false }); return }
     if (showAbout.value) { AboutScreen(onBack = { showAbout.value = false }); return }
+    if (showRamadan.value) { RamadanScreen(onBack = { showRamadan.value = false }); return }
     if (showLetters.value) { LettersScreen(onBack = { showLetters.value = false }); return }
     if (showDuaJournal.value) { DuaJournalScreen(onBack = { showDuaJournal.value = false }); return }
     if (showGraduation.value) { GraduationScreen(onBack = { showGraduation.value = false }); return }
     if (showAbout.value) { AboutScreen(onBack = { showAbout.value = false }); return }
+    if (showRamadan.value) { RamadanScreen(onBack = { showRamadan.value = false }); return }
     if (showLetters.value) { LettersScreen(onBack = { showLetters.value = false }); return }
     if (showDuaJournal.value) { DuaJournalScreen(onBack = { showDuaJournal.value = false }); return }
     if (showGraduation.value) { GraduationScreen(onBack = { showGraduation.value = false }); return }
     if (showAbout.value) { AboutScreen(onBack = { showAbout.value = false }); return }
+    if (showRamadan.value) { RamadanScreen(onBack = { showRamadan.value = false }); return }
 
     val name = Settings.displayName(ctx)
     val level = TahajjudPlan.level(ctx)
@@ -347,6 +351,8 @@ fun YouScreen() {
                         ListRow("Finance — the middle path") { showFinance.value = true }
                         Divider()
                         ListRow("Graduation") { showGraduation.value = true }
+                        Divider()
+                        ListRow("Ramadan") { showRamadan.value = true }
                     }
                 }
             }
