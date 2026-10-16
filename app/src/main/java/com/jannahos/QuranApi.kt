@@ -20,11 +20,16 @@ object QuranApi {
         val englishAyahs = parseAyahs(englishJson)
 
         return arabicAyahs.mapIndexed { i, a ->
-            Ayah(a.number, a.arabic, englishAyahs.getOrNull(i)?.arabic ?: "")
+            Ayah(a.number, a.arabic, englishAyahs.getOrNull(i)?.arabic ?: "", a.globalNumber)
         }
     }
 
-    data class Ayah(val number: Int, val arabic: String, val english: String)
+    data class Ayah(
+        val number: Int,
+        val arabic: String,
+        val english: String,
+        val globalNumber: Int = 0
+    )
 
     private fun parseAyahs(json: String): List<Ayah> {
         val root = JSONObject(json)
@@ -33,7 +38,14 @@ object QuranApi {
         val out = mutableListOf<Ayah>()
         for (i in 0 until array.length()) {
             val a = array.getJSONObject(i)
-            out.add(Ayah(a.getInt("numberInSurah"), a.getString("text"), ""))
+            out.add(
+                Ayah(
+                    number = a.getInt("numberInSurah"),
+                    arabic = a.getString("text"),
+                    english = "",
+                    globalNumber = a.optInt("number", 0)
+                )
+            )
         }
         return out
     }

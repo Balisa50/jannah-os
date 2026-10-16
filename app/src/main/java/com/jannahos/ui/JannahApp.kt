@@ -1,5 +1,11 @@
 package com.jannahos.ui
 
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
+import androidx.compose.ui.platform.LocalContext
+import com.jannahos.ReflectionPrompt
+import com.jannahos.ui.screens.MorningReflectionScreen
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
@@ -50,7 +56,17 @@ private val TABS = listOf(
 
 @Composable
 fun JannahApp() {
+    val ctx = LocalContext.current
     val nav = rememberNavController()
+    var showReflection by remember { mutableStateOf(ReflectionPrompt.shouldPrompt(ctx)) }
+
+    if (showReflection) {
+        ScreenScaffold {
+            MorningReflectionScreen(onDismiss = { showReflection = false })
+        }
+        return
+    }
+
     ScreenScaffold {
         Box(Modifier.fillMaxSize()) {
             NavHost(

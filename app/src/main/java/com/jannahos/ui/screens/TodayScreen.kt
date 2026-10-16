@@ -1,5 +1,7 @@
 package com.jannahos.ui.screens
 
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -33,6 +35,8 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.jannahos.Companion
+import com.jannahos.WeatherApi
 import com.jannahos.HijriDate
 import com.jannahos.SalahScheduler
 import com.jannahos.SalahTracker
@@ -81,6 +85,12 @@ fun TodayScreen(onNavigate: (String) -> Unit = {}) {
     val (prayedWeek, target) = TahajjudPlan.weekProgress(ctx)
     val history = WakeLog(ctx).lastNights(7)
     val today = SalahTracker.today(ctx)
+
+    var companionMsg by remember { mutableStateOf<Companion.Message?>(null) }
+    LaunchedEffect(Unit) {
+        val w = withContext(Dispatchers.IO) { WeatherApi.fetch(lat, lon) }
+        companionMsg = Companion.decide(w)
+    }
 
     Column(
         modifier = Modifier
@@ -166,6 +176,34 @@ fun TodayScreen(onNavigate: (String) -> Unit = {}) {
                     style = JannahType.button,
                     color = JannahColors.OnOrange
                 )
+            }
+
+            // Companion card — only when there is something to say
+            if (companionMsg != null) {
+                val msg = companionMsg!!
+                Spacer(Modifier.height(JannahSpacing.l))
+                Box(
+                    Modifier
+                        .fillMaxWidth()
+                        .clip(RoundedCornerShape(JannahSpacing.cardRadius))
+                        .background(JannahColors.OrangeSoft)
+                        .padding(JannahSpacing.l)
+                ) {
+                    Column {
+                        Text(msg.title.uppercase(),
+                            style = JannahType.eyebrow,
+                            color = JannahColors.OrangeDeep)
+                        Spacer(Modifier.height(JannahSpacing.s))
+                        Text(msg.body,
+                            style = JannahType.bodySmall,
+                            color = JannahColors.Body,
+                            lineHeight = 20.sp)
+                        Spacer(Modifier.height(JannahSpacing.s))
+                        Text(msg.source,
+                            style = JannahType.micro,
+                            color = JannahColors.Faint)
+                    }
+                }
             }
 
             Spacer(Modifier.height(JannahSpacing.xl))

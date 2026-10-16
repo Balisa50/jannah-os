@@ -47,9 +47,14 @@ fun YouScreen() {
     val level = TahajjudPlan.level(ctx)
     val (prayedWeek, target) = TahajjudPlan.weekProgress(ctx)
     val showFormation = remember { mutableStateOf(false) }
+    val showTawbah = remember { mutableStateOf(false) }
 
     if (showFormation.value) {
         FormationScreen(onBack = { showFormation.value = false })
+        return
+    }
+    if (showTawbah.value) {
+        TawbahScreen(onBack = { showTawbah.value = false })
         return
     }
 
@@ -173,6 +178,8 @@ fun YouScreen() {
                     ListRow("Planner") { ctx.startActivity(Intent(ctx, PlannerActivity::class.java)) }
                     Box(Modifier.fillMaxWidth().height(1.dp).background(JannahColors.Divider))
                     ListRow("Urge support") { ctx.startActivity(Intent(ctx, UrgeActivity::class.java)) }
+                    Box(Modifier.fillMaxWidth().height(1.dp).background(JannahColors.Divider))
+                    ListRow("Tawbah — return to Allah") { showTawbah.value = true }
                 }
             }
 

@@ -5,7 +5,7 @@ import android.content.Context
 import android.database.sqlite.SQLiteDatabase
 import android.database.sqlite.SQLiteOpenHelper
 
-class QuranCache(context: Context) : SQLiteOpenHelper(context, DB, null, 1) {
+class QuranCache(context: Context) : SQLiteOpenHelper(context, DB, null, 2) {
 
     override fun onCreate(db: SQLiteDatabase) {
         db.execSQL("""
@@ -14,6 +14,7 @@ class QuranCache(context: Context) : SQLiteOpenHelper(context, DB, null, 1) {
                 ayah INTEGER NOT NULL,
                 arabic TEXT NOT NULL,
                 english TEXT NOT NULL,
+                global_num INTEGER NOT NULL DEFAULT 0,
                 PRIMARY KEY (surah, ayah)
             )
         """.trimIndent())
@@ -43,6 +44,7 @@ class QuranCache(context: Context) : SQLiteOpenHelper(context, DB, null, 1) {
                     put("ayah", a.number)
                     put("arabic", a.arabic)
                     put("english", a.english)
+                    put("global_num", a.globalNumber)
                 }
                 db.insert("ayahs", null, v)
             }
@@ -55,11 +57,11 @@ class QuranCache(context: Context) : SQLiteOpenHelper(context, DB, null, 1) {
     fun load(surah: Int): List<QuranApi.Ayah> {
         val out = mutableListOf<QuranApi.Ayah>()
         readableDatabase.rawQuery(
-            "SELECT ayah, arabic, english FROM ayahs WHERE surah = ? ORDER BY ayah",
+            "SELECT ayah, arabic, english, global_num FROM ayahs WHERE surah = ? ORDER BY ayah",
             arrayOf(surah.toString())
         ).use { c ->
             while (c.moveToNext()) {
-                out.add(QuranApi.Ayah(c.getInt(0), c.getString(1), c.getString(2)))
+                out.add(QuranApi.Ayah(c.getInt(0), c.getString(1), c.getString(2), c.getInt(3)))
             }
         }
         return out
@@ -68,16 +70,36 @@ class QuranCache(context: Context) : SQLiteOpenHelper(context, DB, null, 1) {
     companion object {
         private const val DB = "jannah_quran.db"
 
-        // Name and ayah count for the surahs we ship with. Expandable later.
-        val SURAHS = listOf(
-            1 to "Al-Fatihah",
-            2 to "Al-Baqarah",
-            36 to "Ya-Sin",
-            55 to "Ar-Rahman",
-            67 to "Al-Mulk",
-            112 to "Al-Ikhlas",
-            113 to "Al-Falaq",
-            114 to "An-Nas"
+        val SURAHS: List<Pair<Int, String>> = listOf(
+            1 to "Al-Fatihah", 2 to "Al-Baqarah", 3 to "Ali 'Imran", 4 to "An-Nisa",
+            5 to "Al-Ma'idah", 6 to "Al-An'am", 7 to "Al-A'raf", 8 to "Al-Anfal",
+            9 to "At-Tawbah", 10 to "Yunus", 11 to "Hud", 12 to "Yusuf",
+            13 to "Ar-Ra'd", 14 to "Ibrahim", 15 to "Al-Hijr", 16 to "An-Nahl",
+            17 to "Al-Isra", 18 to "Al-Kahf", 19 to "Maryam", 20 to "Ta-Ha",
+            21 to "Al-Anbiya", 22 to "Al-Hajj", 23 to "Al-Mu'minun", 24 to "An-Nur",
+            25 to "Al-Furqan", 26 to "Ash-Shu'ara", 27 to "An-Naml", 28 to "Al-Qasas",
+            29 to "Al-'Ankabut", 30 to "Ar-Rum", 31 to "Luqman", 32 to "As-Sajdah",
+            33 to "Al-Ahzab", 34 to "Saba", 35 to "Fatir", 36 to "Ya-Sin",
+            37 to "As-Saffat", 38 to "Sad", 39 to "Az-Zumar", 40 to "Ghafir",
+            41 to "Fussilat", 42 to "Ash-Shura", 43 to "Az-Zukhruf", 44 to "Ad-Dukhan",
+            45 to "Al-Jathiyah", 46 to "Al-Ahqaf", 47 to "Muhammad", 48 to "Al-Fath",
+            49 to "Al-Hujurat", 50 to "Qaf", 51 to "Adh-Dhariyat", 52 to "At-Tur",
+            53 to "An-Najm", 54 to "Al-Qamar", 55 to "Ar-Rahman", 56 to "Al-Waqi'ah",
+            57 to "Al-Hadid", 58 to "Al-Mujadilah", 59 to "Al-Hashr", 60 to "Al-Mumtahanah",
+            61 to "As-Saff", 62 to "Al-Jumu'ah", 63 to "Al-Munafiqun", 64 to "At-Taghabun",
+            65 to "At-Talaq", 66 to "At-Tahrim", 67 to "Al-Mulk", 68 to "Al-Qalam",
+            69 to "Al-Haqqah", 70 to "Al-Ma'arij", 71 to "Nuh", 72 to "Al-Jinn",
+            73 to "Al-Muzzammil", 74 to "Al-Muddaththir", 75 to "Al-Qiyamah", 76 to "Al-Insan",
+            77 to "Al-Mursalat", 78 to "An-Naba", 79 to "An-Nazi'at", 80 to "'Abasa",
+            81 to "At-Takwir", 82 to "Al-Infitar", 83 to "Al-Mutaffifin", 84 to "Al-Inshiqaq",
+            85 to "Al-Buruj", 86 to "At-Tariq", 87 to "Al-A'la", 88 to "Al-Ghashiyah",
+            89 to "Al-Fajr", 90 to "Al-Balad", 91 to "Ash-Shams", 92 to "Al-Layl",
+            93 to "Ad-Duha", 94 to "Ash-Sharh", 95 to "At-Tin", 96 to "Al-'Alaq",
+            97 to "Al-Qadr", 98 to "Al-Bayyinah", 99 to "Az-Zalzalah", 100 to "Al-'Adiyat",
+            101 to "Al-Qari'ah", 102 to "At-Takathur", 103 to "Al-'Asr", 104 to "Al-Humazah",
+            105 to "Al-Fil", 106 to "Quraysh", 107 to "Al-Ma'un", 108 to "Al-Kawthar",
+            109 to "Al-Kafirun", 110 to "An-Nasr", 111 to "Al-Masad", 112 to "Al-Ikhlas",
+            113 to "Al-Falaq", 114 to "An-Nas"
         )
     }
 }

@@ -31,6 +31,11 @@
             android:name=".QuranActivity"
             android:exported="false" />
         <activity
+            android:name=".SalahCommitmentActivity"
+            android:exported="false"
+            android:showOnLockScreen="true"
+            android:turnScreenOn="true" />
+        <activity
             android:name=".SalahActivity"
             android:exported="false" />
         <activity

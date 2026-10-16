@@ -2,6 +2,7 @@ package com.jannahos
 
 import android.app.NotificationChannel
 import android.app.NotificationManager
+import android.app.PendingIntent
 import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
@@ -13,7 +14,6 @@ class SalahReceiver : BroadcastReceiver() {
         val prayer = intent.getStringExtra("prayer") ?: return
 
         if (prayer == "reschedule") {
-            // Re-arm tomorrow's prayers using the user's saved location.
             SalahScheduler.schedule(context, Settings.lat(context), Settings.lon(context))
             return
         }
@@ -22,8 +22,7 @@ class SalahReceiver : BroadcastReceiver() {
         val channelId = "salah_time"
 
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            val existing = nm.getNotificationChannel(channelId)
-            if (existing == null) {
+            if (nm.getNotificationChannel(channelId) == null) {
                 val ch = NotificationChannel(
                     channelId,
                     "Prayer time",
@@ -34,13 +33,23 @@ class SalahReceiver : BroadcastReceiver() {
             }
         }
 
+        val launchIntent = Intent(context, SalahCommitmentActivity::class.java).apply {
+            putExtra("prayer", prayer)
+            addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP)
+        }
+        var flags = PendingIntent.FLAG_UPDATE_CURRENT
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M)
+            flags = flags or PendingIntent.FLAG_IMMUTABLE
+        val contentPi = PendingIntent.getActivity(context, prayer.hashCode() + 1, launchIntent, flags)
+
         val label = SalahTracker.label(prayer)
         val notification = NotificationCompat.Builder(context, channelId)
             .setSmallIcon(android.R.drawable.ic_lock_idle_alarm)
             .setContentTitle("It is time for $label")
-            .setContentText("Make wudu and pray.")
+            .setContentText("Tap to open the prayer window.")
             .setPriority(NotificationCompat.PRIORITY_HIGH)
             .setCategory(NotificationCompat.CATEGORY_ALARM)
+            .setContentIntent(contentPi)
             .setAutoCancel(true)
             .build()
 
