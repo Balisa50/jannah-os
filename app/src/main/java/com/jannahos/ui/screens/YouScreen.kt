@@ -51,6 +51,7 @@ fun YouScreen() {
     val showWeekly = remember { mutableStateOf(false) }
     val showFast = remember { mutableStateOf(false) }
     val showSleep = remember { mutableStateOf(false) }
+    val showBackup = remember { mutableStateOf(false) }
 
     if (showFormation.value) {
         FormationScreen(onBack = { showFormation.value = false })
@@ -70,6 +71,10 @@ fun YouScreen() {
     }
     if (showSleep.value) {
         SleepScreen(onBack = { showSleep.value = false })
+        return
+    }
+    if (showBackup.value) {
+        BackupScreen(onBack = { showBackup.value = false })
         return
     }
 
@@ -219,6 +224,8 @@ fun YouScreen() {
                     ListRow("Location & calculation") {
                         ctx.startActivity(Intent(ctx, SettingsActivity::class.java))
                     }
+                    Box(Modifier.fillMaxWidth().height(1.dp).background(JannahColors.Divider))
+                    ListRow("Backup & restore") { showBackup.value = true }
                 }
             }
 
