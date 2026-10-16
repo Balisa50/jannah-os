@@ -47,6 +47,8 @@ import com.jannahos.Settings
 import com.jannahos.TahajjudPlan
 import com.jannahos.WakeLog
 import com.jannahos.ui.theme.JannahColors
+import com.jannahos.ui.theme.RevealIn
+import com.jannahos.ui.theme.CelebrationPulse
 import com.jannahos.ui.theme.JannahSpacing
 import com.jannahos.ui.theme.JannahType
 import kotlinx.coroutines.delay
@@ -159,6 +161,7 @@ fun TodayScreen(onNavigate: (String) -> Unit = {}) {
         if (diaryReaction != null) {
             val r = diaryReaction!!
             val isMilestone = r.tag.startsWith("milestone")
+            val bannerContent: @androidx.compose.runtime.Composable () -> Unit = {
             Box(
                 Modifier
                     .fillMaxWidth()
@@ -215,6 +218,12 @@ fun TodayScreen(onNavigate: (String) -> Unit = {}) {
                         }
                     }
                 }
+            }
+            }
+            if (isMilestone) {
+                RevealIn(delayMillis = 0) { CelebrationPulse { bannerContent() } }
+            } else {
+                RevealIn(delayMillis = 0) { bannerContent() }
             }
         }
 
