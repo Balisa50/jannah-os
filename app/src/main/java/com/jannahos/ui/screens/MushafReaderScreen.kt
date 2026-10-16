@@ -1,5 +1,9 @@
 package com.jannahos.ui.screens
 
+import androidx.compose.animation.animateColorAsState
+import androidx.compose.animation.core.FastOutSlowInEasing
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -93,11 +97,27 @@ fun MushafReaderScreen(
             return@LaunchedEffect
         }
         playingAyah = playback.ayah
+
         val idx = ayahs.indexOfFirst { it.number == playback.ayah }
-        if (idx >= 0) {
-            val headerOffset = if (surah != 1 && surah != 9) 2 else 1
-            val target = (idx + headerOffset).coerceAtLeast(0)
-            listState.animateScrollToItem(target, scrollOffset = -300)
+        if (idx < 0) return@LaunchedEffect
+
+        val headerOffset = if (surah != 1 && surah != 9) 2 else 1
+        val targetIndex = (idx + headerOffset).coerceAtLeast(0)
+
+        // Only scroll when the playing ayah has drifted toward the bottom of the
+        // viewport. This keeps the motion rare and gentle — like a page turn.
+        val layout = listState.layoutInfo
+        val target = layout.visibleItemsInfo.firstOrNull { it.index == targetIndex }
+        val viewportEnd = layout.viewportEndOffset
+        val viewportSize = layout.viewportSize
+        val safeBottom = viewportEnd - (viewportSize.height * 35) / 100
+
+        val needsScroll = target == null ||
+            (target.offset + target.size) > safeBottom
+
+        if (needsScroll) {
+            // Small correction: bring the ayah to the top with a graceful ease.
+            listState.animateScrollToItem(targetIndex, scrollOffset = -80)
         }
     }
 
@@ -261,17 +281,21 @@ fun MushafReaderScreen(
                     val isPlaying = playingAyah == a.number
                     val isSelected = selectedAyah?.number == a.number
 
+                    val highlight by animateFloatAsState(
+                        targetValue = if (isPlaying || isSelected) 1f else 0f,
+                        animationSpec = tween(500, easing = FastOutSlowInEasing),
+                        label = "hl"
+                    )
+                    val textColor by animateColorAsState(
+                        targetValue = if (isPlaying || isSelected) JannahColors.OrangeDeep else JannahColors.Ink,
+                        animationSpec = tween(500, easing = FastOutSlowInEasing),
+                        label = "tc"
+                    )
                     Column(
                         Modifier
                             .fillMaxWidth()
                             .clip(RoundedCornerShape(8.dp))
-                            .background(
-                                when {
-                                    isPlaying -> JannahColors.OrangeSoft
-                                    isSelected -> JannahColors.OrangeSoft
-                                    else -> androidx.compose.ui.graphics.Color.Transparent
-                                }
-                            )
+                            .background(JannahColors.OrangeSoft.copy(alpha = highlight))
                             .clickable { selectedAyah = a }
                             .padding(vertical = 4.dp)
                     ) {
@@ -284,11 +308,7 @@ fun MushafReaderScreen(
                             },
                             fontFamily = AmiriQuran,
                             fontSize = fontSize.sp,
-                            color = when {
-                                isPlaying -> JannahColors.OrangeDeep
-                                isSelected -> JannahColors.OrangeDeep
-                                else -> JannahColors.Ink
-                            },
+                            color = textColor,
                             lineHeight = (fontSize * 1.9f).sp,
                             modifier = Modifier.fillMaxWidth()
                         )
