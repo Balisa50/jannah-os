@@ -158,6 +158,28 @@ fun PrayScreen() {
 
             Spacer(Modifier.height(JannahSpacing.l))
 
+            // Qibla quick action
+            Box(
+                Modifier
+                    .fillMaxWidth()
+                    .clip(RoundedCornerShape(JannahSpacing.cardRadius))
+                    .background(JannahColors.Card)
+                    .clickable { ctx.startActivity(android.content.Intent(ctx, com.jannahos.QiblaActivity::class.java)) }
+                    .padding(JannahSpacing.l)
+            ) {
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Text("Qibla",
+                        fontFamily = FontFamily.Serif,
+                        fontSize = 17.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = JannahColors.Ink,
+                        modifier = Modifier.weight(1f))
+                    Text("→", style = JannahType.title, color = JannahColors.Orange)
+                }
+            }
+
+            Spacer(Modifier.height(JannahSpacing.s))
+
             // Set reminders pill
             Box(
                 Modifier

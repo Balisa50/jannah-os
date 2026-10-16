@@ -48,6 +48,7 @@ fun YouScreen() {
     val (prayedWeek, target) = TahajjudPlan.weekProgress(ctx)
     val showFormation = remember { mutableStateOf(false) }
     val showTawbah = remember { mutableStateOf(false) }
+    val showWeekly = remember { mutableStateOf(false) }
 
     if (showFormation.value) {
         FormationScreen(onBack = { showFormation.value = false })
@@ -55,6 +56,10 @@ fun YouScreen() {
     }
     if (showTawbah.value) {
         TawbahScreen(onBack = { showTawbah.value = false })
+        return
+    }
+    if (showWeekly.value) {
+        WeeklyReviewScreen(onBack = { showWeekly.value = false })
         return
     }
 
@@ -172,6 +177,8 @@ fun YouScreen() {
             ) {
                 Column {
                     ListRow("Formation record") { showFormation.value = true }
+                    Box(Modifier.fillMaxWidth().height(1.dp).background(JannahColors.Divider))
+                    ListRow("Weekly review") { showWeekly.value = true }
                     Box(Modifier.fillMaxWidth().height(1.dp).background(JannahColors.Divider))
                     ListRow("Tonight's plan") { ctx.startActivity(Intent(ctx, BedtimeActivity::class.java)) }
                     Box(Modifier.fillMaxWidth().height(1.dp).background(JannahColors.Divider))
