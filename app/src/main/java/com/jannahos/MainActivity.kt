@@ -35,15 +35,29 @@ class MainActivity : ComponentActivity() {
                 var showCrash by remember { mutableStateOf(crash != null) }
 
                 Surface(modifier = Modifier.fillMaxSize(), color = MaterialTheme.colorScheme.background) {
-                    if (showCrash && crash != null) {
-                        CrashReportScreen(trace = crash, onDismiss = { showCrash = false })
-                    } else if (onboarded) {
-                        JannahApp()
-                    } else {
-                        OnboardingFlow(onDone = {
-                            Settings.setOnboardingComplete(this)
-                            onboarded = true
-                        })
+                    val lockActive = remember {
+                        try { QuranReadingLock.shouldLock(this) } catch (t: Throwable) { false }
+                    }
+                    var showLock by remember { mutableStateOf(lockActive) }
+                    val intentWantsLock = intent?.getBooleanExtra("show_quran_lock", false) == true
+                    if (intentWantsLock) showLock = true
+
+                    when {
+                        showCrash && crash != null -> {
+                            CrashReportScreen(trace = crash, onDismiss = { showCrash = false })
+                        }
+                        onboarded && showLock -> {
+                            com.jannahos.ui.screens.QuranLockScreen(onRelease = { showLock = false })
+                        }
+                        onboarded -> {
+                            JannahApp()
+                        }
+                        else -> {
+                            OnboardingFlow(onDone = {
+                                Settings.setOnboardingComplete(this)
+                                onboarded = true
+                            })
+                        }
                     }
                 }
             }

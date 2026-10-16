@@ -66,6 +66,7 @@ private fun SettingsScreen(onBack: () -> Unit) {
     var adhan by remember { mutableStateOf(AdhanSettings.current(ctx)) }
     var focusOn by remember { mutableStateOf(FocusSession.enabled(ctx)) }
     var lockOn by remember { mutableStateOf(PrayerLock.enabled(ctx)) }
+    var quranLockOn by remember { mutableStateOf(QuranReadingLock.enabled(ctx)) }
     var lockMinutes by remember { mutableStateOf(PrayerLock.durationMinutes(ctx)) }
     var toast by remember { mutableStateOf<String?>(null) }
     var nameExpanded by remember { mutableStateOf(false) }
@@ -166,6 +167,21 @@ private fun SettingsScreen(onBack: () -> Unit) {
             Inset("Requires Settings > Accessibility > Jannah to be enabled. The phone returns you to the prayer screen if you open any other app during the window.") {
                 ctx.startActivity(Intent(android.provider.Settings.ACTION_ACCESSIBILITY_SETTINGS))
             }
+        }
+
+        Divider()
+
+        ListRow(
+            title = "Quran reading lock",
+            subtitle = if (quranLockOn)
+                "App locks until you read a page. 7 minutes minimum."
+            else "Off",
+            toggle = quranLockOn
+        ) {
+            quranLockOn = !quranLockOn
+            QuranReadingLock.setEnabled(ctx, quranLockOn)
+            toast = if (quranLockOn) "Quran lock on. Enable accessibility service to arm it."
+                    else "Quran lock off."
         }
 
         Divider()
