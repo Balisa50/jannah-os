@@ -6,6 +6,8 @@ import android.app.PendingIntent
 import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
+import android.media.AudioAttributes
+import android.net.Uri
 import android.os.Build
 import androidx.core.app.NotificationCompat
 
@@ -19,7 +21,7 @@ class SalahReceiver : BroadcastReceiver() {
         }
 
         val nm = context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
-        val channelId = "salah_time"
+        val channelId = "salah_time_" + AdhanSettings.current(context)
 
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             if (nm.getNotificationChannel(channelId) == null) {
@@ -29,6 +31,27 @@ class SalahReceiver : BroadcastReceiver() {
                     NotificationManager.IMPORTANCE_HIGH
                 )
                 ch.description = "Alert when it is time for prayer"
+
+                when (AdhanSettings.current(context)) {
+                    "adhan_short" -> {
+                        val soundUri = Uri.parse(
+                            "android.resource://${context.packageName}/${R.raw.adhan_short}"
+                        )
+                        val attrs = AudioAttributes.Builder()
+                            .setContentType(AudioAttributes.CONTENT_TYPE_MUSIC)
+                            .setUsage(AudioAttributes.USAGE_ALARM)
+                            .build()
+                        ch.setSound(soundUri, attrs)
+                    }
+                    "silent" -> {
+                        ch.setSound(null, null)
+                        ch.enableVibration(true)
+                    }
+                    else -> {
+                        // "system" uses the default notification sound.
+                    }
+                }
+
                 nm.createNotificationChannel(ch)
             }
         }
@@ -43,7 +66,7 @@ class SalahReceiver : BroadcastReceiver() {
         val contentPi = PendingIntent.getActivity(context, prayer.hashCode() + 1, launchIntent, flags)
 
         val label = SalahTracker.label(prayer)
-        val notification = NotificationCompat.Builder(context, channelId)
+        val builder = NotificationCompat.Builder(context, channelId)
             .setSmallIcon(android.R.drawable.ic_lock_idle_alarm)
             .setContentTitle("It is time for $label")
             .setContentText("Tap to open the prayer window.")
@@ -51,8 +74,11 @@ class SalahReceiver : BroadcastReceiver() {
             .setCategory(NotificationCompat.CATEGORY_ALARM)
             .setContentIntent(contentPi)
             .setAutoCancel(true)
-            .build()
 
-        nm.notify(prayer.hashCode(), notification)
+        if (AdhanSettings.current(context) == "silent") {
+            builder.setSilent(true)
+        }
+
+        nm.notify(prayer.hashCode(), builder.build())
     }
 }

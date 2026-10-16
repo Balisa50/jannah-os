@@ -65,6 +65,7 @@ class SettingsActivity : ComponentActivity() {
         var method by remember { mutableStateOf(Settings.method(ctx)) }
         var toast by remember { mutableStateOf<String?>(null) }
         var bedReminder by remember { mutableStateOf(TahajjudPlan.bedtimeReminderOn(ctx)) }
+        var adhanChoice by remember { mutableStateOf(AdhanSettings.current(ctx)) }
 
         Column(
             modifier = Modifier
@@ -125,6 +126,39 @@ class SettingsActivity : ComponentActivity() {
                                 modifier = Modifier.weight(1f)
                             )
                             if (selected) Text("✓", style = JannahType.bodySmall, color = JannahColors.Gold)
+                        }
+                        Spacer(Modifier.height(JannahSpacing.xs))
+                    }
+                }
+            }
+
+            Spacer(Modifier.height(JannahSpacing.l))
+
+            // --- ADHAN SOUND ---
+            GlassCard {
+                Column(Modifier.padding(JannahSpacing.m)) {
+                    Text("ADHAN SOUND", style = JannahType.eyebrow, color = JannahColors.Muted)
+                    Spacer(Modifier.height(JannahSpacing.s))
+                    AdhanSettings.options.forEach { opt ->
+                        val selected = adhanChoice == opt.id
+                        Row(
+                            Modifier
+                                .fillMaxWidth()
+                                .clip(RoundedCornerShape(12.dp))
+                                .background(if (selected) JannahColors.DayBg else JannahColors.DaySurface)
+                                .clickable {
+                                    AdhanSettings.set(ctx, opt.id)
+                                    adhanChoice = opt.id
+                                    toast = "Adhan set to ${opt.label}."
+                                }
+                                .padding(vertical = 12.dp, horizontal = JannahSpacing.s),
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Text(opt.label,
+                                style = JannahType.bodySmall,
+                                color = if (selected) JannahColors.DayText else JannahColors.DayMuted,
+                                modifier = Modifier.weight(1f))
+                            if (selected) Text("✓", style = JannahType.bodySmall, color = JannahColors.Accent)
                         }
                         Spacer(Modifier.height(JannahSpacing.xs))
                     }
