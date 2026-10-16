@@ -38,6 +38,7 @@ import androidx.compose.ui.unit.sp
 import com.jannahos.Companion
 import com.jannahos.WeatherApi
 import com.jannahos.HijriDate
+import com.jannahos.RightNow
 import com.jannahos.SalahScheduler
 import com.jannahos.SalahTracker
 import com.jannahos.Settings
@@ -87,6 +88,8 @@ fun TodayScreen(onNavigate: (String) -> Unit = {}) {
     val today = SalahTracker.today(ctx)
 
     var companionMsg by remember { mutableStateOf<Companion.Message?>(null) }
+    val prayerTimesMs = remember { prayerTimes.mapValues { it.value.time } }
+    var rightNow by remember { mutableStateOf(RightNow.decide(ctx, prayerTimesMs)) }
     LaunchedEffect(Unit) {
         val w = withContext(Dispatchers.IO) { WeatherApi.fetch(lat, lon) }
         companionMsg = Companion.decide(w)
@@ -98,6 +101,51 @@ fun TodayScreen(onNavigate: (String) -> Unit = {}) {
             .verticalScroll(rememberScrollState())
             .background(JannahColors.Cream)
     ) {
+        // "Right Now" card — single intelligent suggestion
+        if (rightNow != null) {
+            val rn = rightNow!!
+            Box(
+                Modifier
+                    .fillMaxWidth()
+                    .background(JannahColors.OrangeDeep)
+                    .padding(horizontal = JannahSpacing.gutter)
+                    .padding(vertical = JannahSpacing.m)
+            ) {
+                Column {
+                    Text("RIGHT NOW",
+                        style = JannahType.eyebrow,
+                        color = JannahColors.OnOrange.copy(alpha = 0.7f))
+                    Spacer(Modifier.height(4.dp))
+                    Text(rn.title,
+                        fontFamily = androidx.compose.ui.text.font.FontFamily.Serif,
+                        fontSize = 20.sp,
+                        fontWeight = androidx.compose.ui.text.font.FontWeight.Bold,
+                        color = JannahColors.OnOrange,
+                        lineHeight = 26.sp)
+                    Spacer(Modifier.height(4.dp))
+                    Text(rn.body,
+                        style = JannahType.bodySmall,
+                        color = JannahColors.OnOrange.copy(alpha = 0.9f),
+                        lineHeight = 20.sp)
+                    if (rn.actionLabel != null && rn.actionRoute != null) {
+                        Spacer(Modifier.height(JannahSpacing.s))
+                        Box(
+                            Modifier
+                                .clip(RoundedCornerShape(JannahSpacing.pillRadius))
+                                .background(JannahColors.OnOrange.copy(alpha = 0.15f))
+                                .clickable { onNavigate(rn.actionRoute) }
+                                .padding(horizontal = 14.dp, vertical = 8.dp)
+                        ) {
+                            Text(rn.actionLabel,
+                                style = JannahType.caption,
+                                color = JannahColors.OnOrange,
+                                fontWeight = androidx.compose.ui.text.font.FontWeight.Bold)
+                        }
+                    }
+                }
+            }
+        }
+
         // Orange top banner with greeting
         Box(
             Modifier
