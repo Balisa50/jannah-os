@@ -84,9 +84,10 @@ fun EveningScreen(onDismiss: () -> Unit) {
             Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.spacedBy(JannahSpacing.s)
         ) {
-            StatTile(Modifier.weight(1f), "DHIKR", "${summary.dhikrTotal}")
             StatTile(Modifier.weight(1f), "QURAN",
-                if (summary.quranRead) "opened" else "—")
+                if (summary.quranRead) "opened" else "not today")
+            StatTile(Modifier.weight(1f), "GAVE",
+                if (summary.gifted) "yes" else "not today")
         }
 
         Spacer(Modifier.height(JannahSpacing.l))
