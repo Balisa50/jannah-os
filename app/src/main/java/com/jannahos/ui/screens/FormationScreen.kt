@@ -28,6 +28,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.jannahos.CareMode
 import com.jannahos.FrictionMap
 import com.jannahos.InterventionLog
 import com.jannahos.TahajjudPlan
@@ -150,6 +151,31 @@ fun FormationScreen(onBack: () -> Unit) {
             }
 
             Spacer(Modifier.height(JannahSpacing.l))
+
+            // Care Mode note
+            val care = remember { CareMode.evaluate(ctx) }
+            if (care.active) {
+                Box(
+                    Modifier
+                        .fillMaxWidth()
+                        .clip(RoundedCornerShape(JannahSpacing.cardRadius))
+                        .background(JannahColors.OrangeSoft)
+                        .padding(JannahSpacing.l)
+                ) {
+                    Column {
+                        Text("CARING SEASON",
+                            style = JannahType.eyebrow, color = JannahColors.OrangeDeep)
+                        Spacer(Modifier.height(JannahSpacing.s))
+                        Text(
+                            "The app has noticed recent hardness and has softened its expectations. Numbers are still recorded, but you will not see them pushed. " + CareMode.CAVEAT,
+                            style = JannahType.bodySmall,
+                            color = JannahColors.Body,
+                            lineHeight = 20.sp
+                        )
+                    }
+                }
+                Spacer(Modifier.height(JannahSpacing.l))
+            }
 
             // Current formation
             Text("CURRENT LEVEL", style = JannahType.eyebrow,

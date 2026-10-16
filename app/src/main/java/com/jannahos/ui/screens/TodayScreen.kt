@@ -39,6 +39,7 @@ import com.jannahos.Companion
 import com.jannahos.DiaryClassifier
 import com.jannahos.DiaryStore
 import com.jannahos.WeatherApi
+import com.jannahos.CareMode
 import com.jannahos.HijriDate
 import com.jannahos.RamadanMode
 import com.jannahos.RightNow
@@ -162,8 +163,39 @@ fun TodayScreen(onNavigate: (String) -> Unit = {}) {
             }
         }
 
-        // "Right Now" card — single intelligent suggestion
-        if (rightNow != null) {
+        // Care Mode banner — takes priority over Right Now
+        val care = CareMode.evaluate(ctx)
+
+        if (care.active) {
+            Box(
+                Modifier
+                    .fillMaxWidth()
+                    .background(JannahColors.OrangeSoft)
+                    .padding(horizontal = JannahSpacing.gutter)
+                    .padding(vertical = JannahSpacing.m)
+            ) {
+                Column {
+                    Text("A GENTLER DAY",
+                        style = JannahType.eyebrow,
+                        color = JannahColors.OrangeDeep)
+                    Spacer(Modifier.height(4.dp))
+                    Text(CareMode.message().first,
+                        fontFamily = androidx.compose.ui.text.font.FontFamily.Serif,
+                        fontSize = 19.sp,
+                        fontWeight = androidx.compose.ui.text.font.FontWeight.Bold,
+                        color = JannahColors.Ink,
+                        lineHeight = 24.sp)
+                    Spacer(Modifier.height(4.dp))
+                    Text(CareMode.message().second,
+                        style = JannahType.bodySmall,
+                        color = JannahColors.Body,
+                        lineHeight = 20.sp)
+                }
+            }
+        }
+
+        // "Right Now" card — single intelligent suggestion (hidden in Care Mode)
+        if (rightNow != null && !care.active) {
             val rn = rightNow!!
             // Log this suggestion shown once per screen compose
             androidx.compose.runtime.LaunchedEffect(rn.kind) {
