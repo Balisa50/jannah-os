@@ -149,7 +149,7 @@ private fun Welcome() {
             letterSpacing = (-1).sp,
             color = JannahColors.Ink)
         Spacer(Modifier.height(JannahSpacing.s))
-        Text("A system for a life lived deliberately.",
+        Text("A quiet system for worship.",
             fontFamily = FontFamily.Serif,
             fontStyle = FontStyle.Italic,
             fontSize = 17.sp,
@@ -157,7 +157,7 @@ private fun Welcome() {
             textAlign = TextAlign.Center)
         Spacer(Modifier.height(JannahSpacing.xxl))
         Text(
-            "Most Islamic apps give you more to do. This one gives you less, done deeper. It starts with one thing, and grows only when you are ready.",
+            "Built around a single idea: give the user less to do, done deeply. It starts with one habit. It grows only when you are ready.",
             style = JannahType.body,
             color = JannahColors.Body,
             textAlign = TextAlign.Center,
@@ -185,25 +185,25 @@ private fun TheFourPillars() {
         Spacer(Modifier.height(JannahSpacing.xl))
 
         Pillar(
-            "1", "Formation",
-            "Tahajjud, built as a habit, not a streak. Start with one night a week. The plan adapts when you miss, without guilt."
+            "1", "Tahajjud",
+            "Built as a habit, not a streak. Begin with one night a week. The plan adapts when you miss."
         )
         Pillar(
-            "2", "Witness",
-            "The diary reshapes your dashboard for 24 hours based on what you wrote. Milestones are celebrated. Struggles get mercy, not shame."
+            "2", "Diary",
+            "Tell it what happened. It listens, and the day's dashboard responds."
         )
         Pillar(
-            "3", "The Middle Path",
-            "Prayer, time, and money share one principle: balance. The app helps you find it, not chase maximums."
+            "3", "Balance",
+            "Prayer, time, money. The middle path."
         )
         Pillar(
-            "4", "Learning",
-            "Right Now learns what moves you. It stops sending what you ignore and elevates what works."
+            "4", "Practice",
+            "Quran lock, prayer lock, and the tools you reach for when you need them."
         )
 
         Spacer(Modifier.height(JannahSpacing.l))
         Text(
-            "There are more tools, Quran, adhkar, hifdh, duas, fasting. They are there when you need them. They will not compete for your attention.",
+            "More tools sit ready: Quran, adhkar, duas, fasting, hifdh. They stay out of the way.",
             style = JannahType.bodySmall,
             color = JannahColors.Muted,
             textAlign = TextAlign.Center,

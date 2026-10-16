@@ -40,6 +40,7 @@ import com.jannahos.SafeStore
 import com.jannahos.QuranBookmarkStore
 import com.jannahos.QuranBookmarks
 import com.jannahos.QuranCache
+import com.jannahos.QuranStore
 import com.jannahos.Reciters
 import com.jannahos.TafsirApi
 import com.jannahos.WordByWordApi
@@ -75,7 +76,7 @@ fun QuranTabScreen() {
         onOpenKhatm = { showKhatm = true },
         onOpenSearch = { showSearch = true }
     )
-    else MushafPageScreen(startSurah = selected!!, onBack = { selected = null })
+    else MushafPageScreen(startPage = QuranStore.firstPageOfSurah(selected!!), onBack = { selected = null })
 }
 
 @Composable

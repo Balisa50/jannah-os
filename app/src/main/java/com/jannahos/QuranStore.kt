@@ -6,112 +6,114 @@ import java.io.File
 import java.net.HttpURLConnection
 import java.net.URL
 
-// Full Quran, offline, after one download.
-// The API returns { "verses": [ { "id": N, "verse_key": "surah:ayah", "text_uthmani": "..." } ] }
-// We parse verse_key. Verified after download; if it does not contain
-// the expected 6236 verses, we treat it as a failure and do not mark ready.
+// The 604 Madani mushaf pages, downloaded once and cached locally.
+// Each page is stored as its own JSON file so we can render and swipe
+// pages the way the printed mushaf works. After the initial download,
+// the entire Quran works offline.
+//
+// Total size: ~6 MB. Download happens on first launch in the background.
 object QuranStore {
 
-    private const val BULK_URL = "https://api.quran.com/api/v4/quran/verses/uthmani"
-    private const val EXPECTED_VERSES = 6236
+    private const val PAGE_URL = "https://api.quran.com/api/v4/verses/by_page"
+    private const val TOTAL_PAGES = 604
+    private const val FIELDS = "text_uthmani,page_number"
+    private const val PER_PAGE = 50
 
-    fun storeFile(context: Context): File = File(context.filesDir, "quran_bulk.json")
+    fun pagesDir(context: Context): File =
+        File(context.filesDir, "mushaf_pages").also { if (!it.exists()) it.mkdirs() }
 
-    // Loaded lazily and cached per process.
-    @Volatile private var cache: Map<Int, Map<Int, String>>? = null
+    fun pageFile(context: Context, page: Int): File =
+        File(pagesDir(context), "p_$page.json")
 
-    fun isDownloaded(context: Context): Boolean {
-        val f = storeFile(context)
-        if (!f.exists() || f.length() < 500_000) return false
-        // Cheap verification: parse and count verse_keys.
-        return try {
-            val root = JSONObject(f.readText())
-            val verses = root.optJSONArray("verses") ?: return false
-            verses.length() >= EXPECTED_VERSES
-        } catch (e: Exception) {
-            false
-        }
+    fun isPageCached(context: Context, page: Int): Boolean {
+        val f = pageFile(context, page)
+        return f.exists() && f.length() > 200
     }
 
-    fun downloadAll(context: Context, onProgress: (Int) -> Unit = {}): Boolean {
-        // If a stale or broken file exists, delete it first.
-        val f = storeFile(context)
-        if (f.exists() && !isDownloaded(context)) {
-            f.delete()
-        }
-        if (isDownloaded(context)) return true
+    fun cachedCount(context: Context): Int {
+        val files = pagesDir(context).listFiles() ?: return 0
+        return files.count { it.name.startsWith("p_") && it.name.endsWith(".json") }
+    }
 
+    fun isFullyDownloaded(context: Context): Boolean =
+        cachedCount(context) >= TOTAL_PAGES
+
+    // Download a single page. Returns true on success.
+    fun downloadPage(context: Context, page: Int): Boolean {
+        if (isPageCached(context, page)) return true
         return try {
-            onProgress(5)
-            val conn = URL(BULK_URL).openConnection() as HttpURLConnection
+            val url = "$PAGE_URL/$page?fields=$FIELDS&per_page=$PER_PAGE"
+            val conn = URL(url).openConnection() as HttpURLConnection
             conn.requestMethod = "GET"
-            conn.connectTimeout = 30000
-            conn.readTimeout = 60000
+            conn.connectTimeout = 20000
+            conn.readTimeout = 20000
             conn.setRequestProperty("User-Agent", "JannahOS/1.0")
             conn.setRequestProperty("Accept", "application/json")
             if (conn.responseCode != 200) {
                 conn.disconnect()
                 return false
             }
-            onProgress(20)
             val body = conn.inputStream.bufferedReader().use { it.readText() }
             conn.disconnect()
-            onProgress(80)
-
+            // Validate JSON has verses before saving
             val root = JSONObject(body)
             val verses = root.optJSONArray("verses") ?: return false
-            if (verses.length() < EXPECTED_VERSES) return false
-
-            f.writeText(body)
-            // Reset the in-memory cache so next read re-parses fresh.
-            cache = null
-            onProgress(100)
+            if (verses.length() == 0) return false
+            pageFile(context, page).writeText(body)
             true
         } catch (e: Exception) {
             false
         }
     }
 
-    private fun loadCache(context: Context): Map<Int, Map<Int, String>> {
-        cache?.let { return it }
-        synchronized(this) {
-            cache?.let { return it }
-            val result = mutableMapOf<Int, MutableMap<Int, String>>()
-            try {
-                val text = storeFile(context).readText()
-                val root = JSONObject(text)
-                val verses = root.getJSONArray("verses")
-                for (i in 0 until verses.length()) {
-                    val v = verses.getJSONObject(i)
-                    val key = v.optString("verse_key", "")
-                    val parts = key.split(":")
-                    if (parts.size != 2) continue
-                    val surah = parts[0].toIntOrNull() ?: continue
-                    val ayah = parts[1].toIntOrNull() ?: continue
-                    val arabic = v.optString("text_uthmani", "")
-                    if (surah in 1..114 && ayah > 0 && arabic.isNotBlank()) {
-                        result.getOrPut(surah) { mutableMapOf() }[ayah] = arabic
-                    }
-                }
-            } catch (_: Exception) {}
-            cache = result
-            return result
+    // Download pages in a range, calling onProgress with completed count.
+    // Blocks until done or failure. Run on a background thread.
+    fun downloadRange(
+        context: Context,
+        fromPage: Int,
+        toPage: Int,
+        onProgress: (Int, Int) -> Unit
+    ): Boolean {
+        var completed = 0
+        val total = toPage - fromPage + 1
+        for (p in fromPage..toPage) {
+            if (downloadPage(context, p)) {
+                completed++
+                onProgress(completed, total)
+            }
+            // gentle delay to avoid hammering the API
+            try { Thread.sleep(40) } catch (_: Exception) {}
         }
+        return completed == total
     }
 
-    fun ayahsFor(context: Context, surah: Int): List<QuranApi.Ayah> {
-        val map = loadCache(context)[surah] ?: return emptyList()
-        return map.entries.sortedBy { it.key }.map { (ayahNum, arabic) ->
-            QuranApi.Ayah(
-                number = ayahNum,
-                arabic = arabic,
-                english = "",
-                globalNumber = 0
-            )
-        }
+    // Load a page's verse list. Returns null if not cached.
+    data class PageVerse(val surah: Int, val ayah: Int, val arabic: String)
+
+    fun loadPage(context: Context, page: Int): List<PageVerse>? {
+        val f = pageFile(context, page)
+        if (!f.exists()) return null
+        return try {
+            val root = JSONObject(f.readText())
+            val arr = root.getJSONArray("verses")
+            val out = mutableListOf<PageVerse>()
+            for (i in 0 until arr.length()) {
+                val v = arr.getJSONObject(i)
+                val key = v.optString("verse_key", "")
+                val parts = key.split(":")
+                if (parts.size != 2) continue
+                val surah = parts[0].toIntOrNull() ?: continue
+                val ayah = parts[1].toIntOrNull() ?: continue
+                val text = v.optString("text_uthmani", "")
+                if (text.isNotBlank()) out.add(PageVerse(surah, ayah, text))
+            }
+            out
+        } catch (e: Exception) { null }
     }
 
-    fun surahPage(surah: Int): Int = when (surah) {
+    // Given a surah number, return the first page it appears on.
+    // Standard Madani mushaf anchors. Used for jumping to a surah.
+    fun firstPageOfSurah(surah: Int): Int = when (surah) {
         1 -> 1; 2 -> 2; 3 -> 50; 4 -> 77; 5 -> 106; 6 -> 128; 7 -> 151
         8 -> 177; 9 -> 187; 10 -> 208; 11 -> 221; 12 -> 235; 13 -> 249
         14 -> 255; 15 -> 262; 16 -> 267; 17 -> 282; 18 -> 293; 19 -> 305
@@ -133,4 +135,6 @@ object QuranStore {
         109 -> 603; 110 -> 603; 111 -> 603; 112 -> 604; 113 -> 604; 114 -> 604
         else -> 1
     }
+
+    fun totalPages(): Int = TOTAL_PAGES
 }

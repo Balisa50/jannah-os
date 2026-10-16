@@ -31,12 +31,9 @@ import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.Font
 import androidx.compose.ui.text.font.FontFamily
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.jannahos.QuranApi
-import com.jannahos.QuranCache
 import com.jannahos.QuranReaderPrefs
 import com.jannahos.QuranStore
 import com.jannahos.ui.TopBar
@@ -46,41 +43,28 @@ import com.jannahos.ui.theme.JannahType
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 
-private val AmiriQuran = FontFamily(Font(com.jannahos.R.font.amiri_quran))
+// KFGQPC Uthmanic Hafs — the exact typeface used in the printed Madinah mushaf.
+private val UthmanicHafs = FontFamily(Font(com.jannahos.R.font.uthmanic_hafs))
 
 @Composable
-fun MushafPageScreen(startSurah: Int, onBack: () -> Unit) {
-    // Android system back goes back to the caller (list, You, etc.)
+fun MushafPageScreen(startPage: Int = 1, onBack: () -> Unit) {
     BackHandler(onBack = onBack)
 
     val ctx = LocalContext.current
-    var currentSurah by remember { mutableIntStateOf(startSurah.coerceIn(1, 114)) }
-    var ayahs by remember { mutableStateOf<List<QuranApi.Ayah>>(emptyList()) }
+    var currentPage by remember { mutableIntStateOf(startPage.coerceIn(1, QuranStore.totalPages())) }
+    var verses by remember { mutableStateOf<List<QuranStore.PageVerse>>(emptyList()) }
     var loading by remember { mutableStateOf(true) }
-    var error by remember { mutableStateOf<String?>(null) }
     var dragTotal by remember { mutableStateOf(0f) }
+    var fontSize by remember { mutableIntStateOf(QuranReaderPrefs.fontSize(ctx)) }
 
-    val fontSize = remember { QuranReaderPrefs.fontSize(ctx) }
-    val surahName = remember(currentSurah) {
-        QuranCache.SURAHS.firstOrNull { it.first == currentSurah }?.second ?: "Surah $currentSurah"
-    }
+    val surahNameForPage = remember(currentPage) { surahOfPage(verses) }
 
-    LaunchedEffect(currentSurah) {
+    LaunchedEffect(currentPage) {
         loading = true
-        error = null
-        val loaded = withContext(Dispatchers.IO) {
-            // Try the local store first (offline)
-            val local = if (QuranStore.isDownloaded(ctx)) QuranStore.ayahsFor(ctx, currentSurah)
-                        else emptyList()
-            if (local.isNotEmpty()) local
-            else {
-                // Fall back to the network so the reader still works if
-                // the download has not completed yet.
-                try { QuranApi.fetchSurah(currentSurah) } catch (e: Exception) { emptyList() }
-            }
+        verses = withContext(Dispatchers.IO) {
+            QuranStore.loadPage(ctx, currentPage) ?: emptyList()
         }
-        ayahs = loaded
-        if (loaded.isEmpty()) error = "Could not load. Check internet, then try again."
+        QuranReaderPrefs.setLastSurah(ctx, verses.firstOrNull()?.surah ?: 1)
         loading = false
     }
 
@@ -89,37 +73,39 @@ fun MushafPageScreen(startSurah: Int, onBack: () -> Unit) {
             .fillMaxSize()
             .background(JannahColors.Cream)
     ) {
-        TopBar(surahName, onBack = onBack)
+        TopBar(
+            title = if (surahNameForPage.isBlank()) "Page $currentPage" else surahNameForPage,
+            onBack = onBack
+        )
 
         Box(
             Modifier
                 .weight(1f)
                 .fillMaxWidth()
                 .padding(horizontal = JannahSpacing.m, vertical = JannahSpacing.s)
-                .clip(RoundedCornerShape(12.dp))
-                .background(Color(0xFFFFFDF8))
-                .pointerInput(currentSurah) {
+                .clip(RoundedCornerShape(10.dp))
+                .background(Color(0xFFFFFCF5))
+                .pointerInput(currentPage) {
                     detectHorizontalDragGestures(
                         onDragEnd = {
-                            if (dragTotal < -80f && currentSurah < 114) currentSurah++
-                            else if (dragTotal > 80f && currentSurah > 1) currentSurah--
+                            if (dragTotal < -90f && currentPage < QuranStore.totalPages()) currentPage++
+                            else if (dragTotal > 90f && currentPage > 1) currentPage--
                             dragTotal = 0f
                         },
-                        onHorizontalDrag = { _, dragAmount -> dragTotal += dragAmount }
+                        onHorizontalDrag = { _, d -> dragTotal += d }
                     )
                 }
         ) {
             when {
-                loading -> {
-                    Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                        Text("Loading...", style = JannahType.bodySmall, color = JannahColors.Muted)
-                    }
+                loading -> Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                    Text("Loading", style = JannahType.caption, color = JannahColors.Muted)
                 }
-                error != null -> {
-                    Box(Modifier.fillMaxSize().padding(JannahSpacing.l), contentAlignment = Alignment.Center) {
-                        Text(error!!, style = JannahType.bodySmall, color = JannahColors.Muted,
-                            textAlign = TextAlign.Center)
-                    }
+                verses.isEmpty() -> Box(
+                    Modifier.fillMaxSize().padding(JannahSpacing.l),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Text("Page not downloaded yet.",
+                        style = JannahType.bodySmall, color = JannahColors.Muted)
                 }
                 else -> {
                     Column(
@@ -128,63 +114,86 @@ fun MushafPageScreen(startSurah: Int, onBack: () -> Unit) {
                             .verticalScroll(rememberScrollState())
                             .padding(horizontal = JannahSpacing.l, vertical = JannahSpacing.l)
                     ) {
-                        // Basmalah, separate line, except At-Tawbah.
-                        if (currentSurah != 9) {
+                        // Basmalah only when a surah begins on this page
+                        if (verses.firstOrNull()?.ayah == 1 &&
+                            verses.firstOrNull()?.surah != 1 &&
+                            verses.firstOrNull()?.surah != 9) {
                             Text(
-                                "بِسْمِ اللَّهِ الرَّحْمَٰنِ الرَّحِيمِ",
-                                fontFamily = AmiriQuran,
-                                fontSize = (fontSize + 2).sp,
+                                "بِسْمِ ٱللَّهِ ٱلرَّحْمَٰنِ ٱلرَّحِيمِ",
+                                fontFamily = UthmanicHafs,
+                                fontSize = (fontSize + 4).sp,
                                 color = JannahColors.Ink,
                                 textAlign = TextAlign.Center,
                                 modifier = Modifier.fillMaxWidth(),
-                                lineHeight = (fontSize * 2f).sp
+                                lineHeight = (fontSize * 2.1f).sp
                             )
-                            Spacer(Modifier.height(JannahSpacing.l))
+                            Spacer(Modifier.height(JannahSpacing.m))
                         }
 
+                        // The page text — one flowing paragraph, mushaf style.
                         Text(
                             text = buildString {
-                                ayahs.forEach { a ->
-                                    append(a.arabic.trim())
-                                    append("  ۝")
-                                    append(toArabicIndic(a.number))
+                                verses.forEach { v ->
+                                    append(v.arabic.trim())
+                                    append(" ۝")
+                                    append(toArabicIndic(v.ayah))
                                     append(" ")
                                 }
                             },
-                            fontFamily = AmiriQuran,
+                            fontFamily = UthmanicHafs,
                             fontSize = fontSize.sp,
                             color = JannahColors.Ink,
-                            lineHeight = (fontSize * 2.05f).sp,
+                            lineHeight = (fontSize * 2.1f).sp,
                             modifier = Modifier.fillMaxWidth()
                         )
                     }
                 }
             }
+        }
 
-            Row(
-                Modifier
-                    .fillMaxWidth()
-                    .align(Alignment.BottomCenter)
-                    .padding(horizontal = JannahSpacing.l, vertical = JannahSpacing.s),
-                horizontalArrangement = Arrangement.SpaceBetween
-            ) {
+        // Bottom row — page controls
+        Row(
+            Modifier
+                .fillMaxWidth()
+                .padding(horizontal = JannahSpacing.m, vertical = JannahSpacing.s),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            NavPill("←") { if (currentPage > 1) currentPage-- }
+            Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                Text("$currentPage / ${QuranStore.totalPages()}",
+                    style = JannahType.caption, color = JannahColors.Muted)
                 Text(
-                    if (currentSurah > 1) "← " + prevName(currentSurah) else "",
-                    style = JannahType.micro, color = JannahColors.Faint
-                )
-                Text(
-                    if (currentSurah < 114) nextName(currentSurah) + " →" else "",
-                    style = JannahType.micro, color = JannahColors.Faint
+                    "A+  A−",
+                    style = JannahType.micro,
+                    color = JannahColors.Faint,
+                    modifier = Modifier.padding(top = 2.dp)
                 )
             }
+            NavPill("→") { if (currentPage < QuranStore.totalPages()) currentPage++ }
         }
     }
 }
 
-private fun prevName(surah: Int): String =
-    QuranCache.SURAHS.firstOrNull { it.first == surah - 1 }?.second ?: ""
-private fun nextName(surah: Int): String =
-    QuranCache.SURAHS.firstOrNull { it.first == surah + 1 }?.second ?: ""
+@Composable
+private fun NavPill(label: String, onClick: () -> Unit) {
+    Box(
+        Modifier
+            .clip(RoundedCornerShape(JannahSpacing.pillRadius))
+            .background(JannahColors.Card)
+            .pointerInput(Unit) {
+                detectHorizontalDragGestures { _, _ -> }
+            }
+            .padding(horizontal = 22.dp, vertical = 10.dp)
+    ) {
+        Text(label, style = JannahType.title, color = JannahColors.Ink)
+    }
+}
+
+private fun surahOfPage(verses: List<QuranStore.PageVerse>): String {
+    val s = verses.firstOrNull()?.surah ?: return ""
+    return com.jannahos.QuranCache.SURAHS.firstOrNull { it.first == s }?.second ?: "Surah $s"
+}
 
 private fun toArabicIndic(n: Int): String {
     val map = charArrayOf('\u0660','\u0661','\u0662','\u0663','\u0664','\u0665','\u0666','\u0667','\u0668','\u0669')

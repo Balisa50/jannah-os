@@ -36,7 +36,7 @@ class MainActivity : ComponentActivity() {
 
                 Surface(modifier = Modifier.fillMaxSize(), color = MaterialTheme.colorScheme.background) {
                     val needsQuran = remember {
-                        try { !com.jannahos.QuranStore.isDownloaded(this) } catch (t: Throwable) { false }
+                        try { !com.jannahos.QuranStore.isFullyDownloaded(this) } catch (t: Throwable) { false }
                     }
                     var setupDone by remember { mutableStateOf(!needsQuran) }
                     val lockActive = remember {

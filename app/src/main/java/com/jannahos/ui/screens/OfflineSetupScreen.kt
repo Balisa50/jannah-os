@@ -23,7 +23,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontFamily
-import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
@@ -38,27 +37,27 @@ import kotlinx.coroutines.withContext
 @Composable
 fun OfflineSetupScreen(onReady: () -> Unit) {
     val ctx = LocalContext.current
-    var progress by remember { mutableIntStateOf(0) }
-    var error by remember { mutableStateOf<String?>(null) }
-    var done by remember { mutableStateOf(false) }
+    var completed by remember { mutableIntStateOf(QuranStore.cachedCount(ctx)) }
+    var finished by remember { mutableStateOf(false) }
+    var failed by remember { mutableStateOf(false) }
 
     LaunchedEffect(Unit) {
         val ok = withContext(Dispatchers.IO) {
-            QuranStore.downloadAll(ctx) { p -> progress = p }
+            QuranStore.downloadRange(ctx, 1, QuranStore.totalPages()) { done, _ ->
+                completed = done
+            }
         }
-        if (ok) {
-            done = true
-        } else {
-            error = "Could not download the Quran. Check your internet and try again."
-        }
+        if (ok) finished = true else failed = true
     }
 
-    LaunchedEffect(done) {
-        if (done) {
-            kotlinx.coroutines.delay(500)
+    LaunchedEffect(finished) {
+        if (finished) {
+            kotlinx.coroutines.delay(400)
             onReady()
         }
     }
+
+    val progress = (completed.toFloat() / QuranStore.totalPages()).coerceIn(0f, 1f)
 
     Column(
         modifier = Modifier
@@ -68,7 +67,7 @@ fun OfflineSetupScreen(onReady: () -> Unit) {
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.Center
     ) {
-        Text("Setting up.",
+        Text("Preparing.",
             fontFamily = FontFamily.Serif,
             fontSize = 34.sp,
             fontWeight = FontWeight.Bold,
@@ -78,18 +77,16 @@ fun OfflineSetupScreen(onReady: () -> Unit) {
         Spacer(Modifier.height(JannahSpacing.m))
 
         Text(
-            "Downloading the Quran once. After this, everything works without internet. Nothing is sent to a server.",
-            fontFamily = FontFamily.Serif,
-            fontStyle = FontStyle.Italic,
-            fontSize = 16.sp,
-            color = JannahColors.Orange,
+            "Downloading the Quran once. After this, it works without internet.",
+            style = JannahType.body,
+            color = JannahColors.Body,
             textAlign = TextAlign.Center,
             lineHeight = 24.sp
         )
 
         Spacer(Modifier.height(JannahSpacing.xxl))
 
-        if (error == null) {
+        if (!failed) {
             Box(
                 Modifier
                     .fillMaxWidth()
@@ -99,7 +96,7 @@ fun OfflineSetupScreen(onReady: () -> Unit) {
             ) {
                 Box(
                     Modifier
-                        .fillMaxWidth(progress / 100f)
+                        .fillMaxWidth(progress)
                         .height(8.dp)
                         .clip(RoundedCornerShape(4.dp))
                         .background(JannahColors.Orange)
@@ -107,13 +104,20 @@ fun OfflineSetupScreen(onReady: () -> Unit) {
             }
             Spacer(Modifier.height(JannahSpacing.s))
             Text(
-                if (progress < 100) "$progress%" else "Done.",
+                "$completed of ${QuranStore.totalPages()} pages",
                 style = JannahType.caption,
                 color = JannahColors.Muted
             )
+            Spacer(Modifier.height(JannahSpacing.s))
+            Text(
+                "This takes a few minutes on mobile data. Leave the app open.",
+                style = JannahType.caption,
+                color = JannahColors.Faint,
+                textAlign = TextAlign.Center
+            )
         } else {
             Text(
-                error!!,
+                "Download interrupted. Reopen the app to continue where it left off.",
                 style = JannahType.bodySmall,
                 color = JannahColors.Muted,
                 textAlign = TextAlign.Center
