@@ -29,6 +29,7 @@ import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.jannahos.ui.pressClickable
 import com.jannahos.BedtimeActivity
 import com.jannahos.SafeStore
 import com.jannahos.Settings
@@ -141,7 +142,7 @@ fun YouScreen() {
                     .fillMaxWidth()
                     .clip(RoundedCornerShape(JannahSpacing.cardRadius))
                     .background(JannahColors.Orange)
-                    .clickable { showFormation.value = true }
+                    .pressClickable { showFormation.value = true }
                     .padding(JannahSpacing.l)
             ) {
                 Row(verticalAlignment = Alignment.CenterVertically) {
@@ -233,7 +234,7 @@ fun YouScreen() {
                     Modifier
                         .fillMaxWidth()
                         .clip(RoundedCornerShape(JannahSpacing.pillRadius))
-                        .clickable { showMore = false }
+                        .pressClickable { showMore = false }
                         .padding(vertical = 12.dp),
                     contentAlignment = Alignment.Center
                 ) {
@@ -246,7 +247,7 @@ fun YouScreen() {
                         .height(52.dp)
                         .clip(RoundedCornerShape(JannahSpacing.pillRadius))
                         .background(JannahColors.Card)
-                        .clickable { showMore = true },
+                        .pressClickable { showMore = true },
                     contentAlignment = Alignment.Center
                 ) {
                     Text("More tools",

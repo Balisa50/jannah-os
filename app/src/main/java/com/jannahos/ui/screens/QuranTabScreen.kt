@@ -33,6 +33,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.jannahos.ui.pressClickable
 import com.jannahos.AyahPlayer
 import com.jannahos.KhatmPlan
 import com.jannahos.QuranApi
@@ -158,7 +159,7 @@ private fun SurahList(
                         .fillMaxWidth()
                         .clip(RoundedCornerShape(JannahSpacing.cardRadius))
                         .background(JannahColors.Card)
-                        .clickable { onPick(last) }
+                        .pressClickable { onPick(last) }
                         .padding(JannahSpacing.l)
                 ) {
                     Row(verticalAlignment = Alignment.CenterVertically) {
@@ -189,7 +190,7 @@ private fun SurahList(
                     .fillMaxWidth()
                     .clip(RoundedCornerShape(JannahSpacing.cardRadius))
                     .background(JannahColors.Orange)
-                    .clickable { onOpenKhatm() }
+                    .pressClickable { onOpenKhatm() }
                     .padding(JannahSpacing.l)
             ) {
                 Row(verticalAlignment = Alignment.CenterVertically) {
@@ -269,7 +270,7 @@ private fun SurahList(
                 Row(
                     Modifier
                         .fillMaxWidth()
-                        .clickable { onPick(num) }
+                        .pressClickable { onPick(num) }
                         .padding(vertical = 14.dp),
                     verticalAlignment = Alignment.CenterVertically
                 ) {
@@ -386,7 +387,7 @@ private fun SurahReader(surah: Int, onBack: () -> Unit) {
                 Modifier
                     .clip(RoundedCornerShape(JannahSpacing.pillRadius))
                     .background(if (wordMode) JannahColors.Orange else JannahColors.Card)
-                    .clickable { wordMode = !wordMode }
+                    .pressClickable { wordMode = !wordMode }
                     .padding(horizontal = 16.dp, vertical = 8.dp)
             ) {
                 Text(
@@ -429,7 +430,7 @@ private fun SurahReader(surah: Int, onBack: () -> Unit) {
                                     Modifier
                                         .clip(RoundedCornerShape(8.dp))
                                         .background(JannahColors.Card)
-                                        .clickable { selectedWord = w }
+                                        .pressClickable { selectedWord = w }
                                         .padding(horizontal = 10.dp, vertical = 8.dp)
                                 ) {
                                     Text(
@@ -462,7 +463,7 @@ private fun SurahReader(surah: Int, onBack: () -> Unit) {
                             if (isPlaying) "■ stop" else "▶ play",
                             style = JannahType.caption,
                             color = JannahColors.Orange,
-                            modifier = Modifier.clickable {
+                            modifier = Modifier.pressClickable {
                                 if (isPlaying) {
                                     player.stop()
                                     playingGlobal = null
@@ -478,7 +479,7 @@ private fun SurahReader(surah: Int, onBack: () -> Unit) {
                             if (isBookmarked) "★ saved" else "☆ bookmark",
                             style = JannahType.caption,
                             color = if (isBookmarked) JannahColors.Orange else JannahColors.Muted,
-                            modifier = Modifier.clickable {
+                            modifier = Modifier.pressClickable {
                                 if (isBookmarked) bookmarks.remove(surah, a.number)
                                 else bookmarks.add(surah, a.number)
                                 bookmarkTick++
@@ -487,7 +488,7 @@ private fun SurahReader(surah: Int, onBack: () -> Unit) {
                         Text(
                             if (tafsirAyah == a.number) "hide tafsir" else "tafsir",
                             style = JannahType.caption, color = JannahColors.Orange,
-                            modifier = Modifier.clickable {
+                            modifier = Modifier.pressClickable {
                                 tafsirAyah = if (tafsirAyah == a.number) null else a.number
                             }
                         )
@@ -551,7 +552,7 @@ private fun SurahReader(surah: Int, onBack: () -> Unit) {
                         Box(
                             Modifier
                                 .clip(RoundedCornerShape(JannahSpacing.pillRadius))
-                                .clickable { selectedWord = null }
+                                .pressClickable { selectedWord = null }
                                 .padding(8.dp)
                         ) { Text("×", style = JannahType.body, color = JannahColors.Muted) }
                     }
@@ -607,7 +608,7 @@ private fun ReciterPickerScreen(onBack: () -> Unit) {
                 Row(
                     Modifier
                         .fillMaxWidth()
-                        .clickable {
+                        .pressClickable {
                             Reciters.set(ctx, r)
                             current = r
                         }
@@ -692,7 +693,7 @@ private fun BookmarksScreen(onBack: () -> Unit, onOpen: (Int, Int) -> Unit) {
                     Row(
                         Modifier
                             .fillMaxWidth()
-                            .clickable { onOpen(m.surah, m.ayah) }
+                            .pressClickable { onOpen(m.surah, m.ayah) }
                             .padding(vertical = 16.dp),
                         verticalAlignment = Alignment.CenterVertically
                     ) {
@@ -713,7 +714,7 @@ private fun BookmarksScreen(onBack: () -> Unit, onOpen: (Int, Int) -> Unit) {
                             style = JannahType.body,
                             color = JannahColors.Muted,
                             modifier = Modifier
-                                .clickable {
+                                .pressClickable {
                                     store.remove(m.surah, m.ayah)
                                     refresh++
                                 }

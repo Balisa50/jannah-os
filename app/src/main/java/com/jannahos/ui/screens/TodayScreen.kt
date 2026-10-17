@@ -19,6 +19,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
@@ -31,6 +32,8 @@ import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.jannahos.ui.pressClickable
+import com.jannahos.ui.revealOnLoad
 import com.jannahos.DailyHadith
 import com.jannahos.FridayMode
 import com.jannahos.HijriDate
@@ -55,6 +58,10 @@ fun TodayScreen(onNavigate: (String) -> Unit = {}) {
     LaunchedEffect(Unit) { while (true) { delay(1000); tick++ } }
     // Read tick so the composable recomposes each second.
     val ignore = tick
+    var revealCount by remember { mutableIntStateOf(0) }
+    LaunchedEffect(Unit) {
+        for (i in 1..6) { kotlinx.coroutines.delay(60); revealCount = i }
+    }
 
     val lat = Settings.lat(ctx)
     val lon = Settings.lon(ctx)
@@ -101,6 +108,7 @@ fun TodayScreen(onNavigate: (String) -> Unit = {}) {
                 .fillMaxWidth()
                 .padding(horizontal = JannahSpacing.gutter)
                 .padding(top = JannahSpacing.l, bottom = JannahSpacing.m)
+                .revealOnLoad(revealCount >= 1)
         ) {
             Text(
                 if (userName.isBlank()) greeting + "." else "$greeting, $userName.",
@@ -155,10 +163,10 @@ fun TodayScreen(onNavigate: (String) -> Unit = {}) {
             Spacer(Modifier.height(JannahSpacing.l))
 
             // Next prayer hero
-            Text("NEXT PRAYER",
+            Text("NEXT PRAYER", modifier = Modifier.revealOnLoad(revealCount >= 3),
                 style = JannahType.eyebrow, color = JannahColors.OrangeDeep)
             Spacer(Modifier.height(4.dp))
-            Row(verticalAlignment = Alignment.Bottom) {
+            Row(modifier = Modifier.revealOnLoad(revealCount >= 3), verticalAlignment = Alignment.Bottom) {
                 Text(displayLabel,
                     fontFamily = FontFamily.Serif,
                     fontSize = 30.sp,
@@ -173,7 +181,7 @@ fun TodayScreen(onNavigate: (String) -> Unit = {}) {
                     modifier = Modifier.padding(bottom = 5.dp))
             }
             Spacer(Modifier.height(2.dp))
-            Text(countdown,
+            Text(countdown, modifier = Modifier.revealOnLoad(revealCount >= 3),
                 fontFamily = FontFamily.Serif,
                 fontSize = 44.sp,
                 fontWeight = FontWeight.Bold,
@@ -197,7 +205,8 @@ fun TodayScreen(onNavigate: (String) -> Unit = {}) {
                     .fillMaxWidth()
                     .clip(RoundedCornerShape(JannahSpacing.cardRadius))
                     .background(JannahColors.Orange)
-                    .clickable { onNavigate("you") }
+                    .pressClickable { onNavigate("you") }
+                    .revealOnLoad(revealCount >= 4)
                     .padding(JannahSpacing.l)
             ) {
                 Row(verticalAlignment = Alignment.CenterVertically) {
@@ -239,7 +248,8 @@ fun TodayScreen(onNavigate: (String) -> Unit = {}) {
                     .fillMaxWidth()
                     .clip(RoundedCornerShape(JannahSpacing.cardRadius))
                     .background(JannahColors.Card)
-                    .clickable { onNavigate("quran") }
+                    .pressClickable { onNavigate("quran") }
+                    .revealOnLoad(revealCount >= 5)
                     .padding(JannahSpacing.l)
             ) {
                 Row(verticalAlignment = Alignment.CenterVertically) {
@@ -267,6 +277,7 @@ fun TodayScreen(onNavigate: (String) -> Unit = {}) {
                     .clip(RoundedCornerShape(JannahSpacing.cardRadius))
                     .background(JannahColors.Card)
                     .padding(JannahSpacing.l)
+                    .revealOnLoad(revealCount >= 6)
             ) {
                 Column {
                     Text("HADITH · ${h.theme.uppercase()}",

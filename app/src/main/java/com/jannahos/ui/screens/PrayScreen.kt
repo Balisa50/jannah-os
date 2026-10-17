@@ -31,6 +31,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.jannahos.ui.pressClickable
 import com.jannahos.CityStore
 import com.jannahos.PrayerApi
 import com.jannahos.QiblaActivity
@@ -201,7 +202,7 @@ fun PrayScreen() {
                     .fillMaxWidth()
                     .clip(RoundedCornerShape(JannahSpacing.cardRadius))
                     .background(JannahColors.Card)
-                    .clickable {
+                    .pressClickable {
                         ctx.startActivity(Intent(ctx, QiblaActivity::class.java))
                     }
                     .padding(JannahSpacing.l)
@@ -229,7 +230,7 @@ fun PrayScreen() {
                     .height(52.dp)
                     .clip(RoundedCornerShape(JannahSpacing.pillRadius))
                     .background(JannahColors.Ink)
-                    .clickable {
+                    .pressClickable {
                         if (!SalahScheduler.canUseExactAlarms(ctx)) {
                             reminderMsg = "Enable Alarms & reminders in system settings."
                         } else {
