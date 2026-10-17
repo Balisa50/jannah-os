@@ -33,13 +33,9 @@ class MainActivity : ComponentActivity() {
                 var onboarded by remember { mutableStateOf(Settings.onboardingComplete(this)) }
                 val crash = remember { App.latestCrash(application) }
                 var showCrash by remember { mutableStateOf(crash != null) }
+                var setupDone by remember { mutableStateOf(Settings.setupComplete(this)) }
 
                 Surface(modifier = Modifier.fillMaxSize(), color = MaterialTheme.colorScheme.background) {
-                    val setupAlreadyDone = remember { Settings.setupComplete(this) }
-                    val needsQuran = remember {
-                        try { !com.jannahos.QuranStore.isFullyDownloaded(this) } catch (t: Throwable) { false }
-                    }
-                    var setupDone by remember { mutableStateOf(setupAlreadyDone || !needsQuran) }
                     val lockActive = remember {
                         try { QuranReadingLock.shouldLock(this) } catch (t: Throwable) { false }
                     }
@@ -51,11 +47,14 @@ class MainActivity : ComponentActivity() {
                         showCrash && crash != null -> {
                             CrashReportScreen(trace = crash, onDismiss = { showCrash = false })
                         }
-                        onboarded && false -> {
-                            com.jannahos.ui.screens.OfflineSetupScreen(onReady = {
-                                Settings.setSetupComplete(this)
-                                setupDone = true
-                            })
+                        onboarded && !setupDone -> {
+                            com.jannahos.ui.screens.OfflineSetupScreen(
+                                onReady = {
+                                    Settings.setSetupComplete(this)
+                                    setupDone = true
+                                },
+                                onSkip = { setupDone = true }
+                            )
                         }
                         onboarded && showLock -> {
                             com.jannahos.ui.screens.QuranLockScreen(onRelease = { showLock = false })

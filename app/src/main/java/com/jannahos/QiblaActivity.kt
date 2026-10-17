@@ -8,6 +8,7 @@ import android.hardware.SensorManager
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
+import com.jannahos.ui.SwipeBackScreen
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.Canvas
@@ -72,7 +73,7 @@ class QiblaActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
         setContent {
             JannahTheme {
-                QiblaScreen(onBack = { finish() })
+                SwipeBackScreen(onBack = { finish() }) { QiblaScreen(onBack = { finish() }) }
             }
         }
     }

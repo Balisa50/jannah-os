@@ -3,6 +3,7 @@ package com.jannahos
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
+import com.jannahos.ui.SwipeBackScreen
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -45,7 +46,7 @@ class BedtimeActivity : ComponentActivity() {
         setContent {
             JannahTheme {
                 Surface(modifier = Modifier.fillMaxSize(), color = MaterialTheme.colorScheme.background) {
-                    BedtimeScreen()
+                    SwipeBackScreen(onBack = { finish() }) { BedtimeScreen() }
                 }
             }
         }

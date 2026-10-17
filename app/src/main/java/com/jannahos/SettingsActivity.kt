@@ -52,7 +52,7 @@ class SettingsActivity : ComponentActivity() {
         setContent {
             com.jannahos.ui.theme.JannahTheme {
                 Box(Modifier.fillMaxSize().background(JannahColors.Cream)) {
-                    SettingsScreen(onBack = { finish() })
+                    SwipeBackScreen(onBack = { finish() }) { SettingsScreen(onBack = { finish() }) }
                 }
             }
         }

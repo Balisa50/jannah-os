@@ -3,6 +3,7 @@ package com.jannahos
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
+import com.jannahos.ui.SwipeBackScreen
 import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -43,7 +44,7 @@ class PlannerActivity : ComponentActivity() {
         setContent {
             JannahTheme {
                 Surface(modifier = Modifier.fillMaxSize(), color = MaterialTheme.colorScheme.background) {
-                    PlannerScreen()
+                    SwipeBackScreen(onBack = { finish() }) { PlannerScreen() }
                 }
             }
         }

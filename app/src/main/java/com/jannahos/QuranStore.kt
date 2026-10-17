@@ -10,6 +10,8 @@ object QuranStore {
 
     private const val PAGE_URL = "https://api.quran.com/api/v4/verses/by_page"
     private const val TOTAL_PAGES = 604
+    private const val MIN_VALID_BYTES = 200L
+    private const val MAX_RETRIES = 3
 
     private val PARAMS =
         "mushaf=1&words=true" +
@@ -21,38 +23,73 @@ object QuranStore {
         File(context.filesDir, "mushaf_pages").also { if (!it.exists()) it.mkdirs() }
 
     fun pageFile(context: Context, page: Int): File = File(pagesDir(context), "p_$page.json")
+    private fun tmpFile(context: Context, page: Int): File = File(pagesDir(context), "p_$page.json.tmp")
 
     fun isPageCached(context: Context, page: Int): Boolean {
         val f = pageFile(context, page)
-        return f.exists() && f.length() > 200
+        return f.exists() && f.length() > MIN_VALID_BYTES
+    }
+
+    fun verifyPage(context: Context, page: Int): Boolean {
+        val f = pageFile(context, page)
+        if (!f.exists() || f.length() <= MIN_VALID_BYTES) return false
+        return try {
+            val root = JSONObject(f.readText())
+            val verses = root.optJSONArray("verses") ?: return false
+            verses.length() > 0
+        } catch (e: Exception) { false }
     }
 
     fun cachedCount(context: Context): Int {
         val files = pagesDir(context).listFiles() ?: return 0
-        return files.count { it.name.startsWith("p_") && it.name.endsWith(".json") }
+        return files.count {
+            it.name.startsWith("p_") && it.name.endsWith(".json") && it.length() > MIN_VALID_BYTES
+        }
     }
 
     fun isFullyDownloaded(context: Context): Boolean = cachedCount(context) >= TOTAL_PAGES
 
     fun downloadPage(context: Context, page: Int): Boolean {
-        if (isPageCached(context, page)) return true
-        return try {
-            val url = "$PAGE_URL/$page?$PARAMS"
-            val conn = URL(url).openConnection() as HttpURLConnection
-            conn.requestMethod = "GET"
-            conn.connectTimeout = 20000
-            conn.readTimeout = 20000
-            conn.setRequestProperty("User-Agent", "JannahOS/1.0")
-            conn.setRequestProperty("Accept", "application/json")
-            if (conn.responseCode != 200) { conn.disconnect(); return false }
-            val body = conn.inputStream.bufferedReader().use { it.readText() }
-            conn.disconnect()
-            val root = JSONObject(body)
-            val verses = root.optJSONArray("verses") ?: return false
-            if (verses.length() == 0) return false
-            pageFile(context, page).writeText(body)
-            true
-        } catch (e: Exception) { false }
+        if (verifyPage(context, page)) return true
+        pageFile(context, page).takeIf { it.exists() }?.delete()
+
+        repeat(MAX_RETRIES) { attempt ->
+            try {
+                val url = "$PAGE_URL/$page?$PARAMS"
+                val conn = URL(url).openConnection() as HttpURLConnection
+                conn.requestMethod = "GET"
+                conn.connectTimeout = 20000
+                conn.readTimeout = 20000
+                conn.setRequestProperty("User-Agent", "JannahOS/1.0")
+                conn.setRequestProperty("Accept", "application/json")
+                if (conn.responseCode == 200) {
+                    val body = conn.inputStream.bufferedReader().use { it.readText() }
+                    conn.disconnect()
+                    val root = JSONObject(body)
+                    val verses = root.optJSONArray("verses")
+                    if (verses != null && verses.length() > 0) {
+                        writeAtomic(context, page, body)
+                        return true
+                    }
+                } else {
+                    conn.disconnect()
+                }
+            } catch (e: Exception) {
+                // retry
+            }
+            if (attempt < MAX_RETRIES - 1) Thread.sleep(400L * (attempt + 1))
+        }
+        return false
+    }
+
+    private fun writeAtomic(context: Context, page: Int, body: String) {
+        val tmp = tmpFile(context, page)
+        val dst = pageFile(context, page)
+        tmp.writeText(body)
+        if (!tmp.renameTo(dst)) {
+            dst.writeText(body)
+            tmp.delete()
+        }
     }
 
     fun downloadRange(
@@ -61,18 +98,37 @@ object QuranStore {
         var completed = 0
         val total = toPage - fromPage + 1
         for (p in fromPage..toPage) {
-            if (downloadPage(context, p)) { completed++; onProgress(completed, total) }
-            try { Thread.sleep(40) } catch (_: Exception) {}
+            if (downloadPage(context, p)) completed++
+            onProgress(completed, total)
+            try { Thread.sleep(20) } catch (_: Exception) {}
         }
         return completed == total
     }
 
-    // A single word with its exact line position on the page
+    // phase 0 = verifying, phase 1 = downloading
+    fun repair(
+        context: Context,
+        onProgress: (phase: Int, done: Int, total: Int) -> Unit
+    ): List<Int> {
+        val bad = mutableListOf<Int>()
+        for (p in 1..TOTAL_PAGES) {
+            if (!verifyPage(context, p)) bad.add(p)
+            onProgress(0, p, TOTAL_PAGES)
+        }
+        if (bad.isEmpty()) return emptyList()
+        val failed = mutableListOf<Int>()
+        var i = 0
+        for (p in bad) {
+            if (!downloadPage(context, p)) failed.add(p)
+            i++
+            onProgress(1, i, bad.size)
+            try { Thread.sleep(20) } catch (_: Exception) {}
+        }
+        return failed
+    }
+
     data class PageWord(val lineNumber: Int, val position: Int, val text: String, val surah: Int, val ayah: Int)
 
-    // Load a page and reconstruct the exact 15-line mushaf layout.
-    // Returns a map of lineNumber -> joined text string.
-    // Also returns the surah number at the start of the page.
     data class PageLayout(
         val lines: Map<Int, String>,
         val firstSurah: Int,
@@ -89,7 +145,6 @@ object QuranStore {
 
             val wordsByLine = mutableMapOf<Int, MutableList<PageWord>>()
             var firstSurah = 1
-            var hasBasmala = false
             var hasSurahStart = false
 
             for (v in 0 until verses.length()) {
@@ -114,23 +169,18 @@ object QuranStore {
                 }
             }
 
-            // Find the basmala line (short, contains "بِسْمِ") and surah start line
             var basmalaLine: Int? = null
             var headerLine: Int? = null
-
             val joinedLines = mutableMapOf<Int, String>()
+
             for ((lineNo, wordList) in wordsByLine.toSortedMap()) {
                 val sorted = wordList.sortedBy { it.position }.map { it.text }
                 val joined = sorted.joinToString(" ")
                 joinedLines[lineNo] = joined
-
-                // Basmala detection: line with only basmala words
                 if (sorted.size <= 5 && joined.contains("بِسْمِ") && joined.contains("ٱلرَّحِيمِ")) {
                     basmalaLine = lineNo
                 }
-                // Surah start detection: first word is ayah 1
                 if (sorted.isNotEmpty() && wordList.any { it.ayah == 1 } && lineNo == 1) {
-                    // crude but works for pages that start a new surah
                     hasSurahStart = true
                     headerLine = lineNo
                 }
@@ -142,7 +192,10 @@ object QuranStore {
                 basmalaLineNumber = basmalaLine,
                 surahHeaderLineNumber = if (hasSurahStart) headerLine else null
             )
-        } catch (e: Exception) { null }
+        } catch (e: Exception) {
+            f.delete()
+            null
+        }
     }
 
     fun firstPageOfSurah(surah: Int): Int = when (surah) {

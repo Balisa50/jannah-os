@@ -3,6 +3,7 @@ package com.jannahos
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
+import com.jannahos.ui.SwipeBackScreen
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -44,7 +45,7 @@ class QuranActivity : ComponentActivity() {
         setContent {
             JannahTheme {
                 Surface(modifier = Modifier.fillMaxSize(), color = MaterialTheme.colorScheme.background) {
-                    QuranScreen()
+                    SwipeBackScreen(onBack = { finish() }) { QuranScreen() }
                 }
             }
         }

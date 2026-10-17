@@ -5,6 +5,7 @@ import android.os.Bundle
 import android.view.WindowManager
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
+import com.jannahos.ui.SwipeBackScreen
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.Canvas
@@ -77,7 +78,7 @@ class SalahCommitmentActivity : ComponentActivity() {
         setContent {
             JannahTheme {
                 Surface(Modifier.fillMaxSize(), color = MaterialTheme.colorScheme.background) {
-                    CommitmentScreen(prayer)
+                    SwipeBackScreen(onBack = { finish() }) { CommitmentScreen(prayer) }
                 }
             }
         }

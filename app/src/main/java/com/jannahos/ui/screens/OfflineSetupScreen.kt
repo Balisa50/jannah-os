@@ -37,40 +37,54 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 
 @Composable
-fun OfflineSetupScreen(onReady: () -> Unit) {
+fun OfflineSetupScreen(onReady: () -> Unit, onSkip: () -> Unit) {
     val ctx = LocalContext.current
-    var completed by remember { mutableIntStateOf(QuranStore.cachedCount(ctx)) }
+    var attempt by remember { mutableIntStateOf(0) }
     var downloading by remember { mutableStateOf(false) }
-    var done by remember { mutableStateOf(QuranStore.isFullyDownloaded(ctx)) }
+    var done by remember { mutableStateOf(false) }
+    var failed by remember { mutableStateOf(false) }
+    var phase by remember { mutableIntStateOf(0) }
+    var current by remember { mutableIntStateOf(0) }
+    var total by remember { mutableIntStateOf(QuranStore.totalPages()) }
 
-    // If already complete on entry, skip immediately.
-    LaunchedEffect(Unit) {
-        if (QuranStore.isFullyDownloaded(ctx)) {
-            Settings.setSetupComplete(ctx)
-            onReady()
-        }
-    }
-
-    // Only download if not already complete.
-    LaunchedEffect(done) {
-        if (done || downloading) return@LaunchedEffect
-        downloading = true
-        val start = QuranStore.cachedCount(ctx) + 1
-        if (start > QuranStore.totalPages()) {
+    LaunchedEffect(attempt) {
+        if (Settings.setupComplete(ctx) && QuranStore.isFullyDownloaded(ctx)) {
             done = true
-            downloading = false
+            onReady()
             return@LaunchedEffect
         }
-        val ok = withContext(Dispatchers.IO) {
-            QuranStore.downloadRange(ctx, start, QuranStore.totalPages()) { c, _ ->
-                completed = c + (start - 1)
+        downloading = true
+        failed = false
+        phase = 0
+        current = 0
+        total = QuranStore.totalPages()
+        val failedPages = withContext(Dispatchers.IO) {
+            QuranStore.repair(ctx) { p, c, t ->
+                phase = p
+                current = c
+                total = t
             }
         }
         downloading = false
-        if (ok) done = true
+        if (failedPages.isEmpty()) {
+            done = true
+        } else {
+            failed = true
+        }
     }
 
-    val progress = (completed.toFloat() / QuranStore.totalPages()).coerceIn(0f, 1f)
+    val progress = if (total > 0) (current.toFloat() / total).coerceIn(0f, 1f) else 0f
+    val headline = when {
+        done -> "Ready."
+        failed -> "Some pages didn't load."
+        else -> "Preparing."
+    }
+    val sub = when {
+        done -> "Quran is offline and verified."
+        failed -> "Check your connection and retry."
+        phase == 0 -> "Verifying $current of $total"
+        else -> "Downloading $current of $total"
+    }
 
     Column(
         modifier = Modifier
@@ -80,7 +94,7 @@ fun OfflineSetupScreen(onReady: () -> Unit) {
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.Center
     ) {
-        Text("Preparing.",
+        Text(headline,
             fontFamily = FontFamily.Serif,
             fontSize = 34.sp,
             fontWeight = FontWeight.Bold,
@@ -89,9 +103,7 @@ fun OfflineSetupScreen(onReady: () -> Unit) {
 
         Spacer(Modifier.height(JannahSpacing.m))
 
-        Text("$completed of ${QuranStore.totalPages()}",
-            style = JannahType.bodySmall,
-            color = JannahColors.Muted)
+        Text(sub, style = JannahType.bodySmall, color = JannahColors.Muted)
 
         Spacer(Modifier.height(JannahSpacing.xxl))
 
@@ -104,7 +116,7 @@ fun OfflineSetupScreen(onReady: () -> Unit) {
         ) {
             Box(
                 Modifier
-                    .fillMaxWidth(progress)
+                    .fillMaxWidth(if (done) 1f else progress)
                     .height(6.dp)
                     .clip(RoundedCornerShape(3.dp))
                     .background(JannahColors.Orange)
@@ -126,24 +138,28 @@ fun OfflineSetupScreen(onReady: () -> Unit) {
                     },
                 contentAlignment = Alignment.Center
             ) {
-                Text("Continue",
-                    style = JannahType.button,
-                    color = JannahColors.OnOrange)
+                Text("Continue", style = JannahType.button, color = JannahColors.OnOrange)
             }
-        } else if (!downloading && completed > 0) {
+        } else if (failed && !downloading) {
             Box(
                 Modifier
                     .fillMaxWidth()
                     .height(56.dp)
                     .clip(RoundedCornerShape(JannahSpacing.pillRadius))
-                    .background(JannahColors.Card)
-                    .clickable {
-                        completed = QuranStore.cachedCount(ctx)
-                        done = QuranStore.isFullyDownloaded(ctx)
-                    },
+                    .background(JannahColors.Ink)
+                    .clickable { attempt++ },
                 contentAlignment = Alignment.Center
             ) {
-                Text("Retry", style = JannahType.button, color = JannahColors.Ink)
+                Text("Retry", style = JannahType.button, color = JannahColors.OnOrange)
+            }
+            Spacer(Modifier.height(JannahSpacing.m))
+            Box(
+                Modifier
+                    .fillMaxWidth()
+                    .clickable { onSkip() },
+                contentAlignment = Alignment.Center
+            ) {
+                Text("Skip for now", style = JannahType.button, color = JannahColors.Muted)
             }
         }
     }

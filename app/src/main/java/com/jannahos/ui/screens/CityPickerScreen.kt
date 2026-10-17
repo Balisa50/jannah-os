@@ -12,7 +12,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.OutlinedTextField
@@ -48,14 +48,14 @@ fun CityPickerScreen(onBack: () -> Unit, onPicked: (String, String) -> Unit) {
     var results by remember { mutableStateOf<List<CitySearchApi.Result>>(emptyList()) }
     var loading by remember { mutableStateOf(false) }
 
-    // Live API search with debounce
     LaunchedEffect(query) {
         if (query.length < 2) {
             results = emptyList()
+            loading = false
             return@LaunchedEffect
         }
         loading = true
-        delay(400) // debounce
+        delay(400)
         results = withContext(Dispatchers.IO) { CitySearchApi.search(query) }
         loading = false
     }
@@ -83,7 +83,6 @@ fun CityPickerScreen(onBack: () -> Unit, onPicked: (String, String) -> Unit) {
                 )
                 Spacer(Modifier.height(JannahSpacing.m))
             }
-
             if (loading) {
                 item {
                     Box(Modifier.fillMaxWidth().padding(JannahSpacing.l), contentAlignment = Alignment.Center) {
@@ -101,12 +100,17 @@ fun CityPickerScreen(onBack: () -> Unit, onPicked: (String, String) -> Unit) {
                         style = JannahType.caption, color = JannahColors.Muted)
                     Spacer(Modifier.height(JannahSpacing.m))
                 }
-                // Quick suggestion list from the offline store
-                items(CityStore.suggestions.take(10)) { (c, cn) ->
+                itemsIndexed(
+                    CityStore.suggestions.take(10),
+                    key = { i, (c, cn) -> "sug|$i|$c|$cn" }
+                ) { _, (c, cn) ->
                     CityResultRow(c, cn, null) { onPicked(c, cn) }
                 }
             } else {
-                items(results) { r ->
+                itemsIndexed(
+                    results,
+                    key = { i, r -> "res|$i|${r.name}|${r.country}|${r.admin1 ?: ""}" }
+                ) { _, r ->
                     CityResultRow(r.name, r.country, r.admin1) { onPicked(r.name, r.country) }
                 }
             }
