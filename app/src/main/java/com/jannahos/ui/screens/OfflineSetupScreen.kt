@@ -1,6 +1,7 @@
 package com.jannahos.ui.screens
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -28,6 +29,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.jannahos.QuranStore
+import com.jannahos.Settings
 import com.jannahos.ui.theme.JannahColors
 import com.jannahos.ui.theme.JannahSpacing
 import com.jannahos.ui.theme.JannahType
@@ -38,28 +40,34 @@ import kotlinx.coroutines.withContext
 fun OfflineSetupScreen(onReady: () -> Unit) {
     val ctx = LocalContext.current
     var completed by remember { mutableIntStateOf(QuranStore.cachedCount(ctx)) }
-    var done by remember { mutableStateOf(false) }
+    var downloading by remember { mutableStateOf(false) }
+    var done by remember { mutableStateOf(QuranStore.isFullyDownloaded(ctx)) }
 
+    // If already complete on entry, skip immediately.
     LaunchedEffect(Unit) {
-        // Resume from wherever we left off.
+        if (QuranStore.isFullyDownloaded(ctx)) {
+            Settings.setSetupComplete(ctx)
+            onReady()
+        }
+    }
+
+    // Only download if not already complete.
+    LaunchedEffect(done) {
+        if (done || downloading) return@LaunchedEffect
+        downloading = true
         val start = QuranStore.cachedCount(ctx) + 1
         if (start > QuranStore.totalPages()) {
             done = true
+            downloading = false
             return@LaunchedEffect
         }
-        withContext(Dispatchers.IO) {
+        val ok = withContext(Dispatchers.IO) {
             QuranStore.downloadRange(ctx, start, QuranStore.totalPages()) { c, _ ->
                 completed = c + (start - 1)
             }
         }
-        done = true
-    }
-
-    LaunchedEffect(done) {
-        if (done && QuranStore.isFullyDownloaded(ctx)) {
-            kotlinx.coroutines.delay(300)
-            onReady()
-        }
+        downloading = false
+        if (ok) done = true
     }
 
     val progress = (completed.toFloat() / QuranStore.totalPages()).coerceIn(0f, 1f)
@@ -101,6 +109,42 @@ fun OfflineSetupScreen(onReady: () -> Unit) {
                     .clip(RoundedCornerShape(3.dp))
                     .background(JannahColors.Orange)
             )
+        }
+
+        Spacer(Modifier.height(JannahSpacing.xxl))
+
+        if (done) {
+            Box(
+                Modifier
+                    .fillMaxWidth()
+                    .height(56.dp)
+                    .clip(RoundedCornerShape(JannahSpacing.pillRadius))
+                    .background(JannahColors.Ink)
+                    .clickable {
+                        Settings.setSetupComplete(ctx)
+                        onReady()
+                    },
+                contentAlignment = Alignment.Center
+            ) {
+                Text("Continue",
+                    style = JannahType.button,
+                    color = JannahColors.OnOrange)
+            }
+        } else if (!downloading && completed > 0) {
+            Box(
+                Modifier
+                    .fillMaxWidth()
+                    .height(56.dp)
+                    .clip(RoundedCornerShape(JannahSpacing.pillRadius))
+                    .background(JannahColors.Card)
+                    .clickable {
+                        completed = QuranStore.cachedCount(ctx)
+                        done = QuranStore.isFullyDownloaded(ctx)
+                    },
+                contentAlignment = Alignment.Center
+            ) {
+                Text("Retry", style = JannahType.button, color = JannahColors.Ink)
+            }
         }
     }
 }
