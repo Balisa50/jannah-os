@@ -102,6 +102,21 @@ object KhatmPlan {
     private fun surahName(surah: Int): String =
         QuranCache.SURAHS.firstOrNull { it.first == surah }?.second ?: "Surah $surah"
 
+    // Approximate Madani mushaf page for a surah:ayah pair.
+    // Uses the standard page anchors (firstPageOfSurah in QuranStore).
+    fun pageFor(surah: Int, ayah: Int): Int {
+        val startPage = QuranStore.firstPageOfSurah(surah)
+        // If ayah is close to the beginning of the surah, use that page.
+        // Otherwise, move forward proportionally.
+        if (ayah <= 1) return startPage
+        val ayahCount = AYAH_COUNTS.getOrNull(surah - 1) ?: 1
+        val nextSurahPage = if (surah < 114) QuranStore.firstPageOfSurah(surah + 1) else 605
+        val surahPages = (nextSurahPage - startPage).coerceAtLeast(1)
+        val progress = (ayah.toDouble() / ayahCount.toDouble()).coerceIn(0.0, 0.99)
+        val page = startPage + (progress * surahPages).toInt()
+        return page.coerceIn(startPage, nextSurahPage - 1)
+    }
+
     // ---------- Persistence ----------
 
     fun planDays(context: Context): Int =

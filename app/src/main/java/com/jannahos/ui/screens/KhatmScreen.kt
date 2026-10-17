@@ -12,6 +12,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
@@ -30,10 +31,10 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
-import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.jannahos.KhatmPlan
+import com.jannahos.QuranStore
 import com.jannahos.ui.TopBar
 import com.jannahos.ui.theme.JannahColors
 import com.jannahos.ui.theme.JannahSpacing
@@ -45,6 +46,13 @@ fun KhatmScreen(onBack: () -> Unit) {
     val ctx = LocalContext.current
     var refresh by remember { mutableIntStateOf(0) }
     val ignore = refresh
+
+    var openPage by remember { mutableStateOf<Int?>(null) }
+
+    if (openPage != null) {
+        MushafPageScreen(startPage = openPage!!, onBack = { openPage = null })
+        return
+    }
 
     val planDays = KhatmPlan.planDays(ctx)
 
@@ -88,7 +96,6 @@ fun KhatmScreen(onBack: () -> Unit) {
 
             Spacer(Modifier.height(JannahSpacing.s))
 
-            // Progress bar
             Box(
                 Modifier
                     .fillMaxWidth()
@@ -107,46 +114,18 @@ fun KhatmScreen(onBack: () -> Unit) {
 
             Spacer(Modifier.height(JannahSpacing.l))
 
-            // Today's portion
             if (nextDay != null) {
                 val portion = plan[nextDay - 1]
-                Text("TODAY · DAY ${portion.day}",
-                    style = JannahType.eyebrow, color = JannahColors.OrangeDeep)
-                Spacer(Modifier.height(JannahSpacing.s))
-                Box(
-                    Modifier
-                        .fillMaxWidth()
-                        .clip(RoundedCornerShape(JannahSpacing.cardRadius))
-                        .background(JannahColors.Orange)
-                        .padding(JannahSpacing.l)
-                ) {
-                    Column {
-                        Text(portion.label,
-                            fontFamily = FontFamily.Serif,
-                            fontSize = 22.sp,
-                            fontWeight = FontWeight.Bold,
-                            color = JannahColors.OnOrange,
-                            lineHeight = 28.sp)
-                        Spacer(Modifier.height(JannahSpacing.s))
-                        Text("${portion.ayahCount} ayahs",
-                            style = JannahType.caption,
-                            color = JannahColors.OnOrange.copy(alpha = 0.85f))
-                        Spacer(Modifier.height(JannahSpacing.m))
-                        Box(
-                            Modifier
-                                .clip(RoundedCornerShape(JannahSpacing.pillRadius))
-                                .background(JannahColors.OnOrange)
-                                .clickable {
-                                    KhatmPlan.toggleDay(ctx, portion.day)
-                                    refresh++
-                                }
-                                .padding(horizontal = 20.dp, vertical = 12.dp)
-                        ) {
-                            Text("Mark day ${portion.day} done",
-                                style = JannahType.button, color = JannahColors.OrangeDeep)
-                        }
+                PortionCard(
+                    portion = portion,
+                    ctx = ctx,
+                    isToday = true,
+                    isDone = false,
+                    onMarkDone = { KhatmPlan.toggleDay(ctx, portion.day); refresh++ },
+                    onOpenReader = {
+                        openPage = KhatmPlan.pageFor(portion.startSurah, portion.startAyah)
                     }
-                }
+                )
                 Spacer(Modifier.height(JannahSpacing.l))
             } else {
                 Box(
@@ -172,7 +151,6 @@ fun KhatmScreen(onBack: () -> Unit) {
                 Spacer(Modifier.height(JannahSpacing.l))
             }
 
-            // Full plan list
             Text("THE FULL PLAN",
                 style = JannahType.eyebrow, color = JannahColors.OrangeDeep)
             Spacer(Modifier.height(JannahSpacing.s))
@@ -180,71 +158,180 @@ fun KhatmScreen(onBack: () -> Unit) {
             plan.forEachIndexed { i, p ->
                 val isDone = done.contains(p.day)
                 val isNext = nextDay == p.day
-                Row(
-                    Modifier
-                        .fillMaxWidth()
-                        .clip(RoundedCornerShape(10.dp))
-                        .background(
-                            when {
-                                isNext -> JannahColors.OrangeSoft
-                                else -> JannahColors.Card
-                            }
-                        )
-                        .clickable {
-                            KhatmPlan.toggleDay(ctx, p.day)
-                            refresh++
-                        }
-                        .padding(horizontal = JannahSpacing.m, vertical = 14.dp),
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Box(
-                        Modifier
-                            .clip(RoundedCornerShape(20.dp))
-                            .background(
-                                if (isDone) JannahColors.Orange else JannahColors.Cream
-                            )
-                            .padding(horizontal = 10.dp, vertical = 4.dp)
-                    ) {
-                        Text("${p.day}",
-                            style = JannahType.micro,
-                            color = if (isDone) JannahColors.OnOrange else JannahColors.Muted,
-                            fontWeight = FontWeight.Bold)
+                PortionCard(
+                    portion = p,
+                    ctx = ctx,
+                    isToday = isNext,
+                    isDone = isDone,
+                    onMarkDone = { KhatmPlan.toggleDay(ctx, p.day); refresh++ },
+                    onOpenReader = {
+                        openPage = KhatmPlan.pageFor(p.startSurah, p.startAyah)
                     }
-                    Spacer(Modifier.padding(horizontal = 4.dp))
-                    Text(p.label,
-                        style = JannahType.bodySmall,
-                        color = if (isDone) JannahColors.Muted else JannahColors.Ink,
-                        modifier = Modifier.weight(1f))
-                    if (isDone) {
-                        Text("✓", style = JannahType.body, color = JannahColors.Orange)
-                    }
-                }
-                if (i < plan.size - 1) Spacer(Modifier.height(4.dp))
+                )
+                if (i < plan.size - 1) Spacer(Modifier.height(6.dp))
             }
 
             Spacer(Modifier.height(JannahSpacing.l))
 
-            Row(
-                Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(JannahSpacing.s)
+            Box(
+                Modifier
+                    .fillMaxWidth()
+                    .height(48.dp)
+                    .clip(RoundedCornerShape(JannahSpacing.pillRadius))
+                    .background(JannahColors.Card)
+                    .clickable {
+                        KhatmPlan.clear(ctx)
+                        refresh++
+                    },
+                contentAlignment = Alignment.Center
             ) {
-                Box(
-                    Modifier
-                        .weight(1f)
-                        .height(48.dp)
-                        .clip(RoundedCornerShape(JannahSpacing.pillRadius))
-                        .background(JannahColors.Card)
-                        .clickable {
-                            KhatmPlan.clear(ctx)
-                            refresh++
-                        },
-                    contentAlignment = Alignment.Center
-                ) {
-                    Text("Start over", style = JannahType.caption, color = JannahColors.Muted)
-                }
+                Text("Start over", style = JannahType.caption, color = JannahColors.Muted)
             }
 
             Spacer(Modifier.height(JannahSpacing.xxl))
+        }
+    }
+}
+
+@Composable
+private fun PortionCard(
+    portion: KhatmPlan.Portion,
+    ctx: android.content.Context,
+    isToday: Boolean,
+    isDone: Boolean,
+    onMarkDone: () -> Unit,
+    onOpenReader: () -> Unit
+) {
+    val surahNameStart = com.jannahos.QuranCache.SURAHS
+        .firstOrNull { it.first == portion.startSurah }?.second ?: "Surah ${portion.startSurah}"
+    val surahNameEnd = com.jannahos.QuranCache.SURAHS
+        .firstOrNull { it.first == portion.endSurah }?.second ?: "Surah ${portion.endSurah}"
+
+    Box(
+        Modifier
+            .fillMaxWidth()
+            .clip(RoundedCornerShape(JannahSpacing.cardRadius))
+            .background(
+                when {
+                    isToday -> JannahColors.Orange
+                    isDone -> JannahColors.Card
+                    else -> JannahColors.Card
+                }
+            )
+            .padding(JannahSpacing.l)
+    ) {
+        Column {
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Text(
+                    if (isToday) "TODAY · DAY ${portion.day}"
+                    else "DAY ${portion.day}",
+                    style = JannahType.eyebrow,
+                    color = if (isToday) JannahColors.OnOrange.copy(alpha = 0.85f)
+                            else JannahColors.OrangeDeep
+                )
+                Spacer(Modifier.weight(1f))
+                Text("${portion.ayahCount} ayahs",
+                    style = JannahType.caption,
+                    color = if (isToday) JannahColors.OnOrange.copy(alpha = 0.75f)
+                            else JannahColors.Muted)
+            }
+
+            Spacer(Modifier.height(JannahSpacing.m))
+
+            // START
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Text("Start",
+                    style = JannahType.micro,
+                    color = if (isToday) JannahColors.OnOrange.copy(alpha = 0.75f)
+                            else JannahColors.Faint,
+                    modifier = Modifier.width(54.dp))
+                Text("$surahNameStart",
+                    fontFamily = FontFamily.Serif,
+                    fontSize = 17.sp,
+                    fontWeight = FontWeight.Bold,
+                    color = if (isToday) JannahColors.OnOrange else JannahColors.Ink)
+                Spacer(Modifier.padding(horizontal = 4.dp))
+                Text("ayah ${portion.startAyah}",
+                    style = JannahType.bodySmall,
+                    color = if (isToday) JannahColors.OnOrange.copy(alpha = 0.85f)
+                            else JannahColors.Muted)
+            }
+
+            Spacer(Modifier.height(6.dp))
+
+            // STOP
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Text("Stop",
+                    style = JannahType.micro,
+                    color = if (isToday) JannahColors.OnOrange.copy(alpha = 0.75f)
+                            else JannahColors.Faint,
+                    modifier = Modifier.width(54.dp))
+                Text("$surahNameEnd",
+                    fontFamily = FontFamily.Serif,
+                    fontSize = 17.sp,
+                    fontWeight = FontWeight.Bold,
+                    color = if (isToday) JannahColors.OnOrange else JannahColors.Ink)
+                Spacer(Modifier.padding(horizontal = 4.dp))
+                Text("ayah ${portion.endAyah}",
+                    style = JannahType.bodySmall,
+                    color = if (isToday) JannahColors.OnOrange.copy(alpha = 0.85f)
+                            else JannahColors.Muted)
+            }
+
+            Spacer(Modifier.height(JannahSpacing.m))
+
+            Row(
+                Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                // Open the reader at the start page
+                Box(
+                    Modifier
+                        .weight(1f)
+                        .height(44.dp)
+                        .clip(RoundedCornerShape(JannahSpacing.pillRadius))
+                        .background(
+                            if (isToday) JannahColors.OnOrange.copy(alpha = 0.18f)
+                            else JannahColors.Cream
+                        )
+                        .clickable(onClick = onOpenReader),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Text("Open in mushaf",
+                        style = JannahType.caption,
+                        color = if (isToday) JannahColors.OnOrange else JannahColors.Ink,
+                        fontWeight = FontWeight.SemiBold)
+                }
+
+                // Mark done / Undo
+                Box(
+                    Modifier
+                        .weight(1f)
+                        .height(44.dp)
+                        .clip(RoundedCornerShape(JannahSpacing.pillRadius))
+                        .background(
+                            when {
+                                isDone -> JannahColors.OrangeSoft
+                                isToday -> JannahColors.OnOrange
+                                else -> JannahColors.Orange
+                            }
+                        )
+                        .clickable(onClick = onMarkDone),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Text(
+                        if (isDone) "✓ Done"
+                        else "Mark done",
+                        style = JannahType.caption,
+                        color = when {
+                            isDone -> JannahColors.OrangeDeep
+                            isToday -> JannahColors.OrangeDeep
+                            else -> JannahColors.OnOrange
+                        },
+                        fontWeight = FontWeight.SemiBold
+                    )
+                }
+            }
         }
     }
 }
@@ -283,10 +370,7 @@ private fun ChoosePlan(onBack: () -> Unit, onPick: (Int) -> Unit) {
 
             OutlinedTextField(
                 value = daysText,
-                onValueChange = { s ->
-                    // numbers only, max 3 digits
-                    daysText = s.filter { it.isDigit() }.take(3)
-                },
+                onValueChange = { s -> daysText = s.filter { it.isDigit() }.take(3) },
                 label = { Text("Days", fontSize = 12.sp) },
                 keyboardOptions = androidx.compose.foundation.text.KeyboardOptions(
                     keyboardType = KeyboardType.Number
@@ -296,7 +380,6 @@ private fun ChoosePlan(onBack: () -> Unit, onPick: (Int) -> Unit) {
 
             Spacer(Modifier.height(JannahSpacing.s))
 
-            // Quick picks
             Row(
                 Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.spacedBy(6.dp)
@@ -319,7 +402,6 @@ private fun ChoosePlan(onBack: () -> Unit, onPick: (Int) -> Unit) {
                 }
             }
 
-            // Preview
             if (days != null && days in 1..365) {
                 Spacer(Modifier.height(JannahSpacing.l))
                 Text("PREVIEW · FIRST 3 DAYS",
@@ -328,6 +410,10 @@ private fun ChoosePlan(onBack: () -> Unit, onPick: (Int) -> Unit) {
 
                 val preview = remember(days) { KhatmPlan.planForDays(days) }
                 preview.take(3).forEach { p ->
+                    val sStart = com.jannahos.QuranCache.SURAHS
+                        .firstOrNull { it.first == p.startSurah }?.second ?: ""
+                    val sEnd = com.jannahos.QuranCache.SURAHS
+                        .firstOrNull { it.first == p.endSurah }?.second ?: ""
                     Box(
                         Modifier
                             .fillMaxWidth()
@@ -338,12 +424,13 @@ private fun ChoosePlan(onBack: () -> Unit, onPick: (Int) -> Unit) {
                         Column {
                             Text("Day ${p.day}",
                                 style = JannahType.micro, color = JannahColors.OrangeDeep)
-                            Spacer(Modifier.height(2.dp))
-                            Text(p.label,
+                            Spacer(Modifier.height(4.dp))
+                            Text("$sStart ${p.startAyah}  →  $sEnd ${p.endAyah}",
                                 fontFamily = FontFamily.Serif,
                                 fontSize = 15.sp,
                                 fontWeight = FontWeight.Medium,
                                 color = JannahColors.Ink)
+                            Spacer(Modifier.height(2.dp))
                             Text("${p.ayahCount} ayahs",
                                 style = JannahType.micro, color = JannahColors.Faint)
                         }
@@ -351,7 +438,7 @@ private fun ChoosePlan(onBack: () -> Unit, onPick: (Int) -> Unit) {
                     Spacer(Modifier.height(6.dp))
                 }
                 if (days > 3) {
-                    Text("… and ${days - 3} more",
+                    Text("… and ${days - 3} more days",
                         style = JannahType.caption, color = JannahColors.Muted)
                 }
             }
