@@ -151,7 +151,7 @@ private fun SettingsScreen(onBack: () -> Unit) {
 
         ListRow(
             title = "Prayer lock",
-            subtitle = if (lockOn) "Phone locked for $lockMinutes minutes during prayer" else "Off",
+            subtitle = if (lockOn) "$lockMinutes minutes at prayer time" else "Off",
             toggle = lockOn
         ) {
             lockOn = !lockOn
@@ -173,9 +173,7 @@ private fun SettingsScreen(onBack: () -> Unit) {
 
         ListRow(
             title = "Quran reading lock",
-            subtitle = if (quranLockOn)
-                "App locks until you read a page. 7 minutes minimum."
-            else "Off",
+            subtitle = if (quranLockOn) "A page before the day ends" else "Off",
             toggle = quranLockOn
         ) {
             quranLockOn = !quranLockOn
@@ -188,7 +186,7 @@ private fun SettingsScreen(onBack: () -> Unit) {
 
         ListRow(
             title = "Focus mode",
-            subtitle = if (focusOn) "Return to prayer during commitments" else "Off",
+            subtitle = if (focusOn) "On" else "Off",
             toggle = focusOn
         ) {
             focusOn = !focusOn

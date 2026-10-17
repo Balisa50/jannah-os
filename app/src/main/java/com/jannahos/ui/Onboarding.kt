@@ -410,9 +410,6 @@ private fun DoneScreen(name: String) {
             textAlign = TextAlign.Center,
             lineHeight = 26.sp)
         Spacer(Modifier.height(JannahSpacing.l))
-        Text("The rest is there when you want it.",
-            style = JannahType.bodySmall,
-            color = JannahColors.Muted,
-            textAlign = TextAlign.Center)
+        
     }
 }

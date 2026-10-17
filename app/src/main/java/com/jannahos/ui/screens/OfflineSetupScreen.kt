@@ -38,21 +38,26 @@ import kotlinx.coroutines.withContext
 fun OfflineSetupScreen(onReady: () -> Unit) {
     val ctx = LocalContext.current
     var completed by remember { mutableIntStateOf(QuranStore.cachedCount(ctx)) }
-    var finished by remember { mutableStateOf(false) }
-    var failed by remember { mutableStateOf(false) }
+    var done by remember { mutableStateOf(false) }
 
     LaunchedEffect(Unit) {
-        val ok = withContext(Dispatchers.IO) {
-            QuranStore.downloadRange(ctx, 1, QuranStore.totalPages()) { done, _ ->
-                completed = done
+        // Resume from wherever we left off.
+        val start = QuranStore.cachedCount(ctx) + 1
+        if (start > QuranStore.totalPages()) {
+            done = true
+            return@LaunchedEffect
+        }
+        withContext(Dispatchers.IO) {
+            QuranStore.downloadRange(ctx, start, QuranStore.totalPages()) { c, _ ->
+                completed = c + (start - 1)
             }
         }
-        if (ok) finished = true else failed = true
+        done = true
     }
 
-    LaunchedEffect(finished) {
-        if (finished) {
-            kotlinx.coroutines.delay(400)
+    LaunchedEffect(done) {
+        if (done && QuranStore.isFullyDownloaded(ctx)) {
+            kotlinx.coroutines.delay(300)
             onReady()
         }
     }
@@ -76,51 +81,25 @@ fun OfflineSetupScreen(onReady: () -> Unit) {
 
         Spacer(Modifier.height(JannahSpacing.m))
 
-        Text(
-            "Downloading the Quran once. After this, it works without internet.",
-            style = JannahType.body,
-            color = JannahColors.Body,
-            textAlign = TextAlign.Center,
-            lineHeight = 24.sp
-        )
+        Text("$completed of ${QuranStore.totalPages()}",
+            style = JannahType.bodySmall,
+            color = JannahColors.Muted)
 
         Spacer(Modifier.height(JannahSpacing.xxl))
 
-        if (!failed) {
+        Box(
+            Modifier
+                .fillMaxWidth()
+                .height(6.dp)
+                .clip(RoundedCornerShape(3.dp))
+                .background(JannahColors.Border)
+        ) {
             Box(
                 Modifier
-                    .fillMaxWidth()
-                    .height(8.dp)
-                    .clip(RoundedCornerShape(4.dp))
-                    .background(JannahColors.Border)
-            ) {
-                Box(
-                    Modifier
-                        .fillMaxWidth(progress)
-                        .height(8.dp)
-                        .clip(RoundedCornerShape(4.dp))
-                        .background(JannahColors.Orange)
-                )
-            }
-            Spacer(Modifier.height(JannahSpacing.s))
-            Text(
-                "$completed of ${QuranStore.totalPages()} pages",
-                style = JannahType.caption,
-                color = JannahColors.Muted
-            )
-            Spacer(Modifier.height(JannahSpacing.s))
-            Text(
-                "This takes a few minutes on mobile data. Leave the app open.",
-                style = JannahType.caption,
-                color = JannahColors.Faint,
-                textAlign = TextAlign.Center
-            )
-        } else {
-            Text(
-                "Download interrupted. Reopen the app to continue where it left off.",
-                style = JannahType.bodySmall,
-                color = JannahColors.Muted,
-                textAlign = TextAlign.Center
+                    .fillMaxWidth(progress)
+                    .height(6.dp)
+                    .clip(RoundedCornerShape(3.dp))
+                    .background(JannahColors.Orange)
             )
         }
     }
