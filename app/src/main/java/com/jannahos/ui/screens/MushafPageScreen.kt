@@ -38,6 +38,7 @@ import androidx.compose.ui.unit.sp
 import com.jannahos.QuranReaderPrefs
 import com.jannahos.QuranStore
 import com.jannahos.ui.TopBar
+import com.jannahos.ui.swipeToBack
 import com.jannahos.ui.theme.JannahColors
 import com.jannahos.ui.theme.JannahSpacing
 import com.jannahos.ui.theme.JannahType
@@ -72,6 +73,7 @@ fun MushafPageScreen(startPage: Int = 1, onBack: () -> Unit) {
         Modifier
             .fillMaxSize()
             .background(JannahColors.Cream)
+            .swipeToBack(onBack)
     ) {
         TopBar(title = surahName, onBack = onBack)
 
@@ -128,37 +130,22 @@ fun MushafPageScreen(startPage: Int = 1, onBack: () -> Unit) {
                     Box(Modifier.fillMaxWidth().height(1.dp).background(Color(0xFFE0D5B8)))
                     Spacer(Modifier.height(JannahSpacing.s))
 
-                    // 15-line grid
-                    Column(
-                        Modifier.fillMaxWidth(),
-                        verticalArrangement = Arrangement.spacedBy(6.dp)
-                    ) {
-                        l.lines.toSortedMap().forEach { (lineNo, text) ->
-                            // Basmala is centered
-                            if (lineNo == l.basmalaLineNumber) {
-                                Text(
-                                    text,
-                                    fontFamily = UthmanicHafs,
-                                    fontSize = (fontSize + 2).sp,
-                                    color = JannahColors.Ink,
-                                    textAlign = TextAlign.Center,
-                                    modifier = Modifier.fillMaxWidth(),
-                                    lineHeight = (fontSize * 2f).sp
-                                )
-                            } else {
-                                // Regular line — center for short lines, justify for long
-                                Text(
-                                    text,
-                                    fontFamily = UthmanicHafs,
-                                    fontSize = fontSize.sp,
-                                    color = JannahColors.Ink,
-                                    textAlign = TextAlign.Center,
-                                    modifier = Modifier.fillMaxWidth(),
-                                    lineHeight = (fontSize * 2f).sp
-                                )
-                            }
+                    // Single flowing mushaf text
+                    val fullText = buildString {
+                        l.lines.toSortedMap().forEach { (_, text) ->
+                            append(text)
+                            append(" ")
                         }
                     }
+                    Text(
+                        text = fullText,
+                        fontFamily = UthmanicHafs,
+                        fontSize = fontSize.sp,
+                        color = JannahColors.Ink,
+                        textAlign = TextAlign.Start, // RTL handles the alignment
+                        modifier = Modifier.fillMaxWidth(),
+                        lineHeight = (fontSize * 2f).sp
+                    )
 
                     Spacer(Modifier.height(JannahSpacing.m))
                     Text("$currentPage",

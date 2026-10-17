@@ -36,6 +36,7 @@ import androidx.compose.ui.unit.sp
 import com.jannahos.KhatmPlan
 import com.jannahos.QuranStore
 import com.jannahos.ui.TopBar
+import com.jannahos.ui.swipeToBack
 import com.jannahos.ui.theme.JannahColors
 import com.jannahos.ui.theme.JannahSpacing
 import com.jannahos.ui.theme.JannahType
@@ -74,6 +75,7 @@ fun KhatmScreen(onBack: () -> Unit) {
             .fillMaxSize()
             .verticalScroll(rememberScrollState())
             .background(JannahColors.Cream)
+            .swipeToBack(onBack)
     ) {
         TopBar("Reading plan", onBack = onBack)
 
@@ -347,6 +349,7 @@ private fun ChoosePlan(onBack: () -> Unit, onPick: (Int) -> Unit) {
             .fillMaxSize()
             .verticalScroll(rememberScrollState())
             .background(JannahColors.Cream)
+            .swipeToBack(onBack)
     ) {
         TopBar("Reading plan", onBack = onBack)
 
