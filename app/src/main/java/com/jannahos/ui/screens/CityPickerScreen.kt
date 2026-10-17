@@ -33,6 +33,7 @@ import androidx.compose.ui.unit.sp
 import com.jannahos.CitySearchApi
 import com.jannahos.CityStore
 import com.jannahos.ui.TopBar
+import com.jannahos.ui.pressClickable
 import com.jannahos.ui.theme.JannahColors
 import com.jannahos.ui.theme.JannahSpacing
 import com.jannahos.ui.theme.JannahType
@@ -125,7 +126,7 @@ private fun CityResultRow(name: String, country: String, admin1: String?, onPick
             .fillMaxWidth()
             .clip(RoundedCornerShape(12.dp))
             .background(JannahColors.Card)
-            .clickable(onClick = onPick)
+            .pressClickable(onClick = onPick)
             .padding(horizontal = JannahSpacing.m, vertical = 16.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {

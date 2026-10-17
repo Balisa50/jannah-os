@@ -12,7 +12,7 @@ object JannahColors {
 
     // Burnt orange accent (UniDash)
     val Orange     = Color(0xFFD9481F)
-    val OrangeSoft = Color(0xFFF4D9C8)
+    val OrangeSoft = Color(0xFFF7DFC9)
     val OrangeDeep = Color(0xFFA63414)
 
     // Warm deep brown ink (not cold navy)

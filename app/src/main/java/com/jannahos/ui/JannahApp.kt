@@ -1,5 +1,13 @@
 package com.jannahos.ui
 
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.ExitTransition
+import androidx.compose.animation.animateColorAsState
+import androidx.compose.animation.core.FastOutSlowInEasing
+import androidx.compose.animation.core.MutableTransitionState
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.slideInHorizontally
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
@@ -16,13 +24,14 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalContext
-import androidx.navigation.NavHostController
+import androidx.compose.ui.unit.dp
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
@@ -55,6 +64,11 @@ private val TABS = listOf(
 fun JannahApp() {
     val ctx = LocalContext.current
     val nav = rememberNavController()
+    val backStack by nav.currentBackStackEntryAsState()
+    val currentRoute = backStack?.destination?.route ?: "today"
+
+    var currentTabIdx by remember { mutableIntStateOf(0) }
+    var isForward by remember { mutableStateOf(true) }
 
     var comebackState by remember { mutableStateOf<ComebackCheck.State?>(null) }
     var showReflection by remember { mutableStateOf(false) }
@@ -70,6 +84,19 @@ fun JannahApp() {
         } catch (_: Throwable) {}
         try { showReflection = ReflectionPrompt.shouldPrompt(ctx) } catch (_: Throwable) {}
         try { showEv = EveningReckoning.shouldShow(ctx) } catch (_: Throwable) {}
+    }
+
+    val goTo: (String) -> Unit = { route ->
+        val newIdx = TABS.indexOfFirst { it.route == route }
+        if (newIdx >= 0) {
+            isForward = newIdx >= currentTabIdx
+            currentTabIdx = newIdx
+            nav.navigate(route) {
+                popUpTo(nav.graph.startDestinationId) { saveState = true }
+                launchSingleTop = true
+                restoreState = true
+            }
+        }
     }
 
     val cs = comebackState
@@ -100,7 +127,7 @@ fun JannahApp() {
 
     Scaffold(
         containerColor = JannahColors.Cream,
-        bottomBar = { JannahBottomBar(nav) }
+        bottomBar = { JannahBottomBar(currentRoute, goTo) }
     ) { padding ->
         NavHost(
             navController = nav,
@@ -108,48 +135,77 @@ fun JannahApp() {
             modifier = Modifier.fillMaxSize().padding(padding)
         ) {
             composable("today") {
-                ErrorBoundary("the Today screen") {
-                    TodayScreen(onNavigate = { route ->
-                        nav.navigate(route) { launchSingleTop = true }
-                    })
+                TabEnter(isForward) {
+                    ErrorBoundary("the Today screen") {
+                        TodayScreen(onNavigate = goTo)
+                    }
                 }
             }
-            composable("pray") { ErrorBoundary("the Pray screen") { PrayScreen() } }
-            composable("quran") { ErrorBoundary("the Quran tab") { QuranTabScreen() } }
-            composable("you") { ErrorBoundary("the You screen") { YouScreen() } }
+            composable("pray") {
+                TabEnter(isForward) {
+                    ErrorBoundary("the Pray screen") { PrayScreen() }
+                }
+            }
+            composable("quran") {
+                TabEnter(isForward) {
+                    ErrorBoundary("the Quran tab") { QuranTabScreen() }
+                }
+            }
+            composable("you") {
+                TabEnter(isForward) {
+                    ErrorBoundary("the You screen") { YouScreen() }
+                }
+            }
         }
     }
 }
 
 @Composable
-private fun JannahBottomBar(nav: NavHostController) {
-    val backStack by nav.currentBackStackEntryAsState()
-    val current = backStack?.destination?.route
+private fun TabEnter(isForward: Boolean, content: @Composable () -> Unit) {
+    val state = remember { MutableTransitionState(false).apply { targetState = true } }
+    AnimatedVisibility(
+        visibleState = state,
+        enter = slideInHorizontally(
+            initialOffsetX = { fullWidth ->
+                if (isForward) fullWidth / 5 else -fullWidth / 5
+            },
+            animationSpec = tween(220, easing = FastOutSlowInEasing)
+        ) + fadeIn(animationSpec = tween(200)),
+        exit = ExitTransition.None
+    ) {
+        content()
+    }
+}
 
-    NavigationBar(containerColor = JannahColors.Surface, tonalElevation = androidx.compose.ui.unit.Dp(0f)) {
+@Composable
+private fun JannahBottomBar(currentRoute: String?, onTabClick: (String) -> Unit) {
+    NavigationBar(
+        containerColor = JannahColors.Surface,
+        tonalElevation = 0.dp
+    ) {
         TABS.forEach { tab ->
-            val selected = current == tab.route
+            val selected = currentRoute == tab.route
+            val tint by animateColorAsState(
+                targetValue = if (selected) JannahColors.Orange else JannahColors.Muted,
+                animationSpec = tween(180),
+                label = "tabTint"
+            )
             NavigationBarItem(
                 selected = selected,
-                onClick = {
-                    if (!selected) {
-                        nav.navigate(tab.route) {
-                            popUpTo(nav.graph.startDestinationId) { saveState = true }
-                            launchSingleTop = true
-                            restoreState = true
-                        }
-                    }
-                },
+                onClick = { if (!selected) onTabClick(tab.route) },
                 icon = {
                     Icon(
                         imageVector = tab.icon,
                         contentDescription = tab.label,
-                        tint = if (selected) JannahColors.Orange else JannahColors.Muted
+                        tint = tint
                     )
                 },
                 label = {
-                    Text(tab.label, style = JannahType.micro,
-                        color = if (selected) JannahColors.Orange else JannahColors.Muted)
+                    Text(
+                        tab.label,
+                        style = JannahType.micro,
+                        color = tint
+                    )
                 },
                 colors = NavigationBarItemDefaults.colors(
                     indicatorColor = JannahColors.OrangeSoft,
