@@ -167,10 +167,10 @@ private fun TabEnter(isForward: Boolean, content: @Composable () -> Unit) {
         visibleState = state,
         enter = slideInHorizontally(
             initialOffsetX = { fullWidth ->
-                if (isForward) fullWidth / 5 else -fullWidth / 5
+                if (isForward) fullWidth / 6 else -fullWidth / 6
             },
-            animationSpec = tween(220, easing = FastOutSlowInEasing)
-        ) + fadeIn(animationSpec = tween(200)),
+            animationSpec = tween(180, easing = FastOutSlowInEasing)
+        ) + fadeIn(animationSpec = tween(150)),
         exit = ExitTransition.None
     ) {
         content()

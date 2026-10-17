@@ -60,7 +60,7 @@ fun TodayScreen(onNavigate: (String) -> Unit = {}) {
     val ignore = tick
     var revealCount by remember { mutableIntStateOf(0) }
     LaunchedEffect(Unit) {
-        for (i in 1..6) { kotlinx.coroutines.delay(60); revealCount = i }
+        for (i in 1..6) { kotlinx.coroutines.delay(30); revealCount = i }
     }
 
     val lat = Settings.lat(ctx)

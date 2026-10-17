@@ -40,7 +40,7 @@ fun Modifier.pressClickable(
 
 
 @Composable
-fun Modifier.revealOnLoad(visible: Boolean, durationMs: Int = 320, offsetY: Float = 24f): Modifier {
+fun Modifier.revealOnLoad(visible: Boolean, durationMs: Int = 200, offsetY: Float = 24f): Modifier {
     val alpha by animateFloatAsState(
         targetValue = if (visible) 1f else 0f,
         animationSpec = tween(durationMs),
