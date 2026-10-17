@@ -108,6 +108,7 @@ fun AppPickerScreen(onBack: () -> Unit) {
             LazyColumn(
                 Modifier
                     .fillMaxSize()
+                    .weight(1f)
                     .padding(horizontal = JannahSpacing.gutter)
             ) {
                 items(installed, key = { it.packageName }) { app ->

@@ -52,19 +52,19 @@ fun MushafPageScreen(startPage: Int = 1, onBack: () -> Unit) {
 
     val ctx = LocalContext.current
     var currentPage by remember { mutableIntStateOf(startPage.coerceIn(1, QuranStore.totalPages())) }
-    var verses by remember { mutableStateOf<List<QuranStore.PageVerse>>(emptyList()) }
+    var layout by remember { mutableStateOf<QuranStore.PageLayout?>(null) }
     var loading by remember { mutableStateOf(true) }
     var dragTotal by remember { mutableStateOf(0f) }
-    var fontSize by remember { mutableIntStateOf(QuranReaderPrefs.fontSize(ctx)) }
+    val fontSize = remember { QuranReaderPrefs.fontSize(ctx) }
 
     LaunchedEffect(currentPage) {
         loading = true
-        verses = withContext(Dispatchers.IO) { QuranStore.loadPage(ctx, currentPage) ?: emptyList() }
+        layout = withContext(Dispatchers.IO) { QuranStore.loadPage(ctx, currentPage) }
         loading = false
     }
 
-    val surahName = remember(verses) {
-        val s = verses.firstOrNull()?.surah ?: 1
+    val surahName = remember(layout) {
+        val s = layout?.firstSurah ?: 1
         com.jannahos.QuranCache.SURAHS.firstOrNull { it.first == s }?.second ?: "Surah $s"
     }
 
@@ -98,7 +98,7 @@ fun MushafPageScreen(startPage: Int = 1, onBack: () -> Unit) {
                 Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
                     Text("Loading", style = JannahType.caption, color = JannahColors.Muted)
                 }
-            } else if (verses.isEmpty()) {
+            } else if (layout == null || layout!!.lines.isEmpty()) {
                 Box(
                     Modifier.fillMaxSize().padding(JannahSpacing.l),
                     contentAlignment = Alignment.Center
@@ -107,66 +107,69 @@ fun MushafPageScreen(startPage: Int = 1, onBack: () -> Unit) {
                         style = JannahType.bodySmall, color = JannahColors.Muted)
                 }
             } else {
+                val l = layout!!
                 Column(
                     Modifier
                         .fillMaxSize()
                         .verticalScroll(rememberScrollState())
                         .padding(horizontal = JannahSpacing.l, vertical = JannahSpacing.m)
                 ) {
-                    // Surah header if a new surah begins on this page
-                    val firstVerse = verses.firstOrNull()
-                    if (firstVerse != null && firstVerse.ayah == 1 && firstVerse.surah != 1 && firstVerse.surah != 9) {
-                        Box(
-                            Modifier
-                                .fillMaxWidth()
-                                .clip(RoundedCornerShape(3.dp))
-                                .background(Color(0xFFF6EEDB))
-                                .border(1.dp, Color(0xFFC9A961), RoundedCornerShape(3.dp))
-                                .padding(vertical = 6.dp),
-                            contentAlignment = Alignment.Center
-                        ) {
-                            Text(
-                                "سورة $surahName",
-                                fontFamily = UthmanicHafs,
-                                fontSize = 18.sp,
-                                color = JannahColors.Ink
-                            )
+                    // Top row
+                    Row(
+                        Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween
+                    ) {
+                        Text("الجزء ${juzForPage(currentPage)}",
+                            fontFamily = UthmanicHafs, fontSize = 12.sp, color = JannahColors.OrangeDeep)
+                        Text(surahName,
+                            fontFamily = UthmanicHafs, fontSize = 12.sp, color = JannahColors.OrangeDeep)
+                    }
+                    Spacer(Modifier.height(JannahSpacing.s))
+                    Box(Modifier.fillMaxWidth().height(1.dp).background(Color(0xFFE0D5B8)))
+                    Spacer(Modifier.height(JannahSpacing.s))
+
+                    // 15-line grid
+                    Column(
+                        Modifier.fillMaxWidth(),
+                        verticalArrangement = Arrangement.spacedBy(6.dp)
+                    ) {
+                        l.lines.toSortedMap().forEach { (lineNo, text) ->
+                            // Basmala is centered
+                            if (lineNo == l.basmalaLineNumber) {
+                                Text(
+                                    text,
+                                    fontFamily = UthmanicHafs,
+                                    fontSize = (fontSize + 2).sp,
+                                    color = JannahColors.Ink,
+                                    textAlign = TextAlign.Center,
+                                    modifier = Modifier.fillMaxWidth(),
+                                    lineHeight = (fontSize * 2f).sp
+                                )
+                            } else {
+                                // Regular line — center for short lines, justify for long
+                                Text(
+                                    text,
+                                    fontFamily = UthmanicHafs,
+                                    fontSize = fontSize.sp,
+                                    color = JannahColors.Ink,
+                                    textAlign = TextAlign.Center,
+                                    modifier = Modifier.fillMaxWidth(),
+                                    lineHeight = (fontSize * 2f).sp
+                                )
+                            }
                         }
-                        Spacer(Modifier.height(JannahSpacing.m))
                     }
 
-                    // Flowing mushaf text, justified, RTL
-                    Text(
-                        text = buildString {
-                            verses.forEach { v ->
-                                append(v.arabic.trim())
-                                append(" ۝")
-                                append(toArabicIndic(v.ayah))
-                                append(" ")
-                            }
-                        },
-                        fontFamily = UthmanicHafs,
-                        fontSize = fontSize.sp,
-                        color = JannahColors.Ink,
-                        lineHeight = (fontSize * 2.1f).sp,
-                        textAlign = TextAlign.Justify,
-                        modifier = Modifier.fillMaxWidth()
-                    )
-
-                    Spacer(Modifier.height(JannahSpacing.l))
-
-                    Text(
-                        "$currentPage",
-                        fontFamily = UthmanicHafs,
-                        fontSize = 13.sp,
-                        color = JannahColors.OrangeDeep,
+                    Spacer(Modifier.height(JannahSpacing.m))
+                    Text("$currentPage",
+                        fontFamily = UthmanicHafs, fontSize = 13.sp, color = JannahColors.OrangeDeep,
                         textAlign = TextAlign.Center,
-                        modifier = Modifier.fillMaxWidth()
-                    )
+                        modifier = Modifier.fillMaxWidth())
                 }
             }
         }
 
+        // Nav row
         Row(
             Modifier
                 .fillMaxWidth()
@@ -195,7 +198,12 @@ private fun NavPill(label: String, onClick: () -> Unit) {
     }
 }
 
-private fun toArabicIndic(n: Int): String {
-    val map = charArrayOf('\u0660','\u0661','\u0662','\u0663','\u0664','\u0665','\u0666','\u0667','\u0668','\u0669')
-    return n.toString().map { c -> if (c.isDigit()) map[c - '0'] else c }.joinToString("")
+private fun juzForPage(page: Int): Int {
+    val juzStarts = intArrayOf(
+        1, 22, 42, 62, 82, 102, 121, 142, 162, 181,
+        201, 222, 242, 262, 282, 302, 322, 342, 362, 382,
+        402, 422, 442, 462, 482, 502, 522, 542, 562, 582
+    )
+    for (i in juzStarts.indices.reversed()) if (page >= juzStarts[i]) return i + 1
+    return 1
 }

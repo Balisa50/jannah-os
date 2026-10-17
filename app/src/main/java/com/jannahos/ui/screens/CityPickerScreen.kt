@@ -58,7 +58,10 @@ fun CityPickerScreen(onBack: () -> Unit, onPicked: (String, String) -> Unit) {
         TopBar("City", onBack = onBack)
 
         LazyColumn(
-            Modifier.fillMaxSize().padding(horizontal = JannahSpacing.gutter)
+            Modifier
+                .fillMaxSize()
+                .weight(1f)
+                .padding(horizontal = JannahSpacing.gutter)
         ) {
             item {
                 Spacer(Modifier.height(JannahSpacing.s))
