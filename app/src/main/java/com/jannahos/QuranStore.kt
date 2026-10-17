@@ -174,7 +174,7 @@ object QuranStore {
             val joinedLines = mutableMapOf<Int, String>()
 
             for ((lineNo, wordList) in wordsByLine.toSortedMap()) {
-                val sorted = wordList.sortedBy { it.position }.map { it.text }
+                val sorted = wordList.map { it.text }
                 val joined = sorted.joinToString(" ")
                 joinedLines[lineNo] = joined
                 if (sorted.size <= 5 && joined.contains("بِسْمِ") && joined.contains("ٱلرَّحِيمِ")) {
