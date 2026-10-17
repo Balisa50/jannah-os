@@ -20,6 +20,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.mutableLongStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
@@ -54,10 +55,6 @@ import java.util.Locale
 @Composable
 fun TodayScreen(onNavigate: (String) -> Unit = {}) {
     val ctx = LocalContext.current
-    var tick by remember { mutableStateOf(0) }
-    LaunchedEffect(Unit) { while (true) { delay(1000); tick++ } }
-    // Read tick so the composable recomposes each second.
-    val ignore = tick
     var revealCount by remember { mutableIntStateOf(0) }
     LaunchedEffect(Unit) {
         for (i in 1..6) { kotlinx.coroutines.delay(30); revealCount = i }
@@ -297,4 +294,27 @@ fun TodayScreen(onNavigate: (String) -> Unit = {}) {
             Spacer(Modifier.height(JannahSpacing.xxl))
         }
     }
+}
+
+
+@Composable
+fun CountdownTimer(targetTimeMs: Long) {
+    var now by remember { mutableLongStateOf(System.currentTimeMillis()) }
+    LaunchedEffect(Unit) {
+        while (true) {
+            delay(1000)
+            now = System.currentTimeMillis()
+        }
+    }
+    val diff = (targetTimeMs - now).coerceAtLeast(0L)
+    val text = String.format(Locale.US, "%02d:%02d:%02d", diff / 3600000, (diff / 60000) % 60, (diff / 1000) % 60)
+    Text(
+        text,
+        fontFamily = FontFamily.Serif,
+        fontSize = 44.sp,
+        fontWeight = FontWeight.Bold,
+        color = JannahColors.Ink,
+        letterSpacing = (-1).sp,
+        lineHeight = 48.sp
+    )
 }

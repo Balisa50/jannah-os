@@ -1,13 +1,7 @@
 package com.jannahos.ui
 
-import androidx.compose.animation.AnimatedVisibility
-import androidx.compose.animation.ExitTransition
-import androidx.compose.animation.animateColorAsState
-import androidx.compose.animation.core.FastOutSlowInEasing
-import androidx.compose.animation.core.MutableTransitionState
-import androidx.compose.animation.core.tween
-import androidx.compose.animation.fadeIn
-import androidx.compose.animation.slideInHorizontally
+import androidx.compose.animation.*
+import androidx.compose.animation.core.*
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
@@ -15,19 +9,8 @@ import androidx.compose.material.icons.filled.DateRange
 import androidx.compose.material.icons.filled.Home
 import androidx.compose.material.icons.filled.Menu
 import androidx.compose.material.icons.filled.Person
-import androidx.compose.material3.Icon
-import androidx.compose.material3.NavigationBar
-import androidx.compose.material3.NavigationBarItem
-import androidx.compose.material3.NavigationBarItemDefaults
-import androidx.compose.material3.Scaffold
-import androidx.compose.material3.Text
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableIntStateOf
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
+import androidx.compose.material3.*
+import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalContext
@@ -52,7 +35,6 @@ import com.jannahos.ui.theme.ScreenScaffold
 import kotlinx.coroutines.delay
 
 private data class Tab(val route: String, val label: String, val icon: ImageVector)
-
 private val TABS = listOf(
     Tab("today", "Today", Icons.Default.Home),
     Tab("pray",  "Pray",  Icons.Default.DateRange),
@@ -67,9 +49,6 @@ fun JannahApp() {
     val backStack by nav.currentBackStackEntryAsState()
     val currentRoute = backStack?.destination?.route ?: "today"
 
-    var currentTabIdx by remember { mutableIntStateOf(0) }
-    var isForward by remember { mutableStateOf(true) }
-
     var comebackState by remember { mutableStateOf<ComebackCheck.State?>(null) }
     var showReflection by remember { mutableStateOf(false) }
     var showEv by remember { mutableStateOf(false) }
@@ -77,144 +56,73 @@ fun JannahApp() {
 
     LaunchedEffect(Unit) {
         delay(200)
-        try {
-            val c = ComebackCheck.check(ctx)
-            comebackState = c
-            showComeback = c.show
-        } catch (_: Throwable) {}
+        try { val c = ComebackCheck.check(ctx); comebackState = c; showComeback = c.show } catch (_: Throwable) {}
         try { showReflection = ReflectionPrompt.shouldPrompt(ctx) } catch (_: Throwable) {}
         try { showEv = EveningReckoning.shouldShow(ctx) } catch (_: Throwable) {}
     }
 
-    val goTo: (String) -> Unit = { route ->
-        val newIdx = TABS.indexOfFirst { it.route == route }
-        if (newIdx >= 0) {
-            isForward = newIdx >= currentTabIdx
-            currentTabIdx = newIdx
-            nav.navigate(route) {
-                popUpTo(nav.graph.startDestinationId) { saveState = true }
-                launchSingleTop = true
-                restoreState = true
-            }
-        }
-    }
-
     val cs = comebackState
-    if (showComeback && cs != null) {
-        ScreenScaffold {
-            ErrorBoundary("Comeback") {
-                ComebackScreen(cs, onDismiss = { showComeback = false })
-            }
-        }
-        return
-    }
-    if (showReflection) {
-        ScreenScaffold {
-            ErrorBoundary("Morning reflection") {
-                MorningReflectionScreen(onDismiss = { showReflection = false })
-            }
-        }
-        return
-    }
-    if (showEv) {
-        ScreenScaffold {
-            ErrorBoundary("Evening reckoning") {
-                EveningScreen(onDismiss = { showEv = false })
-            }
-        }
-        return
-    }
+    if (showComeback && cs != null) { ScreenScaffold { ErrorBoundary("Comeback") { ComebackScreen(cs, onDismiss = { showComeback = false }) } }; return }
+    if (showReflection) { ScreenScaffold { ErrorBoundary("Morning reflection") { MorningReflectionScreen(onDismiss = { showReflection = false }) } }; return }
+    if (showEv) { ScreenScaffold { ErrorBoundary("Evening reckoning") { EveningScreen(onDismiss = { showEv = false }) } }; return }
 
     Scaffold(
         containerColor = JannahColors.Cream,
-        bottomBar = { JannahBottomBar(currentRoute, goTo) }
+        bottomBar = {
+            NavigationBar(containerColor = JannahColors.Surface, tonalElevation = 0.dp) {
+                TABS.forEach { tab ->
+                    val selected = currentRoute == tab.route
+                    val tint by animateColorAsState(
+                        targetValue = if (selected) JannahColors.Orange else JannahColors.Muted,
+                        animationSpec = spring(stiffness = Spring.StiffnessMediumLow),
+                        label = "tabTint"
+                    )
+                    NavigationBarItem(
+                        selected = selected,
+                        onClick = {
+                            if (!selected) {
+                                nav.navigate(tab.route) {
+                                    popUpTo(nav.graph.startDestinationId) { saveState = true }
+                                    launchSingleTop = true
+                                    restoreState = true
+                                }
+                            }
+                        },
+                        icon = { Icon(tab.icon, contentDescription = tab.label, tint = tint) },
+                        label = { Text(tab.label, style = JannahType.micro, color = tint) },
+                        colors = NavigationBarItemDefaults.colors(
+                            indicatorColor = JannahColors.OrangeSoft,
+                            selectedIconColor = JannahColors.Orange,
+                            selectedTextColor = JannahColors.Orange,
+                            unselectedIconColor = JannahColors.Muted,
+                            unselectedTextColor = JannahColors.Muted
+                        )
+                    )
+                }
+            }
+        }
     ) { padding ->
         NavHost(
             navController = nav,
             startDestination = "today",
-            modifier = Modifier.fillMaxSize().padding(padding)
-        ) {
-            composable("today") {
-                TabEnter(isForward) {
-                    ErrorBoundary("the Today screen") {
-                        TodayScreen(onNavigate = goTo)
-                    }
-                }
-            }
-            composable("pray") {
-                TabEnter(isForward) {
-                    ErrorBoundary("the Pray screen") { PrayScreen() }
-                }
-            }
-            composable("quran") {
-                TabEnter(isForward) {
-                    ErrorBoundary("the Quran tab") { QuranTabScreen() }
-                }
-            }
-            composable("you") {
-                TabEnter(isForward) {
-                    ErrorBoundary("the You screen") { YouScreen() }
-                }
-            }
-        }
-    }
-}
-
-@Composable
-private fun TabEnter(isForward: Boolean, content: @Composable () -> Unit) {
-    val state = remember { MutableTransitionState(false).apply { targetState = true } }
-    AnimatedVisibility(
-        visibleState = state,
-        enter = slideInHorizontally(
-            initialOffsetX = { fullWidth ->
-                if (isForward) fullWidth / 6 else -fullWidth / 6
+            modifier = Modifier.fillMaxSize().padding(padding),
+            enterTransition = {
+                slideInHorizontally(initialOffsetX = { it / 3 }, animationSpec = spring(dampingRatio = 0.85f, stiffness = 400f)) + fadeIn(tween(200))
             },
-            animationSpec = tween(180, easing = FastOutSlowInEasing)
-        ) + fadeIn(animationSpec = tween(150)),
-        exit = ExitTransition.None
-    ) {
-        content()
-    }
-}
-
-@Composable
-private fun JannahBottomBar(currentRoute: String?, onTabClick: (String) -> Unit) {
-    NavigationBar(
-        containerColor = JannahColors.Surface,
-        tonalElevation = 0.dp
-    ) {
-        TABS.forEach { tab ->
-            val selected = currentRoute == tab.route
-            val tint by animateColorAsState(
-                targetValue = if (selected) JannahColors.Orange else JannahColors.Muted,
-                animationSpec = tween(180),
-                label = "tabTint"
-            )
-            NavigationBarItem(
-                selected = selected,
-                onClick = { if (!selected) onTabClick(tab.route) },
-                icon = {
-                    Icon(
-                        imageVector = tab.icon,
-                        contentDescription = tab.label,
-                        tint = tint
-                    )
-                },
-                label = {
-                    Text(
-                        tab.label,
-                        style = JannahType.micro,
-                        color = tint
-                    )
-                },
-                colors = NavigationBarItemDefaults.colors(
-                    indicatorColor = JannahColors.OrangeSoft,
-                    selectedIconColor = JannahColors.Orange,
-                    selectedTextColor = JannahColors.Orange,
-                    unselectedIconColor = JannahColors.Muted,
-                    unselectedTextColor = JannahColors.Muted
-                )
-            )
+            exitTransition = {
+                slideOutHorizontally(targetOffsetX = { -it / 3 }, animationSpec = spring(dampingRatio = 0.85f, stiffness = 400f)) + fadeOut(tween(200))
+            },
+            popEnterTransition = {
+                slideInHorizontally(initialOffsetX = { -it / 3 }, animationSpec = spring(dampingRatio = 0.85f, stiffness = 400f)) + fadeIn(tween(200))
+            },
+            popExitTransition = {
+                slideOutHorizontally(targetOffsetX = { it / 3 }, animationSpec = spring(dampingRatio = 0.85f, stiffness = 400f)) + fadeOut(tween(200))
+            }
+        ) {
+            composable("today") { ErrorBoundary("Today") { TodayScreen(onNavigate = { nav.navigate(it) }) } }
+            composable("pray") { ErrorBoundary("Pray") { PrayScreen() } }
+            composable("quran") { ErrorBoundary("Quran") { QuranTabScreen() } }
+            composable("you") { ErrorBoundary("You") { YouScreen() } }
         }
     }
 }
