@@ -51,7 +51,7 @@ class MainActivity : ComponentActivity() {
                         showCrash && crash != null -> {
                             CrashReportScreen(trace = crash, onDismiss = { showCrash = false })
                         }
-                        onboarded && !setupDone -> {
+                        onboarded && false -> {
                             com.jannahos.ui.screens.OfflineSetupScreen(onReady = {
                                 Settings.setSetupComplete(this)
                                 setupDone = true

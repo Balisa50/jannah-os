@@ -106,7 +106,7 @@ fun CityPickerScreen(onBack: () -> Unit, onPicked: (String, String) -> Unit) {
                     CityResultRow(c, cn, null) { onPicked(c, cn) }
                 }
             } else {
-                items(results, key = { "${it.name}-${it.country}-${it.admin1}" }) { r ->
+                items(results) { r ->
                     CityResultRow(r.name, r.country, r.admin1) { onPicked(r.name, r.country) }
                 }
             }
