@@ -1,9 +1,7 @@
 package com.jannahos.ui.screens
 
-import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
-import androidx.compose.foundation.gestures.detectHorizontalDragGestures
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -28,7 +26,6 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.Font
 import androidx.compose.ui.text.font.FontFamily
@@ -37,8 +34,8 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.jannahos.QuranReaderPrefs
 import com.jannahos.QuranStore
+import com.jannahos.ui.SwipeBackScreen
 import com.jannahos.ui.TopBar
-import com.jannahos.ui.swipeToBack
 import com.jannahos.ui.theme.JannahColors
 import com.jannahos.ui.theme.JannahSpacing
 import com.jannahos.ui.theme.JannahType
@@ -49,13 +46,17 @@ private val UthmanicHafs = FontFamily(Font(com.jannahos.R.font.uthmanic_hafs))
 
 @Composable
 fun MushafPageScreen(startPage: Int = 1, onBack: () -> Unit) {
-    BackHandler(onBack = onBack)
+    SwipeBackScreen(onBack = onBack) {
+        MushafPageContent(startPage = startPage, onBack = onBack)
+    }
+}
 
+@Composable
+private fun MushafPageContent(startPage: Int, onBack: () -> Unit) {
     val ctx = LocalContext.current
     var currentPage by remember { mutableIntStateOf(startPage.coerceIn(1, QuranStore.totalPages())) }
     var layout by remember { mutableStateOf<QuranStore.PageLayout?>(null) }
     var loading by remember { mutableStateOf(true) }
-    var dragTotal by remember { mutableStateOf(0f) }
     val fontSize = remember { QuranReaderPrefs.fontSize(ctx) }
 
     LaunchedEffect(currentPage) {
@@ -73,7 +74,6 @@ fun MushafPageScreen(startPage: Int = 1, onBack: () -> Unit) {
         Modifier
             .fillMaxSize()
             .background(JannahColors.Cream)
-            .swipeToBack(onBack)
     ) {
         TopBar(title = surahName, onBack = onBack)
 
@@ -85,16 +85,6 @@ fun MushafPageScreen(startPage: Int = 1, onBack: () -> Unit) {
                 .clip(RoundedCornerShape(6.dp))
                 .background(Color(0xFFFFFCF3))
                 .border(1.dp, Color(0xFFE0D5B8), RoundedCornerShape(6.dp))
-                .pointerInput(currentPage) {
-                    detectHorizontalDragGestures(
-                        onDragEnd = {
-                            if (dragTotal < -90f && currentPage < QuranStore.totalPages()) currentPage++
-                            else if (dragTotal > 90f && currentPage > 1) currentPage--
-                            dragTotal = 0f
-                        },
-                        onHorizontalDrag = { _, d -> dragTotal += d }
-                    )
-                }
         ) {
             if (loading) {
                 Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
@@ -116,7 +106,6 @@ fun MushafPageScreen(startPage: Int = 1, onBack: () -> Unit) {
                         .verticalScroll(rememberScrollState())
                         .padding(horizontal = JannahSpacing.l, vertical = JannahSpacing.m)
                 ) {
-                    // Top row
                     Row(
                         Modifier.fillMaxWidth(),
                         horizontalArrangement = Arrangement.SpaceBetween
@@ -130,7 +119,6 @@ fun MushafPageScreen(startPage: Int = 1, onBack: () -> Unit) {
                     Box(Modifier.fillMaxWidth().height(1.dp).background(Color(0xFFE0D5B8)))
                     Spacer(Modifier.height(JannahSpacing.s))
 
-                    // Single flowing mushaf text
                     val fullText = buildString {
                         l.lines.toSortedMap().forEach { (_, text) ->
                             append(text)
@@ -142,7 +130,7 @@ fun MushafPageScreen(startPage: Int = 1, onBack: () -> Unit) {
                         fontFamily = UthmanicHafs,
                         fontSize = fontSize.sp,
                         color = JannahColors.Ink,
-                        textAlign = TextAlign.Start, // RTL handles the alignment
+                        textAlign = TextAlign.Start,
                         modifier = Modifier.fillMaxWidth(),
                         lineHeight = (fontSize * 2f).sp
                     )
@@ -156,7 +144,6 @@ fun MushafPageScreen(startPage: Int = 1, onBack: () -> Unit) {
             }
         }
 
-        // Nav row
         Row(
             Modifier
                 .fillMaxWidth()
@@ -178,7 +165,6 @@ private fun NavPill(label: String, onClick: () -> Unit) {
         Modifier
             .clip(RoundedCornerShape(JannahSpacing.pillRadius))
             .background(JannahColors.Card)
-            .pointerInput(Unit) { detectHorizontalDragGestures { _, _ -> } }
             .padding(horizontal = 22.dp, vertical = 10.dp)
     ) {
         Text(label, style = JannahType.title, color = JannahColors.Ink)

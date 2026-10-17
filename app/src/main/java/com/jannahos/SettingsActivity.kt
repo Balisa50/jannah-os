@@ -38,10 +38,10 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.jannahos.ui.SwipeBackScreen
 import com.jannahos.ui.TopBar
 import com.jannahos.ui.screens.AppPickerScreen
 import com.jannahos.ui.screens.CityPickerScreen
-import com.jannahos.ui.swipeToBack
 import com.jannahos.ui.theme.JannahColors
 import com.jannahos.ui.theme.JannahSpacing
 import com.jannahos.ui.theme.JannahType
@@ -103,12 +103,12 @@ private fun SettingsScreen(onBack: () -> Unit) {
     var adhanExpanded by remember { mutableStateOf(false) }
     var toast by remember { mutableStateOf<String?>(null) }
 
+    SwipeBackScreen(onBack = onBack) {
     Column(
         Modifier
             .fillMaxSize()
             .verticalScroll(rememberScrollState())
             .background(JannahColors.Cream)
-            .swipeToBack(onBack)
     ) {
         TopBar("Settings", onBack = onBack)
 
@@ -295,6 +295,7 @@ private fun SettingsScreen(onBack: () -> Unit) {
         }
 
         Spacer(Modifier.height(JannahSpacing.xxl))
+    }
     }
 }
 

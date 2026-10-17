@@ -14,9 +14,11 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -28,26 +30,34 @@ import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.jannahos.CitySearchApi
 import com.jannahos.CityStore
 import com.jannahos.ui.TopBar
 import com.jannahos.ui.theme.JannahColors
 import com.jannahos.ui.theme.JannahSpacing
 import com.jannahos.ui.theme.JannahType
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.withContext
 
 @Composable
 fun CityPickerScreen(onBack: () -> Unit, onPicked: (String, String) -> Unit) {
     BackHandler(onBack = onBack)
 
     var query by remember { mutableStateOf("") }
-    var customCity by remember { mutableStateOf("") }
-    var customCountry by remember { mutableStateOf("") }
+    var results by remember { mutableStateOf<List<CitySearchApi.Result>>(emptyList()) }
+    var loading by remember { mutableStateOf(false) }
 
-    val filtered = remember(query) {
-        if (query.isBlank()) CityStore.suggestions
-        else CityStore.suggestions.filter {
-            it.first.lowercase().contains(query.lowercase()) ||
-            it.second.lowercase().contains(query.lowercase())
+    // Live API search with debounce
+    LaunchedEffect(query) {
+        if (query.length < 2) {
+            results = emptyList()
+            return@LaunchedEffect
         }
+        loading = true
+        delay(400) // debounce
+        results = withContext(Dispatchers.IO) { CitySearchApi.search(query) }
+        loading = false
     }
 
     Column(
@@ -68,76 +78,68 @@ fun CityPickerScreen(onBack: () -> Unit, onPicked: (String, String) -> Unit) {
                 OutlinedTextField(
                     value = query,
                     onValueChange = { query = it },
-                    label = { Text("Search city", fontSize = 12.sp) },
+                    label = { Text("Search any city", fontSize = 12.sp) },
                     modifier = Modifier.fillMaxWidth()
                 )
-                Spacer(Modifier.height(JannahSpacing.l))
+                Spacer(Modifier.height(JannahSpacing.m))
             }
 
-            if (filtered.isEmpty()) {
+            if (loading) {
                 item {
-                    Text("No match. Enter it manually.",
-                        style = JannahType.caption, color = JannahColors.Muted)
-                    Spacer(Modifier.height(JannahSpacing.m))
-                    OutlinedTextField(
-                        value = customCity,
-                        onValueChange = { customCity = it },
-                        label = { Text("City", fontSize = 12.sp) },
-                        modifier = Modifier.fillMaxWidth()
-                    )
-                    Spacer(Modifier.height(JannahSpacing.s))
-                    OutlinedTextField(
-                        value = customCountry,
-                        onValueChange = { customCountry = it },
-                        label = { Text("Country", fontSize = 12.sp) },
-                        modifier = Modifier.fillMaxWidth()
-                    )
-                    Spacer(Modifier.height(JannahSpacing.m))
-                    Box(
-                        Modifier
-                            .fillMaxWidth()
-                            .height(52.dp)
-                            .clip(RoundedCornerShape(JannahSpacing.pillRadius))
-                            .background(
-                                if (customCity.isBlank() || customCountry.isBlank())
-                                    JannahColors.Border else JannahColors.Orange
-                            )
-                            .clickable {
-                                if (customCity.isNotBlank() && customCountry.isNotBlank()) {
-                                    onPicked(customCity.trim(), customCountry.trim())
-                                }
-                            },
-                        contentAlignment = Alignment.Center
-                    ) {
-                        Text("Use this city",
-                            style = JannahType.button,
-                            color = if (customCity.isBlank() || customCountry.isBlank())
-                                JannahColors.Faint else JannahColors.OnOrange)
+                    Box(Modifier.fillMaxWidth().padding(JannahSpacing.l), contentAlignment = Alignment.Center) {
+                        CircularProgressIndicator(color = JannahColors.Orange)
                     }
                 }
+            } else if (query.length >= 2 && results.isEmpty()) {
+                item {
+                    Text("No matches. Try a different spelling.",
+                        style = JannahType.caption, color = JannahColors.Muted)
+                }
+            } else if (query.length < 2) {
+                item {
+                    Text("Start typing to search for any city worldwide.",
+                        style = JannahType.caption, color = JannahColors.Muted)
+                    Spacer(Modifier.height(JannahSpacing.m))
+                }
+                // Quick suggestion list from the offline store
+                items(CityStore.suggestions.take(10)) { (c, cn) ->
+                    CityResultRow(c, cn, null) { onPicked(c, cn) }
+                }
             } else {
-                items(filtered, key = { "${it.first}-${it.second}" }) { (c, cn) ->
-                    Row(
-                        Modifier
-                            .fillMaxWidth()
-                            .clip(RoundedCornerShape(12.dp))
-                            .background(JannahColors.Card)
-                            .clickable { onPicked(c, cn) }
-                            .padding(horizontal = JannahSpacing.m, vertical = 16.dp)
-                    ) {
-                        Text(c,
-                            fontFamily = FontFamily.Serif,
-                            fontSize = 17.sp,
-                            fontWeight = FontWeight.Medium,
-                            color = JannahColors.Ink,
-                            modifier = Modifier.weight(1f))
-                        Text(cn,
-                            style = JannahType.caption,
-                            color = JannahColors.Muted)
-                    }
-                    Spacer(Modifier.height(6.dp))
+                items(results, key = { "${it.name}-${it.country}-${it.admin1}" }) { r ->
+                    CityResultRow(r.name, r.country, r.admin1) { onPicked(r.name, r.country) }
                 }
             }
         }
     }
+}
+
+@Composable
+private fun CityResultRow(name: String, country: String, admin1: String?, onPick: () -> Unit) {
+    Row(
+        Modifier
+            .fillMaxWidth()
+            .clip(RoundedCornerShape(12.dp))
+            .background(JannahColors.Card)
+            .clickable(onClick = onPick)
+            .padding(horizontal = JannahSpacing.m, vertical = 16.dp),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        Column(Modifier.weight(1f)) {
+            Text(name,
+                fontFamily = FontFamily.Serif,
+                fontSize = 17.sp,
+                fontWeight = FontWeight.Medium,
+                color = JannahColors.Ink)
+            if (!admin1.isNullOrBlank()) {
+                Text(admin1,
+                    style = JannahType.caption,
+                    color = JannahColors.Muted)
+            }
+        }
+        Text(country,
+            style = JannahType.caption,
+            color = JannahColors.Muted)
+    }
+    Spacer(Modifier.height(6.dp))
 }
