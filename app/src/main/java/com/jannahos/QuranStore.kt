@@ -6,18 +6,22 @@ import java.io.File
 import java.net.HttpURLConnection
 import java.net.URL
 
-// The 604 Madani mushaf pages, downloaded once and cached locally.
-// Each page is stored as its own JSON file so we can render and swipe
-// pages the way the printed mushaf works. After the initial download,
-// the entire Quran works offline.
-//
-// Total size: ~6 MB. Download happens on first launch in the background.
+// The 604 Madani mushaf pages, downloaded once. Uses the Quran Foundation
+// API with mushaf=1 (QCF V2) which returns the exact printed-page layout:
+// word-level line_number fields group into 15 lines per page, with
+// surah headers and basmala lines identified separately.
 object QuranStore {
 
     private const val PAGE_URL = "https://api.quran.com/api/v4/verses/by_page"
     private const val TOTAL_PAGES = 604
-    private const val FIELDS = "text_uthmani,page_number"
-    private const val PER_PAGE = 50
+
+    // mushaf=1 selects the QCF V2 (Madani 604-page) layout. words=true +
+    // word_fields=line_number gives us the line each word belongs to.
+    private val PARAMS =
+        "mushaf=1&words=true" +
+        "&word_fields=line_number,text_uthmani,position" +
+        "&fields=text_uthmani,verse_key" +
+        "&per_page=50"
 
     fun pagesDir(context: Context): File =
         File(context.filesDir, "mushaf_pages").also { if (!it.exists()) it.mkdirs() }
@@ -38,36 +42,27 @@ object QuranStore {
     fun isFullyDownloaded(context: Context): Boolean =
         cachedCount(context) >= TOTAL_PAGES
 
-    // Download a single page. Returns true on success.
     fun downloadPage(context: Context, page: Int): Boolean {
         if (isPageCached(context, page)) return true
         return try {
-            val url = "$PAGE_URL/$page?fields=$FIELDS&per_page=$PER_PAGE"
+            val url = "$PAGE_URL/$page?$PARAMS"
             val conn = URL(url).openConnection() as HttpURLConnection
             conn.requestMethod = "GET"
             conn.connectTimeout = 20000
             conn.readTimeout = 20000
             conn.setRequestProperty("User-Agent", "JannahOS/1.0")
             conn.setRequestProperty("Accept", "application/json")
-            if (conn.responseCode != 200) {
-                conn.disconnect()
-                return false
-            }
+            if (conn.responseCode != 200) { conn.disconnect(); return false }
             val body = conn.inputStream.bufferedReader().use { it.readText() }
             conn.disconnect()
-            // Validate JSON has verses before saving
             val root = JSONObject(body)
             val verses = root.optJSONArray("verses") ?: return false
             if (verses.length() == 0) return false
             pageFile(context, page).writeText(body)
             true
-        } catch (e: Exception) {
-            false
-        }
+        } catch (e: Exception) { false }
     }
 
-    // Download pages in a range, calling onProgress with completed count.
-    // Blocks until done or failure. Run on a background thread.
     fun downloadRange(
         context: Context,
         fromPage: Int,
@@ -81,38 +76,92 @@ object QuranStore {
                 completed++
                 onProgress(completed, total)
             }
-            // gentle delay to avoid hammering the API
             try { Thread.sleep(40) } catch (_: Exception) {}
         }
         return completed == total
     }
 
-    // Load a page's verse list. Returns null if not cached.
-    data class PageVerse(val surah: Int, val ayah: Int, val arabic: String)
+    // ---------- Line-based page data ----------
 
-    fun loadPage(context: Context, page: Int): List<PageVerse>? {
+    // A single rendered line on a page. Everything the mushaf needs.
+    data class PageLine(
+        val lineNumber: Int,
+        val lineType: String,   // "surah_header" | "basmala" | "text"
+        val text: String,       // Arabic text (for surah_header: Surah name; for basmala: basmala glyph)
+        val isCentered: Boolean,
+        val surahNumber: Int    // for surah_header lines
+    )
+
+    // Load a page and reconstruct the exact line layout. Returns a list of
+    // PageLine ordered top-to-bottom. The API gives us word-level line_number;
+    // we group words by line and assemble one Arabic string per line.
+    fun loadPage(context: Context, page: Int): List<PageLine>? {
         val f = pageFile(context, page)
         if (!f.exists()) return null
         return try {
             val root = JSONObject(f.readText())
-            val arr = root.getJSONArray("verses")
-            val out = mutableListOf<PageVerse>()
-            for (i in 0 until arr.length()) {
-                val v = arr.getJSONObject(i)
-                val key = v.optString("verse_key", "")
-                val parts = key.split(":")
-                if (parts.size != 2) continue
-                val surah = parts[0].toIntOrNull() ?: continue
-                val ayah = parts[1].toIntOrNull() ?: continue
-                val text = v.optString("text_uthmani", "")
-                if (text.isNotBlank()) out.add(PageVerse(surah, ayah, text))
+            val verses = root.getJSONArray("verses")
+
+            // word map: lineNumber -> sorted list of words (by position within the line)
+            val linesByNumber = sortedMapOf<Int, MutableList<Pair<Int, String>>>()
+            // Track where surahs begin on this page (verse == 1)
+            val surahStartsOnPage = mutableSetOf<Int>()
+
+            for (v in 0 until verses.length()) {
+                val verse = verses.getJSONObject(v)
+                val verseKey = verse.optString("verse_key", "")
+                val parts = verseKey.split(":")
+                val surah = parts.getOrNull(0)?.toIntOrNull() ?: continue
+                val ayahNum = parts.getOrNull(1)?.toIntOrNull() ?: continue
+                if (ayahNum == 1 && v > 0) surahStartsOnPage.add(surah)
+
+                val words = verse.optJSONArray("words") ?: continue
+                for (w in 0 until words.length()) {
+                    val word = words.getJSONObject(w)
+                    val lineNo = word.optInt("line_number", 0)
+                    val text = word.optString("text_uthmani", "")
+                    val pos = word.optInt("position", w + 1)
+                    if (lineNo > 0 && text.isNotBlank()) {
+                        linesByNumber.getOrPut(lineNo) { mutableListOf() }
+                            .add(pos to text.trim())
+                    }
+                }
+            }
+
+            if (linesByNumber.isEmpty()) return null
+
+            val out = mutableListOf<PageLine>()
+            val firstSurah = verses.getJSONObject(0).optString("verse_key", "")
+                .split(":").firstOrNull()?.toIntOrNull() ?: 1
+
+            for ((lineNo, wordList) in linesByNumber) {
+                val sorted = wordList.sortedBy { it.first }.map { it.second }
+                val joined = sorted.joinToString(" ")
+
+                // A line that is just the basmala (very short, contains the basmala phrase)
+                val isBasmala = sorted.size in 1..5 &&
+                    joined.contains("بِسْمِ") && joined.contains("ٱلرَّحِيمِ")
+
+                val type = when {
+                    isBasmala -> "basmala"
+                    else -> "text"
+                }
+
+                out.add(
+                    PageLine(
+                        lineNumber = lineNo,
+                        lineType = type,
+                        text = joined,
+                        isCentered = isBasmala,
+                        surahNumber = firstSurah
+                    )
+                )
             }
             out
         } catch (e: Exception) { null }
     }
 
-    // Given a surah number, return the first page it appears on.
-    // Standard Madani mushaf anchors. Used for jumping to a surah.
+    // First page of each surah in the Madani mushaf (mushaf=1).
     fun firstPageOfSurah(surah: Int): Int = when (surah) {
         1 -> 1; 2 -> 2; 3 -> 50; 4 -> 77; 5 -> 106; 6 -> 128; 7 -> 151
         8 -> 177; 9 -> 187; 10 -> 208; 11 -> 221; 12 -> 235; 13 -> 249
