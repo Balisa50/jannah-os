@@ -12,7 +12,10 @@ class FocusAccessibilityService : AccessibilityService() {
 
         val pkg = event.packageName?.toString() ?: return
         if (pkg == packageName) return
-        if (pkg in ALLOWED) return
+        if (pkg in ALWAYS_ALLOWED) return
+
+        // Only lock apps the user explicitly chose.
+        if (!AppBlockStore.isBlocked(this, pkg)) return
 
         // Priority 1: Quran reading lock
         if (QuranReadingLock.shouldLock(this)) {
@@ -44,7 +47,9 @@ class FocusAccessibilityService : AccessibilityService() {
     override fun onInterrupt() {}
 
     companion object {
-        private val ALLOWED = setOf(
+        // System UI and phone/dialer are always allowed so the user can
+        // still receive calls and reach emergency services.
+        private val ALWAYS_ALLOWED = setOf(
             "com.android.systemui",
             "com.android.settings",
             "com.android.phone",
@@ -53,7 +58,8 @@ class FocusAccessibilityService : AccessibilityService() {
             "com.samsung.android.dialer",
             "com.android.server.telecom",
             "android",
-            "com.google.android.dialer"
+            "com.google.android.dialer",
+            "com.android.emergency"
         )
     }
 }

@@ -38,6 +38,15 @@ object Settings {
             .edit().putString("name", name.trim()).apply()
     }
 
+    fun setupComplete(context: Context): Boolean =
+        context.getSharedPreferences(PREFS, Context.MODE_PRIVATE)
+            .getBoolean("setup_done", false)
+
+    fun setSetupComplete(context: Context) {
+        context.getSharedPreferences(PREFS, Context.MODE_PRIVATE)
+            .edit().putBoolean("setup_done", true).apply()
+    }
+
     fun onboardingComplete(context: Context): Boolean =
         context.getSharedPreferences(PREFS, Context.MODE_PRIVATE)
             .getBoolean("onboarded", false)

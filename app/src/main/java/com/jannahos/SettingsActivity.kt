@@ -39,6 +39,8 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.jannahos.ui.TopBar
+import com.jannahos.CityStore
+import com.jannahos.ui.screens.CityPickerScreen
 import com.jannahos.ui.theme.JannahColors
 import com.jannahos.ui.theme.JannahSpacing
 import com.jannahos.ui.theme.JannahType
@@ -66,6 +68,11 @@ private fun SettingsScreen(onBack: () -> Unit) {
     var adhan by remember { mutableStateOf(AdhanSettings.current(ctx)) }
     var focusOn by remember { mutableStateOf(FocusSession.enabled(ctx)) }
     var lockOn by remember { mutableStateOf(PrayerLock.enabled(ctx)) }
+    var cityPicker by remember { mutableStateOf(false) }
+    var cityName by remember { mutableStateOf(CityStore.name(ctx)) }
+    var countryName by remember { mutableStateOf(CityStore.country(ctx)) }
+    var useCityMode by remember { mutableStateOf(CityStore.useCity(ctx)) }
+    var appPicker by remember { mutableStateOf(false) }
     var quranLockOn by remember { mutableStateOf(QuranReadingLock.enabled(ctx)) }
     var lockMinutes by remember { mutableStateOf(PrayerLock.durationMinutes(ctx)) }
     var toast by remember { mutableStateOf<String?>(null) }
@@ -104,7 +111,14 @@ private fun SettingsScreen(onBack: () -> Unit) {
         SectionHeader("Prayer")
 
         ListRow(
-            title = "Location",
+            title = "City",
+            subtitle = if (cityName.isBlank()) "Not set" else "$cityName, $countryName",
+            onClick = { cityPicker = true }
+        )
+        Divider()
+
+        ListRow(
+            title = "Coordinates",
             subtitle = "%.4f, %.4f".format(Settings.lat(ctx), Settings.lon(ctx)),
             onClick = { locExpanded = !locExpanded }
         )
@@ -185,6 +199,14 @@ private fun SettingsScreen(onBack: () -> Unit) {
         Divider()
 
         ListRow(
+            title = "Blocked apps",
+            subtitle = if (AppBlockStore.count(ctx) == 0) "None" else "${AppBlockStore.count(ctx)} selected",
+            onClick = { appPicker = true }
+        )
+
+        Divider()
+
+        ListRow(
             title = "Focus mode",
             subtitle = if (focusOn) "On" else "Off",
             toggle = focusOn
@@ -241,6 +263,25 @@ private fun SettingsScreen(onBack: () -> Unit) {
                 toast = "History erased."
             }
         )
+
+        if (cityPicker) {
+            CityPickerScreen(
+                onBack = { cityPicker = false },
+                onPicked = { c, cn ->
+                    CityStore.set(ctx, c, cn)
+                    cityName = c; countryName = cn
+                    useCityMode = true
+                    cityPicker = false
+                    toast = "City set to $c"
+                }
+            )
+            return
+        }
+
+        if (appPicker) {
+            com.jannahos.ui.screens.AppPickerScreen(onBack = { appPicker = false })
+            return
+        }
 
         if (toast != null) {
             Spacer(Modifier.height(JannahSpacing.m))

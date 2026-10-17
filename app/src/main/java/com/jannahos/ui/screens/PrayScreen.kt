@@ -31,6 +31,8 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.jannahos.CityStore
+import com.jannahos.PrayerApi
 import com.jannahos.QiblaActivity
 import com.jannahos.SalahScheduler
 import com.jannahos.SalahTracker
@@ -54,7 +56,31 @@ fun PrayScreen() {
     val lat = Settings.lat(ctx)
     val lon = Settings.lon(ctx)
     val todayKey = remember { SimpleDateFormat("yyyy-MM-dd", Locale.US).format(Date()) }
-    val times = remember(todayKey, lat, lon) { SalahScheduler.todayTimes(lat, lon) }
+    val useCity = remember { CityStore.useCity(ctx) }
+    val cityName = remember { CityStore.name(ctx) }
+    val countryName = remember { CityStore.country(ctx) }
+
+    // Real API times (Aladhan), computed once per day. Falls back to the
+    // offline Adhan calculation if the network is unavailable.
+    val apiTimes = remember(todayKey, useCity) {
+        if (!useCity || cityName.isBlank()) null
+        else try { PrayerApi.fetchByCity(ctx, cityName, countryName, 3) } catch (e: Exception) { null }
+    }
+
+    val times: Map<String, Date?> = remember(todayKey, useCity, apiTimes) {
+        if (apiTimes != null) {
+            mapOf(
+                "fajr" to Date(PrayerApi.timeToMillis(apiTimes.fajr)),
+                "dhuhr" to Date(PrayerApi.timeToMillis(apiTimes.dhuhr)),
+                "asr" to Date(PrayerApi.timeToMillis(apiTimes.asr)),
+                "maghrib" to Date(PrayerApi.timeToMillis(apiTimes.maghrib)),
+                "isha" to Date(PrayerApi.timeToMillis(apiTimes.isha))
+            )
+        } else {
+            SalahScheduler.todayTimes(lat, lon)
+        }
+    }
+
     val hhmm = SimpleDateFormat("HH:mm", Locale.getDefault())
     val ordered = listOf("fajr", "dhuhr", "asr", "maghrib", "isha")
 
@@ -87,7 +113,9 @@ fun PrayScreen() {
                     fontWeight = FontWeight.Bold,
                     color = JannahColors.Ink)
                 Spacer(Modifier.height(2.dp))
-                Text("Today's times for your location",
+                Text(
+                    if (useCity && cityName.isNotBlank()) "Today in $cityName"
+                    else "Today for your location",
                     style = JannahType.caption, color = JannahColors.Muted)
             }
         }
