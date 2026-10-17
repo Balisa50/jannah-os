@@ -180,6 +180,35 @@ private fun SurahList(
                 Spacer(Modifier.height(JannahSpacing.s))
             }
 
+            // Reading plan entry (top)
+            val planDays = KhatmPlan.planDays(ctx)
+            val planDone = KhatmPlan.completedDays(ctx).size
+            val planText = if (planDays == 0) "Not started" else "$planDone of $planDays days"
+            Box(
+                Modifier
+                    .fillMaxWidth()
+                    .clip(RoundedCornerShape(JannahSpacing.cardRadius))
+                    .background(JannahColors.Orange)
+                    .clickable { onOpenKhatm() }
+                    .padding(JannahSpacing.l)
+            ) {
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Column(Modifier.weight(1f)) {
+                        Text("READING PLAN",
+                            style = JannahType.eyebrow,
+                            color = JannahColors.OnOrange.copy(alpha = 0.75f))
+                        Spacer(Modifier.height(4.dp))
+                        Text(planText,
+                            fontFamily = FontFamily.Serif,
+                            fontSize = 18.sp,
+                            fontWeight = FontWeight.Bold,
+                            color = JannahColors.OnOrange)
+                    }
+                    Text("→", style = JannahType.title, color = JannahColors.OnOrange)
+                }
+            }
+            Spacer(Modifier.height(JannahSpacing.s))
+
             // Search entry
             Box(
                 Modifier
@@ -199,34 +228,6 @@ private fun SurahList(
                         Spacer(Modifier.height(2.dp))
                         Text("Find any verse by word",
                             style = JannahType.caption, color = JannahColors.Muted)
-                    }
-                    Text("→", style = JannahType.title, color = JannahColors.Orange)
-                }
-            }
-            Spacer(Modifier.height(JannahSpacing.s))
-
-            // Reading plan entry
-            val planDays = KhatmPlan.planDays(ctx)
-            val planDone = KhatmPlan.completedDays(ctx).size
-            val planText = if (planDays == 0) "Start a plan"
-                else "$planDone of $planDays days"
-            Box(
-                Modifier
-                    .fillMaxWidth()
-                    .clip(RoundedCornerShape(JannahSpacing.cardRadius))
-                    .background(JannahColors.Card)
-                    .clickable { onOpenKhatm() }
-                    .padding(JannahSpacing.l)
-            ) {
-                Row(verticalAlignment = Alignment.CenterVertically) {
-                    Column(Modifier.weight(1f)) {
-                        Text("Reading plan",
-                            fontFamily = FontFamily.Serif,
-                            fontSize = 17.sp,
-                            fontWeight = FontWeight.Bold,
-                            color = JannahColors.Ink)
-                        Spacer(Modifier.height(2.dp))
-                        Text(planText, style = JannahType.caption, color = JannahColors.Muted)
                     }
                     Text("→", style = JannahType.title, color = JannahColors.Orange)
                 }

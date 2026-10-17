@@ -61,7 +61,7 @@ fun AppPickerScreen(onBack: () -> Unit) {
             val launcherIntent = android.content.Intent(android.content.Intent.ACTION_MAIN).apply {
                 addCategory(android.content.Intent.CATEGORY_LAUNCHER)
             }
-            val infos = pm.queryIntentActivities(launcherIntent, 0)
+            val infos = try { pm.queryIntentActivities(launcherIntent, 0) } catch (e: Exception) { emptyList() }
             infos.mapNotNull { ri ->
                 val pkg = ri.activityInfo?.packageName ?: return@mapNotNull null
                 if (pkg == ctx.packageName) return@mapNotNull null

@@ -83,79 +83,28 @@ object QuranStore {
 
     // ---------- Line-based page data ----------
 
-    // A single rendered line on a page. Everything the mushaf needs.
-    data class PageLine(
-        val lineNumber: Int,
-        val lineType: String,   // "surah_header" | "basmala" | "text"
-        val text: String,       // Arabic text (for surah_header: Surah name; for basmala: basmala glyph)
-        val isCentered: Boolean,
-        val surahNumber: Int    // for surah_header lines
-    )
+    // A single verse as returned by the API, with surah, ayah, and Arabic text.
+    data class PageVerse(val surah: Int, val ayah: Int, val arabic: String)
 
-    // Load a page and reconstruct the exact line layout. Returns a list of
-    // PageLine ordered top-to-bottom. The API gives us word-level line_number;
-    // we group words by line and assemble one Arabic string per line.
-    fun loadPage(context: Context, page: Int): List<PageLine>? {
+    // Load a page and return all its verses in order.
+    fun loadPage(context: Context, page: Int): List<PageVerse>? {
         val f = pageFile(context, page)
         if (!f.exists()) return null
         return try {
             val root = JSONObject(f.readText())
             val verses = root.getJSONArray("verses")
-
-            // word map: lineNumber -> sorted list of words (by position within the line)
-            val linesByNumber = sortedMapOf<Int, MutableList<Pair<Int, String>>>()
-            // Track where surahs begin on this page (verse == 1)
-            val surahStartsOnPage = mutableSetOf<Int>()
-
-            for (v in 0 until verses.length()) {
-                val verse = verses.getJSONObject(v)
-                val verseKey = verse.optString("verse_key", "")
-                val parts = verseKey.split(":")
-                val surah = parts.getOrNull(0)?.toIntOrNull() ?: continue
-                val ayahNum = parts.getOrNull(1)?.toIntOrNull() ?: continue
-                if (ayahNum == 1 && v > 0) surahStartsOnPage.add(surah)
-
-                val words = verse.optJSONArray("words") ?: continue
-                for (w in 0 until words.length()) {
-                    val word = words.getJSONObject(w)
-                    val lineNo = word.optInt("line_number", 0)
-                    val text = word.optString("text_uthmani", "")
-                    val pos = word.optInt("position", w + 1)
-                    if (lineNo > 0 && text.isNotBlank()) {
-                        linesByNumber.getOrPut(lineNo) { mutableListOf() }
-                            .add(pos to text.trim())
-                    }
+            val out = mutableListOf<PageVerse>()
+            for (i in 0 until verses.length()) {
+                val v = verses.getJSONObject(i)
+                val key = v.optString("verse_key", "")
+                val parts = key.split(":")
+                if (parts.size != 2) continue
+                val surah = parts[0].toIntOrNull() ?: continue
+                val ayah = parts[1].toIntOrNull() ?: continue
+                val text = v.optString("text_uthmani", "")
+                if (text.isNotBlank()) {
+                    out.add(PageVerse(surah, ayah, text))
                 }
-            }
-
-            if (linesByNumber.isEmpty()) return null
-
-            val out = mutableListOf<PageLine>()
-            val firstSurah = verses.getJSONObject(0).optString("verse_key", "")
-                .split(":").firstOrNull()?.toIntOrNull() ?: 1
-
-            for ((lineNo, wordList) in linesByNumber) {
-                val sorted = wordList.sortedBy { it.first }.map { it.second }
-                val joined = sorted.joinToString(" ")
-
-                // A line that is just the basmala (very short, contains the basmala phrase)
-                val isBasmala = sorted.size in 1..5 &&
-                    joined.contains("بِسْمِ") && joined.contains("ٱلرَّحِيمِ")
-
-                val type = when {
-                    isBasmala -> "basmala"
-                    else -> "text"
-                }
-
-                out.add(
-                    PageLine(
-                        lineNumber = lineNo,
-                        lineType = type,
-                        text = joined,
-                        isCentered = isBasmala,
-                        surahNumber = firstSurah
-                    )
-                )
             }
             out
         } catch (e: Exception) { null }

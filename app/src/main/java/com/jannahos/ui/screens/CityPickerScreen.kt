@@ -57,80 +57,82 @@ fun CityPickerScreen(onBack: () -> Unit, onPicked: (String, String) -> Unit) {
     ) {
         TopBar("City", onBack = onBack)
 
-        Column(Modifier.padding(horizontal = JannahSpacing.gutter)) {
-            Spacer(Modifier.height(JannahSpacing.s))
-
-            OutlinedTextField(
-                value = query,
-                onValueChange = { query = it },
-                label = { Text("Search city", fontSize = 12.sp) },
-                modifier = Modifier.fillMaxWidth()
-            )
-
-            Spacer(Modifier.height(JannahSpacing.l))
-
-            if (filtered.isEmpty()) {
-                Text("No match. Enter it below.",
-                    style = JannahType.caption, color = JannahColors.Muted)
-                Spacer(Modifier.height(JannahSpacing.m))
-                OutlinedTextField(
-                    value = customCity,
-                    onValueChange = { customCity = it },
-                    label = { Text("City", fontSize = 12.sp) },
-                    modifier = Modifier.fillMaxWidth()
-                )
+        LazyColumn(
+            Modifier.fillMaxSize().padding(horizontal = JannahSpacing.gutter)
+        ) {
+            item {
                 Spacer(Modifier.height(JannahSpacing.s))
                 OutlinedTextField(
-                    value = customCountry,
-                    onValueChange = { customCountry = it },
-                    label = { Text("Country", fontSize = 12.sp) },
+                    value = query,
+                    onValueChange = { query = it },
+                    label = { Text("Search city", fontSize = 12.sp) },
                     modifier = Modifier.fillMaxWidth()
                 )
-                Spacer(Modifier.height(JannahSpacing.m))
-                Box(
-                    Modifier
-                        .fillMaxWidth()
-                        .height(52.dp)
-                        .clip(RoundedCornerShape(JannahSpacing.pillRadius))
-                        .background(
-                            if (customCity.isBlank() || customCountry.isBlank())
-                                JannahColors.Border else JannahColors.Orange
-                        )
-                        .clickable {
-                            if (customCity.isNotBlank() && customCountry.isNotBlank()) {
-                                onPicked(customCity.trim(), customCountry.trim())
-                            }
-                        },
-                    contentAlignment = Alignment.Center
-                ) {
-                    Text("Use this city",
-                        style = JannahType.button,
-                        color = if (customCity.isBlank() || customCountry.isBlank())
-                            JannahColors.Faint else JannahColors.OnOrange)
+                Spacer(Modifier.height(JannahSpacing.l))
+            }
+
+            if (filtered.isEmpty()) {
+                item {
+                    Text("No match. Enter it manually.",
+                        style = JannahType.caption, color = JannahColors.Muted)
+                    Spacer(Modifier.height(JannahSpacing.m))
+                    OutlinedTextField(
+                        value = customCity,
+                        onValueChange = { customCity = it },
+                        label = { Text("City", fontSize = 12.sp) },
+                        modifier = Modifier.fillMaxWidth()
+                    )
+                    Spacer(Modifier.height(JannahSpacing.s))
+                    OutlinedTextField(
+                        value = customCountry,
+                        onValueChange = { customCountry = it },
+                        label = { Text("Country", fontSize = 12.sp) },
+                        modifier = Modifier.fillMaxWidth()
+                    )
+                    Spacer(Modifier.height(JannahSpacing.m))
+                    Box(
+                        Modifier
+                            .fillMaxWidth()
+                            .height(52.dp)
+                            .clip(RoundedCornerShape(JannahSpacing.pillRadius))
+                            .background(
+                                if (customCity.isBlank() || customCountry.isBlank())
+                                    JannahColors.Border else JannahColors.Orange
+                            )
+                            .clickable {
+                                if (customCity.isNotBlank() && customCountry.isNotBlank()) {
+                                    onPicked(customCity.trim(), customCountry.trim())
+                                }
+                            },
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Text("Use this city",
+                            style = JannahType.button,
+                            color = if (customCity.isBlank() || customCountry.isBlank())
+                                JannahColors.Faint else JannahColors.OnOrange)
+                    }
                 }
             } else {
-                LazyColumn {
-                    items(filtered, key = { "${it.first}-${it.second}" }) { (c, cn) ->
-                        Row(
-                            Modifier
-                                .fillMaxWidth()
-                                .clip(RoundedCornerShape(12.dp))
-                                .background(JannahColors.Card)
-                                .clickable { onPicked(c, cn) }
-                                .padding(horizontal = JannahSpacing.m, vertical = 16.dp)
-                        ) {
-                            Text(c,
-                                fontFamily = FontFamily.Serif,
-                                fontSize = 17.sp,
-                                fontWeight = FontWeight.Medium,
-                                color = JannahColors.Ink,
-                                modifier = Modifier.weight(1f))
-                            Text(cn,
-                                style = JannahType.caption,
-                                color = JannahColors.Muted)
-                        }
-                        Spacer(Modifier.height(6.dp))
+                items(filtered, key = { "${it.first}-${it.second}" }) { (c, cn) ->
+                    Row(
+                        Modifier
+                            .fillMaxWidth()
+                            .clip(RoundedCornerShape(12.dp))
+                            .background(JannahColors.Card)
+                            .clickable { onPicked(c, cn) }
+                            .padding(horizontal = JannahSpacing.m, vertical = 16.dp)
+                    ) {
+                        Text(c,
+                            fontFamily = FontFamily.Serif,
+                            fontSize = 17.sp,
+                            fontWeight = FontWeight.Medium,
+                            color = JannahColors.Ink,
+                            modifier = Modifier.weight(1f))
+                        Text(cn,
+                            style = JannahType.caption,
+                            color = JannahColors.Muted)
                     }
+                    Spacer(Modifier.height(6.dp))
                 }
             }
         }
