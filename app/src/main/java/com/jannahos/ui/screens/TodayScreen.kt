@@ -1,29 +1,12 @@
 package com.jannahos.ui.screens
 
 import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Text
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableIntStateOf
-import androidx.compose.runtime.mutableLongStateOf
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -33,16 +16,8 @@ import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.jannahos.*
 import com.jannahos.ui.pressClickable
-import com.jannahos.ui.revealOnLoad
-import com.jannahos.DailyHadith
-import com.jannahos.FridayMode
-import com.jannahos.HijriDate
-import com.jannahos.RamadanMode
-import com.jannahos.SalahScheduler
-import com.jannahos.SalahTracker
-import com.jannahos.Settings
-import com.jannahos.TahajjudPlan
 import com.jannahos.ui.theme.JannahColors
 import com.jannahos.ui.theme.JannahSpacing
 import com.jannahos.ui.theme.JannahType
@@ -55,32 +30,21 @@ import java.util.Locale
 @Composable
 fun TodayScreen(onNavigate: (String) -> Unit = {}) {
     val ctx = LocalContext.current
-    var revealCount by remember { mutableIntStateOf(0) }
-    LaunchedEffect(Unit) {
-        for (i in 1..6) { kotlinx.coroutines.delay(30); revealCount = i }
-    }
-
     val lat = Settings.lat(ctx)
     val lon = Settings.lon(ctx)
     val todayKey = remember { SimpleDateFormat("yyyy-MM-dd", Locale.US).format(Date()) }
     val prayerTimes = remember(todayKey, lat, lon) { SalahScheduler.todayTimes(lat, lon) }
+    
     val now = System.currentTimeMillis()
-
     val ordered = listOf("fajr", "dhuhr", "asr", "maghrib", "isha")
     val nextKey = ordered.firstOrNull { (prayerTimes[it]?.time ?: 0L) > now }
     val nextTime = nextKey?.let { prayerTimes[it] }?.time
 
-    // If all prayers passed today, show tomorrow's Fajr
     val isAfterIsha = nextKey == null
     val displayLabel = if (isAfterIsha) "Fajr" else SalahTracker.label(nextKey!!)
     val displayTime = if (isAfterIsha) {
-        // Rough estimate: tomorrow's Fajr is ~24h later
         (prayerTimes["fajr"]?.time ?: now) + 24L * 60 * 60 * 1000
     } else nextTime!!
-
-    val diffMs = (displayTime - now).coerceAtLeast(0L)
-    val countdown = String.format(Locale.US, "%02d:%02d:%02d",
-        diffMs / 3600000, (diffMs / 60000) % 60, (diffMs / 1000) % 60)
 
     val hour = Calendar.getInstance().get(Calendar.HOUR_OF_DAY)
     val greeting = when {
@@ -99,13 +63,11 @@ fun TodayScreen(onNavigate: (String) -> Unit = {}) {
             .verticalScroll(rememberScrollState())
             .background(JannahColors.Cream)
     ) {
-        // Greeting
         Column(
             Modifier
                 .fillMaxWidth()
                 .padding(horizontal = JannahSpacing.gutter)
                 .padding(top = JannahSpacing.l, bottom = JannahSpacing.m)
-                .revealOnLoad(revealCount >= 1)
         ) {
             Text(
                 if (userName.isBlank()) greeting + "." else "$greeting, $userName.",
@@ -124,46 +86,12 @@ fun TodayScreen(onNavigate: (String) -> Unit = {}) {
             )
         }
 
-        // Ramadan / Friday banner
-        val ramadan = RamadanMode.current()
-        if (ramadan.active || (ramadan.daysUntil in 1..7)) {
-            Box(
-                Modifier
-                    .fillMaxWidth()
-                    .background(if (ramadan.isLastTen) JannahColors.OrangeDeep else JannahColors.OrangeSoft)
-                    .padding(horizontal = JannahSpacing.gutter, vertical = JannahSpacing.s)
-            ) {
-                Text(
-                    when {
-                        ramadan.active && ramadan.isLastTen -> "Last ten · night ${ramadan.dayOfRamadan}"
-                        ramadan.active -> "Ramadan · day ${ramadan.dayOfRamadan}"
-                        else -> "Ramadan in ${ramadan.daysUntil} days"
-                    },
-                    style = JannahType.eyebrow,
-                    color = if (ramadan.isLastTen) JannahColors.OnOrange else JannahColors.OrangeDeep
-                )
-            }
-        } else if (FridayMode.isTodayFriday()) {
-            Box(
-                Modifier
-                    .fillMaxWidth()
-                    .background(JannahColors.OrangeSoft)
-                    .padding(horizontal = JannahSpacing.gutter, vertical = JannahSpacing.s)
-            ) {
-                Text("Friday · recite Al-Kahf today",
-                    style = JannahType.eyebrow, color = JannahColors.OrangeDeep)
-            }
-        }
-
         Column(Modifier.padding(horizontal = JannahSpacing.gutter)) {
-
             Spacer(Modifier.height(JannahSpacing.l))
-
-            // Next prayer hero
-            Text("NEXT PRAYER", modifier = Modifier.revealOnLoad(revealCount >= 3),
-                style = JannahType.eyebrow, color = JannahColors.OrangeDeep)
+            
+            Text("NEXT PRAYER", style = JannahType.eyebrow, color = JannahColors.OrangeDeep)
             Spacer(Modifier.height(4.dp))
-            Row(modifier = Modifier.revealOnLoad(revealCount >= 3), verticalAlignment = Alignment.Bottom) {
+            Row(verticalAlignment = Alignment.Bottom) {
                 Text(displayLabel,
                     fontFamily = FontFamily.Serif,
                     fontSize = 30.sp,
@@ -178,13 +106,10 @@ fun TodayScreen(onNavigate: (String) -> Unit = {}) {
                     modifier = Modifier.padding(bottom = 5.dp))
             }
             Spacer(Modifier.height(2.dp))
-            Text(countdown, modifier = Modifier.revealOnLoad(revealCount >= 3),
-                fontFamily = FontFamily.Serif,
-                fontSize = 44.sp,
-                fontWeight = FontWeight.Bold,
-                color = JannahColors.Ink,
-                letterSpacing = (-1).sp,
-                lineHeight = 48.sp)
+            
+            // LIVE COUNTDOWN
+            LiveCountdown(displayTime)
+            
             Spacer(Modifier.height(4.dp))
             Text(
                 if (isAfterIsha) "Tomorrow" else SimpleDateFormat("HH:mm", Locale.getDefault()).format(Date(displayTime)),
@@ -194,7 +119,6 @@ fun TodayScreen(onNavigate: (String) -> Unit = {}) {
 
             Spacer(Modifier.height(JannahSpacing.l))
 
-            // Tahajjud card — the only "tracking" in the app
             val level = TahajjudPlan.level(ctx)
             val (prayedWeek, target) = TahajjudPlan.weekProgress(ctx)
             Box(
@@ -203,7 +127,6 @@ fun TodayScreen(onNavigate: (String) -> Unit = {}) {
                     .clip(RoundedCornerShape(JannahSpacing.cardRadius))
                     .background(JannahColors.Orange)
                     .pressClickable { onNavigate("you") }
-                    .revealOnLoad(revealCount >= 4)
                     .padding(JannahSpacing.l)
             ) {
                 Row(verticalAlignment = Alignment.CenterVertically) {
@@ -239,14 +162,12 @@ fun TodayScreen(onNavigate: (String) -> Unit = {}) {
 
             Spacer(Modifier.height(JannahSpacing.m))
 
-            // Quran
             Box(
                 Modifier
                     .fillMaxWidth()
                     .clip(RoundedCornerShape(JannahSpacing.cardRadius))
                     .background(JannahColors.Card)
                     .pressClickable { onNavigate("quran") }
-                    .revealOnLoad(revealCount >= 5)
                     .padding(JannahSpacing.l)
             ) {
                 Row(verticalAlignment = Alignment.CenterVertically) {
@@ -266,7 +187,6 @@ fun TodayScreen(onNavigate: (String) -> Unit = {}) {
 
             Spacer(Modifier.height(JannahSpacing.m))
 
-            // Hadith of the day
             val h = DailyHadith.today()
             Box(
                 Modifier
@@ -274,7 +194,6 @@ fun TodayScreen(onNavigate: (String) -> Unit = {}) {
                     .clip(RoundedCornerShape(JannahSpacing.cardRadius))
                     .background(JannahColors.Card)
                     .padding(JannahSpacing.l)
-                    .revealOnLoad(revealCount >= 6)
             ) {
                 Column {
                     Text("HADITH · ${h.theme.uppercase()}",
@@ -295,9 +214,6 @@ fun TodayScreen(onNavigate: (String) -> Unit = {}) {
         }
     }
 }
-
-
-
 
 @Composable
 fun LiveCountdown(targetTimeMs: Long) {

@@ -6,9 +6,8 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.rememberPagerState
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material3.*
+import androidx.compose.material3.Text
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -19,8 +18,6 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import com.jannahos.MushafImageStore
-import com.jannahos.QuranCache
-import com.jannahos.QuranStore
 import com.jannahos.ui.SwipeBackScreen
 import com.jannahos.ui.TopBar
 import com.jannahos.ui.theme.JannahColors
@@ -47,9 +44,6 @@ private fun MushafPageContent(startPage: Int, onBack: () -> Unit) {
     )
     val currentPage = pagerState.currentPage + 1
     val scope = rememberCoroutineScope()
-    var currentSurah by remember { mutableIntStateOf(1) }
-
-    
 
     Box(Modifier.fillMaxSize().background(JannahColors.Cream)) {
         Column(Modifier.fillMaxSize()) {
@@ -79,18 +73,17 @@ private fun MushafPageContent(startPage: Int, onBack: () -> Unit) {
 
 @Composable
 private fun MushafImagePage(ctx: android.content.Context, pageNum: Int) {
-    var bitmap by remember { mutableStateOf<Bitmap?>(null) }
+    var bitmap by remember(pageNum) { mutableStateOf<Bitmap?>(null) }
     
-
     LaunchedEffect(pageNum) {
-                bitmap = withContext(Dispatchers.IO) {
-            MushafImageStore.loadBitmap(ctx, pageNum)
-                ?: run {
-                    MushafImageStore.downloadPage(ctx, pageNum)
-                    MushafImageStore.loadBitmap(ctx, pageNum)
-                }
+        // First try to load from disk instantly
+        bitmap = withContext(Dispatchers.IO) { MushafImageStore.loadBitmap(ctx, pageNum) }
+        
+        // If not on disk, download it
+        if (bitmap == null) {
+            bitmap = withContext(Dispatchers.IO) { MushafImageStore.downloadAndDecode(ctx, pageNum) }
         }
-            }
+    }
 
     Box(
         Modifier
@@ -107,8 +100,7 @@ private fun MushafImagePage(ctx: android.content.Context, pageNum: Int) {
                 contentScale = ContentScale.Fit
             )
         } else {
-            // Skeleton loader that occupies the exact same space, no layout jump
-            Box(Modifier.fillMaxSize().background(Color(0xFFF7F4EF)), contentAlignment = Alignment.Center) {
+            Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
                 Text("Page $pageNum", style = JannahType.caption, color = JannahColors.Muted.copy(alpha = 0.3f))
             }
         }

@@ -16,11 +16,6 @@ object MushafImageStore {
 
     fun imageFile(context: Context, page: Int): File = File(imagesDir(context), "p_$page.png")
 
-    fun isCached(context: Context, page: Int): Boolean {
-        val f = imageFile(context, page)
-        return f.exists() && f.length() > 1000
-    }
-
     fun loadBitmap(context: Context, page: Int): Bitmap? {
         val f = imageFile(context, page)
         if (f.exists() && f.length() > 1000) {
@@ -29,36 +24,37 @@ object MushafImageStore {
         return null
     }
 
-    fun downloadPage(context: Context, page: Int): Boolean {
-        if (isCached(context, page)) return true
+    fun downloadAndDecode(context: Context, page: Int): Bitmap? {
+        val f = imageFile(context, page)
         return try {
-            val url = String.format("%s/%03d.png", BASE_URL, page)
-            val conn = URL(url).openConnection() as HttpURLConnection
-            conn.connectTimeout = 30000
-            conn.readTimeout = 30000
-            conn.setRequestProperty("User-Agent", "JannahOS/1.0")
-            if (conn.responseCode != 200) { conn.disconnect(); return false }
-            val bytes = conn.inputStream.readBytes()
-            conn.disconnect()
-            if (bytes.size < 1000) return false
-            val tmp = File(imagesDir(context), "p_$page.png.tmp")
-            tmp.writeBytes(bytes)
-            if (!tmp.renameTo(imageFile(context, page))) {
-                imageFile(context, page).writeBytes(bytes)
-                tmp.delete()
-            }
-            true
-        } catch (e: Exception) { false }
-    }
+            // If it exists but failed to decode previously, delete it
+            if (f.exists()) f.delete()
 
-    fun downloadRange(context: Context, from: Int, to: Int, onProgress: (Int, Int) -> Unit): Boolean {
-        var done = 0
-        val total = to - from + 1
-        for (p in from..to) {
-            if (downloadPage(context, p)) done++
-            onProgress(done, total)
+            val formattedPage = String.format("%03d", page)
+            val url = URL("$BASE_URL/$formattedPage.png")
+            val conn = url.openConnection() as HttpURLConnection
+            conn.connectTimeout = 15000
+            conn.readTimeout = 15000
+            conn.setRequestProperty("User-Agent", "JannahOS/1.0")
+            
+            if (conn.responseCode == 200) {
+                val bitmap = BitmapFactory.decodeStream(conn.inputStream)
+                conn.disconnect()
+                
+                if (bitmap != null) {
+                    // Save to disk for offline use
+                    f.outputStream().use { out ->
+                        bitmap.compress(Bitmap.CompressFormat.PNG, 100, out)
+                    }
+                    return bitmap
+                }
+            } else {
+                conn.disconnect()
+            }
+            null
+        } catch (e: Exception) {
+            null
         }
-        return done == total
     }
 
     fun totalPages(): Int = TOTAL_PAGES
