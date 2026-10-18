@@ -49,15 +49,11 @@ private fun MushafPageContent(startPage: Int, onBack: () -> Unit) {
     val scope = rememberCoroutineScope()
     var currentSurah by remember { mutableIntStateOf(1) }
 
-    LaunchedEffect(pagerState.currentPage) {
-        val pd = withContext(Dispatchers.IO) { QuranStore.loadPage(ctx, currentPage) }
-        if (pd != null) currentSurah = pd.ayahs.firstOrNull()?.surah ?: 1
-    }
+    
 
     Box(Modifier.fillMaxSize().background(JannahColors.Cream)) {
         Column(Modifier.fillMaxSize()) {
-            val surahTitle = QuranCache.SURAHS.firstOrNull { it.first == currentSurah }?.second ?: "Quran"
-            TopBar(title = surahTitle, onBack = onBack)
+            TopBar(title = "Quran", onBack = onBack)
 
             HorizontalPager(
                 state = pagerState,

@@ -74,7 +74,7 @@ private fun ReadingLockSession(surah: Int, onRelease: () -> Unit) {
     val cache = remember { QuranCache(ctx) }
     
     // Instant load if cached
-    var ayahs by remember(surah) { mutableStateOf(if (cache.isCached(surah)) cache.load(surah) else emptyList()) }
+    var ayahs by remember(surah) { mutableStateOf(try { cache.load(surah) } catch (e: Exception) { emptyList() }) }
     
     LaunchedEffect(surah) {
         if (ayahs.isEmpty()) {
@@ -135,11 +135,8 @@ private fun ReadingLockSession(surah: Int, onRelease: () -> Unit) {
                 }
             }
         } else {
-            // Skeleton text block, prevents layout jump
-            Column(Modifier.weight(1f).padding(JannahSpacing.gutter)) {
-                repeat(5) {
-                    Box(Modifier.fillMaxWidth().height(24.dp).padding(vertical = 4.dp).background(JannahColors.Border.copy(alpha = 0.5f)))
-                }
+            Box(Modifier.weight(1f), contentAlignment = Alignment.Center) {
+                Text("Downloading...", style = JannahType.bodySmall, color = JannahColors.Muted)
             }
         }
 

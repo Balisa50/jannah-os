@@ -8,7 +8,7 @@ import java.net.HttpURLConnection
 import java.net.URL
 
 object MushafImageStore {
-    private const val BASE_URL = "https://archive.org/download/madinah_mushaf"
+    private const val BASE_URL = "https://static.qurancdn.com/images/pages"
     private const val TOTAL_PAGES = 604
 
     fun imagesDir(context: Context): File =
@@ -32,7 +32,7 @@ object MushafImageStore {
     fun downloadPage(context: Context, page: Int): Boolean {
         if (isCached(context, page)) return true
         return try {
-            val url = "$BASE_URL/$page.png"
+            val url = "$BASE_URL/%03d.png".format(page)
             val conn = URL(url).openConnection() as HttpURLConnection
             conn.connectTimeout = 30000
             conn.readTimeout = 30000
