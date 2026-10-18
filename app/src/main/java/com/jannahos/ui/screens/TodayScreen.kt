@@ -297,19 +297,23 @@ fun TodayScreen(onNavigate: (String) -> Unit = {}) {
 }
 
 
+
+
 @Composable
-fun CountdownTimer(targetTimeMs: Long) {
-    var now by remember { mutableLongStateOf(System.currentTimeMillis()) }
-    LaunchedEffect(Unit) {
+fun LiveCountdown(targetTimeMs: Long) {
+    var timeLeft by remember { mutableLongStateOf(targetTimeMs - System.currentTimeMillis()) }
+    LaunchedEffect(targetTimeMs) {
         while (true) {
+            val now = System.currentTimeMillis()
+            timeLeft = (targetTimeMs - now).coerceAtLeast(0L)
             delay(1000)
-            now = System.currentTimeMillis()
         }
     }
-    val diff = (targetTimeMs - now).coerceAtLeast(0L)
-    val text = String.format(Locale.US, "%02d:%02d:%02d", diff / 3600000, (diff / 60000) % 60, (diff / 1000) % 60)
+    val h = timeLeft / 3600000
+    val m = (timeLeft / 60000) % 60
+    val s = (timeLeft / 1000) % 60
     Text(
-        text,
+        text = String.format(Locale.US, "%02d:%02d:%02d", h, m, s),
         fontFamily = FontFamily.Serif,
         fontSize = 44.sp,
         fontWeight = FontWeight.Bold,
