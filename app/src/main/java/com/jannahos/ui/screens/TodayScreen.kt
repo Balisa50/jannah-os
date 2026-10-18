@@ -218,13 +218,16 @@ fun TodayScreen(onNavigate: (String) -> Unit = {}) {
 @Composable
 fun LiveCountdown(targetTimeMs: Long) {
     var timeLeft by remember { mutableLongStateOf(targetTimeMs - System.currentTimeMillis()) }
+    
+    // This LaunchedEffect runs exactly once, updating the state every second
     LaunchedEffect(targetTimeMs) {
         while (true) {
+            delay(1000L)
             val now = System.currentTimeMillis()
             timeLeft = (targetTimeMs - now).coerceAtLeast(0L)
-            delay(1000)
         }
     }
+    
     val h = timeLeft / 3600000
     val m = (timeLeft / 60000) % 60
     val s = (timeLeft / 1000) % 60

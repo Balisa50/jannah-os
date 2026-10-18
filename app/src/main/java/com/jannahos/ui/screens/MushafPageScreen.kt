@@ -52,7 +52,7 @@ private fun MushafPageContent(startPage: Int, onBack: () -> Unit) {
             HorizontalPager(
                 state = pagerState,
                 modifier = Modifier.weight(1f).fillMaxWidth(),
-                pageSpacing = 16.dp,
+                pageSpacing = 8.dp,
                 beyondViewportPageCount = 1
             ) { pageIndex ->
                 MushafImagePage(ctx, pageIndex + 1)
@@ -73,35 +73,25 @@ private fun MushafPageContent(startPage: Int, onBack: () -> Unit) {
 
 @Composable
 private fun MushafImagePage(ctx: android.content.Context, pageNum: Int) {
-    var bitmap by remember(pageNum) { mutableStateOf<Bitmap?>(null) }
-    
-    LaunchedEffect(pageNum) {
-        // First try to load from disk instantly
-        bitmap = withContext(Dispatchers.IO) { MushafImageStore.loadBitmap(ctx, pageNum) }
-        
-        // If not on disk, download it
-        if (bitmap == null) {
-            bitmap = withContext(Dispatchers.IO) { MushafImageStore.downloadAndDecode(ctx, pageNum) }
-        }
-    }
+    // Load instantly synchronously from Assets
+    val bitmap = remember(pageNum) { MushafImageStore.loadBitmap(ctx, pageNum) }
 
     Box(
         Modifier
             .fillMaxSize()
-            .padding(horizontal = JannahSpacing.m, vertical = JannahSpacing.s)
-            .clip(RoundedCornerShape(12.dp))
             .background(Color(0xFFFFFCF3))
     ) {
         if (bitmap != null) {
             Image(
-                bitmap = bitmap!!.asImageBitmap(),
+                bitmap = bitmap.asImageBitmap(),
                 contentDescription = "Page $pageNum",
-                modifier = Modifier.fillMaxSize(),
-                contentScale = ContentScale.Fit
+                modifier = Modifier.fillMaxWidth(), // Fill width, let height wrap
+                contentScale = ContentScale.FillWidth,
+                alignment = Alignment.TopCenter
             )
         } else {
             Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                Text("Page $pageNum", style = JannahType.caption, color = JannahColors.Muted.copy(alpha = 0.3f))
+                Text("Error loading page $pageNum", style = JannahType.caption, color = JannahColors.Muted)
             }
         }
     }
