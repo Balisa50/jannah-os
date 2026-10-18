@@ -12,7 +12,7 @@ object MushafImageStore {
         val formatted = String.format("%03d", page)
         return try {
             // Load straight from the bundled assets
-            context.assets.open("quran/$formatted.jpg").use { inputStream ->
+            context.assets.open("quran/$formatted.webp").use { inputStream ->
                 BitmapFactory.decodeStream(inputStream)
             }
         } catch (e: Exception) {
