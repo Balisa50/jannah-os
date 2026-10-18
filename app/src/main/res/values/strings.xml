@@ -2,4 +2,5 @@
 <resources>
     <string name="app_name">Jannah</string>
     <string name="focus_service_description">During a prayer window you have started, Jannah can gently return you to the prayer screen if you open a distracting app. Nothing leaves your phone.</string>
+    <string name="accessibility_desc">Jannah OS uses accessibility services to block distracting apps when you turn on App Blocker.</string>
 </resources>
