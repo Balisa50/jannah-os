@@ -106,12 +106,14 @@ private fun ReadingLockSession(surah: Int, onRelease: () -> Unit) {
             val pageNum = pageIndex + 1
             val bitmap = remember(pageNum) { MushafImageStore.loadBitmap(ctx, pageNum) }
             if (bitmap != null) {
-                androidx.compose.foundation.Image(
-                    bitmap = bitmap.asImageBitmap(),
-                    contentDescription = "Page $pageNum",
-                    modifier = Modifier.fillMaxSize(),
-                    contentScale = ContentScale.Fit
-                )
+                Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                    androidx.compose.foundation.Image(
+                        bitmap = bitmap.asImageBitmap(),
+                        contentDescription = "Page $pageNum",
+                        modifier = Modifier.fillMaxWidth(),
+                        contentScale = ContentScale.FillWidth
+                    )
+                }
             }
         }
 

@@ -87,12 +87,13 @@ private fun MushafPageContent(startPage: Int, onBack: () -> Unit) {
                         Modifier
                             .fillMaxSize()
                             .verticalScroll(rememberScrollState()),
+                        verticalArrangement = Arrangement.Center, // Centers vertically!
                         horizontalAlignment = Alignment.CenterHorizontally
                     ) {
                         Image(
                             bitmap = bitmap.asImageBitmap(),
                             contentDescription = "Page $pageNum",
-                            modifier = Modifier.fillMaxWidth().padding(horizontal = 8.dp),
+                            modifier = Modifier.fillMaxWidth(), // No padding, fills width completely
                             contentScale = ContentScale.FillWidth
                         )
                     }
