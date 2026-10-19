@@ -82,6 +82,25 @@ fun GuardianSetupScreen(onBack: () -> Unit) {
 
             Spacer(Modifier.height(JannahSpacing.m))
 
+            // Test Button
+            Box(
+                Modifier
+                    .fillMaxWidth()
+                    .clip(RoundedCornerShape(JannahSpacing.cardRadius))
+                    .background(JannahColors.Orange)
+                    .pressClickable {
+                        val intent = Intent(ctx, GuardianService::class.java)
+                        intent.action = "TEST_ALERT"
+                        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) ctx.startForegroundService(intent) else ctx.startService(intent)
+                    }
+                    .padding(JannahSpacing.m),
+                contentAlignment = Alignment.Center
+            ) {
+                Text("Test Breathing Alert", color = JannahColors.OnOrange, fontWeight = FontWeight.Bold)
+            }
+
+            Spacer(Modifier.height(JannahSpacing.m))
+
             // 3. Foreground Service
             GuardianItem(
                 title = "3. Background Guardian",
