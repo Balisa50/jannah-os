@@ -7,6 +7,7 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Text
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -16,13 +17,19 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.text.font.FontFamily
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.jannahos.MushafImageStore
 import com.jannahos.ui.SwipeBackScreen
 import com.jannahos.ui.pressClickable
+import com.jannahos.ui.theme.JannahColors
+import com.jannahos.ui.theme.JannahSpacing
+import com.jannahos.ui.theme.JannahType
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 
 @Composable
 fun MushafPageScreen(startPage: Int = 1, onBack: () -> Unit) {
@@ -48,79 +55,76 @@ private fun MushafPageContent(startPage: Int, onBack: () -> Unit) {
         onDispose { mediaPlayer?.release() }
     }
 
-    Box(Modifier.fillMaxSize().background(Color(0xFFFFFCF3))) {
-        // Full screen Pager, perfectly centered
-        HorizontalPager(
-            state = pagerState,
-            modifier = Modifier.fillMaxSize(),
-            pageSpacing = 0.dp,
-            beyondViewportPageCount = 2
-        ) { pageIndex ->
-            val pageNum = pageIndex + 1
-            val bitmap = remember(pageNum) { MushafImageStore.loadBitmap(ctx, pageNum) }
-            
-            if (bitmap != null) {
-                Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+    Column(Modifier.fillMaxSize().background(Color(0xFFFFFCF3))) {
+        
+        // 1. SOLID TOP HEADER
+        Row(
+            Modifier
+                .fillMaxWidth()
+                .background(JannahColors.Cream)
+                .windowInsetsPadding(WindowInsets.statusBars)
+                .padding(horizontal = JannahSpacing.gutter, vertical = 12.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Box(
+                Modifier.size(40.dp).clip(CircleShape).background(JannahColors.Card).pressClickable { onBack() },
+                contentAlignment = Alignment.Center
+            ) { Text("←", fontSize = 20.sp, color = JannahColors.Ink) }
+            Spacer(Modifier.width(16.dp))
+            Text("Quran", fontFamily = FontFamily.Serif, fontSize = 22.sp, fontWeight = FontWeight.Bold, color = JannahColors.Ink)
+        }
+
+        // 2. CENTERED QURAN PAGE
+        Box(
+            Modifier
+                .weight(1f)
+                .fillMaxWidth()
+                .background(Color(0xFFFFFCF3)),
+            contentAlignment = Alignment.Center
+        ) {
+            HorizontalPager(
+                state = pagerState,
+                modifier = Modifier.fillMaxSize(),
+                pageSpacing = 0.dp,
+                beyondViewportPageCount = 2
+            ) { pageIndex ->
+                val pageNum = pageIndex + 1
+                val bitmap = remember(pageNum) { MushafImageStore.loadBitmap(ctx, pageNum) }
+                
+                if (bitmap != null) {
                     Image(
                         bitmap = bitmap.asImageBitmap(),
                         contentDescription = "Page $pageNum",
-                        modifier = Modifier.fillMaxSize(),
-                        contentScale = ContentScale.Fit // Centers it with no cut off
+                        modifier = Modifier.fillMaxSize().padding(vertical = 16.dp),
+                        contentScale = ContentScale.Fit // Perfect centering, no cropping
                     )
-                }
-            } else {
-                Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                    Text("Loading...", color = Color.Gray)
+                } else {
+                    Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                        Text("Loading...", style = JannahType.caption, color = JannahColors.Muted)
+                    }
                 }
             }
         }
 
-        // Minimalist Floating Controls (Top Right Exit, Bottom Center Audio)
-        // Exit button top left
-        Box(
+        // 3. SOLID BOTTOM FOOTER
+        Row(
             Modifier
-                .align(Alignment.TopStart)
-                .windowInsetsPadding(WindowInsets.statusBars)
-                .padding(16.dp)
-                .size(40.dp)
-                .clip(CircleShape)
-                .background(Color.Black.copy(alpha = 0.4f))
-                .pressClickable { onBack() },
-            contentAlignment = Alignment.Center
-        ) {
-            Text("✕", color = Color.White, fontSize = 16.sp)
-        }
-
-        // Page indicator top right
-        Box(
-            Modifier
-                .align(Alignment.TopEnd)
-                .windowInsetsPadding(WindowInsets.statusBars)
-                .padding(16.dp)
-                .clip(CircleShape)
-                .background(Color.Black.copy(alpha = 0.4f))
-                .padding(horizontal = 12.dp, vertical = 6.dp),
-            contentAlignment = Alignment.Center
-        ) {
-            Text("$currentPage / 604", color = Color.White, fontSize = 12.sp)
-        }
-
-        // Audio Play Button bottom center
-        Box(
-            Modifier
-                .align(Alignment.BottomCenter)
+                .fillMaxWidth()
+                .background(JannahColors.Cream)
                 .windowInsetsPadding(WindowInsets.navigationBars)
-                .padding(bottom = 24.dp)
-                .size(56.dp)
-                .clip(CircleShape)
-                .background(JannahColors_Orange)
-                .pressClickable {
+                .padding(horizontal = 16.dp, vertical = 12.dp),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            NavPill("←") { if (pagerState.currentPage > 0) scope.launch { pagerState.animateScrollToPage(pagerState.currentPage - 1) } }
+            
+            Box(
+                Modifier.clip(CircleShape).background(JannahColors.Orange).pressClickable {
                     if (isAudioPlaying) {
                         mediaPlayer?.pause()
                         isAudioPlaying = false
                     } else {
                         if (mediaPlayer == null) {
-                            // Use Ayah-by-Ayah API to stream the exact start of the page
                             val startAyah = getStartAyahForPage(currentPage)
                             val url = "https://cdn.islamic.network/quran/audio/128/ar.alafasy/$startAyah.mp3"
                             val mp = MediaPlayer()
@@ -136,20 +140,32 @@ private fun MushafPageContent(startPage: Int, onBack: () -> Unit) {
                             isAudioPlaying = true
                         }
                     }
-                },
-            contentAlignment = Alignment.Center
-        ) {
-            Text(if (isAudioPlaying) "❚❚" else "▶", color = Color.White, fontSize = 20.sp)
+                }.padding(horizontal = 24.dp, vertical = 12.dp),
+                contentAlignment = Alignment.Center
+            ) {
+                Text(if (isAudioPlaying) "❚❚" else "▶", color = Color.White, fontSize = 18.sp, fontWeight = FontWeight.Bold)
+            }
+
+            Text("$currentPage / 604", style = JannahType.caption, color = JannahColors.Muted)
+            NavPill("→") { if (pagerState.currentPage < 603) scope.launch { pagerState.animateScrollToPage(pagerState.currentPage + 1) } }
         }
     }
 }
 
-// Color fallback since JannahColors might not be imported in this snippet
-private val JannahColors_Orange = Color(0xFFE65100)
+@Composable
+private fun NavPill(label: String, onClick: () -> Unit) {
+    Box(
+        Modifier
+            .clip(RoundedCornerShape(50))
+            .background(JannahColors.Card)
+            .pressClickable(onClick = onClick)
+            .padding(horizontal = 16.dp, vertical = 8.dp)
+    ) {
+        Text(label, style = JannahType.title, color = JannahColors.Ink)
+    }
+}
 
-// Maps exact page starts to the global Ayah number (1-6236) for audio streaming
 private fun getStartAyahForPage(page: Int): Int {
-    // Standard Madani Mushaf mapping of pages to global ayah numbers
     val pageToAyah = intArrayOf(
         1, 8, 14, 22, 29, 35, 43, 50, 57, 63, 70, 77, 84, 91, 98, 105, 112, 119, 126, 133, 140, 147, 154, 161, 168,
         175, 182, 189, 196, 203, 210, 217, 224, 231, 238, 245, 252, 259, 266, 273, 280, 287, 294, 301, 308, 315, 322,
