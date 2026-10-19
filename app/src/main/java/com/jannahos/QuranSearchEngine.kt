@@ -1,33 +1,32 @@
 package com.jannahos
 
 object QuranSearchEngine {
+    data class SearchResult(val surahId: Int, val name: String, val page: Int)
+
+    // Maps human scenarios directly to the exact page in the Madani Mushaf
     private val semanticMap = mapOf(
-        "musa" to listOf(18, 20, 28), // Al-Kahf, Taha, Al-Qasas
-        "khidr" to listOf(18), // Al-Kahf
-        "pharaoh" to listOf(10, 20, 26, 28, 79),
-        "firaun" to listOf(10, 20, 26, 28, 79),
-        "crossing the river" to listOf(2, 20),
-        "splitting the sea" to listOf(26),
-        "bani israel" to listOf(2, 5, 7, 10, 17, 20),
-        "children of israel" to listOf(2, 5, 7, 10, 17, 20),
-        "yusuf" to listOf(12), "joseph" to listOf(12),
-        "maryam" to listOf(19), "mary" to listOf(19),
-        "isa" to listOf(3, 4, 5, 19), "jesus" to listOf(3, 4, 5, 19),
-        "sulaiman" to listOf(27, 34), "solomon" to listOf(27, 34),
-        "yunus" to listOf(10, 37, 68), "jonah" to listOf(10, 37, 68),
-        "ayyub" to listOf(21, 38), "job" to listOf(21, 38),
-        "patience" to listOf(2, 3, 103), "sabr" to listOf(2, 3, 103),
-        "anxiety" to listOf(13, 94), "stress" to listOf(13, 94),
-        "forgiveness" to listOf(39, 71), "tawbah" to listOf(9),
-        "paradise" to listOf(55, 56, 76), "jannah" to listOf(55, 56, 76),
-        "hellfire" to listOf(67, 78), "jahannam" to listOf(67, 78)
+        "musa" to listOf(SearchResult(18, "Al-Kahf (Musa & Khidr)", 299)),
+        "khidr" to listOf(SearchResult(18, "Al-Kahf (Musa & Khidr)", 299)),
+        "pharaoh" to listOf(SearchResult(20, "Ta-Ha (Pharaoh)", 312)),
+        "firaun" to listOf(SearchResult(20, "Ta-Ha (Pharaoh)", 312)),
+        "crossing the river" to listOf(SearchResult(26, "Ash-Shu'ara (Splitting the Sea)", 367)),
+        "splitting the sea" to listOf(SearchResult(26, "Ash-Shu'ara (Splitting the Sea)", 367)),
+        "yusuf" to listOf(SearchResult(12, "Yusuf", 235)),
+        "maryam" to listOf(SearchResult(19, "Maryam", 305)),
+        "sulaiman" to listOf(SearchResult(27, "An-Naml (Solomon)", 377)),
+        "yunus" to listOf(SearchResult(10, "Yunus", 208)),
+        "ayyub" to listOf(SearchResult(21, "Al-Anbiya (Job)", 322)),
+        "patience" to listOf(SearchResult(2, "Al-Baqarah", 2), SearchResult(103, "Al-Asr", 601)),
+        "anxiety" to listOf(SearchResult(13, "Ar-Ra'd", 249), SearchResult(94, "Ash-Sharh", 596)),
+        "forgiveness" to listOf(SearchResult(39, "Az-Zumar", 458)),
+        "paradise" to listOf(SearchResult(55, "Ar-Rahman", 531))
     )
 
-    fun search(query: String): List<Pair<Int, String>> {
+    fun search(query: String): List<SearchResult> {
         val q = query.lowercase().trim()
         if (q.isEmpty()) return emptyList()
         
-        val results = mutableSetOf<Int>()
+        val results = mutableSetOf<SearchResult>()
         
         // 1. Semantic Matches
         for ((key, surahs) in semanticMap) {
@@ -39,13 +38,11 @@ object QuranSearchEngine {
         // 2. Direct Surah Name Matches
         for (surah in QuranCache.SURAHS) {
             if (surah.second.lowercase().contains(q)) {
-                results.add(surah.first)
+                // Default to the first page of the surah
+                results.add(SearchResult(surah.first, surah.second, QuranStore.firstPageOfSurah(surah.first)))
             }
         }
         
-        // Map IDs back to Names
-        return results.toList().sorted().mapNotNull { id ->
-            QuranCache.SURAHS.firstOrNull { it.first == id }
-        }
+        return results.toList().sortedBy { it.page }
     }
 }

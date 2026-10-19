@@ -26,29 +26,20 @@ import com.jannahos.ui.theme.JannahSpacing
 import com.jannahos.ui.theme.JannahType
 
 @Composable
-fun QuranTabScreen(onNavigateToSurah: (Int) -> Unit = {}) {
-    var showBookmarks by remember { mutableStateOf(false) }
+fun QuranTabScreen(
+    onNavigateToSurah: (Int) -> Unit = {},
+    onNavigateToSearch: () -> Unit = {},
+    onNavigateToBookmarks: () -> Unit = {}
+) {
     var showKhatm by remember { mutableStateOf(false) }
-    var showSearch by remember { mutableStateOf(false) }
 
     if (showKhatm) { KhatmScreen(onBack = { showKhatm = false }); return }
-    if (showSearch) { QuranSearchScreen(onBack = { showSearch = false }, onNavigateToSurah = onNavigateToSurah); return }
-    if (showBookmarks) {
-        BookmarksScreen(
-            onBack = { showBookmarks = false },
-            onOpen = { s, _ -> 
-                showBookmarks = false
-                onNavigateToSurah(s) 
-            }
-        )
-        return
-    }
 
     SurahList(
         onPick = { onNavigateToSurah(it) },
-        onOpenBookmarks = { showBookmarks = true },
+        onOpenBookmarks = onNavigateToBookmarks,
         onOpenKhatm = { showKhatm = true },
-        onOpenSearch = { showSearch = true }
+        onOpenSearch = onNavigateToSearch
     )
 }
 
@@ -191,7 +182,7 @@ private fun SurahList(
 
 
 @Composable
-private fun BookmarksScreen(onBack: () -> Unit, onOpen: (Int, Int) -> Unit) {
+fun BookmarksScreen(onBack: () -> Unit, onOpen: (Int, Int) -> Unit) {
     val ctx = LocalContext.current
     val store = remember { com.jannahos.QuranBookmarkStore(ctx) }
     var refresh by remember { mutableStateOf(0) }

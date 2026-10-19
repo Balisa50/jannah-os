@@ -2,7 +2,6 @@ package com.jannahos.ui.screens
 
 import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -34,14 +33,14 @@ import kotlinx.coroutines.withContext
 private val UthmanicHafs = FontFamily(Font(com.jannahos.R.font.uthmanic_hafs))
 
 @Composable
-fun QuranSearchScreen(onBack: () -> Unit, onNavigateToSurah: (Int) -> Unit) {
+fun QuranSearchScreen(onBack: () -> Unit, onNavigateToPage: (Int) -> Unit) {
     BackHandler(onBack = onBack)
     val ctx = LocalContext.current
     val bookmarks = remember { QuranBookmarkStore(ctx) }
 
     var query by remember { mutableStateOf("") }
     var hits by remember { mutableStateOf<List<QuranSearch.Hit>>(emptyList()) }
-    var semanticHits by remember { mutableStateOf<List<Pair<Int, String>>>(emptyList()) }
+    var semanticHits by remember { mutableStateOf<List<QuranSearchEngine.SearchResult>>(emptyList()) }
     var loading by remember { mutableStateOf(false) }
     var searched by remember { mutableStateOf(false) }
     var error by remember { mutableStateOf<String?>(null) }
@@ -126,17 +125,17 @@ fun QuranSearchScreen(onBack: () -> Unit, onNavigateToSurah: (Int) -> Unit) {
                         Text("STORIES & SCENARIOS", style = JannahType.eyebrow, color = JannahColors.OrangeDeep, modifier = Modifier.padding(horizontal = JannahSpacing.gutter, vertical = JannahSpacing.s))
                     }
                     items(semanticHits.size) { i ->
-                        val (surahId, surahName) = semanticHits[i]
+                        val res = semanticHits[i]
                         Row(
                             Modifier
                                 .fillMaxWidth()
-                                .pressClickable { onNavigateToSurah(surahId) }
+                                .pressClickable { onNavigateToPage(res.page) }
                                 .padding(horizontal = JannahSpacing.gutter, vertical = 16.dp),
                             verticalAlignment = Alignment.CenterVertically
                         ) {
                             Column(Modifier.weight(1f)) {
-                                Text(surahName, fontFamily = FontFamily.Serif, fontSize = 18.sp, fontWeight = FontWeight.Bold, color = JannahColors.Ink)
-                                Text("Go to Surah", style = JannahType.caption, color = JannahColors.Muted)
+                                Text(res.name, fontFamily = FontFamily.Serif, fontSize = 18.sp, fontWeight = FontWeight.Bold, color = JannahColors.Ink)
+                                Text("Open Page ${res.page}", style = JannahType.caption, color = JannahColors.Muted)
                             }
                             Text("→", style = JannahType.title, color = JannahColors.Orange)
                         }
@@ -207,7 +206,7 @@ fun QuranSearchScreen(onBack: () -> Unit, onNavigateToSurah: (Int) -> Unit) {
                                     Modifier
                                         .clip(RoundedCornerShape(50))
                                         .background(JannahColors.Card)
-                                        .pressClickable { onNavigateToSurah(h.surah) }
+                                        .pressClickable { onNavigateToPage(com.jannahos.QuranStore.firstPageOfSurah(h.surah)) }
                                         .padding(horizontal = 12.dp, vertical = 6.dp)
                                 ) {
                                     Text(

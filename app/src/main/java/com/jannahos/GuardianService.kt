@@ -8,6 +8,7 @@ import android.app.Service
 import android.content.Context
 import android.content.Intent
 import android.os.Build
+import android.media.RingtoneManager
 import android.os.IBinder
 import androidx.core.app.NotificationCompat
 import kotlinx.coroutines.CoroutineScope
@@ -82,14 +83,16 @@ class GuardianService : Service() {
 
         val isCountDown = Build.VERSION.SDK_INT >= Build.VERSION_CODES.N
         val builder = NotificationCompat.Builder(this, CHANNEL_BREATHING)
-            .setContentTitle("$prayerName at $clockTime") // Clear title
-            .setContentText(timeLeftStr)                  // Clear time left
+            .setContentTitle("$prayerName at $clockTime")
+            .setContentText(timeLeftStr)
             .setSmallIcon(android.R.drawable.ic_lock_idle_alarm)
-            .setPriority(NotificationCompat.PRIORITY_MAX) // Force Heads-up
-            .setCategory(NotificationCompat.CATEGORY_CALL) // Call style
-            .setDefaults(NotificationCompat.DEFAULT_ALL)  // Sound + Vibe
+            .setPriority(NotificationCompat.PRIORITY_MAX)
+            .setCategory(NotificationCompat.CATEGORY_CALL)
+            .setVibrate(longArrayOf(0, 1000, 500, 1000, 500, 1000)) // Force vibration pattern
+            .setSound(RingtoneManager.getDefaultUri(RingtoneManager.TYPE_NOTIFICATION)) // Force sound
+            .setFullScreenIntent(pendingIntent, true) // Force pop-up over lock screen/apps
             .setAutoCancel(true)
-            .setTimeoutAfter(60_000)                      // Stays for 1 minute then drops
+            .setTimeoutAfter(120_000) // Stays for 2 minutes
             .setContentIntent(pendingIntent)
 
         if (isCountDown) {
@@ -126,6 +129,8 @@ class GuardianService : Service() {
             val breathingChannel = NotificationChannel(CHANNEL_BREATHING, "Prayer Countdowns", NotificationManager.IMPORTANCE_HIGH).apply {
                 description = "Alerts you as prayer time approaches"
                 enableVibration(true)
+                vibrationPattern = longArrayOf(0, 1000, 500, 1000, 500, 1000)
+                setBypassDnd(true)
             }
             nm.createNotificationChannel(breathingChannel)
         }

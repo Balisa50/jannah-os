@@ -40,6 +40,7 @@ fun JannahApp() {
     val nav = rememberNavController()
     val backStack by nav.currentBackStackEntryAsState()
     val currentRoute = backStack?.destination?.route ?: "today"
+    
     val showBottomBar = currentRoute in listOf("today", "pray", "quran", "you")
 
     var comebackState by remember { mutableStateOf<ComebackCheck.State?>(null) }
@@ -101,27 +102,48 @@ fun JannahApp() {
             navController = nav,
             startDestination = "today",
             modifier = Modifier.fillMaxSize().padding(padding),
-            // SILKY SMOOTH TRANSITIONS
-            enterTransition = { 
-                slideInHorizontally(initialOffsetX = { it / 4 }, animationSpec = spring(dampingRatio = 0.85f, stiffness = 350f)) + fadeIn(tween(200)) 
-            },
-            exitTransition = { 
-                slideOutHorizontally(targetOffsetX = { -it / 4 }, animationSpec = spring(dampingRatio = 0.85f, stiffness = 350f)) + fadeOut(tween(200)) 
-            },
-            popEnterTransition = { 
-                slideInHorizontally(initialOffsetX = { -it / 4 }, animationSpec = spring(dampingRatio = 0.85f, stiffness = 350f)) + fadeIn(tween(200)) 
-            },
-            popExitTransition = { 
-                slideOutHorizontally(targetOffsetX = { it / 4 }, animationSpec = spring(dampingRatio = 0.85f, stiffness = 350f)) + fadeOut(tween(200)) 
-            }
+            enterTransition = { slideInHorizontally(initialOffsetX = { it / 4 }, animationSpec = spring(dampingRatio = 0.85f, stiffness = 350f)) + fadeIn(tween(200)) },
+            exitTransition = { slideOutHorizontally(targetOffsetX = { -it / 4 }, animationSpec = spring(dampingRatio = 0.85f, stiffness = 350f)) + fadeOut(tween(200)) },
+            popEnterTransition = { slideInHorizontally(initialOffsetX = { -it / 4 }, animationSpec = spring(dampingRatio = 0.85f, stiffness = 350f)) + fadeIn(tween(200)) },
+            popExitTransition = { slideOutHorizontally(targetOffsetX = { it / 4 }, animationSpec = spring(dampingRatio = 0.85f, stiffness = 350f)) + fadeOut(tween(200)) }
         ) {
             composable("today") { ErrorBoundary("Today") { TodayScreen(onNavigate = goTo) } }
             composable("pray") { ErrorBoundary("Pray") { PrayScreen() } }
-            composable("quran") { ErrorBoundary("Quran") { QuranTabScreen(onNavigateToSurah = { surahId -> nav.navigate("mushaf/${QuranStore.firstPageOfSurah(surahId)}") }) } }
             composable("you") { ErrorBoundary("You") { YouScreen() } }
+            
+            composable("quran") { 
+                ErrorBoundary("Quran") { 
+                    QuranTabScreen(
+                        onNavigateToSurah = { surah -> nav.navigate("mushaf/${QuranStore.firstPageOfSurah(surah)}") },
+                        onNavigateToSearch = { nav.navigate("search") },
+                        onNavigateToBookmarks = { nav.navigate("bookmarks") }
+                    ) 
+                } 
+            }
+            
+            composable("search") { 
+                ErrorBoundary("Search") { 
+                    QuranSearchScreen(
+                        onBack = { nav.popBackStack() }, 
+                        onNavigateToPage = { page -> nav.navigate("mushaf/$page") }
+                    ) 
+                } 
+            }
+            
+            composable("bookmarks") {
+                ErrorBoundary("Bookmarks") {
+                    BookmarksScreen(
+                        onBack = { nav.popBackStack() },
+                        onOpen = { surah, _ -> nav.navigate("mushaf/${QuranStore.firstPageOfSurah(surah)}") }
+                    )
+                }
+            }
+            
             composable("mushaf/{startPage}") { backStackEntry ->
                 val startPage = backStackEntry.arguments?.getString("startPage")?.toIntOrNull() ?: 1
-                ErrorBoundary("Quran Reader") { MushafPageScreen(startPage = startPage, onBack = { nav.popBackStack() }) }
+                ErrorBoundary("Quran Reader") { 
+                    MushafPageScreen(startPage = startPage, onBack = { nav.popBackStack() }) 
+                }
             }
         }
     }
