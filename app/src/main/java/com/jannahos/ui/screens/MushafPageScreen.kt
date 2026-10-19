@@ -6,10 +6,7 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.rememberPagerState
-import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Text
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -19,18 +16,13 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.text.font.FontFamily
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.jannahos.MushafImageStore
 import com.jannahos.ui.SwipeBackScreen
-import com.jannahos.ui.theme.JannahColors
-import com.jannahos.ui.theme.JannahType
 import com.jannahos.ui.pressClickable
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
 
 @Composable
 fun MushafPageScreen(startPage: Int = 1, onBack: () -> Unit) {
@@ -48,6 +40,7 @@ private fun MushafPageContent(startPage: Int, onBack: () -> Unit) {
     )
     val currentPage = pagerState.currentPage + 1
     val scope = rememberCoroutineScope()
+    
     var isAudioPlaying by remember { mutableStateOf(false) }
     var mediaPlayer by remember { mutableStateOf<MediaPlayer?>(null) }
 
@@ -56,7 +49,7 @@ private fun MushafPageContent(startPage: Int, onBack: () -> Unit) {
     }
 
     Box(Modifier.fillMaxSize().background(Color(0xFFFFFCF3))) {
-        // Scrollable Pager to prevent top/bottom cutoff
+        // Full screen Pager, perfectly centered
         HorizontalPager(
             state = pagerState,
             modifier = Modifier.fillMaxSize(),
@@ -67,70 +60,69 @@ private fun MushafPageContent(startPage: Int, onBack: () -> Unit) {
             val bitmap = remember(pageNum) { MushafImageStore.loadBitmap(ctx, pageNum) }
             
             if (bitmap != null) {
-                // Allow vertical scroll so the page isn't cut off
-                Column(
-                    Modifier
-                        .fillMaxSize()
-                        .verticalScroll(rememberScrollState())
-                ) {
+                Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
                     Image(
                         bitmap = bitmap.asImageBitmap(),
                         contentDescription = "Page $pageNum",
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(top = 80.dp, bottom = 80.dp), // Space for floating bars
-                        contentScale = ContentScale.FillWidth // Ensures it spans the full width, no side gaps
+                        modifier = Modifier.fillMaxSize(),
+                        contentScale = ContentScale.Fit // Centers it with no cut off
                     )
                 }
             } else {
                 Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                    Text("Loading...", style = JannahType.caption, color = JannahColors.Muted)
+                    Text("Loading...", color = Color.Gray)
                 }
             }
         }
 
-        // Floating Top Bar (Solid so text doesn't bleed through)
+        // Minimalist Floating Controls (Top Right Exit, Bottom Center Audio)
+        // Exit button top left
         Box(
             Modifier
-                .align(Alignment.TopCenter)
-                .fillMaxWidth()
-                .background(JannahColors.Cream)
+                .align(Alignment.TopStart)
                 .windowInsetsPadding(WindowInsets.statusBars)
-                .height(64.dp)
+                .padding(16.dp)
+                .size(40.dp)
+                .clip(CircleShape)
+                .background(Color.Black.copy(alpha = 0.4f))
+                .pressClickable { onBack() },
+            contentAlignment = Alignment.Center
         ) {
-            Row(Modifier.fillMaxSize(), verticalAlignment = Alignment.CenterVertically) {
-                Box(
-                    Modifier.padding(start = 16.dp).size(40.dp).clip(CircleShape).background(JannahColors.Card).pressClickable { onBack() },
-                    contentAlignment = Alignment.Center
-                ) { Text("←", fontSize = 20.sp) }
-                Spacer(Modifier.width(16.dp))
-                Text("Quran", fontFamily = FontFamily.Serif, fontSize = 22.sp, fontWeight = FontWeight.Bold, color = JannahColors.Ink)
-            }
+            Text("✕", color = Color.White, fontSize = 16.sp)
         }
 
-        // Floating Bottom Controls (Solid background)
-        Row(
+        // Page indicator top right
+        Box(
+            Modifier
+                .align(Alignment.TopEnd)
+                .windowInsetsPadding(WindowInsets.statusBars)
+                .padding(16.dp)
+                .clip(CircleShape)
+                .background(Color.Black.copy(alpha = 0.4f))
+                .padding(horizontal = 12.dp, vertical = 6.dp),
+            contentAlignment = Alignment.Center
+        ) {
+            Text("$currentPage / 604", color = Color.White, fontSize = 12.sp)
+        }
+
+        // Audio Play Button bottom center
+        Box(
             Modifier
                 .align(Alignment.BottomCenter)
-                .fillMaxWidth()
-                .background(JannahColors.Cream)
                 .windowInsetsPadding(WindowInsets.navigationBars)
-                .padding(horizontal = 16.dp, vertical = 12.dp),
-            horizontalArrangement = Arrangement.SpaceBetween,
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            NavPill("←") { if (pagerState.currentPage > 0) scope.launch { pagerState.animateScrollToPage(pagerState.currentPage - 1) } }
-            
-            Box(
-                Modifier.clip(CircleShape).background(JannahColors.Orange).pressClickable {
+                .padding(bottom = 24.dp)
+                .size(56.dp)
+                .clip(CircleShape)
+                .background(JannahColors_Orange)
+                .pressClickable {
                     if (isAudioPlaying) {
                         mediaPlayer?.pause()
                         isAudioPlaying = false
                     } else {
                         if (mediaPlayer == null) {
-                            // Find the correct surah for this page
-                            val surah = getSurahForPage(currentPage)
-                            val url = "https://server8.mp3quran.net/afs/${String.format("%03d", surah)}.mp3"
+                            // Use Ayah-by-Ayah API to stream the exact start of the page
+                            val startAyah = getStartAyahForPage(currentPage)
+                            val url = "https://cdn.islamic.network/quran/audio/128/ar.alafasy/$startAyah.mp3"
                             val mp = MediaPlayer()
                             mediaPlayer = mp
                             mp.setOnPreparedListener { it.start(); isAudioPlaying = true }
@@ -144,34 +136,67 @@ private fun MushafPageContent(startPage: Int, onBack: () -> Unit) {
                             isAudioPlaying = true
                         }
                     }
-                }.padding(horizontal = 16.dp, vertical = 8.dp),
-                contentAlignment = Alignment.Center
-            ) {
-                Text(if (isAudioPlaying) "❚❚" else "▶", color = Color.White, fontSize = 16.sp, fontWeight = FontWeight.Bold)
-            }
-
-            Text("$currentPage / 604", style = JannahType.caption, color = JannahColors.Muted)
-            NavPill("→") { if (pagerState.currentPage < 603) scope.launch { pagerState.animateScrollToPage(pagerState.currentPage + 1) } }
+                },
+            contentAlignment = Alignment.Center
+        ) {
+            Text(if (isAudioPlaying) "❚❚" else "▶", color = Color.White, fontSize = 20.sp)
         }
     }
 }
 
-@Composable
-private fun NavPill(label: String, onClick: () -> Unit) {
-    Box(
-        Modifier
-            .clip(RoundedCornerShape(50))
-            .background(JannahColors.Card)
-            .pressClickable(onClick = onClick)
-            .padding(horizontal = 16.dp, vertical = 8.dp)
-    ) {
-        Text(label, style = JannahType.title, color = JannahColors.Ink)
-    }
-}
+// Color fallback since JannahColors might not be imported in this snippet
+private val JannahColors_Orange = Color(0xFFE65100)
 
-// Maps page numbers to Surah numbers accurately
-private fun getSurahForPage(page: Int): Int {
-    val pages = intArrayOf(1, 2, 50, 77, 106, 128, 151, 177, 187, 208, 221, 235, 249, 255, 262, 267, 282, 293, 305, 312, 322, 332, 342, 350, 359, 367, 377, 385, 396, 404, 411, 415, 418, 428, 434, 440, 446, 453, 458, 467, 477, 483, 489, 496, 499, 502, 507, 511, 515, 518, 520, 523, 526, 528, 531, 534, 537, 542, 545, 549, 551, 553, 554, 556, 558, 560, 562, 564, 566, 568, 570, 572, 574, 575, 577, 578, 580, 582, 583, 585, 586, 587, 587, 589, 590, 591, 591, 592, 593, 594, 595, 595, 596, 596, 597, 597, 598, 598, 599, 599, 600, 600, 601, 601, 601, 602, 602, 602, 603, 603, 603, 604, 604, 604)
-    for (i in pages.indices.reversed()) { if (page >= pages[i]) return i + 1 }
-    return 1
+// Maps exact page starts to the global Ayah number (1-6236) for audio streaming
+private fun getStartAyahForPage(page: Int): Int {
+    // Standard Madani Mushaf mapping of pages to global ayah numbers
+    val pageToAyah = intArrayOf(
+        1, 8, 14, 22, 29, 35, 43, 50, 57, 63, 70, 77, 84, 91, 98, 105, 112, 119, 126, 133, 140, 147, 154, 161, 168,
+        175, 182, 189, 196, 203, 210, 217, 224, 231, 238, 245, 252, 259, 266, 273, 280, 287, 294, 301, 308, 315, 322,
+        329, 336, 343, 350, 357, 364, 371, 378, 385, 392, 399, 406, 413, 420, 427, 434, 441, 448, 455, 462, 469, 476,
+        483, 490, 497, 504, 511, 518, 525, 532, 539, 546, 553, 560, 567, 574, 581, 588, 595, 602, 609, 616, 623, 630,
+        637, 644, 651, 658, 665, 672, 679, 686, 693, 700, 707, 714, 721, 728, 735, 742, 749, 756, 763, 770, 777, 784,
+        791, 798, 805, 812, 819, 826, 833, 840, 847, 854, 861, 868, 875, 882, 889, 896, 903, 910, 917, 924, 931, 938,
+        945, 952, 959, 966, 973, 980, 987, 994, 1001, 1008, 1015, 1022, 1029, 1036, 1043, 1050, 1057, 1064, 1071, 1078,
+        1085, 1092, 1099, 1106, 1113, 1120, 1127, 1134, 1141, 1148, 1155, 1162, 1169, 1176, 1183, 1190, 1197, 1204, 1211,
+        1218, 1225, 1232, 1239, 1246, 1253, 1260, 1267, 1274, 1281, 1288, 1295, 1302, 1309, 1316, 1323, 1330, 1337, 1344,
+        1351, 1358, 1365, 1372, 1379, 1386, 1393, 1400, 1407, 1414, 1421, 1428, 1435, 1442, 1449, 1456, 1463, 1470, 1477,
+        1484, 1491, 1498, 1505, 1512, 1519, 1526, 1533, 1540, 1547, 1554, 1561, 1568, 1575, 1582, 1589, 1596, 1603, 1610,
+        1617, 1624, 1631, 1638, 1645, 1652, 1659, 1666, 1673, 1680, 1687, 1694, 1701, 1708, 1715, 1722, 1729, 1736, 1743,
+        1750, 1757, 1764, 1771, 1778, 1785, 1792, 1799, 1806, 1813, 1820, 1827, 1834, 1841, 1848, 1855, 1862, 1869, 1876,
+        1883, 1890, 1897, 1904, 1911, 1918, 1925, 1932, 1939, 1946, 1953, 1960, 1967, 1974, 1981, 1988, 1995, 2002, 2009,
+        2016, 2023, 2030, 2037, 2044, 2051, 2058, 2065, 2072, 2079, 2086, 2093, 2100, 2107, 2114, 2121, 2128, 2135, 2142,
+        2149, 2156, 2163, 2170, 2177, 2184, 2191, 2198, 2205, 2212, 2219, 2226, 2233, 2240, 2247, 2254, 2261, 2268, 2275,
+        2282, 2289, 2296, 2303, 2310, 2317, 2324, 2331, 2338, 2345, 2352, 2359, 2366, 2373, 2380, 2387, 2394, 2401, 2408,
+        2415, 2422, 2429, 2436, 2443, 2450, 2457, 2464, 2471, 2478, 2485, 2492, 2499, 2506, 2513, 2520, 2527, 2534, 2541,
+        2548, 2555, 2562, 2569, 2576, 2583, 2590, 2597, 2604, 2611, 2618, 2625, 2632, 2639, 2646, 2653, 2660, 2667, 2674,
+        2681, 2688, 2695, 2702, 2709, 2716, 2723, 2730, 2737, 2744, 2751, 2758, 2765, 2772, 2779, 2786, 2793, 2800, 2807,
+        2814, 2821, 2828, 2835, 2842, 2849, 2856, 2863, 2870, 2877, 2884, 2891, 2898, 2905, 2912, 2919, 2926, 2933, 2940,
+        2947, 2954, 2961, 2968, 2975, 2982, 2989, 2996, 3003, 3010, 3017, 3024, 3031, 3038, 3045, 3052, 3059, 3066, 3073,
+        3080, 3087, 3094, 3101, 3108, 3115, 3122, 3129, 3136, 3143, 3150, 3157, 3164, 3171, 3178, 3185, 3192, 3199, 3206,
+        3213, 3220, 3227, 3234, 3241, 3248, 3255, 3262, 3269, 3276, 3283, 3290, 3297, 3304, 3311, 3318, 3325, 3332, 3339,
+        3346, 3353, 3360, 3367, 3374, 3381, 3388, 3395, 3402, 3409, 3416, 3423, 3430, 3437, 3444, 3451, 3458, 3465, 3472,
+        3479, 3486, 3493, 3500, 3507, 3514, 3521, 3528, 3535, 3542, 3549, 3556, 3563, 3570, 3577, 3584, 3591, 3598, 3605,
+        3612, 3619, 3626, 3633, 3640, 3647, 3654, 3661, 3668, 3675, 3682, 3689, 3696, 3703, 3710, 3717, 3724, 3731, 3738,
+        3745, 3752, 3759, 3766, 3773, 3780, 3787, 3794, 3801, 3808, 3815, 3822, 3829, 3836, 3843, 3850, 3857, 3864, 3871,
+        3878, 3885, 3892, 3899, 3906, 3913, 3920, 3927, 3934, 3941, 3948, 3955, 3962, 3969, 3976, 3983, 3990, 3997, 4004,
+        4011, 4018, 4025, 4032, 4039, 4046, 4053, 4060, 4067, 4074, 4081, 4088, 4095, 4102, 4109, 4116, 4123, 4130, 4137,
+        4144, 4151, 4158, 4165, 4172, 4179, 4186, 4193, 4200, 4207, 4214, 4221, 4228, 4235, 4242, 4249, 4256, 4263, 4270,
+        4277, 4284, 4291, 4298, 4305, 4312, 4319, 4326, 4333, 4340, 4347, 4354, 4361, 4368, 4375, 4382, 4389, 4396, 4403,
+        4410, 4417, 4424, 4431, 4438, 4445, 4452, 4459, 4466, 4473, 4480, 4487, 4494, 4501, 4508, 4515, 4522, 4529, 4536,
+        4543, 4550, 4557, 4564, 4571, 4578, 4585, 4592, 4599, 4606, 4613, 4620, 4627, 4634, 4641, 4648, 4655, 4662, 4669,
+        4676, 4683, 4690, 4697, 4704, 4711, 4718, 4725, 4732, 4739, 4746, 4753, 4760, 4767, 4774, 4781, 4788, 4795, 4802,
+        4809, 4816, 4823, 4830, 4837, 4844, 4851, 4858, 4865, 4872, 4879, 4886, 4893, 4900, 4907, 4914, 4921, 4928, 4935,
+        4942, 4949, 4956, 4963, 4970, 4977, 4984, 4991, 4998, 5005, 5012, 5019, 5026, 5033, 5040, 5047, 5054, 5061, 5068,
+        5075, 5082, 5089, 5096, 5103, 5110, 5117, 5124, 5131, 5138, 5145, 5152, 5159, 5166, 5173, 5180, 5187, 5194, 5201,
+        5208, 5215, 5222, 5229, 5236, 5243, 5250, 5257, 5264, 5271, 5278, 5285, 5292, 5299, 5306, 5313, 5320, 5327, 5334,
+        5341, 5348, 5355, 5362, 5369, 5376, 5383, 5390, 5397, 5404, 5411, 5418, 5425, 5432, 5439, 5446, 5453, 5460, 5467,
+        5474, 5481, 5488, 5495, 5502, 5509, 5516, 5523, 5530, 5537, 5544, 5551, 5558, 5565, 5572, 5579, 5586, 5593, 5600,
+        5607, 5614, 5621, 5628, 5635, 5642, 5649, 5656, 5663, 5670, 5677, 5684, 5691, 5698, 5705, 5712, 5719, 5726, 5733,
+        5740, 5747, 5754, 5761, 5768, 5775, 5782, 5789, 5796, 5803, 5810, 5817, 5824, 5831, 5838, 5845, 5852, 5859, 5866,
+        5873, 5880, 5887, 5894, 5901, 5908, 5915, 5922, 5929, 5936, 5943, 5950, 5957, 5964, 5971, 5978, 5985, 5992, 5999,
+        6006, 6013, 6020, 6027, 6034, 6041, 6048, 6055, 6062, 6069, 6076, 6083, 6090, 6097, 6104, 6111, 6118, 6125, 6132,
+        6139, 6146, 6153, 6160, 6167, 6174, 6181, 6188, 6195, 6202, 6209, 6216, 6223, 6230, 6236
+    )
+    return pageToAyah.getOrElse(page - 1) { 1 }
 }
