@@ -75,32 +75,31 @@ class GuardianService : Service() {
             this, 0, launchIntent, PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT
         )
 
-        // Native countdown timer
+        val h = diffMs / 3600000
+        val m = (diffMs / 60000) % 60
+        val timeLeftStr = if (h > 0) "${h}h ${m}m left" else "${m}m left"
+        val clockTime = java.text.SimpleDateFormat("HH:mm", java.util.Locale.getDefault()).format(java.util.Date(targetTimeMs))
+
         val isCountDown = Build.VERSION.SDK_INT >= Build.VERSION_CODES.N
         val builder = NotificationCompat.Builder(this, CHANNEL_BREATHING)
-            .setContentTitle("Next: $prayerName")
-            .setContentText("Time remaining for prayer")
+            .setContentTitle("$prayerName at $clockTime") // Clear title
+            .setContentText(timeLeftStr)                  // Clear time left
             .setSmallIcon(android.R.drawable.ic_lock_idle_alarm)
-            .setPriority(NotificationCompat.PRIORITY_HIGH)
-            .setDefaults(NotificationCompat.DEFAULT_ALL)
-            .setOnlyAlertOnce(false)
-            .setCategory(NotificationCompat.CATEGORY_REMINDER)
+            .setPriority(NotificationCompat.PRIORITY_MAX) // Force Heads-up
+            .setCategory(NotificationCompat.CATEGORY_CALL) // Call style
+            .setDefaults(NotificationCompat.DEFAULT_ALL)  // Sound + Vibe
             .setAutoCancel(true)
+            .setTimeoutAfter(60_000)                      // Stays for 1 minute then drops
             .setContentIntent(pendingIntent)
 
         if (isCountDown) {
             builder.setUsesChronometer(true)
             builder.setChronometerCountDown(true)
             builder.setWhen(targetTimeMs)
-        } else {
-            // Fallback for older Android
-            val h = diffMs / 3600000
-            val m = (diffMs / 60000) % 60
-            builder.setContentText("In ${h}h ${m}m")
         }
 
         val nm = getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
-        nm.notify(99, builder.build()) // ID 99 so it replaces the old one, doesn't stack
+        nm.notify(99, builder.build())
     }
 
     private fun buildSilentNotification(): Notification {

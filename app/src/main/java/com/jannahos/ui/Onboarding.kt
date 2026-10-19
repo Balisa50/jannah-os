@@ -157,7 +157,7 @@ private fun Welcome() {
             textAlign = TextAlign.Center)
         Spacer(Modifier.height(JannahSpacing.xxl))
         Text(
-            "Built around a single idea: give the user less to do, done deeply. It starts with one habit. It grows only when you are ready.",
+            "No streaks. No noise. Just the essentials to help you build a quiet, consistent practice.",
             style = JannahType.body,
             color = JannahColors.Body,
             textAlign = TextAlign.Center,

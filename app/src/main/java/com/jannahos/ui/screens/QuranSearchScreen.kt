@@ -13,6 +13,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.text.font.Font
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
@@ -29,6 +30,8 @@ import com.jannahos.ui.theme.JannahType
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.withContext
+
+private val UthmanicHafs = FontFamily(Font(com.jannahos.R.font.uthmanic_hafs))
 
 @Composable
 fun QuranSearchScreen(onBack: () -> Unit, onNavigateToSurah: (Int) -> Unit) {
@@ -167,10 +170,11 @@ fun QuranSearchScreen(onBack: () -> Unit, onNavigateToSurah: (Int) -> Unit) {
                             if (h.arabic.isNotBlank()) {
                                 Text(
                                     h.arabic,
-                                    fontFamily = FontFamily.Serif,
-                                    fontSize = 20.sp,
+                                    fontFamily = UthmanicHafs,
+                                    fontSize = 24.sp,
                                     color = JannahColors.Ink,
                                     textAlign = TextAlign.End,
+                                    lineHeight = 40.sp,
                                     modifier = Modifier.fillMaxWidth()
                                 )
                                 Spacer(Modifier.height(JannahSpacing.xs))
@@ -181,22 +185,37 @@ fun QuranSearchScreen(onBack: () -> Unit, onNavigateToSurah: (Int) -> Unit) {
                             
                             Spacer(Modifier.height(JannahSpacing.s))
                             
-                            Box(
-                                Modifier
-                                    .clip(RoundedCornerShape(50))
-                                    .background(if (isBookmarked) JannahColors.Orange else JannahColors.Card)
-                                    .pressClickable {
-                                        if (isBookmarked) bookmarks.remove(h.surah, h.ayah)
-                                        else bookmarks.add(h.surah, h.ayah)
-                                        bookmarkTick++
-                                    }
-                                    .padding(horizontal = 12.dp, vertical = 6.dp)
-                            ) {
-                                Text(
-                                    if (isBookmarked) "★ Saved" else "☆ Save",
-                                    style = JannahType.micro,
-                                    color = if (isBookmarked) JannahColors.OnOrange else JannahColors.Muted
-                                )
+                            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                                Box(
+                                    Modifier
+                                        .clip(RoundedCornerShape(50))
+                                        .background(if (isBookmarked) JannahColors.Orange else JannahColors.Card)
+                                        .pressClickable {
+                                            if (isBookmarked) bookmarks.remove(h.surah, h.ayah)
+                                            else bookmarks.add(h.surah, h.ayah)
+                                            bookmarkTick++
+                                        }
+                                        .padding(horizontal = 12.dp, vertical = 6.dp)
+                                ) {
+                                    Text(
+                                        if (isBookmarked) "★ Saved" else "☆ Save",
+                                        style = JannahType.micro,
+                                        color = if (isBookmarked) JannahColors.OnOrange else JannahColors.Muted
+                                    )
+                                }
+                                Box(
+                                    Modifier
+                                        .clip(RoundedCornerShape(50))
+                                        .background(JannahColors.Card)
+                                        .pressClickable { onNavigateToSurah(h.surah) }
+                                        .padding(horizontal = 12.dp, vertical = 6.dp)
+                                ) {
+                                    Text(
+                                        "Open in Mushaf",
+                                        style = JannahType.micro,
+                                        color = JannahColors.Ink
+                                    )
+                                }
                             }
                         }
                         Box(Modifier.fillMaxWidth().padding(horizontal = JannahSpacing.gutter).height(1.dp).background(JannahColors.Border))
