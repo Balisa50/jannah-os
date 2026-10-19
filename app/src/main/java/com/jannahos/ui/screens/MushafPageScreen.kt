@@ -47,31 +47,31 @@ private fun MushafPageContent(startPage: Int, onBack: () -> Unit) {
 
     Column(Modifier.fillMaxSize().background(JannahColors.Cream)) {
         
-        // 1. SOLID TOP HEADER
+        // 1. SLIM TOP HEADER
         Row(
             Modifier
                 .fillMaxWidth()
                 .background(JannahColors.Cream)
                 .windowInsetsPadding(WindowInsets.statusBars)
-                .padding(horizontal = JannahSpacing.gutter, vertical = 12.dp),
+                .padding(horizontal = 12.dp, vertical = 6.dp), // Reduced padding
             verticalAlignment = Alignment.CenterVertically
         ) {
             Box(
-                Modifier.size(40.dp).clip(CircleShape).background(JannahColors.Card).pressClickable { onBack() },
+                Modifier.size(32.dp).clip(CircleShape).background(JannahColors.Card).pressClickable { onBack() }, // Smaller button
                 contentAlignment = Alignment.Center
-            ) { Text("←", fontSize = 20.sp, color = JannahColors.Ink) }
-            Spacer(Modifier.width(16.dp))
-            Text("Quran", fontFamily = FontFamily.Serif, fontSize = 22.sp, fontWeight = FontWeight.Bold, color = JannahColors.Ink)
+            ) { Text("←", fontSize = 16.sp, color = JannahColors.Ink) }
+            Spacer(Modifier.width(12.dp))
+            Text("Quran", fontFamily = FontFamily.Serif, fontSize = 18.sp, fontWeight = FontWeight.Bold, color = JannahColors.Ink) // Smaller text
         }
 
-        // 2. WHITE CARD WITH PERFECTLY CENTERED IMAGE
+        // 2. WHITE CARD (Reduced padding, maximum space)
         Box(
             Modifier
                 .weight(1f)
                 .fillMaxWidth()
-                .padding(horizontal = 16.dp, vertical = 8.dp)
-                .clip(RoundedCornerShape(12.dp))
-                .background(Color(0xFFFFFCF3)), // White page background
+                .padding(horizontal = 2.dp, vertical = 2.dp) // Almost no padding around the white page
+                .clip(RoundedCornerShape(8.dp))
+                .background(Color(0xFFFFFCF3)),
             contentAlignment = Alignment.Center
         ) {
             HorizontalPager(
@@ -88,7 +88,7 @@ private fun MushafPageContent(startPage: Int, onBack: () -> Unit) {
                         bitmap = bitmap.asImageBitmap(),
                         contentDescription = "Page $pageNum",
                         modifier = Modifier.fillMaxSize(),
-                        contentScale = ContentScale.Fit // Fits entire page perfectly without scrolling or cropping
+                        contentScale = ContentScale.Fit 
                     )
                 } else {
                     Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
@@ -98,19 +98,19 @@ private fun MushafPageContent(startPage: Int, onBack: () -> Unit) {
             }
         }
 
-        // 3. SOLID BOTTOM FOOTER
+        // 3. SLIM BOTTOM FOOTER
         Row(
             Modifier
                 .fillMaxWidth()
                 .background(JannahColors.Cream)
                 .windowInsetsPadding(WindowInsets.navigationBars)
-                .padding(horizontal = 16.dp, vertical = 12.dp),
+                .padding(horizontal = 12.dp, vertical = 4.dp), // Reduced vertical padding
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically
         ) {
             NavPill("←") { if (pagerState.currentPage > 0) scope.launch { pagerState.animateScrollToPage(pagerState.currentPage - 1) } }
             
-            Text("$currentPage / 604", style = JannahType.title, color = JannahColors.Ink, fontWeight = FontWeight.Bold)
+            Text("$currentPage / 604", style = JannahType.bodySmall, color = JannahColors.Ink, fontWeight = FontWeight.Bold) // Smaller, cleaner text
             
             NavPill("→") { if (pagerState.currentPage < 603) scope.launch { pagerState.animateScrollToPage(pagerState.currentPage + 1) } }
         }
@@ -124,8 +124,8 @@ private fun NavPill(label: String, onClick: () -> Unit) {
             .clip(RoundedCornerShape(50))
             .background(JannahColors.Card)
             .pressClickable(onClick = onClick)
-            .padding(horizontal = 24.dp, vertical = 12.dp)
+            .padding(horizontal = 16.dp, vertical = 6.dp) // Smaller buttons
     ) {
-        Text(label, style = JannahType.title, color = JannahColors.Ink)
+        Text(label, style = JannahType.bodySmall, color = JannahColors.Ink)
     }
 }
