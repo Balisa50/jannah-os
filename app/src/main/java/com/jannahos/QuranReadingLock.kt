@@ -7,7 +7,7 @@ object QuranReadingLock {
     private const val KEY_ENABLED = "enabled"
     private const val KEY_DONE_DAY = "done_day"
 
-    const val DEFAULT_MS = 10 * 60_000L
+    const val DEFAULT_MS = 5 * 60_000L
     const val LINES_PER_PAGE = 15
 
     fun enabled(ctx: Context): Boolean =

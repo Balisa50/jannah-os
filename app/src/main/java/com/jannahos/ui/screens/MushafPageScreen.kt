@@ -1,14 +1,15 @@
 package com.jannahos.ui.screens
 
-import android.graphics.Bitmap
 import android.media.MediaPlayer
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.rememberPagerState
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Text
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -30,10 +31,6 @@ import com.jannahos.ui.pressClickable
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
-import androidx.compose.foundation.layout.WindowInsets
-import androidx.compose.foundation.layout.statusBars
-import androidx.compose.foundation.layout.navigationBars
-import androidx.compose.foundation.layout.windowInsetsPadding
 
 @Composable
 fun MushafPageScreen(startPage: Int = 1, onBack: () -> Unit) {
@@ -59,23 +56,47 @@ private fun MushafPageContent(startPage: Int, onBack: () -> Unit) {
     }
 
     Box(Modifier.fillMaxSize().background(Color(0xFFFFFCF3))) {
+        // Scrollable Pager to prevent top/bottom cutoff
         HorizontalPager(
             state = pagerState,
             modifier = Modifier.fillMaxSize(),
             pageSpacing = 0.dp,
             beyondViewportPageCount = 2
         ) { pageIndex ->
-            MushafImagePage(ctx, pageIndex + 1)
+            val pageNum = pageIndex + 1
+            val bitmap = remember(pageNum) { MushafImageStore.loadBitmap(ctx, pageNum) }
+            
+            if (bitmap != null) {
+                // Allow vertical scroll so the page isn't cut off
+                Column(
+                    Modifier
+                        .fillMaxSize()
+                        .verticalScroll(rememberScrollState())
+                ) {
+                    Image(
+                        bitmap = bitmap.asImageBitmap(),
+                        contentDescription = "Page $pageNum",
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(top = 80.dp, bottom = 80.dp), // Space for floating bars
+                        contentScale = ContentScale.FillWidth // Ensures it spans the full width, no side gaps
+                    )
+                }
+            } else {
+                Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                    Text("Loading...", style = JannahType.caption, color = JannahColors.Muted)
+                }
+            }
         }
 
-        // Floating Top Bar
+        // Floating Top Bar (Solid so text doesn't bleed through)
         Box(
             Modifier
                 .align(Alignment.TopCenter)
                 .fillMaxWidth()
-                .background(JannahColors.Cream.copy(alpha = 0.95f))
+                .background(JannahColors.Cream)
                 .windowInsetsPadding(WindowInsets.statusBars)
-                .height(56.dp)
+                .height(64.dp)
         ) {
             Row(Modifier.fillMaxSize(), verticalAlignment = Alignment.CenterVertically) {
                 Box(
@@ -87,12 +108,12 @@ private fun MushafPageContent(startPage: Int, onBack: () -> Unit) {
             }
         }
 
-        // Floating Bottom Controls
+        // Floating Bottom Controls (Solid background)
         Row(
             Modifier
                 .align(Alignment.BottomCenter)
                 .fillMaxWidth()
-                .background(JannahColors.Cream.copy(alpha = 0.95f))
+                .background(JannahColors.Cream)
                 .windowInsetsPadding(WindowInsets.navigationBars)
                 .padding(horizontal = 16.dp, vertical = 12.dp),
             horizontalArrangement = Arrangement.SpaceBetween,
@@ -107,6 +128,7 @@ private fun MushafPageContent(startPage: Int, onBack: () -> Unit) {
                         isAudioPlaying = false
                     } else {
                         if (mediaPlayer == null) {
+                            // Find the correct surah for this page
                             val surah = getSurahForPage(currentPage)
                             val url = "https://server8.mp3quran.net/afs/${String.format("%03d", surah)}.mp3"
                             val mp = MediaPlayer()
@@ -135,23 +157,6 @@ private fun MushafPageContent(startPage: Int, onBack: () -> Unit) {
 }
 
 @Composable
-private fun MushafImagePage(ctx: android.content.Context, pageNum: Int) {
-    val bitmap = remember(pageNum) { MushafImageStore.loadBitmap(ctx, pageNum) }
-    if (bitmap != null) {
-        Image(
-            bitmap = bitmap.asImageBitmap(),
-            contentDescription = "Page $pageNum",
-            modifier = Modifier.fillMaxSize(),
-            contentScale = ContentScale.Fit
-        )
-    } else {
-        Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-            Text("Loading...", style = JannahType.caption, color = JannahColors.Muted)
-        }
-    }
-}
-
-@Composable
 private fun NavPill(label: String, onClick: () -> Unit) {
     Box(
         Modifier
@@ -164,6 +169,7 @@ private fun NavPill(label: String, onClick: () -> Unit) {
     }
 }
 
+// Maps page numbers to Surah numbers accurately
 private fun getSurahForPage(page: Int): Int {
     val pages = intArrayOf(1, 2, 50, 77, 106, 128, 151, 177, 187, 208, 221, 235, 249, 255, 262, 267, 282, 293, 305, 312, 322, 332, 342, 350, 359, 367, 377, 385, 396, 404, 411, 415, 418, 428, 434, 440, 446, 453, 458, 467, 477, 483, 489, 496, 499, 502, 507, 511, 515, 518, 520, 523, 526, 528, 531, 534, 537, 542, 545, 549, 551, 553, 554, 556, 558, 560, 562, 564, 566, 568, 570, 572, 574, 575, 577, 578, 580, 582, 583, 585, 586, 587, 587, 589, 590, 591, 591, 592, 593, 594, 595, 595, 596, 596, 597, 597, 598, 598, 599, 599, 600, 600, 601, 601, 601, 602, 602, 602, 603, 603, 603, 604, 604, 604)
     for (i in pages.indices.reversed()) { if (page >= pages[i]) return i + 1 }

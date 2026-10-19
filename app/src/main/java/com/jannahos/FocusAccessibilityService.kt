@@ -39,11 +39,14 @@ class FocusAccessibilityService : AccessibilityService() {
 
         // 3. Check Quran Reading Lock
         if (QuranReadingLock.shouldLock(this)) {
+            // Send user to Jannah OS to do their time
             val intent = Intent(this, MainActivity::class.java).apply {
                 addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP)
                 putExtra("show_quran_lock", true)
             }
             startActivity(intent)
+            // Go home so they can't look at the blocked app in the background
+            performGlobalAction(GLOBAL_ACTION_HOME)
             return
         }
     }

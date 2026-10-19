@@ -77,18 +77,24 @@ private fun ReadingLockSession(surah: Int, onRelease: () -> Unit) {
     )
 
     var remaining by remember { mutableLongStateOf(QuranReadingLock.getSavedRemainingMs(ctx)) }
+    var isDone by remember { mutableStateOf(remaining <= 0L) }
     
+    // Pause timer instantly when leaving screen
     DisposableEffect(Unit) {
         onDispose { QuranReadingLock.saveRemainingMs(ctx, remaining) }
     }
 
     LaunchedEffect(Unit) {
-        while (remaining > 0L) {
-            delay(1000)
-            remaining -= 1000L
+        if (isDone) {
+            QuranReadingLock.markDoneToday(ctx)
+        } else {
+            while (remaining > 0L) {
+                delay(1000)
+                remaining -= 1000L
+            }
+            QuranReadingLock.markDoneToday(ctx)
+            isDone = true
         }
-        QuranReadingLock.markDoneToday(ctx)
-        onRelease()
     }
 
     val mm = (remaining / 60_000L).toInt()
@@ -111,10 +117,33 @@ private fun ReadingLockSession(surah: Int, onRelease: () -> Unit) {
 
         Box(Modifier.align(Alignment.TopCenter).fillMaxWidth().background(JannahColors.Orange).padding(horizontal = JannahSpacing.gutter, vertical = 12.dp).windowInsetsPadding(WindowInsets.statusBars)) {
             Row(verticalAlignment = Alignment.CenterVertically) {
-                Text("READING LOCK", style = JannahType.eyebrow, color = JannahColors.OnOrange.copy(alpha = 0.75f), modifier = Modifier.weight(1f))
+                Text(if (isDone) "UNLOCKED" else "READING LOCK", style = JannahType.eyebrow, color = JannahColors.OnOrange.copy(alpha = 0.75f), modifier = Modifier.weight(1f))
                 Text(timeText, fontFamily = FontFamily.Serif, fontSize = 22.sp, fontWeight = FontWeight.Bold, color = JannahColors.OnOrange)
             }
         }
-        // Exit button removed. The timer auto-releases the lock.
+
+        if (isDone) {
+            // Overlay to celebrate completion and allow exit
+            Box(
+                Modifier
+                    .fillMaxSize()
+                    .background(Color.Black.copy(alpha = 0.5f))
+                    .windowInsetsPadding(WindowInsets.navigationBars)
+                    .padding(JannahSpacing.gutter),
+                contentAlignment = Alignment.BottomCenter
+            ) {
+                Box(
+                    Modifier
+                        .fillMaxWidth()
+                        .height(56.dp)
+                        .clip(RoundedCornerShape(JannahSpacing.pillRadius))
+                        .background(JannahColors.Orange)
+                        .pressClickable { onRelease() },
+                    contentAlignment = Alignment.Center
+                ) {
+                    Text("Exit to Jannah", style = JannahType.button, color = JannahColors.OnOrange, fontWeight = FontWeight.Bold, fontSize = 18.sp)
+                }
+            }
+        }
     }
 }
