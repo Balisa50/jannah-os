@@ -18,18 +18,22 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.text.font.FontFamily
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.jannahos.MushafImageStore
 import com.jannahos.ui.SwipeBackScreen
-import com.jannahos.ui.TopBar
 import com.jannahos.ui.theme.JannahColors
-import com.jannahos.ui.theme.JannahSpacing
 import com.jannahos.ui.theme.JannahType
 import com.jannahos.ui.pressClickable
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.statusBars
+import androidx.compose.foundation.layout.navigationBars
+import androidx.compose.foundation.layout.windowInsetsPadding
 
 @Composable
 fun MushafPageScreen(startPage: Int = 1, onBack: () -> Unit) {
@@ -55,7 +59,6 @@ private fun MushafPageContent(startPage: Int, onBack: () -> Unit) {
     }
 
     Box(Modifier.fillMaxSize().background(Color(0xFFFFFCF3))) {
-        // Full screen Pager
         HorizontalPager(
             state = pagerState,
             modifier = Modifier.fillMaxSize(),
@@ -66,8 +69,22 @@ private fun MushafPageContent(startPage: Int, onBack: () -> Unit) {
         }
 
         // Floating Top Bar
-        Box(Modifier.align(Alignment.TopCenter).fillMaxWidth().background(JannahColors.Cream.copy(alpha = 0.95f))) {
-            TopBar(title = "Quran", onBack = onBack)
+        Box(
+            Modifier
+                .align(Alignment.TopCenter)
+                .fillMaxWidth()
+                .background(JannahColors.Cream.copy(alpha = 0.95f))
+                .windowInsetsPadding(WindowInsets.statusBars)
+                .height(56.dp)
+        ) {
+            Row(Modifier.fillMaxSize(), verticalAlignment = Alignment.CenterVertically) {
+                Box(
+                    Modifier.padding(start = 16.dp).size(40.dp).clip(CircleShape).background(JannahColors.Card).pressClickable { onBack() },
+                    contentAlignment = Alignment.Center
+                ) { Text("←", fontSize = 20.sp) }
+                Spacer(Modifier.width(16.dp))
+                Text("Quran", fontFamily = FontFamily.Serif, fontSize = 22.sp, fontWeight = FontWeight.Bold, color = JannahColors.Ink)
+            }
         }
 
         // Floating Bottom Controls
@@ -76,13 +93,13 @@ private fun MushafPageContent(startPage: Int, onBack: () -> Unit) {
                 .align(Alignment.BottomCenter)
                 .fillMaxWidth()
                 .background(JannahColors.Cream.copy(alpha = 0.95f))
-                .padding(horizontal = JannahSpacing.m, vertical = JannahSpacing.s),
+                .windowInsetsPadding(WindowInsets.navigationBars)
+                .padding(horizontal = 16.dp, vertical = 12.dp),
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically
         ) {
             NavPill("←") { if (pagerState.currentPage > 0) scope.launch { pagerState.animateScrollToPage(pagerState.currentPage - 1) } }
             
-            // Audio Button
             Box(
                 Modifier.clip(CircleShape).background(JannahColors.Orange).pressClickable {
                     if (isAudioPlaying) {
@@ -90,9 +107,8 @@ private fun MushafPageContent(startPage: Int, onBack: () -> Unit) {
                         isAudioPlaying = false
                     } else {
                         if (mediaPlayer == null) {
-                            // Approximate surah from page
                             val surah = getSurahForPage(currentPage)
-                            val url = "https://cdn.islamic.network/quran/audio-surah/128/ar.alafasy/$surah.mp3"
+                            val url = "https://server8.mp3quran.net/afs/${String.format("%03d", surah)}.mp3"
                             val mp = MediaPlayer()
                             mediaPlayer = mp
                             mp.setOnPreparedListener { it.start(); isAudioPlaying = true }
@@ -109,7 +125,7 @@ private fun MushafPageContent(startPage: Int, onBack: () -> Unit) {
                 }.padding(horizontal = 16.dp, vertical = 8.dp),
                 contentAlignment = Alignment.Center
             ) {
-                Text(if (isAudioPlaying) "❚❚" else "▶", color = Color.White, fontSize = 16.sp, fontWeight = androidx.compose.ui.text.font.FontWeight.Bold)
+                Text(if (isAudioPlaying) "❚❚" else "▶", color = Color.White, fontSize = 16.sp, fontWeight = FontWeight.Bold)
             }
 
             Text("$currentPage / 604", style = JannahType.caption, color = JannahColors.Muted)
@@ -126,7 +142,7 @@ private fun MushafImagePage(ctx: android.content.Context, pageNum: Int) {
             bitmap = bitmap.asImageBitmap(),
             contentDescription = "Page $pageNum",
             modifier = Modifier.fillMaxSize(),
-            contentScale = ContentScale.Fit // Ensures full page visibility without cropping
+            contentScale = ContentScale.Fit
         )
     } else {
         Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
@@ -139,7 +155,7 @@ private fun MushafImagePage(ctx: android.content.Context, pageNum: Int) {
 private fun NavPill(label: String, onClick: () -> Unit) {
     Box(
         Modifier
-            .clip(RoundedCornerShape(JannahSpacing.pillRadius))
+            .clip(RoundedCornerShape(50))
             .background(JannahColors.Card)
             .pressClickable(onClick = onClick)
             .padding(horizontal = 16.dp, vertical = 8.dp)

@@ -52,7 +52,7 @@ class GuardianService : Service() {
                 val diff = nextTime - now
                 val h = diff / 3600000
                 val m = (diff / 60000) % 60
-                val timeString = String.format("%02d:%02d", h, m)
+                val timeString = if (h > 0) String.format("%02dh %02dm", h, m) else String.format("%02dm %02ds", m, (diff / 1000) % 60)
                 val name = SalahTracker.label(nextKey).uppercase()
                 
                 val nm = getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager

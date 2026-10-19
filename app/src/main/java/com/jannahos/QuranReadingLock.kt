@@ -27,8 +27,10 @@ object QuranReadingLock {
     fun shouldLock(ctx: Context): Boolean = enabled(ctx) && !isDoneToday(ctx)
 
     // Remaining time is tracked in memory via the screen, but saved here
-    fun getSavedRemainingMs(ctx: Context): Long =
-        ctx.getSharedPreferences("lock_session", Context.MODE_PRIVATE).getLong("remaining", DEFAULT_MS)
+    fun getSavedRemainingMs(ctx: Context): Long {
+        val ms = ctx.getSharedPreferences("lock_session", Context.MODE_PRIVATE).getLong("remaining", DEFAULT_MS)
+        return if (ms <= 0L) DEFAULT_MS else ms
+    }
 
     fun saveRemainingMs(ctx: Context, ms: Long) {
         ctx.getSharedPreferences("lock_session", Context.MODE_PRIVATE).edit().putLong("remaining", ms).apply()

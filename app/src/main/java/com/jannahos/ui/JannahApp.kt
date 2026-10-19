@@ -22,13 +22,7 @@ import androidx.navigation.compose.rememberNavController
 import com.jannahos.ComebackCheck
 import com.jannahos.EveningReckoning
 import com.jannahos.ReflectionPrompt
-import com.jannahos.ui.screens.ComebackScreen
-import com.jannahos.ui.screens.EveningScreen
-import com.jannahos.ui.screens.MorningReflectionScreen
-import com.jannahos.ui.screens.PrayScreen
-import com.jannahos.ui.screens.QuranTabScreen
-import com.jannahos.ui.screens.TodayScreen
-import com.jannahos.ui.screens.YouScreen
+import com.jannahos.ui.screens.*
 import com.jannahos.ui.theme.JannahColors
 import com.jannahos.ui.theme.JannahType
 import com.jannahos.ui.theme.ScreenScaffold
@@ -48,6 +42,9 @@ fun JannahApp() {
     val nav = rememberNavController()
     val backStack by nav.currentBackStackEntryAsState()
     val currentRoute = backStack?.destination?.route ?: "today"
+    
+    // HIDE BOTTOM BAR ON FULL-SCREEN ROUTES
+    val showBottomBar = currentRoute in listOf("today", "pray", "quran", "you")
 
     var comebackState by remember { mutableStateOf<ComebackCheck.State?>(null) }
     var showReflection by remember { mutableStateOf(false) }
@@ -61,6 +58,14 @@ fun JannahApp() {
         try { showEv = EveningReckoning.shouldShow(ctx) } catch (_: Throwable) {}
     }
 
+    val goTo: (String) -> Unit = { route ->
+        nav.navigate(route) {
+            popUpTo(nav.graph.startDestinationId) { saveState = true }
+            launchSingleTop = true
+            restoreState = true
+        }
+    }
+
     val cs = comebackState
     if (showComeback && cs != null) { ScreenScaffold { ErrorBoundary("Comeback") { ComebackScreen(cs, onDismiss = { showComeback = false }) } }; return }
     if (showReflection) { ScreenScaffold { ErrorBoundary("Morning reflection") { MorningReflectionScreen(onDismiss = { showReflection = false }) } }; return }
@@ -69,35 +74,29 @@ fun JannahApp() {
     Scaffold(
         containerColor = JannahColors.Cream,
         bottomBar = {
-            NavigationBar(containerColor = JannahColors.Surface, tonalElevation = 0.dp) {
-                TABS.forEach { tab ->
-                    val selected = currentRoute == tab.route
-                    val tint by animateColorAsState(
-                        targetValue = if (selected) JannahColors.Orange else JannahColors.Muted,
-                        animationSpec = spring(stiffness = Spring.StiffnessMediumLow),
-                        label = "tabTint"
-                    )
-                    NavigationBarItem(
-                        selected = selected,
-                        onClick = {
-                            if (!selected) {
-                                nav.navigate(tab.route) {
-                                    popUpTo(nav.graph.startDestinationId) { saveState = true }
-                                    launchSingleTop = true
-                                    restoreState = true
-                                }
-                            }
-                        },
-                        icon = { Icon(tab.icon, contentDescription = tab.label, tint = tint) },
-                        label = { Text(tab.label, style = JannahType.micro, color = tint) },
-                        colors = NavigationBarItemDefaults.colors(
-                            indicatorColor = JannahColors.OrangeSoft,
-                            selectedIconColor = JannahColors.Orange,
-                            selectedTextColor = JannahColors.Orange,
-                            unselectedIconColor = JannahColors.Muted,
-                            unselectedTextColor = JannahColors.Muted
+            if (showBottomBar) {
+                NavigationBar(containerColor = JannahColors.Surface, tonalElevation = 0.dp) {
+                    TABS.forEach { tab ->
+                        val selected = currentRoute == tab.route
+                        val tint by animateColorAsState(
+                            targetValue = if (selected) JannahColors.Orange else JannahColors.Muted,
+                            animationSpec = spring(stiffness = Spring.StiffnessMediumLow),
+                            label = "tabTint"
                         )
-                    )
+                        NavigationBarItem(
+                            selected = selected,
+                            onClick = { if (!selected) goTo(tab.route) },
+                            icon = { Icon(tab.icon, contentDescription = tab.label, tint = tint) },
+                            label = { Text(tab.label, style = JannahType.micro, color = tint) },
+                            colors = NavigationBarItemDefaults.colors(
+                                indicatorColor = JannahColors.OrangeSoft,
+                                selectedIconColor = JannahColors.Orange,
+                                selectedTextColor = JannahColors.Orange,
+                                unselectedIconColor = JannahColors.Muted,
+                                unselectedTextColor = JannahColors.Muted
+                            )
+                        )
+                    }
                 }
             }
         }
@@ -106,23 +105,21 @@ fun JannahApp() {
             navController = nav,
             startDestination = "today",
             modifier = Modifier.fillMaxSize().padding(padding),
-            enterTransition = {
-                slideInHorizontally(initialOffsetX = { it / 3 }, animationSpec = spring(dampingRatio = 0.85f, stiffness = 400f)) + fadeIn(tween(200))
-            },
-            exitTransition = {
-                slideOutHorizontally(targetOffsetX = { -it / 3 }, animationSpec = spring(dampingRatio = 0.85f, stiffness = 400f)) + fadeOut(tween(200))
-            },
-            popEnterTransition = {
-                slideInHorizontally(initialOffsetX = { -it / 3 }, animationSpec = spring(dampingRatio = 0.85f, stiffness = 400f)) + fadeIn(tween(200))
-            },
-            popExitTransition = {
-                slideOutHorizontally(targetOffsetX = { it / 3 }, animationSpec = spring(dampingRatio = 0.85f, stiffness = 400f)) + fadeOut(tween(200))
-            }
+            enterTransition = { slideInHorizontally(initialOffsetX = { it / 3 }, animationSpec = spring(dampingRatio = 0.85f, stiffness = 400f)) + fadeIn(tween(200)) },
+            exitTransition = { slideOutHorizontally(targetOffsetX = { -it / 3 }, animationSpec = spring(dampingRatio = 0.85f, stiffness = 400f)) + fadeOut(tween(200)) },
+            popEnterTransition = { slideInHorizontally(initialOffsetX = { -it / 3 }, animationSpec = spring(dampingRatio = 0.85f, stiffness = 400f)) + fadeIn(tween(200)) },
+            popExitTransition = { slideOutHorizontally(targetOffsetX = { it / 3 }, animationSpec = spring(dampingRatio = 0.85f, stiffness = 400f)) + fadeOut(tween(200)) }
         ) {
-            composable("today") { ErrorBoundary("Today") { TodayScreen(onNavigate = { nav.navigate(it) }) } }
+            composable("today") { ErrorBoundary("Today") { TodayScreen(onNavigate = goTo) } }
             composable("pray") { ErrorBoundary("Pray") { PrayScreen() } }
             composable("quran") { ErrorBoundary("Quran") { QuranTabScreen() } }
             composable("you") { ErrorBoundary("You") { YouScreen() } }
+            
+            // Full-screen routes
+            composable("mushaf/{startPage}") { backStackEntry ->
+                val startPage = backStackEntry.arguments?.getString("startPage")?.toIntOrNull() ?: 1
+                ErrorBoundary("Quran Reader") { MushafPageScreen(startPage = startPage, onBack = { nav.popBackStack() }) }
+            }
         }
     }
 }
