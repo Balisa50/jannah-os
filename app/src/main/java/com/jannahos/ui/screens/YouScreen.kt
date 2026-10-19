@@ -291,10 +291,8 @@ private fun ListRow(label: String, onClick: () -> Unit) {
     Row(
         Modifier
             .fillMaxWidth()
-            .clip(RoundedCornerShape(12.dp))
-            .background(JannahColors.Card)
             .clickable(onClick = onClick)
-            .padding(horizontal = JannahSpacing.l, vertical = 18.dp),
+            .padding(horizontal = JannahSpacing.gutter, vertical = 18.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {
         Text(label,
@@ -309,5 +307,5 @@ private fun ListRow(label: String, onClick: () -> Unit) {
 
 @Composable
 private fun Divider() {
-    Spacer(Modifier.height(2.dp))
+    Box(Modifier.fillMaxWidth().padding(horizontal = JannahSpacing.gutter).height(1.dp).background(JannahColors.Border))
 }

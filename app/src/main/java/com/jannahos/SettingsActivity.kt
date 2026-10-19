@@ -346,7 +346,7 @@ private fun ListRow(
         Modifier
             .fillMaxWidth()
             .clickable(onClick = onClick)
-            .padding(horizontal = JannahSpacing.gutter, vertical = 16.dp),
+            .padding(horizontal = JannahSpacing.gutter, vertical = 18.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {
         Column(Modifier.weight(1f)) {
@@ -374,7 +374,7 @@ private fun ListRow(
                     color = if (toggle) JannahColors.OnOrange else JannahColors.Muted)
             }
         } else {
-            Text("→", style = JannahType.title, color = JannahColors.Orange)
+            Text("→", style = JannahType.body, color = JannahColors.Orange)
         }
     }
 }

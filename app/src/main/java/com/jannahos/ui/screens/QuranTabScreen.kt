@@ -52,7 +52,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 
 @Composable
-fun QuranTabScreen() {
+fun QuranTabScreen(onNavigateToSurah: (Int) -> Unit = {}) {
     var selected by remember { mutableStateOf<Int?>(null) }
     var showBookmarks by remember { mutableStateOf(false) }
     var showReciters by remember { mutableStateOf(false) }
@@ -60,7 +60,7 @@ fun QuranTabScreen() {
     var showSearch by remember { mutableStateOf(false) }
 
     if (showKhatm) { KhatmScreen(onBack = { showKhatm = false }); return }
-    if (showSearch) { QuranSearchScreen(onBack = { showSearch = false }); return }
+    if (showSearch) { QuranSearchScreen(onBack = { showSearch = false }, onNavigateToSurah = onNavigateToSurah); return }
     if (showReciters) { ReciterPickerScreen(onBack = { showReciters = false }); return }
     if (showBookmarks) {
         BookmarksScreen(

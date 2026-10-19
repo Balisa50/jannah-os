@@ -19,9 +19,7 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
-import com.jannahos.ComebackCheck
-import com.jannahos.EveningReckoning
-import com.jannahos.ReflectionPrompt
+import com.jannahos.*
 import com.jannahos.ui.screens.*
 import com.jannahos.ui.theme.JannahColors
 import com.jannahos.ui.theme.JannahType
@@ -42,9 +40,7 @@ fun JannahApp() {
     val nav = rememberNavController()
     val backStack by nav.currentBackStackEntryAsState()
     val currentRoute = backStack?.destination?.route ?: "today"
-    
-    // HIDE BOTTOM BAR ON FULL-SCREEN ROUTES
-    val showBottomBar = currentRoute in listOf("today", "pray", "you")
+    val showBottomBar = currentRoute in listOf("today", "pray", "quran", "you")
 
     var comebackState by remember { mutableStateOf<ComebackCheck.State?>(null) }
     var showReflection by remember { mutableStateOf(false) }
@@ -105,17 +101,24 @@ fun JannahApp() {
             navController = nav,
             startDestination = "today",
             modifier = Modifier.fillMaxSize().padding(padding),
-            enterTransition = { slideInHorizontally(initialOffsetX = { it / 3 }, animationSpec = spring(dampingRatio = 0.85f, stiffness = 400f)) + fadeIn(tween(200)) },
-            exitTransition = { slideOutHorizontally(targetOffsetX = { -it / 3 }, animationSpec = spring(dampingRatio = 0.85f, stiffness = 400f)) + fadeOut(tween(200)) },
-            popEnterTransition = { slideInHorizontally(initialOffsetX = { -it / 3 }, animationSpec = spring(dampingRatio = 0.85f, stiffness = 400f)) + fadeIn(tween(200)) },
-            popExitTransition = { slideOutHorizontally(targetOffsetX = { it / 3 }, animationSpec = spring(dampingRatio = 0.85f, stiffness = 400f)) + fadeOut(tween(200)) }
+            // SILKY SMOOTH TRANSITIONS
+            enterTransition = { 
+                slideInHorizontally(initialOffsetX = { it / 4 }, animationSpec = spring(dampingRatio = 0.85f, stiffness = 350f)) + fadeIn(tween(200)) 
+            },
+            exitTransition = { 
+                slideOutHorizontally(targetOffsetX = { -it / 4 }, animationSpec = spring(dampingRatio = 0.85f, stiffness = 350f)) + fadeOut(tween(200)) 
+            },
+            popEnterTransition = { 
+                slideInHorizontally(initialOffsetX = { -it / 4 }, animationSpec = spring(dampingRatio = 0.85f, stiffness = 350f)) + fadeIn(tween(200)) 
+            },
+            popExitTransition = { 
+                slideOutHorizontally(targetOffsetX = { it / 4 }, animationSpec = spring(dampingRatio = 0.85f, stiffness = 350f)) + fadeOut(tween(200)) 
+            }
         ) {
             composable("today") { ErrorBoundary("Today") { TodayScreen(onNavigate = goTo) } }
             composable("pray") { ErrorBoundary("Pray") { PrayScreen() } }
-            composable("quran") { ErrorBoundary("Quran") { QuranTabScreen() } }
+            composable("quran") { ErrorBoundary("Quran") { QuranTabScreen(onNavigateToSurah = { surahId -> nav.navigate("mushaf/${QuranStore.firstPageOfSurah(surahId)}") }) } }
             composable("you") { ErrorBoundary("You") { YouScreen() } }
-            
-            // Full-screen routes
             composable("mushaf/{startPage}") { backStackEntry ->
                 val startPage = backStackEntry.arguments?.getString("startPage")?.toIntOrNull() ?: 1
                 ErrorBoundary("Quran Reader") { MushafPageScreen(startPage = startPage, onBack = { nav.popBackStack() }) }
