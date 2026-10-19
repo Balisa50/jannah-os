@@ -64,14 +64,12 @@ private fun MushafPageContent(startPage: Int, onBack: () -> Unit) {
             Text("Quran", fontFamily = FontFamily.Serif, fontSize = 18.sp, fontWeight = FontWeight.Bold, color = JannahColors.Ink) // Smaller text
         }
 
-        // 2. WHITE CARD (Reduced padding, maximum space)
+        // 2. PURE WHITE EDGE-TO-EDGE READING AREA
         Box(
             Modifier
                 .weight(1f)
                 .fillMaxWidth()
-                .padding(horizontal = 2.dp, vertical = 2.dp) // Almost no padding around the white page
-                .clip(RoundedCornerShape(8.dp))
-                .background(Color(0xFFFFFCF3)),
+                .background(Color.White), // Pure white background matching the page
             contentAlignment = Alignment.Center
         ) {
             HorizontalPager(
