@@ -14,52 +14,48 @@ class FocusAccessibilityService : AccessibilityService() {
         if (pkg == packageName) return
         if (pkg in ALWAYS_ALLOWED) return
 
-        // Only lock apps the user explicitly chose.
-        if (!AppBlockStore.isBlocked(this, pkg)) return
-
-        // Priority 1: Quran reading lock
-        if (QuranReadingLock.shouldLock(this)) {
-            val back = Intent(this, MainActivity::class.java).apply {
+        // 1. Check if app is explicitly blocked
+        if (AppBlockStore.isBlocked(this, pkg)) {
+            // Hard block: Launch BlockActivity and go home
+            val blockIntent = Intent(this, BlockActivity::class.java).apply {
                 addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP)
-                putExtra("show_quran_lock", true)
             }
-            startActivity(back)
+            startActivity(blockIntent)
+            performGlobalAction(GLOBAL_ACTION_HOME)
             return
         }
 
-        // Priority 2: Prayer lock / Focus mode
+        // 2. Check Prayer Lock
         val prayerLock = PrayerLock.enabled(this) && PrayerLock.sessionActive(this)
-        val focusWindow = FocusSession.isActive(this)
-        if (!prayerLock && !focusWindow) return
-
-        val prayer = FocusSession.currentPrayer(this)
-            ?: PrayerLock.sessionPrayer(this)
-            ?: "fajr"
-
-        val back = Intent(this, SalahCommitmentActivity::class.java).apply {
-            addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP)
-            putExtra("prayer", prayer)
-            putExtra("from_focus", true)
+        if (prayerLock) {
+            val prayer = PrayerLock.sessionPrayer(this) ?: "fajr"
+            val intent = Intent(this, SalahCommitmentActivity::class.java).apply {
+                addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP)
+                putExtra("prayer", prayer)
+            }
+            startActivity(intent)
+            return
         }
-        startActivity(back)
+
+        // 3. Check Quran Reading Lock
+        if (QuranReadingLock.shouldLock(this)) {
+            val intent = Intent(this, MainActivity::class.java).apply {
+                addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP)
+                putExtra("show_quran_lock", true)
+            }
+            startActivity(intent)
+            return
+        }
     }
 
     override fun onInterrupt() {}
 
     companion object {
-        // System UI and phone/dialer are always allowed so the user can
-        // still receive calls and reach emergency services.
         private val ALWAYS_ALLOWED = setOf(
-            "com.android.systemui",
-            "com.android.settings",
-            "com.android.phone",
-            "com.samsung.android.incallui",
-            "com.android.dialer",
-            "com.samsung.android.dialer",
-            "com.android.server.telecom",
-            "android",
-            "com.google.android.dialer",
-            "com.android.emergency"
+            "com.android.systemui", "com.android.settings", "com.android.phone",
+            "com.samsung.android.incallui", "com.android.dialer", "com.samsung.android.dialer",
+            "com.android.server.telecom", "android", "com.google.android.dialer",
+            "com.android.emergency", "com.jannahos"
         )
     }
 }

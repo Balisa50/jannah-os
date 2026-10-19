@@ -1,14 +1,19 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
 
+    <uses-permission android:name="android.permission.INTERNET" />
+    <uses-permission android:name="android.permission.WAKE_LOCK" />
     <uses-permission android:name="android.permission.SCHEDULE_EXACT_ALARM" />
     <uses-permission android:name="android.permission.USE_EXACT_ALARM" />
     <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
-    <uses-permission android:name="android.permission.WAKE_LOCK" />
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
     <uses-permission android:name="android.permission.RECORD_AUDIO" />
-    <uses-permission android:name="android.permission.INTERNET" />
+    <uses-permission android:name="android.permission.CAMERA" />
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_DATA_SYNC" />
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_CAMERA" />
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_MICROPHONE" />
+    <uses-permission android:name="android.permission.BIND_DEVICE_ADMIN" />
 
     <queries>
         <intent>
@@ -23,90 +28,91 @@
         android:icon="@mipmap/ic_launcher"
         android:roundIcon="@mipmap/ic_launcher_round"
         android:theme="@android:style/Theme.Material.Light.NoActionBar">
-        <activity
-            android:name=".MainActivity"
-            android:exported="true">
+
+        <!-- Core Activities -->
+        <activity android:name=".MainActivity" android:exported="true">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
-        <activity
-            android:name=".SettingsActivity"
-            android:exported="false" />
-        <activity
-            android:name=".PlannerActivity"
-            android:exported="false" />
-        <activity
-            android:name=".QuranActivity"
-            android:exported="false" />
-        <activity
-            android:name=".QiblaActivity"
-            android:exported="false" />
+        <activity android:name=".SettingsActivity" android:exported="false" />
+        <activity android:name=".PlannerActivity" android:exported="false" />
+        <activity android:name=".QuranActivity" android:exported="false" />
+        <activity android:name=".QiblaActivity" android:exported="false" />
+        <activity android:name=".SalahActivity" android:exported="false" />
+        <activity android:name=".BedtimeActivity" android:exported="false" />
+
+        <!-- Lock / Overlay Activities -->
         <activity
             android:name=".SalahCommitmentActivity"
             android:exported="false"
             android:showOnLockScreen="true"
             android:turnScreenOn="true" />
         <activity
-            android:name=".SalahActivity"
-            android:exported="false" />
-        <activity
             android:name=".UrgeActivity"
             android:exported="false"
             android:showOnLockScreen="true"
             android:turnScreenOn="true" />
         <activity
-            android:name=".BedtimeActivity"
-            android:exported="false" />
-        <activity
             android:name=".TahajjudAlarmActivity"
             android:exported="false"
             android:showOnLockScreen="true"
             android:turnScreenOn="true" />
-        <receiver
-            android:name=".TahajjudAlarmReceiver"
+        
+        <activity android:name=".BlockActivity"
+            android:excludeFromRecents="true"
+            android:launchMode="singleInstance"
+            android:taskAffinity=""
             android:exported="false" />
-        <receiver
-            android:name=".BedtimeReceiver"
+            
+        <activity android:name=".TahajjudEvidenceActivity"
             android:exported="false" />
-        <receiver
-            android:name=".PrePrayerReceiver"
-            android:exported="false" />
-        <receiver
-            android:name=".SalahReceiver"
-            android:exported="false" />
-        <receiver
-            android:name=".BootReceiver"
-            android:exported="true">
+
+        <!-- Receivers -->
+        <receiver android:name=".TahajjudAlarmReceiver" android:exported="false" />
+        <receiver android:name=".BedtimeReceiver" android:exported="false" />
+        <receiver android:name=".PrePrayerReceiver" android:exported="false" />
+        <receiver android:name=".SalahReceiver" android:exported="false" />
+        
+        <receiver android:name=".BootReceiver" android:exported="true">
             <intent-filter>
                 <action android:name="android.intent.action.BOOT_COMPLETED" />
             </intent-filter>
         </receiver>
-            <service
-            android:name=".FocusAccessibilityService"
+
+        <receiver android:name=".JannahWidget" android:exported="true">
+            <intent-filter>
+                <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
+            </intent-filter>
+            <meta-data android:name="android.appwidget.provider" android:resource="@xml/jannah_widget_info" />
+        </receiver>
+
+        <receiver android:name=".JannahDeviceAdminReceiver"
+            android:permission="android.permission.BIND_DEVICE_ADMIN"
+            android:exported="true">
+            <meta-data android:name="android.app.device_admin" android:resource="@xml/device_admin" />
+            <intent-filter>
+                <action android:name="android.app.action.DEVICE_ADMIN_ENABLED" />
+            </intent-filter>
+        </receiver>
+
+        <!-- Services -->
+        <service android:name=".FocusAccessibilityService"
             android:exported="false"
             android:label="Prayer focus"
             android:permission="android.permission.BIND_ACCESSIBILITY_SERVICE">
             <intent-filter>
                 <action android:name="android.accessibilityservice.AccessibilityService" />
             </intent-filter>
-            <meta-data
-                android:name="android.accessibilityservice"
-                android:resource="@xml/focus_accessibility" />
+            <meta-data android:name="android.accessibilityservice" android:resource="@xml/accessibility_service_config" />
         </service>
-            <receiver
-            android:name=".JannahWidget"
-            android:exported="true">
-            <intent-filter>
-                <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
-            </intent-filter>
-            <meta-data
-                android:name="android.appwidget.provider"
-                android:resource="@xml/jannah_widget_info" />
-        </receiver>
-            <service
-            android:name=".audio.QuranPlaybackService"
+
+        <service android:name=".GuardianService"
+            android:foregroundServiceType="dataSync"
             android:exported="false" />
+
+        <service android:name=".audio.QuranPlaybackService" android:exported="false" />
+
     </application>
 </manifest>

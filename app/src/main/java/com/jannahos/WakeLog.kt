@@ -145,4 +145,6 @@ class WakeLog(context: Context) : SQLiteOpenHelper(
             return fmt.format(java.util.Date())
         }
     }
+
+
 }

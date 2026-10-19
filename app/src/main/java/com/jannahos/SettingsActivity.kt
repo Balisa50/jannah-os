@@ -39,6 +39,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.jannahos.ui.SwipeBackScreen
+import com.jannahos.ui.pressClickable
 import com.jannahos.ui.TopBar
 import com.jannahos.ui.screens.AppPickerScreen
 import com.jannahos.ui.screens.CityPickerScreen
@@ -66,6 +67,7 @@ private fun SettingsScreen(onBack: () -> Unit) {
     // Modal routes
     var showCityPicker by remember { mutableStateOf(false) }
     var showAppPicker by remember { mutableStateOf(false) }
+    var showGuardian by remember { mutableStateOf(false) }
 
     if (showCityPicker) {
         CityPickerScreen(
@@ -75,6 +77,10 @@ private fun SettingsScreen(onBack: () -> Unit) {
                 showCityPicker = false
             }
         )
+        return
+    }
+    if (showGuardian) {
+        com.jannahos.ui.screens.GuardianSetupScreen(onBack = { showGuardian = false })
         return
     }
     if (showAppPicker) {
@@ -111,6 +117,18 @@ private fun SettingsScreen(onBack: () -> Unit) {
             .background(JannahColors.Cream)
     ) {
         TopBar("Settings", onBack = onBack)
+        Box(Modifier.fillMaxWidth().padding(horizontal = JannahSpacing.gutter, vertical = JannahSpacing.s)) {
+            Row(
+                Modifier.fillMaxWidth().clip(RoundedCornerShape(JannahSpacing.cardRadius)).background(JannahColors.Orange).pressClickable { showGuardian = true }.padding(JannahSpacing.m),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Column(Modifier.weight(1f)) {
+                    Text("GUARDIAN SYSTEM", style = JannahType.eyebrow, color = JannahColors.OnOrange.copy(alpha=0.8f))
+                    Text("Activate Locks & Blocker", fontFamily = FontFamily.Serif, fontWeight = FontWeight.Bold, fontSize = 18.sp, color = JannahColors.OnOrange)
+                }
+                Text("→", fontSize = 20.sp, color = JannahColors.OnOrange, fontWeight = FontWeight.Bold)
+            }
+        }
 
         Spacer(Modifier.height(JannahSpacing.s))
 
