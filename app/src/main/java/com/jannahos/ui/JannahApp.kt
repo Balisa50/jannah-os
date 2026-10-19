@@ -44,7 +44,7 @@ fun JannahApp() {
     val currentRoute = backStack?.destination?.route ?: "today"
     
     // HIDE BOTTOM BAR ON FULL-SCREEN ROUTES
-    val showBottomBar = currentRoute in listOf("today", "pray", "quran", "you") && currentRoute?.startsWith("mushaf") != true
+    val showBottomBar = currentRoute in listOf("today", "pray", "you")
 
     var comebackState by remember { mutableStateOf<ComebackCheck.State?>(null) }
     var showReflection by remember { mutableStateOf(false) }

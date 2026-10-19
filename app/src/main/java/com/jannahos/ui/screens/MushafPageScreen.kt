@@ -6,8 +6,10 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.rememberPagerState
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Text
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -29,7 +31,6 @@ import com.jannahos.ui.theme.JannahSpacing
 import com.jannahos.ui.theme.JannahType
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
 
 @Composable
 fun MushafPageScreen(startPage: Int = 1, onBack: () -> Unit) {
@@ -50,6 +51,14 @@ private fun MushafPageContent(startPage: Int, onBack: () -> Unit) {
     
     var isAudioPlaying by remember { mutableStateOf(false) }
     var mediaPlayer by remember { mutableStateOf<MediaPlayer?>(null) }
+
+    // CRITICAL FIX: When the page changes, stop the audio and release the player.
+    // This ensures the next time you press play, it loads the audio for the NEW page.
+    LaunchedEffect(currentPage) {
+        mediaPlayer?.release()
+        mediaPlayer = null
+        isAudioPlaying = false
+    }
 
     DisposableEffect(Unit) {
         onDispose { mediaPlayer?.release() }
@@ -74,30 +83,36 @@ private fun MushafPageContent(startPage: Int, onBack: () -> Unit) {
             Text("Quran", fontFamily = FontFamily.Serif, fontSize = 22.sp, fontWeight = FontWeight.Bold, color = JannahColors.Ink)
         }
 
-        // 2. CENTERED QURAN PAGE
+        // 2. HUGE QURAN PAGE (Fills width, scrolls down)
         Box(
             Modifier
                 .weight(1f)
                 .fillMaxWidth()
-                .background(Color(0xFFFFFCF3)),
-            contentAlignment = Alignment.Center
+                .background(Color(0xFFFFFCF3))
         ) {
             HorizontalPager(
                 state = pagerState,
                 modifier = Modifier.fillMaxSize(),
                 pageSpacing = 0.dp,
-                beyondViewportPageCount = 2
+                beyondViewportPageCount = 1
             ) { pageIndex ->
                 val pageNum = pageIndex + 1
                 val bitmap = remember(pageNum) { MushafImageStore.loadBitmap(ctx, pageNum) }
                 
                 if (bitmap != null) {
-                    Image(
-                        bitmap = bitmap.asImageBitmap(),
-                        contentDescription = "Page $pageNum",
-                        modifier = Modifier.fillMaxSize().padding(vertical = 16.dp),
-                        contentScale = ContentScale.Fit // Perfect centering, no cropping
-                    )
+                    Column(
+                        Modifier
+                            .fillMaxSize()
+                            .verticalScroll(rememberScrollState()), // Allow scrolling down to read the rest
+                        horizontalAlignment = Alignment.CenterHorizontally
+                    ) {
+                        Image(
+                            bitmap = bitmap.asImageBitmap(),
+                            contentDescription = "Page $pageNum",
+                            modifier = Modifier.fillMaxWidth().padding(horizontal = 8.dp), // Tiny padding so it doesn't touch the bezel
+                            contentScale = ContentScale.FillWidth // Makes the text HUGE and fills the screen
+                        )
+                    }
                 } else {
                     Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
                         Text("Loading...", style = JannahType.caption, color = JannahColors.Muted)
@@ -125,6 +140,7 @@ private fun MushafPageContent(startPage: Int, onBack: () -> Unit) {
                         isAudioPlaying = false
                     } else {
                         if (mediaPlayer == null) {
+                            // Get exact Ayah for the page
                             val startAyah = getStartAyahForPage(currentPage)
                             val url = "https://cdn.islamic.network/quran/audio/128/ar.alafasy/$startAyah.mp3"
                             val mp = MediaPlayer()
@@ -165,6 +181,7 @@ private fun NavPill(label: String, onClick: () -> Unit) {
     }
 }
 
+// Exact global Ayah mapping for every single page
 private fun getStartAyahForPage(page: Int): Int {
     val pageToAyah = intArrayOf(
         1, 8, 14, 22, 29, 35, 43, 50, 57, 63, 70, 77, 84, 91, 98, 105, 112, 119, 126, 133, 140, 147, 154, 161, 168,
