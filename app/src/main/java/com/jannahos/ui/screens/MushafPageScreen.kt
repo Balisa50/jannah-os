@@ -5,10 +5,8 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.rememberPagerState
-import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Text
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -47,7 +45,7 @@ private fun MushafPageContent(startPage: Int, onBack: () -> Unit) {
     val currentPage = pagerState.currentPage + 1
     val scope = rememberCoroutineScope()
 
-    Column(Modifier.fillMaxSize().background(Color(0xFFFFFCF3))) {
+    Column(Modifier.fillMaxSize().background(JannahColors.Cream)) {
         
         // 1. SOLID TOP HEADER
         Row(
@@ -66,12 +64,15 @@ private fun MushafPageContent(startPage: Int, onBack: () -> Unit) {
             Text("Quran", fontFamily = FontFamily.Serif, fontSize = 22.sp, fontWeight = FontWeight.Bold, color = JannahColors.Ink)
         }
 
-        // 2. HUGE QURAN PAGE (Fills width, scrolls down)
+        // 2. WHITE CARD WITH PERFECTLY CENTERED IMAGE
         Box(
             Modifier
                 .weight(1f)
                 .fillMaxWidth()
-                .background(Color(0xFFFFFCF3))
+                .padding(horizontal = 16.dp, vertical = 8.dp)
+                .clip(RoundedCornerShape(12.dp))
+                .background(Color(0xFFFFFCF3)), // White page background
+            contentAlignment = Alignment.Center
         ) {
             HorizontalPager(
                 state = pagerState,
@@ -83,20 +84,12 @@ private fun MushafPageContent(startPage: Int, onBack: () -> Unit) {
                 val bitmap = remember(pageNum) { MushafImageStore.loadBitmap(ctx, pageNum) }
                 
                 if (bitmap != null) {
-                    Column(
-                        Modifier
-                            .fillMaxSize()
-                            .verticalScroll(rememberScrollState()),
-                        verticalArrangement = Arrangement.Center, // Centers vertically!
-                        horizontalAlignment = Alignment.CenterHorizontally
-                    ) {
-                        Image(
-                            bitmap = bitmap.asImageBitmap(),
-                            contentDescription = "Page $pageNum",
-                            modifier = Modifier.fillMaxWidth(), // No padding, fills width completely
-                            contentScale = ContentScale.FillWidth
-                        )
-                    }
+                    Image(
+                        bitmap = bitmap.asImageBitmap(),
+                        contentDescription = "Page $pageNum",
+                        modifier = Modifier.fillMaxSize(),
+                        contentScale = ContentScale.Fit // Fits entire page perfectly without scrolling or cropping
+                    )
                 } else {
                     Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
                         Text("Loading...", style = JannahType.caption, color = JannahColors.Muted)
@@ -105,7 +98,7 @@ private fun MushafPageContent(startPage: Int, onBack: () -> Unit) {
             }
         }
 
-        // 3. SOLID BOTTOM FOOTER (Audio Removed)
+        // 3. SOLID BOTTOM FOOTER
         Row(
             Modifier
                 .fillMaxWidth()
