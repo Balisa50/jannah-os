@@ -53,7 +53,6 @@ import kotlinx.coroutines.withContext
 
 @Composable
 fun QuranTabScreen(onNavigateToSurah: (Int) -> Unit = {}) {
-    var selected by remember { mutableStateOf<Int?>(null) }
     var showBookmarks by remember { mutableStateOf(false) }
     var showReciters by remember { mutableStateOf(false) }
     var showKhatm by remember { mutableStateOf(false) }
@@ -65,19 +64,21 @@ fun QuranTabScreen(onNavigateToSurah: (Int) -> Unit = {}) {
     if (showBookmarks) {
         BookmarksScreen(
             onBack = { showBookmarks = false },
-            onOpen = { s, _ -> selected = s; showBookmarks = false }
+            onOpen = { s, _ -> 
+                showBookmarks = false
+                onNavigateToSurah(s) 
+            }
         )
         return
     }
 
-    if (selected == null) SurahList(
-        onPick = { selected = it },
+    SurahList(
+        onPick = { onNavigateToSurah(it) },
         onOpenBookmarks = { showBookmarks = true },
         onOpenReciters = { showReciters = true },
         onOpenKhatm = { showKhatm = true },
         onOpenSearch = { showSearch = true }
     )
-    else MushafPageScreen(startPage = QuranStore.firstPageOfSurah(selected!!), onBack = { selected = null })
 }
 
 @Composable

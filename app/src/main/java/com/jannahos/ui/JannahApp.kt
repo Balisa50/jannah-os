@@ -40,7 +40,7 @@ fun JannahApp() {
     val nav = rememberNavController()
     val backStack by nav.currentBackStackEntryAsState()
     val currentRoute = backStack?.destination?.route ?: "today"
-    val showBottomBar = currentRoute == "today" || currentRoute == "pray" || currentRoute == "you" || currentRoute == "quran"
+    val showBottomBar = currentRoute in listOf("today", "pray", "quran", "you")
 
     var comebackState by remember { mutableStateOf<ComebackCheck.State?>(null) }
     var showReflection by remember { mutableStateOf(false) }
