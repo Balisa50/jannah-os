@@ -261,13 +261,9 @@ fun YouScreen() {
             SectionLabel("SETTINGS")
             ListRow("About") { showAbout.value = true }
             Divider()
-            ListRow("Location & calculation") {
-                ctx.startActivity(Intent(ctx, SettingsActivity::class.java))
-            }
-            Divider()
             ListRow("Backup & restore") { showBackup.value = true }
             Divider()
-            ListRow("All settings") {
+            ListRow("Settings") {
                 ctx.startActivity(Intent(ctx, SettingsActivity::class.java))
             }
 
