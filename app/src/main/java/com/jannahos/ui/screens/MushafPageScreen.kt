@@ -76,18 +76,25 @@ private fun MushafPageContent(startPage: Int, onBack: () -> Unit) {
                 state = pagerState,
                 modifier = Modifier.fillMaxSize(),
                 pageSpacing = 0.dp,
-                beyondViewportPageCount = 1
+                beyondViewportPageCount = 1,
+                verticalAlignment = Alignment.CenterVertically // Forces vertical centering
             ) { pageIndex ->
                 val pageNum = pageIndex + 1
                 val bitmap = remember(pageNum) { MushafImageStore.loadBitmap(ctx, pageNum) }
                 
                 if (bitmap != null) {
-                    Image(
-                        bitmap = bitmap.asImageBitmap(),
-                        contentDescription = "Page $pageNum",
+                    // Wrap in a centered container
+                    Box(
                         modifier = Modifier.fillMaxSize(),
-                        contentScale = ContentScale.Fit 
-                    )
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Image(
+                            bitmap = bitmap.asImageBitmap(),
+                            contentDescription = "Page $pageNum",
+                            modifier = Modifier.fillMaxSize().padding(horizontal = 8.dp),
+                            contentScale = ContentScale.Fit 
+                        )
+                    }
                 } else {
                     Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
                         Text("Loading...", style = JannahType.caption, color = JannahColors.Muted)
