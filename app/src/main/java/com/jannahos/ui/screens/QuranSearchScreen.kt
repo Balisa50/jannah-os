@@ -65,7 +65,7 @@ fun QuranSearchScreen(onBack: () -> Unit, onNavigateToPage: (Int) -> Unit) {
         delay(400) // Debounce
 
         // 1. Check Semantic Engine
-        val semantic = QuranSearchEngine.search(q)
+        val semantic = QuranSearchEngine.search(ctx, q)
         semanticHits = semantic
 
         // 2. Fetch text for semantic hits

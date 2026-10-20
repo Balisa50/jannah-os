@@ -21,6 +21,18 @@ object QuranSearchEngine {
         "paradise" to listOf(SearchResult(55, "Ar-Rahman", 531))
     )
 
+    fun search(ctx: android.content.Context, query: String): List<SearchResult> {
+        // First try semantic
+        val semantic = search(query)
+        if (semantic.isNotEmpty()) return semantic
+        
+        // Then fallback to text search
+        val textResults = QuranTextStore.search(ctx, query)
+        return textResults.map { 
+            SearchResult(it.surah, "Surah ${it.surah}", 1) 
+        }.distinctBy { it.surahId }
+    }
+
     fun search(query: String): List<SearchResult> {
         val q = query.lowercase().trim()
         if (q.isEmpty()) return emptyList()
