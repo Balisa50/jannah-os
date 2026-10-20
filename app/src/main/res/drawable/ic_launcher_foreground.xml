@@ -1,6 +1,8 @@
 <vector xmlns:android="http://schemas.android.com/apk/res/android"
     android:width="108dp" android:height="108dp"
     android:viewportWidth="108" android:viewportHeight="108">
-    <path android:fillColor="#DD6B00" android:pathData="M54,24 C42,24 32,34 32,46 L32,84 L42,84 L42,46 C42,39.4 47.4,34 54,34 C60.6,34 66,39.4 66,46 L66,84 L76,84 L76,46 C76,34 66,24 54,24 Z"/>
-    <path android:fillColor="#DD6B00" android:pathData="M24,84 L84,84 L84,90 L24,90 Z"/>
+    <!-- Terracotta Arch -->
+    <path android:fillColor="#C2410C" android:pathData="M54,24 C38,24 28,38 28,54 L28,84 L40,84 L40,54 C40,42 46,36 54,36 C62,36 68,42 68,54 L68,84 L80,84 L80,54 C80,38 70,24 54,24 Z"/>
+    <!-- Base Line -->
+    <path android:fillColor="#C2410C" android:pathData="M20,84 L88,84 L88,90 L20,90 Z"/>
 </vector>

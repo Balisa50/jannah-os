@@ -30,6 +30,12 @@ class MainActivity : ComponentActivity() {
         }
         setContent {
             JannahTheme {
+                var showSplash by remember { mutableStateOf(true) }
+                if (showSplash) {
+                    com.jannahos.ui.JannahSplashScreen { showSplash = false }
+                    return@JannahTheme
+                }
+                
                 var onboarded by remember { mutableStateOf(Settings.onboardingComplete(this)) }
                 val crash = remember { App.latestCrash(application) }
                 var showCrash by remember { mutableStateOf(crash != null) }
