@@ -72,7 +72,7 @@ fun TodayScreen(onNavigate: (String) -> Unit = {}) {
         Box(
             Modifier
                 .fillMaxWidth()
-                .height(220.dp)
+                .height(260.dp)
         ) {
             Image(
                 painter = painterResource(id = com.jannahos.R.drawable.hero_today),
@@ -80,13 +80,13 @@ fun TodayScreen(onNavigate: (String) -> Unit = {}) {
                 contentScale = ContentScale.Crop,
                 modifier = Modifier.fillMaxSize()
             )
-            // Gradient Scrim for text readability
+            // Dark gradient for white text readability
             Box(
                 Modifier
                     .fillMaxSize()
                     .background(
                         Brush.verticalGradient(
-                            colors = listOf(Color.Transparent, JannahColors.Cream.copy(alpha = 0.8f), JannahColors.Cream)
+                            colors = listOf(Color.Transparent, Color.Black.copy(alpha = 0.2f), Color.Black.copy(alpha = 0.8f))
                         )
                     )
             )
@@ -101,7 +101,7 @@ fun TodayScreen(onNavigate: (String) -> Unit = {}) {
                     fontFamily = FontFamily.Serif,
                     fontSize = 28.sp,
                     fontWeight = FontWeight.Bold,
-                    color = JannahColors.Ink
+                    color = Color.White
                 )
                 Spacer(Modifier.height(2.dp))
                 val greg = SimpleDateFormat("EEE d MMM", Locale.getDefault()).format(Date())
@@ -109,7 +109,7 @@ fun TodayScreen(onNavigate: (String) -> Unit = {}) {
                 Text(
                     if (hijri.isNotEmpty()) "$greg · $hijri" else greg,
                     style = JannahType.caption,
-                    color = JannahColors.Muted
+                    color = Color.White.copy(alpha = 0.8f)
                 )
             }
         }

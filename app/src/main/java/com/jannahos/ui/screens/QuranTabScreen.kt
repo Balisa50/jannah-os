@@ -1,5 +1,6 @@
 package com.jannahos.ui.screens
 
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
@@ -12,6 +13,10 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
@@ -62,24 +67,42 @@ private fun SurahList(
             .verticalScroll(rememberScrollState())
             .background(JannahColors.Cream)
     ) {
-        // Slim Header
+        // HERO HEADER
         Box(
             Modifier
                 .fillMaxWidth()
-                .background(JannahColors.Orange)
-                .padding(horizontal = JannahSpacing.gutter)
-                .padding(top = JannahSpacing.xl, bottom = JannahSpacing.m)
+                .height(160.dp)
         ) {
-            Column {
+            Image(
+                painter = painterResource(id = com.jannahos.R.drawable.quran_hero),
+                contentDescription = "Quran",
+                contentScale = ContentScale.Crop,
+                modifier = Modifier.fillMaxSize()
+            )
+            Box(
+                Modifier
+                    .fillMaxSize()
+                    .background(
+                        Brush.verticalGradient(
+                            colors = listOf(Color.Transparent, Color.Black.copy(alpha = 0.7f))
+                        )
+                    )
+            )
+            Column(
+                Modifier
+                    .align(Alignment.BottomStart)
+                    .padding(horizontal = JannahSpacing.gutter)
+                    .padding(bottom = JannahSpacing.m)
+            ) {
                 Text("QURAN",
                     style = JannahType.eyebrow,
-                    color = JannahColors.OnOrange.copy(alpha = 0.75f))
+                    color = Color.White.copy(alpha = 0.8f))
                 Spacer(Modifier.height(4.dp))
                 Text("114 Surahs",
                     fontFamily = FontFamily.Serif,
                     fontSize = 24.sp,
                     fontWeight = FontWeight.Bold,
-                    color = JannahColors.OnOrange)
+                    color = Color.White)
             }
         }
 

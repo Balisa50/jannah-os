@@ -1,6 +1,7 @@
 package com.jannahos.ui.screens
 
 import android.content.Intent
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -25,6 +26,10 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
@@ -115,23 +120,44 @@ fun YouScreen() {
             .verticalScroll(rememberScrollState())
             .background(JannahColors.Cream)
     ) {
-        // Header
-        Column(
+        // HERO HEADER
+        Box(
             Modifier
                 .fillMaxWidth()
-                .padding(horizontal = JannahSpacing.gutter)
-                .padding(top = JannahSpacing.l, bottom = JannahSpacing.m)
+                .height(200.dp)
         ) {
-            Text(
-                if (name.isBlank()) "You." else "$name.",
-                fontFamily = FontFamily.Serif,
-                fontSize = 26.sp,
-                fontWeight = FontWeight.Bold,
-                color = JannahColors.Ink
+            Image(
+                painter = painterResource(id = com.jannahos.R.drawable.dhikr_hero),
+                contentDescription = "You",
+                contentScale = ContentScale.Crop,
+                modifier = Modifier.fillMaxSize()
             )
-            Spacer(Modifier.height(2.dp))
-            Text("Level $level · $prayedWeek of $target nights this week",
-                style = JannahType.caption, color = JannahColors.Muted)
+            Box(
+                Modifier
+                    .fillMaxSize()
+                    .background(
+                        Brush.verticalGradient(
+                            colors = listOf(Color.Transparent, Color.Black.copy(alpha = 0.7f))
+                        )
+                    )
+            )
+            Column(
+                Modifier
+                    .align(Alignment.BottomStart)
+                    .padding(horizontal = JannahSpacing.gutter)
+                    .padding(bottom = JannahSpacing.m)
+            ) {
+                Text(
+                    if (name.isBlank()) "You." else "$name.",
+                    fontFamily = FontFamily.Serif,
+                    fontSize = 28.sp,
+                    fontWeight = FontWeight.Bold,
+                    color = Color.White
+                )
+                Spacer(Modifier.height(2.dp))
+                Text("Level $level · $prayedWeek of $target nights this week",
+                    style = JannahType.caption, color = Color.White.copy(alpha = 0.8f))
+            }
         }
 
         Column(Modifier.padding(horizontal = JannahSpacing.gutter)) {
