@@ -1,6 +1,7 @@
 package com.jannahos
 
 import android.os.Bundle
+import androidx.activity.compose.BackHandler
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.compose.foundation.background
@@ -26,6 +27,13 @@ class BlockActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
         setContent {
             JannahTheme {
+                BackHandler {
+                    val homeIntent = android.content.Intent(android.content.Intent.ACTION_MAIN).apply {
+                        addCategory(android.content.Intent.CATEGORY_HOME)
+                        flags = android.content.Intent.FLAG_ACTIVITY_NEW_TASK
+                    }
+                    startActivity(homeIntent)
+                }
                 var secondsLeft by remember { mutableIntStateOf(30) }
                 LaunchedEffect(Unit) {
                     while (secondsLeft > 0) {

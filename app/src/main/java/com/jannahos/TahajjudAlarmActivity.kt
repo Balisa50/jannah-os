@@ -151,7 +151,10 @@ class TahajjudAlarmActivity : ComponentActivity() {
         setContent {
             JannahTheme() {
                 Surface(modifier = Modifier.fillMaxSize(), color = MaterialTheme.colorScheme.background) {
-                    Flow(onDone = { finish() })
+                    Flow(onDone = { 
+                        startActivity(android.content.Intent(this@TahajjudAlarmActivity, TahajjudEvidenceActivity::class.java))
+                        finish() 
+                    })
                 }
             }
         }

@@ -73,9 +73,9 @@ class TahajjudEvidenceActivity : ComponentActivity() {
                     horizontalAlignment = Alignment.CenterHorizontally,
                     verticalArrangement = Arrangement.Center
                 ) {
-                    Text("Tahajjud Evidence", fontFamily = FontFamily.Serif, fontSize = 28.sp, fontWeight = FontWeight.Bold, color = JannahColors.Ink)
+                    Text("Tahajjud", fontFamily = FontFamily.Serif, fontSize = 28.sp, fontWeight = FontWeight.Bold, color = JannahColors.Ink)
                     Spacer(Modifier.height(16.dp))
-                    Text("Take a photo of your prayer mat to confirm you woke up.", style = com.jannahos.ui.theme.JannahType.body, color = JannahColors.Muted)
+                    Text("Take a photo of your prayer mat to confirm you woke up. Then recite Al-Fatihah.", style = com.jannahos.ui.theme.JannahType.body, color = JannahColors.Muted)
                     Spacer(Modifier.height(32.dp))
                     Box(
                         Modifier
