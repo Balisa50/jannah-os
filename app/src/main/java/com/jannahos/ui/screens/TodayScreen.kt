@@ -117,6 +117,34 @@ fun TodayScreen(onNavigate: (String) -> Unit = {}) {
         Spacer(Modifier.height(JannahSpacing.m))
 
         Column(Modifier.padding(horizontal = JannahSpacing.gutter)) {
+            
+            // DYNAMIC DIARY CARD
+            val latestEntry = remember { com.jannahos.DiaryStore(ctx).recent(1).firstOrNull() }
+            if (latestEntry != null && (System.currentTimeMillis() - latestEntry.ts) < 24 * 60 * 60 * 1000) {
+                val result = com.jannahos.DiaryClassifier.classify(latestEntry.text)
+                if (result.reactionBody.isNotBlank()) {
+                    Spacer(Modifier.height(JannahSpacing.m))
+                    Box(
+                        Modifier
+                            .fillMaxWidth()
+                            .clip(RoundedCornerShape(JannahSpacing.cardRadius))
+                            .background(JannahColors.OrangeSoft)
+                            .padding(JannahSpacing.l)
+                    ) {
+                        Column {
+                            Text(result.reactionTitle, fontFamily = FontFamily.Serif, fontSize = 18.sp, fontWeight = FontWeight.Bold, color = JannahColors.OrangeDeep)
+                            Spacer(Modifier.height(4.dp))
+                            Text(result.reactionBody, style = JannahType.bodySmall, color = JannahColors.Ink, lineHeight = 22.sp)
+                            if (result.source.isNotBlank()) {
+                                Spacer(Modifier.height(4.dp))
+                                Text(result.source, style = JannahType.micro, color = JannahColors.Muted)
+                            }
+                        }
+                    }
+                }
+            }
+            
+
             Spacer(Modifier.height(JannahSpacing.l))
             
             Text("NEXT PRAYER", style = JannahType.eyebrow, color = JannahColors.OrangeDeep)

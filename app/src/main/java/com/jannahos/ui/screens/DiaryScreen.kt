@@ -68,29 +68,22 @@ fun DiaryScreen(onBack: () -> Unit, onReacted: (String) -> Unit = {}) {
             .verticalScroll(rememberScrollState())
             .background(JannahColors.Cream)
     ) {
+        TopBar("Diary", onBack = onBack)
         Box(
             Modifier
                 .fillMaxWidth()
-                .clip(RoundedCornerShape(bottomStart = 28.dp, bottomEnd = 28.dp))
+                .clip(RoundedCornerShape(bottomStart = 24.dp, bottomEnd = 24.dp))
                 .background(JannahColors.Orange)
                 .padding(horizontal = JannahSpacing.gutter)
-                .padding(top = JannahSpacing.xl, bottom = JannahSpacing.l)
+                .padding(top = JannahSpacing.xxl, bottom = JannahSpacing.l)
         ) {
             Column {
                 Text("DIARY",
                     style = JannahType.eyebrow,
                     color = JannahColors.OnOrange.copy(alpha = 0.75f))
-                Spacer(Modifier.height(JannahSpacing.xs))
-                Row {
-                    Text("Tell it ", style = JannahType.title.copy(fontSize = 22.sp),
-                        color = JannahColors.OnOrange)
-                    Text("anything.", style = JannahType.titleItalic.copy(fontSize = 22.sp),
-                        color = JannahColors.OnOrange)
-                }
                 Spacer(Modifier.height(4.dp))
-                Text("Encrypted. Never uploaded. The app reacts.",
-                    style = JannahType.caption,
-                    color = JannahColors.OnOrange.copy(alpha = 0.85f))
+                Text("Tell it anything.", style = JannahType.title.copy(fontSize = 26.sp), fontWeight = FontWeight.Bold,
+                    color = JannahColors.OnOrange)
             }
         }
 
@@ -280,17 +273,7 @@ fun DiaryScreen(onBack: () -> Unit, onReacted: (String) -> Unit = {}) {
 
             Spacer(Modifier.height(JannahSpacing.l))
 
-            Box(
-                Modifier
-                    .clip(RoundedCornerShape(JannahSpacing.pillRadius))
-                    .background(JannahColors.Ink)
-                    .clickable(onClick = onBack)
-                    .padding(horizontal = 24.dp, vertical = 14.dp)
-            ) {
-                Text("← Back", style = JannahType.button, color = JannahColors.OnOrange)
-            }
 
-            Spacer(Modifier.height(JannahSpacing.xxl))
         }
     }
 }
