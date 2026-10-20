@@ -16,12 +16,17 @@ class FocusAccessibilityService : AccessibilityService() {
 
         // 1. Check if app is explicitly blocked
         if (AppBlockStore.isBlocked(this, pkg)) {
-            // Hard block: Launch BlockActivity and go home
-            val blockIntent = Intent(this, BlockActivity::class.java).apply {
-                addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK or Intent.FLAG_ACTIVITY_EXCLUDE_FROM_RECENTS)
+            val blockAlways = AppBlockStore.blockAlways(this)
+            val isPrayerLock = PrayerLock.enabled(this) && PrayerLock.sessionActive(this)
+            
+            // Block if it's 24/7 OR if it's currently a prayer time
+            if (blockAlways || isPrayerLock) {
+                val blockIntent = Intent(this, BlockActivity::class.java).apply {
+                    addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK or Intent.FLAG_ACTIVITY_EXCLUDE_FROM_RECENTS)
+                }
+                startActivity(blockIntent)
+                return
             }
-            startActivity(blockIntent)
-            return
         }
 
         // 2. Check Prayer Lock

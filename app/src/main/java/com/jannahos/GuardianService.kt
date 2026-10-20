@@ -8,7 +8,6 @@ import android.app.Service
 import android.content.Context
 import android.content.Intent
 import android.os.Build
-import android.media.RingtoneManager
 import android.os.IBinder
 import androidx.core.app.NotificationCompat
 import kotlinx.coroutines.CoroutineScope
@@ -17,49 +16,26 @@ import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
+import java.text.SimpleDateFormat
+import java.util.Date
+import java.util.Locale
 
 class GuardianService : Service() {
-    private val CHANNEL_SILENT = "jannah_guardian_silent_v2"
-    private val CHANNEL_BREATHING = "jannah_guardian_breathing_v2"
+    private val CHANNEL_ID = "jannah_persistent_countdown"
     private val scope = CoroutineScope(Dispatchers.IO + SupervisorJob())
 
     override fun onCreate() {
         super.onCreate()
-        createChannels()
-        startForeground(1, buildSilentNotification())
+        createChannel()
         
-        // Loop to trigger the "breathing" prayer notifications
+        val notification = buildNotification("Calculating next prayer...")
+        startForeground(1, notification)
+
+        // Loop to update the persistent notification every minute
         scope.launch {
             while (isActive) {
-                try {
-                    val times = SalahScheduler.todayTimes(Settings.lat(this@GuardianService), Settings.lon(this@GuardianService))
-                    val now = System.currentTimeMillis()
-                    val ordered = listOf("fajr", "dhuhr", "asr", "maghrib", "isha")
-                    
-                    val nextKey = ordered.firstOrNull { (times[it]?.time ?: 0L) > now }
-                    if (nextKey != null) {
-                        val nextTime = times[nextKey]?.time ?: now
-                        val diff = nextTime - now
-                        val name = SalahTracker.label(nextKey).uppercase()
-                        
-                        // Trigger the heads-up notification
-                        sendBreathingNotification(name, nextTime, diff)
-                        
-                        // Calculate when to pop up next based on how close the prayer is
-                        val waitMs = when {
-                            diff > 3 * 60 * 60 * 1000L -> 60 * 60 * 1000L // > 3 hours: every hour
-                            diff > 60 * 60 * 1000L -> 30 * 60 * 1000L     // > 1 hour: every 30 mins
-                            diff > 30 * 60 * 1000L -> 15 * 60 * 1000L     // > 30 mins: every 15 mins
-                            diff > 10 * 60 * 1000L -> 5 * 60 * 1000L      // > 10 mins: every 5 mins
-                            else -> 2 * 60 * 1000L                        // < 10 mins: every 2 mins
-                        }
-                        delay(waitMs)
-                    } else {
-                        delay(10 * 60 * 1000L) // Fallback sleep
-                    }
-                } catch (e: Exception) {
-                    delay(5 * 60 * 1000L)
-                }
+                updateNotification()
+                delay(60_000L) // Update every 1 minute
             }
         }
     }
@@ -70,71 +46,71 @@ class GuardianService : Service() {
 
     override fun onBind(intent: Intent?): IBinder? = null
 
-    private fun sendBreathingNotification(prayerName: String, targetTimeMs: Long, diffMs: Long) {
+    private fun updateNotification() {
+        try {
+            val lat = Settings.lat(this)
+            val lon = Settings.lon(this)
+            val times = SalahScheduler.todayTimes(lat, lon)
+            val now = System.currentTimeMillis()
+            val ordered = listOf("fajr", "dhuhr", "asr", "maghrib", "isha")
+            
+            val nextKey = ordered.firstOrNull { (times[it]?.time ?: 0L) > now }
+            
+            val title: String
+            val text: String
+            
+            if (nextKey != null) {
+                val nextTime = times[nextKey]?.time ?: now
+                val diff = nextTime - now
+                val h = diff / 3600000
+                val m = (diff / 60000) % 60
+                val timeStr = if (h > 0) "${h}h ${m}m left" else "${m}m left"
+                val clockStr = SimpleDateFormat("HH:mm", Locale.getDefault()).format(Date(nextTime))
+                
+                title = "${SalahTracker.label(nextKey).replaceFirstChar { it.uppercase() }} at $clockStr"
+                text = "Next prayer in $timeStr"
+            } else {
+                val tomorrowFajr = (times["fajr"]?.time ?: now) + 24L * 60 * 60 * 1000
+                val diff = tomorrowFajr - now
+                val h = diff / 3600000
+                val m = (diff / 60000) % 60
+                title = "Fajr tomorrow"
+                text = "Next prayer in ${h}h ${m}m"
+            }
+
+            val nm = getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
+            nm.notify(1, buildNotification(text, title))
+        } catch (e: Exception) {
+            // Ignore and retry next minute
+        }
+    }
+
+    private fun buildNotification(text: String, title: String = "Jannah OS"): Notification {
         val launchIntent = packageManager.getLaunchIntentForPackage(packageName)
         val pendingIntent = PendingIntent.getActivity(
             this, 0, launchIntent, PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT
         )
 
-        val h = diffMs / 3600000
-        val m = (diffMs / 60000) % 60
-        val timeLeftStr = if (h > 0) "${h}h ${m}m left" else "${m}m left"
-        val clockTime = java.text.SimpleDateFormat("HH:mm", java.util.Locale.getDefault()).format(java.util.Date(targetTimeMs))
-
-        val isCountDown = Build.VERSION.SDK_INT >= Build.VERSION_CODES.N
-        val builder = NotificationCompat.Builder(this, CHANNEL_BREATHING)
-            .setContentTitle("$prayerName at $clockTime")
-            .setContentText(timeLeftStr)
+        return NotificationCompat.Builder(this, CHANNEL_ID)
+            .setContentTitle(title)
+            .setContentText(text)
             .setSmallIcon(android.R.drawable.ic_lock_idle_alarm)
-            .setPriority(NotificationCompat.PRIORITY_MAX)
-            .setCategory(NotificationCompat.CATEGORY_CALL)
             .setColor(android.graphics.Color.parseColor("#C2410C")) // Jannah Orange
-            .setColorized(true)
-            .setVibrate(longArrayOf(0, 1000, 500, 1000, 500, 1000)) // Force vibration pattern
-            .setSound(RingtoneManager.getDefaultUri(RingtoneManager.TYPE_NOTIFICATION)) // Force sound
-            .setFullScreenIntent(pendingIntent, true) // Force pop-up over lock screen/apps
-            .setAutoCancel(true)
-            .setTimeoutAfter(30_000) // Stays for 2 minutes
-            .setContentIntent(pendingIntent)
-
-        if (isCountDown) {
-            builder.setUsesChronometer(true)
-            builder.setChronometerCountDown(true)
-            builder.setWhen(targetTimeMs)
-        }
-
-        val nm = getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
-        nm.notify(99, builder.build())
-    }
-
-    private fun buildSilentNotification(): Notification {
-        return NotificationCompat.Builder(this, CHANNEL_SILENT)
-            .setContentTitle("Jannah Brain is active")
-            .setContentText("Monitoring prayer times and app locks.")
-            .setSmallIcon(android.R.drawable.ic_lock_idle_lock)
             .setOngoing(true)
-            .setPriority(NotificationCompat.PRIORITY_MIN) // Completely silent, grouped at bottom
+            .setOnlyAlertOnce(true) // Silent update
+            .setPriority(NotificationCompat.PRIORITY_LOW)
+            .setContentIntent(pendingIntent)
             .build()
     }
 
-    private fun createChannels() {
+    private fun createChannel() {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            val nm = getSystemService(NotificationManager::class.java)
-            
-            // Silent channel for the ongoing service
-            val silentChannel = NotificationChannel(CHANNEL_SILENT, "System Guardian", NotificationManager.IMPORTANCE_MIN).apply {
+            val channel = NotificationChannel(CHANNEL_ID, "Next Prayer Countdown", NotificationManager.IMPORTANCE_LOW).apply {
+                description = "Always shows the time remaining until the next prayer."
                 setShowBadge(false)
             }
-            nm.createNotificationChannel(silentChannel)
-
-            // High priority channel for the "Call-like" prayer popups
-            val breathingChannel = NotificationChannel(CHANNEL_BREATHING, "Prayer Countdowns", NotificationManager.IMPORTANCE_HIGH).apply {
-                description = "Alerts you as prayer time approaches"
-                enableVibration(true)
-                vibrationPattern = longArrayOf(0, 1000, 500, 1000, 500, 1000)
-                setBypassDnd(true)
-            }
-            nm.createNotificationChannel(breathingChannel)
+            val nm = getSystemService(NotificationManager::class.java)
+            nm.createNotificationChannel(channel)
         }
     }
 }

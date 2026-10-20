@@ -102,6 +102,7 @@ private fun SettingsScreen(onBack: () -> Unit) {
     var countryName by remember { mutableStateOf(CityStore.country(ctx)) }
     var useCityMode by remember { mutableStateOf(CityStore.useCity(ctx)) }
     var blockedCount by remember { mutableStateOf(AppBlockStore.count(ctx)) }
+    var blockAlways by remember { mutableStateOf(AppBlockStore.blockAlways(ctx)) }
 
     var nameExpanded by remember { mutableStateOf(false) }
     var locExpanded by remember { mutableStateOf(false) }

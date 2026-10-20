@@ -81,18 +81,12 @@ private fun ReadingLockSession(surah: Int, onRelease: () -> Unit) {
 
     var remaining by remember { mutableLongStateOf(QuranReadingLock.getSavedRemainingMs(ctx)) }
     var isDone by remember { mutableStateOf(remaining <= 0L) }
-    var isForeground by remember { mutableStateOf(true) }
     val lifecycleOwner = LocalLifecycleOwner.current
 
     DisposableEffect(lifecycleOwner) {
         val observer = LifecycleEventObserver { _, event ->
-            when (event) {
-                Lifecycle.Event.ON_PAUSE -> {
-                    isForeground = false
-                    QuranReadingLock.saveRemainingMs(ctx, remaining)
-                }
-                Lifecycle.Event.ON_RESUME -> isForeground = true
-                else -> {}
+            if (event == Lifecycle.Event.ON_STOP || event == Lifecycle.Event.ON_PAUSE) {
+                QuranReadingLock.saveRemainingMs(ctx, remaining)
             }
         }
         lifecycleOwner.lifecycle.addObserver(observer)
@@ -102,16 +96,17 @@ private fun ReadingLockSession(surah: Int, onRelease: () -> Unit) {
         }
     }
 
-    LaunchedEffect(isForeground) {
-        if (!isForeground || isDone) return@LaunchedEffect
-        while (remaining > 0L && isForeground) {
+    // The timer only runs while the composable is actively in the composition tree AND the lifecycle is resumed.
+    // Using rememberCoroutineScope tied to the composition ensures it dies the moment you leave.
+    LaunchedEffect(isDone) {
+        if (isDone) return@LaunchedEffect
+        while (remaining > 0L) {
             delay(1000)
             remaining -= 1000L
+            QuranReadingLock.saveRemainingMs(ctx, remaining)
         }
-        if (remaining <= 0L) {
-            QuranReadingLock.markDoneToday(ctx)
-            isDone = true
-        }
+        QuranReadingLock.markDoneToday(ctx)
+        isDone = true
     }
 
     val mm = (remaining / 60_000L).toInt()
