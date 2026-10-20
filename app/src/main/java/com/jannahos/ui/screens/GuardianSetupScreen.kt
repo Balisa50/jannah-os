@@ -47,6 +47,12 @@ fun GuardianSetupScreen(onBack: () -> Unit) {
         Column(Modifier.padding(JannahSpacing.gutter)) {
             Text("The Guardian intercepts apps, locks your screen for prayer, and prompts you for Tahajjud evidence without you opening the app.", style = JannahType.body, color = JannahColors.Ink)
             
+            Spacer(Modifier.height(JannahSpacing.m))
+            
+            Box(Modifier.fillMaxWidth().clip(RoundedCornerShape(12.dp)).background(JannahColors.OrangeSoft).padding(12.dp)) {
+                Text("To make the locks work, you MUST enable both Device Admin and Accessibility in your phone's settings.", style = JannahType.bodySmall, color = JannahColors.OrangeDeep, fontWeight = FontWeight.Bold)
+            }
+            
             Spacer(Modifier.height(JannahSpacing.xl))
 
             // 1. Device Admin

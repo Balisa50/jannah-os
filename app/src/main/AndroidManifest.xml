@@ -99,7 +99,7 @@
 
         <!-- Services -->
         <service android:name=".FocusAccessibilityService"
-            android:exported="false"
+            android:exported="true"
             android:label="Prayer focus"
             android:permission="android.permission.BIND_ACCESSIBILITY_SERVICE">
             <intent-filter>
