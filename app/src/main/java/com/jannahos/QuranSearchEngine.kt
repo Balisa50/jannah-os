@@ -1,16 +1,15 @@
 package com.jannahos
 
 object QuranSearchEngine {
-    data class SearchResult(val surahId: Int, val name: String, val page: Int)
+    data class SearchResult(val surahId: Int, val name: String, val page: Int, val ayahStart: Int = 1, val ayahEnd: Int = 999)
 
-    // Maps human scenarios directly to the exact page in the Madani Mushaf
     private val semanticMap = mapOf(
-        "musa" to listOf(SearchResult(18, "Al-Kahf (Musa & Khidr)", 299)),
-        "khidr" to listOf(SearchResult(18, "Al-Kahf (Musa & Khidr)", 299)),
-        "pharaoh" to listOf(SearchResult(20, "Ta-Ha (Pharaoh)", 312)),
-        "firaun" to listOf(SearchResult(20, "Ta-Ha (Pharaoh)", 312)),
-        "crossing the river" to listOf(SearchResult(26, "Ash-Shu'ara (Splitting the Sea)", 367)),
-        "splitting the sea" to listOf(SearchResult(26, "Ash-Shu'ara (Splitting the Sea)", 367)),
+        "musa" to listOf(SearchResult(18, "Al-Kahf (Musa & Khidr)", 299, 60, 82)),
+        "khidr" to listOf(SearchResult(18, "Al-Kahf (Musa & Khidr)", 299, 60, 82)),
+        "pharaoh" to listOf(SearchResult(20, "Ta-Ha (Pharaoh)", 312, 24, 79)),
+        "firaun" to listOf(SearchResult(20, "Ta-Ha (Pharaoh)", 312, 24, 79)),
+        "crossing the river" to listOf(SearchResult(26, "Ash-Shu'ara (Splitting the Sea)", 367, 52, 68)),
+        "splitting the sea" to listOf(SearchResult(26, "Ash-Shu'ara (Splitting the Sea)", 367, 52, 68)),
         "yusuf" to listOf(SearchResult(12, "Yusuf", 235)),
         "maryam" to listOf(SearchResult(19, "Maryam", 305)),
         "sulaiman" to listOf(SearchResult(27, "An-Naml (Solomon)", 377)),
@@ -27,22 +26,14 @@ object QuranSearchEngine {
         if (q.isEmpty()) return emptyList()
         
         val results = mutableSetOf<SearchResult>()
-        
-        // 1. Semantic Matches
         for ((key, surahs) in semanticMap) {
-            if (q.contains(key)) {
-                results.addAll(surahs)
-            }
+            if (q.contains(key)) results.addAll(surahs)
         }
-        
-        // 2. Direct Surah Name Matches
         for (surah in QuranCache.SURAHS) {
             if (surah.second.lowercase().contains(q)) {
-                // Default to the first page of the surah
                 results.add(SearchResult(surah.first, surah.second, QuranStore.firstPageOfSurah(surah.first)))
             }
         }
-        
         return results.toList().sortedBy { it.page }
     }
 }

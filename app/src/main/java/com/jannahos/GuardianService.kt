@@ -19,8 +19,8 @@ import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 
 class GuardianService : Service() {
-    private val CHANNEL_SILENT = "jannah_guardian_silent"
-    private val CHANNEL_BREATHING = "jannah_guardian_breathing"
+    private val CHANNEL_SILENT = "jannah_guardian_silent_v2"
+    private val CHANNEL_BREATHING = "jannah_guardian_breathing_v2"
     private val scope = CoroutineScope(Dispatchers.IO + SupervisorJob())
 
     override fun onCreate() {
@@ -88,11 +88,13 @@ class GuardianService : Service() {
             .setSmallIcon(android.R.drawable.ic_lock_idle_alarm)
             .setPriority(NotificationCompat.PRIORITY_MAX)
             .setCategory(NotificationCompat.CATEGORY_CALL)
+            .setColor(android.graphics.Color.parseColor("#C2410C")) // Jannah Orange
+            .setColorized(true)
             .setVibrate(longArrayOf(0, 1000, 500, 1000, 500, 1000)) // Force vibration pattern
             .setSound(RingtoneManager.getDefaultUri(RingtoneManager.TYPE_NOTIFICATION)) // Force sound
             .setFullScreenIntent(pendingIntent, true) // Force pop-up over lock screen/apps
             .setAutoCancel(true)
-            .setTimeoutAfter(120_000) // Stays for 2 minutes
+            .setTimeoutAfter(30_000) // Stays for 2 minutes
             .setContentIntent(pendingIntent)
 
         if (isCountDown) {

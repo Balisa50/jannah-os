@@ -18,6 +18,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.jannahos.QuranApi
 import com.jannahos.QuranBookmarkStore
 import com.jannahos.QuranSearch
 import com.jannahos.QuranSearchEngine
@@ -41,6 +42,7 @@ fun QuranSearchScreen(onBack: () -> Unit, onNavigateToPage: (Int) -> Unit) {
     var query by remember { mutableStateOf("") }
     var hits by remember { mutableStateOf<List<QuranSearch.Hit>>(emptyList()) }
     var semanticHits by remember { mutableStateOf<List<QuranSearchEngine.SearchResult>>(emptyList()) }
+    var semanticVerses by remember { mutableStateOf<Map<Int, List<QuranApi.Ayah>>>(emptyMap()) } // SurahId -> Ayahs
     var loading by remember { mutableStateOf(false) }
     var searched by remember { mutableStateOf(false) }
     var error by remember { mutableStateOf<String?>(null) }
@@ -53,6 +55,7 @@ fun QuranSearchScreen(onBack: () -> Unit, onNavigateToPage: (Int) -> Unit) {
         if (q.length < 2) {
             hits = emptyList()
             semanticHits = emptyList()
+            semanticVerses = emptyMap()
             searched = false
             return@LaunchedEffect
         }
@@ -61,11 +64,24 @@ fun QuranSearchScreen(onBack: () -> Unit, onNavigateToPage: (Int) -> Unit) {
         error = null
         delay(400) // Debounce
 
-        // 1. Check Semantic Engine (Scenario Matching)
+        // 1. Check Semantic Engine
         val semantic = QuranSearchEngine.search(q)
         semanticHits = semantic
 
-        // 2. Check Text Search API (if it's a specific word)
+        // 2. Fetch text for semantic hits
+        val verseMap = mutableMapOf<Int, List<QuranApi.Ayah>>()
+        for (res in semantic) {
+            val surahText = withContext(Dispatchers.IO) {
+                try { QuranApi.fetchSurah(res.surahId) } catch (e: Exception) { emptyList() }
+            }
+            if (surahText.isNotEmpty()) {
+                val filtered = surahText.filter { it.number in res.ayahStart..res.ayahEnd }
+                verseMap[res.surahId] = if (filtered.isNotEmpty()) filtered else surahText.take(5)
+            }
+        }
+        semanticVerses = verseMap
+
+        // 3. Check Text Search API
         val res = withContext(Dispatchers.IO) {
             try { QuranSearch.search(q) } catch (e: Exception) { null }
         }
@@ -81,15 +97,12 @@ fun QuranSearchScreen(onBack: () -> Unit, onNavigateToPage: (Int) -> Unit) {
     }
 
     Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .background(JannahColors.Cream)
+        modifier = Modifier.fillMaxSize().background(JannahColors.Cream)
     ) {
         TopBar("Search Quran", onBack = onBack)
 
         Column(Modifier.padding(horizontal = JannahSpacing.gutter)) {
             Spacer(Modifier.height(JannahSpacing.m))
-            
             OutlinedTextField(
                 value = query,
                 onValueChange = { query = it },
@@ -98,7 +111,6 @@ fun QuranSearchScreen(onBack: () -> Unit, onNavigateToPage: (Int) -> Unit) {
                 placeholder = { Text("e.g. Musa, patience, mercy", fontSize = 13.sp) },
                 shape = RoundedCornerShape(12.dp)
             )
-            
             Spacer(Modifier.height(JannahSpacing.l))
         }
 
@@ -119,31 +131,41 @@ fun QuranSearchScreen(onBack: () -> Unit, onNavigateToPage: (Int) -> Unit) {
                     Text("No matches found. Try a different word.", style = JannahType.bodySmall, color = JannahColors.Muted, textAlign = TextAlign.Center, modifier = Modifier.fillMaxWidth().padding(JannahSpacing.l))
                 }
             } else {
-                // 1. Show Semantic Story Matches First
+                // 1. Semantic Matches with Text
                 if (semanticHits.isNotEmpty()) {
                     item {
                         Text("STORIES & SCENARIOS", style = JannahType.eyebrow, color = JannahColors.OrangeDeep, modifier = Modifier.padding(horizontal = JannahSpacing.gutter, vertical = JannahSpacing.s))
                     }
                     items(semanticHits.size) { i ->
                         val res = semanticHits[i]
-                        Row(
-                            Modifier
-                                .fillMaxWidth()
-                                .pressClickable { onNavigateToPage(res.page) }
-                                .padding(horizontal = JannahSpacing.gutter, vertical = 16.dp),
-                            verticalAlignment = Alignment.CenterVertically
-                        ) {
-                            Column(Modifier.weight(1f)) {
-                                Text(res.name, fontFamily = FontFamily.Serif, fontSize = 18.sp, fontWeight = FontWeight.Bold, color = JannahColors.Ink)
-                                Text("Open Page ${res.page}", style = JannahType.caption, color = JannahColors.Muted)
+                        val verses = semanticVerses[res.surahId] ?: emptyList()
+                        
+                        Column(Modifier.fillMaxWidth().padding(horizontal = JannahSpacing.gutter, vertical = JannahSpacing.s)) {
+                            Row(
+                                Modifier.fillMaxWidth().pressClickable { onNavigateToPage(res.page) }.padding(vertical = 8.dp),
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Column(Modifier.weight(1f)) {
+                                    Text(res.name, fontFamily = FontFamily.Serif, fontSize = 20.sp, fontWeight = FontWeight.Bold, color = JannahColors.Ink)
+                                    Text("Page ${res.page} · Tap to read full context", style = JannahType.caption, color = JannahColors.Orange)
+                                }
+                                Text("→", style = JannahType.title, color = JannahColors.Orange)
                             }
-                            Text("→", style = JannahType.title, color = JannahColors.Orange)
+                            
+                            // Render the text
+                            verses.forEach { ayah ->
+                                Column(Modifier.padding(vertical = 8.dp)) {
+                                    Text(ayah.arabic, fontFamily = UthmanicHafs, fontSize = 24.sp, lineHeight = 40.sp, textAlign = TextAlign.End, modifier = Modifier.fillMaxWidth(), color = JannahColors.Ink)
+                                    Spacer(Modifier.height(4.dp))
+                                    Text(ayah.english, style = JannahType.bodySmall, color = JannahColors.Body, lineHeight = 22.sp)
+                                }
+                            }
                         }
                         Box(Modifier.fillMaxWidth().padding(horizontal = JannahSpacing.gutter).height(1.dp).background(JannahColors.Border))
                     }
                 }
 
-                // 2. Show Text API Matches
+                // 2. Text API Matches
                 if (hits.isNotEmpty()) {
                     item {
                         Spacer(Modifier.height(JannahSpacing.m))
@@ -153,29 +175,12 @@ fun QuranSearchScreen(onBack: () -> Unit, onNavigateToPage: (Int) -> Unit) {
                         val h = hits[i]
                         val isBookmarked = bookmarks.isBookmarked(h.surah, h.ayah)
                         
-                        Column(
-                            Modifier
-                                .fillMaxWidth()
-                                .padding(horizontal = JannahSpacing.gutter, vertical = JannahSpacing.m)
-                        ) {
-                            Text(
-                                "${h.surahName} · ${h.surah}:${h.ayah}",
-                                style = JannahType.micro,
-                                color = JannahColors.OrangeDeep,
-                                fontWeight = FontWeight.Bold
-                            )
+                        Column(Modifier.fillMaxWidth().padding(horizontal = JannahSpacing.gutter, vertical = JannahSpacing.m)) {
+                            Text("${h.surahName} · ${h.surah}:${h.ayah}", style = JannahType.micro, color = JannahColors.OrangeDeep, fontWeight = FontWeight.Bold)
                             Spacer(Modifier.height(JannahSpacing.xs))
                             
                             if (h.arabic.isNotBlank()) {
-                                Text(
-                                    h.arabic,
-                                    fontFamily = UthmanicHafs,
-                                    fontSize = 24.sp,
-                                    color = JannahColors.Ink,
-                                    textAlign = TextAlign.End,
-                                    lineHeight = 40.sp,
-                                    modifier = Modifier.fillMaxWidth()
-                                )
+                                Text(h.arabic, fontFamily = UthmanicHafs, fontSize = 24.sp, color = JannahColors.Ink, textAlign = TextAlign.End, lineHeight = 40.sp, modifier = Modifier.fillMaxWidth())
                                 Spacer(Modifier.height(JannahSpacing.xs))
                             }
                             if (h.english.isNotBlank()) {
@@ -186,34 +191,12 @@ fun QuranSearchScreen(onBack: () -> Unit, onNavigateToPage: (Int) -> Unit) {
                             
                             Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                                 Box(
-                                    Modifier
-                                        .clip(RoundedCornerShape(50))
-                                        .background(if (isBookmarked) JannahColors.Orange else JannahColors.Card)
-                                        .pressClickable {
-                                            if (isBookmarked) bookmarks.remove(h.surah, h.ayah)
-                                            else bookmarks.add(h.surah, h.ayah)
-                                            bookmarkTick++
-                                        }
-                                        .padding(horizontal = 12.dp, vertical = 6.dp)
+                                    Modifier.clip(RoundedCornerShape(50)).background(if (isBookmarked) JannahColors.Orange else JannahColors.Card).pressClickable {
+                                        if (isBookmarked) bookmarks.remove(h.surah, h.ayah) else bookmarks.add(h.surah, h.ayah)
+                                        bookmarkTick++
+                                    }.padding(horizontal = 12.dp, vertical = 6.dp)
                                 ) {
-                                    Text(
-                                        if (isBookmarked) "★ Saved" else "☆ Save",
-                                        style = JannahType.micro,
-                                        color = if (isBookmarked) JannahColors.OnOrange else JannahColors.Muted
-                                    )
-                                }
-                                Box(
-                                    Modifier
-                                        .clip(RoundedCornerShape(50))
-                                        .background(JannahColors.Card)
-                                        .pressClickable { onNavigateToPage(com.jannahos.QuranStore.firstPageOfSurah(h.surah)) }
-                                        .padding(horizontal = 12.dp, vertical = 6.dp)
-                                ) {
-                                    Text(
-                                        "Open in Mushaf",
-                                        style = JannahType.micro,
-                                        color = JannahColors.Ink
-                                    )
+                                    Text(if (isBookmarked) "★ Saved" else "☆ Save", style = JannahType.micro, color = if (isBookmarked) JannahColors.OnOrange else JannahColors.Muted)
                                 }
                             }
                         }
