@@ -7,6 +7,9 @@ import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Text
 import androidx.compose.runtime.*
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.LifecycleEventObserver
+import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -78,20 +81,34 @@ private fun ReadingLockSession(surah: Int, onRelease: () -> Unit) {
 
     var remaining by remember { mutableLongStateOf(QuranReadingLock.getSavedRemainingMs(ctx)) }
     var isDone by remember { mutableStateOf(remaining <= 0L) }
-    
-    // Pause timer instantly when leaving screen
-    DisposableEffect(Unit) {
-        onDispose { QuranReadingLock.saveRemainingMs(ctx, remaining) }
+    var isForeground by remember { mutableStateOf(true) }
+    val lifecycleOwner = LocalLifecycleOwner.current
+
+    DisposableEffect(lifecycleOwner) {
+        val observer = LifecycleEventObserver { _, event ->
+            when (event) {
+                Lifecycle.Event.ON_PAUSE -> {
+                    isForeground = false
+                    QuranReadingLock.saveRemainingMs(ctx, remaining)
+                }
+                Lifecycle.Event.ON_RESUME -> isForeground = true
+                else -> {}
+            }
+        }
+        lifecycleOwner.lifecycle.addObserver(observer)
+        onDispose {
+            lifecycleOwner.lifecycle.removeObserver(observer)
+            QuranReadingLock.saveRemainingMs(ctx, remaining)
+        }
     }
 
-    LaunchedEffect(Unit) {
-        if (isDone) {
-            QuranReadingLock.markDoneToday(ctx)
-        } else {
-            while (remaining > 0L) {
-                delay(1000)
-                remaining -= 1000L
-            }
+    LaunchedEffect(isForeground) {
+        if (!isForeground || isDone) return@LaunchedEffect
+        while (remaining > 0L && isForeground) {
+            delay(1000)
+            remaining -= 1000L
+        }
+        if (remaining <= 0L) {
             QuranReadingLock.markDoneToday(ctx)
             isDone = true
         }
@@ -106,12 +123,12 @@ private fun ReadingLockSession(surah: Int, onRelease: () -> Unit) {
             val pageNum = pageIndex + 1
             val bitmap = remember(pageNum) { MushafImageStore.loadBitmap(ctx, pageNum) }
             if (bitmap != null) {
-                Box(Modifier.fillMaxSize().padding(16.dp).clip(RoundedCornerShape(12.dp)).background(Color(0xFFFFFCF3)), contentAlignment = Alignment.Center) {
+                Box(Modifier.fillMaxSize().background(Color.White), contentAlignment = Alignment.Center) {
                     androidx.compose.foundation.Image(
                         bitmap = bitmap.asImageBitmap(),
                         contentDescription = "Page $pageNum",
-                        modifier = Modifier.fillMaxSize(),
-                        contentScale = ContentScale.Fit
+                        modifier = Modifier.fillMaxWidth(),
+                        contentScale = ContentScale.FillWidth
                     )
                 }
             }

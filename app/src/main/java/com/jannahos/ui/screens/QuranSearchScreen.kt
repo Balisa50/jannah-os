@@ -155,7 +155,7 @@ fun QuranSearchScreen(onBack: () -> Unit, onNavigateToPage: (Int) -> Unit) {
                             // Render the text
                             verses.forEach { ayah ->
                                 Column(Modifier.padding(vertical = 8.dp)) {
-                                    Text(ayah.arabic, fontFamily = UthmanicHafs, fontSize = 24.sp, lineHeight = 40.sp, textAlign = TextAlign.End, modifier = Modifier.fillMaxWidth(), color = JannahColors.Ink)
+                                    Text(cleanArabic(ayah.arabic), fontFamily = UthmanicHafs, fontSize = 24.sp, lineHeight = 40.sp, textAlign = TextAlign.End, modifier = Modifier.fillMaxWidth(), color = JannahColors.Ink)
                                     Spacer(Modifier.height(4.dp))
                                     Text(ayah.english, style = JannahType.bodySmall, color = JannahColors.Body, lineHeight = 22.sp)
                                 }
@@ -180,7 +180,7 @@ fun QuranSearchScreen(onBack: () -> Unit, onNavigateToPage: (Int) -> Unit) {
                             Spacer(Modifier.height(JannahSpacing.xs))
                             
                             if (h.arabic.isNotBlank()) {
-                                Text(h.arabic, fontFamily = UthmanicHafs, fontSize = 24.sp, color = JannahColors.Ink, textAlign = TextAlign.End, lineHeight = 40.sp, modifier = Modifier.fillMaxWidth())
+                                Text(cleanArabic(h.arabic), fontFamily = UthmanicHafs, fontSize = 24.sp, color = JannahColors.Ink, textAlign = TextAlign.End, lineHeight = 40.sp, modifier = Modifier.fillMaxWidth())
                                 Spacer(Modifier.height(JannahSpacing.xs))
                             }
                             if (h.english.isNotBlank()) {
@@ -206,4 +206,10 @@ fun QuranSearchScreen(onBack: () -> Unit, onNavigateToPage: (Int) -> Unit) {
             }
         }
     }
+}
+
+
+private fun cleanArabic(text: String): String {
+    // Removes Ayah markers (U+06DD) and Arabic numerals (U+0660 to U+0669, U+06F0 to U+06F9)
+    return text.replace(Regex("[\\u06DD\\u06DE\\u06E9\\u0660-\\u0669\\u06F0-\\u06F9]"), "").trim()
 }

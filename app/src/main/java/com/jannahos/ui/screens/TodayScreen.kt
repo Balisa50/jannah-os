@@ -1,5 +1,6 @@
 package com.jannahos.ui.screens
 
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
@@ -11,6 +12,10 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.font.FontWeight
@@ -63,27 +68,50 @@ fun TodayScreen(onNavigate: (String) -> Unit = {}) {
             .verticalScroll(rememberScrollState())
             .background(JannahColors.Cream)
     ) {
-        Column(
+        // HERO PHOTO BLOCK
+        Box(
             Modifier
                 .fillMaxWidth()
-                .padding(horizontal = JannahSpacing.gutter)
-                .padding(top = JannahSpacing.l, bottom = JannahSpacing.m)
+                .height(220.dp)
         ) {
-            Text(
-                if (userName.isBlank()) greeting + "." else "$greeting, $userName.",
-                fontFamily = FontFamily.Serif,
-                fontSize = 26.sp,
-                fontWeight = FontWeight.Bold,
-                color = JannahColors.Ink
+            Image(
+                painter = painterResource(id = com.jannahos.R.drawable.hero_today),
+                contentDescription = "Today",
+                contentScale = ContentScale.Crop,
+                modifier = Modifier.fillMaxSize()
             )
-            Spacer(Modifier.height(2.dp))
-            val greg = SimpleDateFormat("EEE d MMM", Locale.getDefault()).format(Date())
-            val hijri = HijriDate.today()
-            Text(
-                if (hijri.isNotEmpty()) "$greg · $hijri" else greg,
-                style = JannahType.caption,
-                color = JannahColors.Muted
+            // Gradient Scrim for text readability
+            Box(
+                Modifier
+                    .fillMaxSize()
+                    .background(
+                        Brush.verticalGradient(
+                            colors = listOf(Color.Transparent, JannahColors.Cream.copy(alpha = 0.8f), JannahColors.Cream)
+                        )
+                    )
             )
+            Column(
+                Modifier
+                    .align(Alignment.BottomStart)
+                    .padding(horizontal = JannahSpacing.gutter)
+                    .padding(bottom = JannahSpacing.m)
+            ) {
+                Text(
+                    if (userName.isBlank()) greeting + "." else "$greeting, $userName.",
+                    fontFamily = FontFamily.Serif,
+                    fontSize = 28.sp,
+                    fontWeight = FontWeight.Bold,
+                    color = JannahColors.Ink
+                )
+                Spacer(Modifier.height(2.dp))
+                val greg = SimpleDateFormat("EEE d MMM", Locale.getDefault()).format(Date())
+                val hijri = HijriDate.today()
+                Text(
+                    if (hijri.isNotEmpty()) "$greg · $hijri" else greg,
+                    style = JannahType.caption,
+                    color = JannahColors.Muted
+                )
+            }
         }
 
         Column(Modifier.padding(horizontal = JannahSpacing.gutter)) {
