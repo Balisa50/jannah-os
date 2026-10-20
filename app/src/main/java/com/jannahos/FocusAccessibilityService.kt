@@ -18,10 +18,9 @@ class FocusAccessibilityService : AccessibilityService() {
         if (AppBlockStore.isBlocked(this, pkg)) {
             // Hard block: Launch BlockActivity and go home
             val blockIntent = Intent(this, BlockActivity::class.java).apply {
-                addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP)
+                addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK or Intent.FLAG_ACTIVITY_EXCLUDE_FROM_RECENTS)
             }
             startActivity(blockIntent)
-            performGlobalAction(GLOBAL_ACTION_HOME)
             return
         }
 

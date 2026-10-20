@@ -16,6 +16,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.jannahos.ui.theme.JannahColors
@@ -53,14 +54,17 @@ class BlockActivity : ComponentActivity() {
                     horizontalAlignment = Alignment.CenterHorizontally,
                     verticalArrangement = Arrangement.Center
                 ) {
-                    Text("This app is locked.", fontFamily = FontFamily.Serif, fontSize = 32.sp, fontWeight = FontWeight.Bold, color = JannahColors.Ink)
-                    Spacer(Modifier.height(16.dp))
-                    Text("Returning to Jannah OS in $secondsLeft seconds.", style = com.jannahos.ui.theme.JannahType.body, color = JannahColors.Muted)
-                    Spacer(Modifier.height(32.dp))
+                    Text("BLOCKED", style = com.jannahos.ui.theme.JannahType.eyebrow, color = JannahColors.OrangeDeep)
+                    Spacer(Modifier.height(8.dp))
+                    Text("Focus mode is active.", fontFamily = FontFamily.Serif, fontSize = 32.sp, fontWeight = FontWeight.Bold, color = JannahColors.Ink, textAlign = TextAlign.Center)
+                    Spacer(Modifier.height(12.dp))
+                    Text("This app is locked to protect your time and worship. Returning to Jannah in $secondsLeft seconds.", style = com.jannahos.ui.theme.JannahType.body, color = JannahColors.Muted, textAlign = TextAlign.Center, lineHeight = 24.sp)
+                    Spacer(Modifier.height(48.dp))
+                    
                     Box(
                         Modifier
                             .fillMaxWidth()
-                            .height(52.dp)
+                            .height(56.dp)
                             .clip(RoundedCornerShape(50))
                             .background(JannahColors.Orange)
                             .clickable {
@@ -73,7 +77,7 @@ class BlockActivity : ComponentActivity() {
                             },
                         contentAlignment = Alignment.Center
                     ) {
-                        Text("Return to Jannah", color = JannahColors.OnOrange, fontWeight = FontWeight.Bold)
+                        Text("Return to Jannah", color = JannahColors.OnOrange, fontWeight = FontWeight.Bold, fontSize = 16.sp)
                     }
                 }
             }
