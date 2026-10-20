@@ -147,6 +147,36 @@ fun TodayScreen(onNavigate: (String) -> Unit = {}) {
 
             Spacer(Modifier.height(JannahSpacing.l))
 
+            // SADAQAH DEBT
+            val debt = SadaqahStore.getDebt(ctx)
+            if (debt > 0) {
+                Box(
+                    Modifier
+                        .fillMaxWidth()
+                        .clip(RoundedCornerShape(JannahSpacing.cardRadius))
+                        .background(JannahColors.Card)
+                        .padding(JannahSpacing.l)
+                ) {
+                    Column {
+                        Text("SADAQAH DEBT", style = JannahType.eyebrow, color = JannahColors.OrangeDeep)
+                        Spacer(Modifier.height(4.dp))
+                        Text("You owe \$$debt to charity.", fontFamily = FontFamily.Serif, fontSize = 18.sp, fontWeight = FontWeight.Bold, color = JannahColors.Ink)
+                        Spacer(Modifier.height(4.dp))
+                        Text("Missed prayers accumulate a $1 penalty. Give it away to clear it.", style = JannahType.caption, color = JannahColors.Muted)
+                        Spacer(Modifier.height(12.dp))
+                        Box(
+                            Modifier
+                                .clip(RoundedCornerShape(50))
+                                .background(JannahColors.OrangeSoft)
+                                .pressClickable { SadaqahStore.clearDebt(ctx) }
+                                .padding(horizontal = 16.dp, vertical = 8.dp)
+                        ) {
+                            Text("I paid it", style = JannahType.caption, color = JannahColors.OrangeDeep, fontWeight = FontWeight.Bold)
+                        }
+                    }
+                }
+            }
+
             // RAMADAN MODE
             val ramadan = RamadanMode.current()
             if (ramadan.active) {
