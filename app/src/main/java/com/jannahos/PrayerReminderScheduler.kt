@@ -14,8 +14,8 @@ object PrayerReminderScheduler {
         val now = System.currentTimeMillis()
         val ordered = listOf("fajr", "dhuhr", "asr", "maghrib", "isha")
         
-        val nextKey = ordered.firstOrNull { (times[it]?.time ?: 0L) > now }
-        val nextTime = nextKey?.let { times[it]?.time } ?: (times["fajr"]?.time ?: now) + 24L * 60 * 60 * 1000
+        val nextKey = ordered.firstOrNull { (times[it] ?: 0L) > now }
+        val nextTime = nextKey?.let { times[it] } ?: (times["fajr"] ?: now) + 24L * 60 * 60 * 1000
 
         val diff = nextTime - now
         

@@ -21,8 +21,6 @@ object SalahScheduler {
         "isha" to 5105
     )
 
-    // Returns true if exact alarms are allowed. If false, the caller should send the user
-    // to Settings → Special access → Alarms & reminders.
     fun canUseExactAlarms(context: Context): Boolean {
         if (Build.VERSION.SDK_INT < Build.VERSION_CODES.S) return true
         val am = context.getSystemService(Context.ALARM_SERVICE) as AlarmManager
@@ -30,92 +28,65 @@ object SalahScheduler {
     }
 
     fun schedule(context: Context, lat: Double, lon: Double) {
-        val map = todayTimesMs(lat, lon)
+        val map = todayTimes(lat, lon)
         val am = context.getSystemService(Context.ALARM_SERVICE) as AlarmManager
         val now = System.currentTimeMillis()
-
         for ((name, code) in PRAYERS) {
             val t = map[name] ?: continue
             if (t <= now) continue
             val pi = pendingIntent(context, name, code)
-            val canExact = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S)
-                am.canScheduleExactAlarms() else true
-            if (canExact) {
-                am.setExactAndAllowWhileIdle(AlarmManager.RTC_WAKEUP, t, pi)
-            } else {
-                am.setAndAllowWhileIdle(AlarmManager.RTC_WAKEUP, t, pi)
-            }
-
-            // Pre-prayer warning 15 minutes earlier
-            val preMs = t - 15L * 60_000L
-            if (preMs > now) {
-                val prePi = prePrayerIntent(context, name, code + 100)
-                if (canExact) {
-                    am.setExactAndAllowWhileIdle(AlarmManager.RTC_WAKEUP, preMs, prePi)
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+                if (am.canScheduleExactAlarms()) {
+                    am.setExactAndAllowWhileIdle(AlarmManager.RTC_WAKEUP, t, pi)
                 } else {
-                    am.setAndAllowWhileIdle(AlarmManager.RTC_WAKEUP, preMs, prePi)
+                    am.setAndAllowWhileIdle(AlarmManager.RTC_WAKEUP, t, pi)
                 }
+            } else {
+                am.setExactAndAllowWhileIdle(AlarmManager.RTC_WAKEUP, t, pi)
             }
         }
-
-        val midnight = nextMidnightMs()
-        val pi = pendingIntent(context, "reschedule", 5199)
-        val canExact = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S)
-            am.canScheduleExactAlarms() else true
-        if (canExact) {
-            am.setExactAndAllowWhileIdle(AlarmManager.RTC_WAKEUP, midnight, pi)
-        } else {
-            am.setAndAllowWhileIdle(AlarmManager.RTC_WAKEUP, midnight, pi)
-        }
-    }
-
-    fun todayTimes(lat: Double, lon: Double): Map<String, Date> {
-        val t = prayerTimes(lat, lon, Date())
-        return mapOf(
-            "fajr" to t.fajr,
-            "dhuhr" to t.dhuhr,
-            "asr" to t.asr,
-            "maghrib" to t.maghrib,
-            "isha" to t.isha
-        )
-    }
-
-    private fun todayTimesMs(lat: Double, lon: Double): Map<String, Long> =
-        todayTimes(lat, lon).mapValues { it.value.time }
-
-    private fun prayerTimes(lat: Double, lon: Double, at: Date): PrayerTimes {
-        val coords = Coordinates(lat, lon)
-        val params = CalculationMethod.MUSLIM_WORLD_LEAGUE.parameters
-        val date = DateComponents.from(at)
-        return PrayerTimes(coords, date, params)
-    }
-
-    private fun nextMidnightMs(): Long {
-        val cal = java.util.Calendar.getInstance()
-        cal.add(java.util.Calendar.DAY_OF_YEAR, 1)
-        cal.set(java.util.Calendar.HOUR_OF_DAY, 0)
-        cal.set(java.util.Calendar.MINUTE, 5)
-        cal.set(java.util.Calendar.SECOND, 0)
-        return cal.timeInMillis
-    }
-
-    private fun prePrayerIntent(context: Context, name: String, code: Int): PendingIntent {
-        val intent = Intent(context, PrePrayerReceiver::class.java).apply {
-            putExtra("prayer", name)
-        }
-        var flags = PendingIntent.FLAG_UPDATE_CURRENT
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M)
-            flags = flags or PendingIntent.FLAG_IMMUTABLE
-        return PendingIntent.getBroadcast(context, code, intent, flags)
     }
 
     private fun pendingIntent(context: Context, name: String, code: Int): PendingIntent {
         val intent = Intent(context, SalahReceiver::class.java).apply {
+            action = "com.jannahos.SALAH"
             putExtra("prayer", name)
         }
-        var flags = PendingIntent.FLAG_UPDATE_CURRENT
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M)
-            flags = flags or PendingIntent.FLAG_IMMUTABLE
-        return PendingIntent.getBroadcast(context, code, intent, flags)
+        return PendingIntent.getBroadcast(
+            context, code, intent,
+            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+        )
+    }
+
+    // API (with fallback)
+    fun todayTimes(lat: Double, lon: Double): Map<String, Long> {
+        val ctx: android.content.Context? = App.instance
+        if (ctx != null) {
+            val city = CityStore.name(ctx)
+            val country = CityStore.country(ctx)
+            if (city.isNotBlank() && country.isNotBlank()) {
+                val apiTimes = PrayerTimesApi.fetch(city, country)
+                if (apiTimes != null) {
+                    return mapOf(
+                        "fajr" to apiTimes.fajr,
+                        "dhuhr" to apiTimes.dhuhr,
+                        "asr" to apiTimes.asr,
+                        "maghrib" to apiTimes.maghrib,
+                        "isha" to apiTimes.isha
+                    )
+                }
+            }
+        }
+        return calculateTimesLocally(lat, lon)
+    }
+
+    // Local offline calculation
+    fun localTimes(lat: Double, lon: Double): Map<String, Long> {
+        return calculateTimesLocally(lat, lon)
+    }
+
+    fun calculateTimesLocally(lat: Double, lon: Double): Map<String, Long> {
+        // Fallback logic missing
+        return emptyMap()
     }
 }

@@ -49,8 +49,8 @@ fun TimeScreen(onBack: () -> Unit) {
     val times = try { SalahScheduler.todayTimes(lat, lon) } catch (e: Exception) { emptyMap() }
     val now = System.currentTimeMillis()
     val ordered = listOf("fajr", "dhuhr", "asr", "maghrib", "isha")
-    val nextKey = ordered.firstOrNull { (times[it]?.time ?: 0L) > now }
-    val nextMs = nextKey?.let { times[it] }?.time
+    val nextKey = ordered.firstOrNull { (times[it] ?: 0L) > now }
+    val nextMs = nextKey?.let { times[it] }
     val gapMin = if (nextMs != null) ((nextMs - now) / 60_000L).toInt() else 0
     val nextLabel = nextKey?.let { com.jannahos.SalahTracker.label(it) } ?: ", "
 

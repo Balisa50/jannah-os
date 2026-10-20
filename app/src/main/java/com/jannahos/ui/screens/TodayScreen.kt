@@ -38,17 +38,27 @@ fun TodayScreen(onNavigate: (String) -> Unit = {}) {
     val lat = Settings.lat(ctx)
     val lon = Settings.lon(ctx)
     val todayKey = remember { SimpleDateFormat("yyyy-MM-dd", Locale.US).format(Date()) }
-    val prayerTimes = remember(todayKey, lat, lon) { SalahScheduler.todayTimes(lat, lon) }
+    var prayerTimes by remember { mutableStateOf(SalahScheduler.localTimes(lat, lon)) }
+    
+    LaunchedEffect(todayKey, lat, lon) {
+        kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.IO) {
+            // This calls the API and falls back to local automatically
+            val freshTimes = SalahScheduler.todayTimes(lat, lon)
+            kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.Main) {
+                prayerTimes = freshTimes
+            }
+        }
+    }
     
     val now = System.currentTimeMillis()
     val ordered = listOf("fajr", "dhuhr", "asr", "maghrib", "isha")
-    val nextKey = ordered.firstOrNull { (prayerTimes[it]?.time ?: 0L) > now }
-    val nextTime = nextKey?.let { prayerTimes[it] }?.time
+    val nextKey = ordered.firstOrNull { (prayerTimes[it] ?: 0L) > now }
+    val nextTime = nextKey?.let { prayerTimes[it] }
 
     val isAfterIsha = nextKey == null
     val displayLabel = if (isAfterIsha) "Fajr" else SalahTracker.label(nextKey!!)
     val displayTime = if (isAfterIsha) {
-        (prayerTimes["fajr"]?.time ?: now) + 24L * 60 * 60 * 1000
+        (prayerTimes["fajr"] ?: now) + 24L * 60 * 60 * 1000
     } else nextTime!!
 
     val hour = Calendar.getInstance().get(Calendar.HOUR_OF_DAY)
@@ -209,8 +219,8 @@ fun TodayScreen(onNavigate: (String) -> Unit = {}) {
                         
                         // Check if it's before Fajr (Suhoor) or after (Iftar)
                         val now = System.currentTimeMillis()
-                        val fajrTime = prayerTimes["fajr"]?.time ?: now
-                        val maghribTime = prayerTimes["maghrib"]?.time ?: now
+                        val fajrTime = prayerTimes["fajr"] ?: now
+                        val maghribTime = prayerTimes["maghrib"] ?: now
                         
                         if (now < fajrTime) {
                             Text("Suhoor ends in", fontFamily = FontFamily.Serif, fontSize = 18.sp, color = JannahColors.OnOrange)

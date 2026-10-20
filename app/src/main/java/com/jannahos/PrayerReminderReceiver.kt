@@ -18,10 +18,10 @@ class PrayerReminderReceiver : BroadcastReceiver() {
         val now = System.currentTimeMillis()
         val ordered = listOf("fajr", "dhuhr", "asr", "maghrib", "isha")
         
-        val nextKey = ordered.firstOrNull { (times[it]?.time ?: 0L) > now }
+        val nextKey = ordered.firstOrNull { (times[it] ?: 0L) > now }
         
         if (nextKey != null) {
-            val nextTime = times[nextKey]?.time ?: now
+            val nextTime = times[nextKey] ?: now
             val diff = nextTime - now
             val h = diff / 3600000
             val m = (diff / 60000) % 60

@@ -7,6 +7,10 @@ import org.json.JSONObject
 object HadithStore {
     data class Hadith(val id: Int, val text: String, val narrator: String, val source: String, val grade: String)
 
+    suspend fun searchAsync(ctx: Context, query: String): List<Hadith> = kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.IO) {
+        search(ctx, query)
+    }
+
     fun search(ctx: Context, query: String): List<Hadith> {
         val q = query.lowercase().trim()
         if (q.isEmpty()) return emptyList()

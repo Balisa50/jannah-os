@@ -29,6 +29,10 @@ object QuranTextStore {
         return list
     }
 
+    suspend fun searchAsync(ctx: Context, query: String): List<Ayah> = kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.IO) {
+        search(ctx, query)
+    }
+
     fun search(ctx: Context, query: String): List<Ayah> {
         val q = query.trim()
         if (q.isEmpty()) return emptyList()
