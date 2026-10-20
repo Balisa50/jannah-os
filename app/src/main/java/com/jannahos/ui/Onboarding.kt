@@ -157,7 +157,7 @@ private fun Welcome() {
             textAlign = TextAlign.Center)
         Spacer(Modifier.height(JannahSpacing.xxl))
         Text(
-            "No streaks. No noise. Just the essentials to help you build a quiet, consistent practice.",
+            "The operating system for your worship.",
             style = JannahType.body,
             color = JannahColors.Body,
             textAlign = TextAlign.Center,
@@ -174,36 +174,34 @@ private fun TheFourPillars() {
             .verticalScroll(rememberScrollState()),
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
-        Text("How this works",
+        Text("Four pillars.",
             fontFamily = FontFamily.Serif,
             fontSize = 28.sp,
             fontWeight = FontWeight.Bold,
             color = JannahColors.Ink)
         Spacer(Modifier.height(JannahSpacing.s))
-        Text("Four things. Nothing else on the surface.",
-            style = JannahType.caption, color = JannahColors.Muted)
         Spacer(Modifier.height(JannahSpacing.xl))
 
         Pillar(
             "1", "Tahajjud",
-            "Built as a habit, not a streak. Begin with one night a week. The plan adapts when you miss."
+            "Build the habit. One night at a time."
         )
         Pillar(
             "2", "Diary",
-            "Tell it what happened. It listens, and the day's dashboard responds."
+            "Write. The dashboard adapts to how you feel."
         )
         Pillar(
             "3", "Balance",
-            "Prayer, time, money. The middle path."
+            "Prayer, time, money."
         )
         Pillar(
             "4", "Practice",
-            "Quran lock, prayer lock, and the tools you reach for when you need them."
+            "App blocker and prayer locks."
         )
 
         Spacer(Modifier.height(JannahSpacing.l))
         Text(
-            "More tools sit ready: Quran, adhkar, duas, fasting, hifdh. They stay out of the way.",
+            "",
             style = JannahType.bodySmall,
             color = JannahColors.Muted,
             textAlign = TextAlign.Center,

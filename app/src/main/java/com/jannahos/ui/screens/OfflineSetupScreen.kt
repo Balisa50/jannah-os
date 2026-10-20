@@ -76,11 +76,11 @@ fun OfflineSetupScreen(onReady: () -> Unit, onSkip: () -> Unit) {
     val progress = if (total > 0) (current.toFloat() / total).coerceIn(0f, 1f) else 0f
     val headline = when {
         done -> "Ready."
-        failed -> "Some pages didn't load."
+        failed -> "Setup paused."
         else -> "Preparing."
     }
     val sub = when {
-        done -> "Quran is offline and verified."
+        done -> "Setup complete."
         failed -> "Check your connection and retry."
         phase == 0 -> "Verifying $current of $total"
         else -> "Downloading $current of $total"
