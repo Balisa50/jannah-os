@@ -71,7 +71,7 @@ private fun SurahList(
         Box(
             Modifier
                 .fillMaxWidth()
-                .height(160.dp)
+                .height(160.dp).clip(RoundedCornerShape(bottomStart = 24.dp, bottomEnd = 24.dp))
         ) {
             Image(
                 painter = painterResource(id = com.jannahos.R.drawable.quran_hero),
@@ -106,6 +106,8 @@ private fun SurahList(
             }
         }
 
+        Spacer(Modifier.height(JannahSpacing.m))
+
         Column(Modifier.padding(horizontal = JannahSpacing.gutter)) {
             Spacer(Modifier.height(JannahSpacing.m))
 
@@ -118,7 +120,7 @@ private fun SurahList(
                 Box(
                     Modifier
                         .weight(1f)
-                        .clip(RoundedCornerShape(8.dp))
+                        .clip(RoundedCornerShape(50))
                         .background(JannahColors.Card)
                         .pressClickable { onOpenSearch() }
                         .padding(vertical = 12.dp),
@@ -131,7 +133,7 @@ private fun SurahList(
                 Box(
                     Modifier
                         .weight(1f)
-                        .clip(RoundedCornerShape(8.dp))
+                        .clip(RoundedCornerShape(50))
                         .background(JannahColors.Card)
                         .pressClickable { onOpenKhatm() }
                         .padding(vertical = 12.dp),
@@ -145,7 +147,7 @@ private fun SurahList(
                     Box(
                         Modifier
                             .weight(1f)
-                            .clip(RoundedCornerShape(8.dp))
+                            .clip(RoundedCornerShape(50))
                             .background(JannahColors.Card)
                             .pressClickable { onOpenBookmarks() }
                             .padding(vertical = 12.dp),

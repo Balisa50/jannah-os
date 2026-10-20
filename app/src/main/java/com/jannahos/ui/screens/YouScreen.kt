@@ -124,7 +124,7 @@ fun YouScreen() {
         Box(
             Modifier
                 .fillMaxWidth()
-                .height(200.dp)
+                .height(200.dp).clip(RoundedCornerShape(bottomStart = 24.dp, bottomEnd = 24.dp))
         ) {
             Image(
                 painter = painterResource(id = com.jannahos.R.drawable.dhikr_hero),
@@ -159,6 +159,8 @@ fun YouScreen() {
                     style = JannahType.caption, color = Color.White.copy(alpha = 0.8f))
             }
         }
+
+        Spacer(Modifier.height(JannahSpacing.m))
 
         Column(Modifier.padding(horizontal = JannahSpacing.gutter)) {
 

@@ -72,7 +72,7 @@ fun TodayScreen(onNavigate: (String) -> Unit = {}) {
         Box(
             Modifier
                 .fillMaxWidth()
-                .height(260.dp)
+                .height(260.dp).clip(RoundedCornerShape(bottomStart = 24.dp, bottomEnd = 24.dp))
         ) {
             Image(
                 painter = painterResource(id = com.jannahos.R.drawable.hero_today),
@@ -113,6 +113,8 @@ fun TodayScreen(onNavigate: (String) -> Unit = {}) {
                 )
             }
         }
+
+        Spacer(Modifier.height(JannahSpacing.m))
 
         Column(Modifier.padding(horizontal = JannahSpacing.gutter)) {
             Spacer(Modifier.height(JannahSpacing.l))
