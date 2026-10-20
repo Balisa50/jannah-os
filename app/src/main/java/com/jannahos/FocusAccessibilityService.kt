@@ -25,6 +25,7 @@ class FocusAccessibilityService : AccessibilityService() {
                     addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK or Intent.FLAG_ACTIVITY_EXCLUDE_FROM_RECENTS)
                 }
                 startActivity(blockIntent)
+                RegretStore.logAttempt(this, pkg)
                 return
             }
         }

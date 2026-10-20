@@ -103,6 +103,7 @@ private fun SettingsScreen(onBack: () -> Unit) {
     var useCityMode by remember { mutableStateOf(CityStore.useCity(ctx)) }
     var blockedCount by remember { mutableStateOf(AppBlockStore.count(ctx)) }
     var blockAlways by remember { mutableStateOf(AppBlockStore.blockAlways(ctx)) }
+    var silentTahajjud by remember { mutableStateOf<Boolean>(Settings.isTahajjudSilent(ctx)) }
 
     var nameExpanded by remember { mutableStateOf(false) }
     var locExpanded by remember { mutableStateOf(false) }
@@ -252,6 +253,17 @@ private fun SettingsScreen(onBack: () -> Unit) {
             focusOn = !focusOn
             FocusSession.setEnabled(ctx, focusOn)
             toast = if (focusOn) "Focus mode on" else "Focus mode off"
+        }
+
+        Divider()
+        ListRow(
+            title = "Silent tahajjud",
+            subtitle = if (silentTahajjud) "Vibrate only (no sound)" else "Play alarm sound",
+            toggle = silentTahajjud
+        ) {
+            silentTahajjud = !silentTahajjud
+            Settings.setTahajjudSilent(ctx, silentTahajjud)
+            toast = if (silentTahajjud) "Tahajjud alarm set to vibrate only" else "Tahajjud alarm set to sound"
         }
 
         // ---- APP ----

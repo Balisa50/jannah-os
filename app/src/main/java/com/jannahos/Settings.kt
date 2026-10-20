@@ -70,4 +70,12 @@ object Settings {
         "TEHRAN" to "Institute of Geophysics, Tehran",
         "GULF" to "Gulf Region"
     )
+
+    fun isTahajjudSilent(ctx: android.content.Context): Boolean = 
+        ctx.getSharedPreferences("jannah_prefs", android.content.Context.MODE_PRIVATE).getBoolean("tahajjud_silent", false)
+        
+    fun setTahajjudSilent(ctx: android.content.Context, silent: Boolean) {
+        ctx.getSharedPreferences("jannah_prefs", android.content.Context.MODE_PRIVATE).edit().putBoolean("tahajjud_silent", silent).apply()
+    }
+
 }
