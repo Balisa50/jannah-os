@@ -13,6 +13,8 @@ class App : Application() {
 
     override fun onCreate() {
         super.onCreate()
+        PrayerReminderScheduler.scheduleNextReminder(this)
+        super.onCreate()
 
         // Crash logger. Writes to internal filesDir so no storage permission
         // is needed. A crash report screen reads from here on next launch.

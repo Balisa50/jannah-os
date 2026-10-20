@@ -4,7 +4,6 @@ import android.app.admin.DevicePolicyManager
 import android.content.ComponentName
 import android.content.Context
 import android.content.Intent
-import android.os.Build
 import android.provider.Settings
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -22,7 +21,6 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.jannahos.DevicePolicyHelper
-import com.jannahos.GuardianService
 import com.jannahos.JannahDeviceAdminReceiver
 import com.jannahos.ui.TopBar
 import com.jannahos.ui.pressClickable
@@ -88,39 +86,7 @@ fun GuardianSetupScreen(onBack: () -> Unit) {
 
             Spacer(Modifier.height(JannahSpacing.m))
 
-            // Test Button
-            Box(
-                Modifier
-                    .fillMaxWidth()
-                    .clip(RoundedCornerShape(JannahSpacing.cardRadius))
-                    .background(JannahColors.Orange)
-                    .pressClickable {
-                        val intent = Intent(ctx, GuardianService::class.java)
-                        intent.action = "TEST_ALERT"
-                        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) ctx.startForegroundService(intent) else ctx.startService(intent)
-                    }
-                    .padding(JannahSpacing.m),
-                contentAlignment = Alignment.Center
-            ) {
-                Text("Test Breathing Alert", color = JannahColors.OnOrange, fontWeight = FontWeight.Bold)
-            }
 
-            Spacer(Modifier.height(JannahSpacing.m))
-
-            // 3. Foreground Service
-            GuardianItem(
-                title = "3. Background Guardian",
-                desc = "Keeps the app alive 24/7 to schedule locks and reminders.",
-                isActive = true, // Hard to check directly, just show as active
-                onClick = {
-                    val intent = Intent(ctx, GuardianService::class.java)
-                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-                        ctx.startForegroundService(intent)
-                    } else {
-                        ctx.startService(intent)
-                    }
-                }
-            )
         }
     }
 }
