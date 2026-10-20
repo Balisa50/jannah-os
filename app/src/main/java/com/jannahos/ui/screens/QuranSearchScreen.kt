@@ -179,8 +179,14 @@ fun QuranSearchScreen(onBack: () -> Unit, onNavigateToPage: (Int) -> Unit) {
                             Text("${h.surahName} · ${h.surah}:${h.ayah}", style = JannahType.micro, color = JannahColors.OrangeDeep, fontWeight = FontWeight.Bold)
                             Spacer(Modifier.height(JannahSpacing.xs))
                             
-                            if (h.arabic.isNotBlank()) {
-                                Text(cleanArabic(h.arabic), fontFamily = UthmanicHafs, fontSize = 24.sp, color = JannahColors.Ink, textAlign = TextAlign.End, lineHeight = 40.sp, modifier = Modifier.fillMaxWidth())
+                            // Always fetch the Arabic text from the local store using the Surah/Ayah
+                            val localAyat = remember(h.surah, h.ayah) {
+                                com.jannahos.QuranTextStore.getAyah(ctx, h.surah, h.ayah)
+                            }
+                            val arabicText = localAyat?.text ?: h.arabic
+                            
+                            if (arabicText.isNotBlank()) {
+                                Text(cleanArabic(arabicText), fontFamily = UthmanicHafs, fontSize = 24.sp, color = JannahColors.Ink, textAlign = TextAlign.End, lineHeight = 40.sp, modifier = Modifier.fillMaxWidth())
                                 Spacer(Modifier.height(JannahSpacing.xs))
                             }
                             if (h.english.isNotBlank()) {

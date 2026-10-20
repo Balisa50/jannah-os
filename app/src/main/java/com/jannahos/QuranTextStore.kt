@@ -7,6 +7,7 @@ object QuranTextStore {
     data class Ayah(val surah: Int, val ayah: Int, val text: String)
 
     private var cache: List<Ayah>? = null
+    private val lookupMap = mutableMapOf<String, Ayah>()
 
     fun load(ctx: Context): List<Ayah> {
         cache?.let { return it }
@@ -26,11 +27,17 @@ object QuranTextStore {
             }
         } catch (e: Exception) {}
         cache = list
+        list.forEach { lookupMap["${it.surah}:${it.ayah}"] = it }
         return list
     }
 
     suspend fun searchAsync(ctx: Context, query: String): List<Ayah> = kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.IO) {
         search(ctx, query)
+    }
+
+    fun getAyah(ctx: Context, surah: Int, ayah: Int): Ayah? {
+        if (lookupMap.isEmpty()) load(ctx)
+        return lookupMap["$surah:$ayah"]
     }
 
     fun search(ctx: Context, query: String): List<Ayah> {

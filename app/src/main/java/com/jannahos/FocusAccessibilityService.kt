@@ -16,18 +16,14 @@ class FocusAccessibilityService : AccessibilityService() {
 
         // 1. Check if app is explicitly blocked
         if (AppBlockStore.isBlocked(this, pkg)) {
-            val blockAlways = AppBlockStore.blockAlways(this)
-            val isPrayerLock = PrayerLock.enabled(this) && PrayerLock.sessionActive(this)
-            
-            // Block if it's 24/7 OR if it's currently a prayer time
-            if (blockAlways || isPrayerLock) {
-                val blockIntent = Intent(this, BlockActivity::class.java).apply {
-                    addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK or Intent.FLAG_ACTIVITY_EXCLUDE_FROM_RECENTS)
-                }
-                startActivity(blockIntent)
-                RegretStore.logAttempt(this, pkg)
-                return
+            // Just block it. If they want a schedule, they can toggle it in settings,
+            // but for now, if it's in the list, it gets blocked.
+            val blockIntent = Intent(this, BlockActivity::class.java).apply {
+                addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK or Intent.FLAG_ACTIVITY_EXCLUDE_FROM_RECENTS)
             }
+            startActivity(blockIntent)
+            RegretStore.logAttempt(this, pkg)
+            return
         }
 
         // 2. Check Prayer Lock
