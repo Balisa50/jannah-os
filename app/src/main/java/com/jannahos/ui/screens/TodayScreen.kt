@@ -147,6 +147,14 @@ fun TodayScreen(onNavigate: (String) -> Unit = {}) {
                                 Spacer(Modifier.height(4.dp))
                                 Text(result.source, style = JannahType.micro, color = JannahColors.Muted)
                             }
+                            if (result.duaRecommendation != null) {
+                                Spacer(Modifier.height(12.dp))
+                                Box(Modifier.fillMaxWidth().height(1.dp).background(JannahColors.OrangeDeep.copy(alpha = 0.2f)))
+                                Spacer(Modifier.height(12.dp))
+                                Text("Recommended Dua", style = JannahType.micro, color = JannahColors.OrangeDeep, fontWeight = FontWeight.Bold)
+                                Spacer(Modifier.height(4.dp))
+                                Text(result.duaRecommendation, style = JannahType.body, color = JannahColors.Ink, lineHeight = 24.sp)
+                            }
                         }
                     }
                 }
@@ -220,6 +228,39 @@ fun TodayScreen(onNavigate: (String) -> Unit = {}) {
                             Text("Iftar complete.", fontFamily = FontFamily.Serif, fontSize = 24.sp, fontWeight = FontWeight.Bold, color = JannahColors.OnOrange)
                             Spacer(Modifier.height(4.dp))
                             Text("May Allah accept your fast.", fontFamily = FontFamily.Serif, fontStyle = FontStyle.Italic, fontSize = 16.sp, color = JannahColors.OnOrange.copy(alpha = 0.9f))
+                        }
+
+                        Spacer(Modifier.height(16.dp))
+                        Text("FASTING TRACKER", style = JannahType.micro, color = JannahColors.OnOrange.copy(alpha = 0.6f), fontWeight = FontWeight.Bold)
+                        Spacer(Modifier.height(8.dp))
+                        
+                        // Simple 10x3 grid for 30 days
+                        for (row in 0 until 3) {
+                            Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(4.dp)) {
+                                for (col in 1..10) {
+                                    val dayNum = row * 10 + col
+                                    val isCompleted = dayNum < ramadan.dayOfRamadan
+                                    val isToday = dayNum == ramadan.dayOfRamadan
+                                    
+                                    Box(
+                                        Modifier
+                                            .weight(1f)
+                                            .aspectRatio(1f)
+                                            .clip(RoundedCornerShape(4.dp))
+                                            .background(
+                                                when {
+                                                    isCompleted -> JannahColors.OnOrange
+                                                    isToday -> JannahColors.OnOrange.copy(alpha = 0.5f)
+                                                    else -> JannahColors.OnOrange.copy(alpha = 0.1f)
+                                                }
+                                            ),
+                                        contentAlignment = Alignment.Center
+                                    ) {
+                                        Text("$dayNum", fontSize = 10.sp, color = if (isCompleted) JannahColors.OrangeDeep else JannahColors.OnOrange)
+                                    }
+                                }
+                            }
+                            Spacer(Modifier.height(4.dp))
                         }
                     }
                 }

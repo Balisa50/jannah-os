@@ -10,7 +10,8 @@ object DiaryClassifier {
         val reactionTitle: String,
         val reactionBody: String,
         val source: String,
-        val actionRoute: String?
+        val actionRoute: String?,
+        val duaRecommendation: String? = null
     )
 
     fun classify(text: String): Result {
@@ -42,7 +43,8 @@ object DiaryClassifier {
                 reactionTitle = "An achievement",
                 reactionBody = "Alhamdulillah. Say \"Alhamdulillah\" and give a small sadaqah in gratitude. Gratitude preserves blessings.",
                 source = "Qur'an 14:7",
-                actionRoute = null
+                actionRoute = null,
+                duaRecommendation = "اللَّهُمَّ أَعِنِّي عَلَى ذِكْرِكَ وَشُكْرِكَ وَحُسْنِ عِبَادَتِكَ\n\n(O Allah, help me to remember You, thank You, and worship You in the best manner.)"
             )
 
         if (listM(t, listOf("finished the quran", "completed quran", "khatm", "memorized", "memorised", "hifdh")))
@@ -129,7 +131,8 @@ object DiaryClassifier {
                 reactionTitle = "You feel anxious",
                 reactionBody = "\"Allah does not burden a soul beyond what it can bear.\" (Qur'an 2:286). Read it slowly. Make the anxiety dua.",
                 source = "Qur'an 2:286",
-                actionRoute = "dhikr"
+                actionRoute = "dhikr",
+                duaRecommendation = "اللَّهُمَّ إِنِّي أَعُوذُ بِكَ مِنَ الْهَمِّ وَالْحَزَنِ، وَالْعَجْزِ وَالْكَسَلِ\n\n(O Allah, I seek refuge in You from anxiety and sorrow, weakness and laziness.)"
             )
 
         if (listM(t, listOf("sad", "lonely", "depressed", "down today", "heavy heart", "heartbroken")))
@@ -138,7 +141,8 @@ object DiaryClassifier {
                 reactionTitle = "You feel low",
                 reactionBody = "The Prophet ﷺ sought refuge from worry and grief. You are not alone in this. Allah is closer than you think.",
                 source = "Sahih al-Bukhari 6369",
-                actionRoute = "dhikr"
+                actionRoute = "dhikr",
+                duaRecommendation = "اللَّهُمَّ إِنِّي عَبْدُكَ، ابْنُ عَبْدِكَ، ابْنُ أَمَتِكَ...\n\n(O Allah, I am Your servant, son of Your servant, son of Your maidservant...)"
             )
 
         if (listM(t, listOf("grateful", "gratitude", "thankful", "alhamdulillah", "so happy", "blessed")))
@@ -147,7 +151,8 @@ object DiaryClassifier {
                 reactionTitle = "You are grateful",
                 reactionBody = "\"If you are grateful, I will surely increase you.\" (Qur'an 14:7). Gratitude is the shortest path to more.",
                 source = "Qur'an 14:7",
-                actionRoute = null
+                actionRoute = null,
+                duaRecommendation = "اللَّهُمَّ أَعِنِّي عَلَى ذِكْرِكَ وَشُكْرِكَ وَحُسْنِ عِبَادَتِكَ\n\n(O Allah, help me to remember You, thank You, and worship You in the best manner.)"
             )
 
         // ---- Dream ----

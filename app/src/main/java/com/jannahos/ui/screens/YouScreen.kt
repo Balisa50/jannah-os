@@ -74,6 +74,8 @@ fun YouScreen() {
     val showAbout = remember { mutableStateOf(false) }
     val showRamadan = remember { mutableStateOf(false) }
     val showFinance = remember { mutableStateOf(false) }
+    val showIfThen = remember { mutableStateOf(false) }
+    val showFriction = remember { mutableStateOf(false) }
     var showMore by remember { mutableStateOf(false) }
 
     if (showFormation.value) { FormationScreen(onBack = { showFormation.value = false }); return }
@@ -109,6 +111,8 @@ fun YouScreen() {
     if (showAbout.value) { AboutScreen(onBack = { showAbout.value = false }); return }
     if (showRamadan.value) { RamadanScreen(onBack = { showRamadan.value = false }); return }
     if (showFinance.value) { FinanceScreen(onBack = { showFinance.value = false }); return }
+    if (showIfThen.value) { IfThenScreen(onBack = { showIfThen.value = false }); return }
+    if (showFriction.value) { FrictionAuditScreen(onBack = { showFriction.value = false }); return }
 
     val name = Settings.displayName(ctx)
     val level = TahajjudPlan.level(ctx)
@@ -217,6 +221,10 @@ fun YouScreen() {
             ListRow("Letters to future self") { showLetters.value = true }
             Divider()
             ListRow("Companion") { showCompanion.value = true }
+            Divider()
+            ListRow("If-Then Planner") { showIfThen.value = true }
+            Divider()
+            ListRow("Friction Audit") { showFriction.value = true }
 
             Spacer(Modifier.height(JannahSpacing.l))
 

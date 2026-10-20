@@ -35,7 +35,12 @@ class BlockActivity : ComponentActivity() {
                     }
                     startActivity(homeIntent)
                 }
-                var secondsLeft by remember { mutableIntStateOf(30) }
+                var secondsLeft by remember { mutableIntStateOf(60) }
+                val dua = remember { listOf(
+                    "\"And when My servants ask you concerning Me - indeed I am near.\" (2:186)",
+                    "\"Verily, in the remembrance of Allah do hearts find rest.\" (13:28)",
+                    "\"So remember Me; I will remember you.\" (2:152)"
+                ).random() }
                 LaunchedEffect(Unit) {
                     while (secondsLeft > 0) {
                         delay(1000)
@@ -58,26 +63,32 @@ class BlockActivity : ComponentActivity() {
                     Spacer(Modifier.height(8.dp))
                     Text("Focus mode is active.", fontFamily = FontFamily.Serif, fontSize = 32.sp, fontWeight = FontWeight.Bold, color = JannahColors.Ink, textAlign = TextAlign.Center)
                     Spacer(Modifier.height(12.dp))
-                    Text("This app is locked to protect your time and worship. Returning to Jannah in $secondsLeft seconds.", style = com.jannahos.ui.theme.JannahType.body, color = JannahColors.Muted, textAlign = TextAlign.Center, lineHeight = 24.sp)
+                    Text(dua, fontFamily = FontFamily.Serif, fontStyle = androidx.compose.ui.text.font.FontStyle.Italic, fontSize = 18.sp, color = JannahColors.OrangeDeep, textAlign = TextAlign.Center, lineHeight = 28.sp)
+                    Spacer(Modifier.height(24.dp))
+                    Text("Take one minute to breathe and remember your intention.", style = com.jannahos.ui.theme.JannahType.body, color = JannahColors.Muted, textAlign = TextAlign.Center, lineHeight = 24.sp)
                     Spacer(Modifier.height(48.dp))
                     
-                    Box(
-                        Modifier
-                            .fillMaxWidth()
-                            .height(56.dp)
-                            .clip(RoundedCornerShape(50))
-                            .background(JannahColors.Orange)
-                            .clickable {
-                                finish()
-                                val launchIntent = packageManager.getLaunchIntentForPackage(packageName)
-                                if (launchIntent != null) {
-                                    launchIntent.addFlags(android.content.Intent.FLAG_ACTIVITY_NEW_TASK)
-                                    startActivity(launchIntent)
-                                }
-                            },
-                        contentAlignment = Alignment.Center
-                    ) {
-                        Text("Return to Jannah", color = JannahColors.OnOrange, fontWeight = FontWeight.Bold, fontSize = 16.sp)
+                    if (secondsLeft > 0) {
+                        Text("${secondsLeft}s", fontSize = 32.sp, fontWeight = FontWeight.Bold, color = JannahColors.Orange)
+                    } else {
+                        Box(
+                            Modifier
+                                .fillMaxWidth()
+                                .height(56.dp)
+                                .clip(RoundedCornerShape(50))
+                                .background(JannahColors.Orange)
+                                .clickable {
+                                    finish()
+                                    val launchIntent = packageManager.getLaunchIntentForPackage(packageName)
+                                    if (launchIntent != null) {
+                                        launchIntent.addFlags(android.content.Intent.FLAG_ACTIVITY_NEW_TASK)
+                                        startActivity(launchIntent)
+                                    }
+                                },
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Text("Return to Jannah", color = JannahColors.OnOrange, fontWeight = FontWeight.Bold, fontSize = 16.sp)
+                        }
                     }
                 }
             }
