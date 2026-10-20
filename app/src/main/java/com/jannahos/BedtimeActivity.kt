@@ -137,8 +137,8 @@ class BedtimeActivity : ComponentActivity() {
                 },
                 modifier = Modifier.fillMaxWidth(),
                 colors = ButtonDefaults.buttonColors(
-                    containerColor = JannahColors.Accent,
-                    contentColor = JannahColors.AccentInk
+                    containerColor = JannahColors.Orange,
+                    contentColor = JannahColors.OnOrange
                 )
             ) { Text("Save and return", style = JannahType.button) }
 

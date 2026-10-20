@@ -78,8 +78,8 @@ class UrgeActivity : ComponentActivity() {
                         onClick = { step = 1 },
                         modifier = Modifier.fillMaxWidth(),
                         colors = ButtonDefaults.buttonColors(
-                            containerColor = JannahColors.Accent,
-                            contentColor = JannahColors.AccentInk
+                            containerColor = JannahColors.Orange,
+                            contentColor = JannahColors.OnOrange
                         )
                     ) { Text("I am still struggling", style = JannahType.button) }
                     Spacer(Modifier.height(JannahSpacing.s))
@@ -118,8 +118,8 @@ class UrgeActivity : ComponentActivity() {
                         },
                         modifier = Modifier.fillMaxWidth(),
                         colors = ButtonDefaults.buttonColors(
-                            containerColor = JannahColors.Accent,
-                            contentColor = JannahColors.AccentInk
+                            containerColor = JannahColors.Orange,
+                            contentColor = JannahColors.OnOrange
                         )
                     ) { Text("I got through it", style = JannahType.button) }
                     Spacer(Modifier.height(JannahSpacing.s))
@@ -146,8 +146,8 @@ class UrgeActivity : ComponentActivity() {
                         onClick = { finish() },
                         modifier = Modifier.fillMaxWidth(),
                         colors = ButtonDefaults.buttonColors(
-                            containerColor = JannahColors.Accent,
-                            contentColor = JannahColors.AccentInk
+                            containerColor = JannahColors.Orange,
+                            contentColor = JannahColors.OnOrange
                         )
                     ) { Text("Return", style = JannahType.button) }
                 }
@@ -171,8 +171,8 @@ class UrgeActivity : ComponentActivity() {
                         },
                         modifier = Modifier.fillMaxWidth(),
                         colors = ButtonDefaults.buttonColors(
-                            containerColor = JannahColors.Accent,
-                            contentColor = JannahColors.AccentInk
+                            containerColor = JannahColors.Orange,
+                            contentColor = JannahColors.OnOrange
                         )
                     ) { Text("I have repented", style = JannahType.button) }
                     Spacer(Modifier.height(JannahSpacing.s))

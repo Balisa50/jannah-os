@@ -100,8 +100,8 @@ class PlannerActivity : ComponentActivity() {
                     Button(
                         onClick = { anchor = a },
                         colors = ButtonDefaults.buttonColors(
-                            containerColor = if (anchor == a) JannahColors.Accent else JannahColors.DaySurface,
-                            contentColor = if (anchor == a) JannahColors.AccentInk else JannahColors.DayText
+                            containerColor = if (anchor == a) JannahColors.Orange else JannahColors.DaySurface,
+                            contentColor = if (anchor == a) JannahColors.OnOrange else JannahColors.DayText
                         )
                     ) {
                         Text(a, style = JannahType.tertiary)
@@ -121,8 +121,8 @@ class PlannerActivity : ComponentActivity() {
                 },
                 modifier = Modifier.fillMaxWidth(),
                 colors = ButtonDefaults.buttonColors(
-                    containerColor = JannahColors.Accent,
-                    contentColor = JannahColors.AccentInk
+                    containerColor = JannahColors.Orange,
+                    contentColor = JannahColors.OnOrange
                 )
             ) {
                 Text("Add", style = JannahType.button)
