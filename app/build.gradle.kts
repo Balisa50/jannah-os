@@ -5,6 +5,15 @@ plugins {
 }
 
 android {
+    signingConfigs {
+        create("release") {
+            storeFile = file("../jannah.keystore")
+            storePassword = "jannah123"
+            keyAlias = "jannah"
+            keyPassword = "jannah123"
+        }
+    }
+
     namespace = "com.jannahos"
     compileSdk = 34
     defaultConfig {
