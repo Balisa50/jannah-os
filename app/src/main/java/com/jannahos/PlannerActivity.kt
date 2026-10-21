@@ -3,54 +3,40 @@ package com.jannahos
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
-import com.jannahos.ui.SwipeBackScreen
-import androidx.compose.foundation.layout.ExperimentalLayoutApi
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.FlowRow
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.background
+import androidx.compose.foundation.horizontalScroll
+import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material3.Button
-import androidx.compose.material3.ButtonDefaults
-import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
-import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.text.font.FontFamily
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
+import com.jannahos.ui.SwipeBackScreen
+import com.jannahos.ui.TopBar
+import com.jannahos.ui.pressClickable
 import com.jannahos.ui.theme.JannahColors
 import com.jannahos.ui.theme.JannahSpacing
-import com.jannahos.ui.theme.JannahTheme
 import com.jannahos.ui.theme.JannahType
+import com.jannahos.ui.theme.JannahTheme
 
 class PlannerActivity : ComponentActivity() {
-
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContent {
             JannahTheme {
-                Surface(modifier = Modifier.fillMaxSize(), color = MaterialTheme.colorScheme.background) {
-                    SwipeBackScreen(onBack = { finish() }) { PlannerScreen() }
-                }
+                SwipeBackScreen(onBack = { finish() }) { PlannerScreen() }
             }
         }
     }
 
-    @OptIn(ExperimentalLayoutApi::class)
     @Composable
     private fun PlannerScreen() {
         var refresh by remember { mutableStateOf(0) }
@@ -63,118 +49,98 @@ class PlannerActivity : ComponentActivity() {
         val doneCount = store.doneToday()
 
         Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .verticalScroll(rememberScrollState())
-                .padding(horizontal = JannahSpacing.screenGutter),
-            horizontalAlignment = Alignment.CenterHorizontally
+            modifier = Modifier.fillMaxSize().verticalScroll(rememberScrollState()).background(JannahColors.Cream)
         ) {
-            Spacer(Modifier.height(JannahSpacing.xxl))
+            TopBar("Planner", onBack = { finish() })
 
-            Text("Planner", style = JannahType.screenTitle, color = JannahColors.DayText)
+            Column(Modifier.padding(horizontal = JannahSpacing.gutter)) {
+                Spacer(Modifier.height(JannahSpacing.m))
+                
+                Text("Your day, anchored to prayer.", style = JannahType.body, color = JannahColors.Muted)
+                Spacer(Modifier.height(JannahSpacing.m))
+                Text("$doneCount done today · ${tasks.size} open", style = JannahType.eyebrow, color = JannahColors.OrangeDeep)
+                
+                Spacer(Modifier.height(JannahSpacing.l))
 
-            Spacer(Modifier.height(JannahSpacing.s))
-            Text("$doneCount done today · ${tasks.size} open",
-                style = JannahType.secondary, color = JannahColors.DayMuted)
+                OutlinedTextField(
+                    value = newTitle,
+                    onValueChange = { newTitle = it },
+                    label = { Text("What needs doing?", fontSize = 12.sp) },
+                    modifier = Modifier.fillMaxWidth(),
+                    shape = RoundedCornerShape(12.dp)
+                )
 
-            Spacer(Modifier.height(JannahSpacing.l))
+                Spacer(Modifier.height(JannahSpacing.m))
 
-            OutlinedTextField(
-                value = newTitle,
-                onValueChange = { newTitle = it },
-                label = { Text("What needs doing?", style = JannahType.tertiary) },
-                modifier = Modifier.fillMaxWidth()
-            )
+                Text("ANCHOR TO", style = JannahType.eyebrow, color = JannahColors.OrangeDeep)
+                Spacer(Modifier.height(JannahSpacing.s))
 
-            Spacer(Modifier.height(JannahSpacing.m))
-
-            Text("Anchor to", style = JannahType.section, color = JannahColors.DayMuted)
-            Spacer(Modifier.height(JannahSpacing.s))
-
-            FlowRow(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(JannahSpacing.xs),
-                verticalArrangement = Arrangement.spacedBy(JannahSpacing.xs)
-            ) {
-                PlannerStore.ANCHORS.forEach { a ->
-                    Button(
-                        onClick = { anchor = a },
-                        colors = ButtonDefaults.buttonColors(
-                            containerColor = if (anchor == a) JannahColors.Orange else JannahColors.DaySurface,
-                            contentColor = if (anchor == a) JannahColors.OnOrange else JannahColors.DayText
-                        )
-                    ) {
-                        Text(a, style = JannahType.tertiary)
+                // Horizontal scrolling anchors
+                Row(
+                    modifier = Modifier.fillMaxWidth().horizontalScroll(rememberScrollState()),
+                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    PlannerStore.ANCHORS.forEach { a ->
+                        Box(
+                            Modifier
+                                .clip(RoundedCornerShape(50))
+                                .background(if (anchor == a) JannahColors.Orange else JannahColors.Card)
+                                .pressClickable { anchor = a }
+                                .padding(horizontal = 16.dp, vertical = 8.dp)
+                        ) {
+                            Text(a, style = JannahType.caption, color = if (anchor == a) JannahColors.OnOrange else JannahColors.Ink, fontWeight = FontWeight.Bold)
+                        }
                     }
                 }
-            }
 
-            Spacer(Modifier.height(JannahSpacing.m))
+                Spacer(Modifier.height(JannahSpacing.m))
 
-            Button(
-                onClick = {
-                    if (newTitle.isNotBlank()) {
+                Box(
+                    Modifier.fillMaxWidth().height(52.dp).clip(RoundedCornerShape(50)).background(if (newTitle.isBlank()) JannahColors.Border else JannahColors.Ink).pressClickable(enabled = newTitle.isNotBlank()) {
                         store.add(newTitle.trim(), anchor)
                         newTitle = ""
-                        refresh = refresh + 1
-                    }
-                },
-                modifier = Modifier.fillMaxWidth(),
-                colors = ButtonDefaults.buttonColors(
-                    containerColor = JannahColors.Orange,
-                    contentColor = JannahColors.OnOrange
-                )
-            ) {
-                Text("Add", style = JannahType.button)
-            }
+                        refresh++
+                    },
+                    contentAlignment = Alignment.Center
+                ) {
+                    Text("Add Task", style = JannahType.button, color = if (newTitle.isBlank()) JannahColors.Faint else JannahColors.OnOrange)
+                }
 
-            Spacer(Modifier.height(JannahSpacing.xl))
+                Spacer(Modifier.height(JannahSpacing.xl))
+                
+                Text("OPEN TASKS", style = JannahType.eyebrow, color = JannahColors.OrangeDeep)
+                Spacer(Modifier.height(JannahSpacing.s))
 
-            if (tasks.isEmpty()) {
-                Text("Nothing open.", style = JannahType.secondary, color = JannahColors.DayMuted)
-            } else {
-                tasks.forEach { t ->
-                    Row(
-                        modifier = Modifier.fillMaxWidth().padding(vertical = JannahSpacing.xs),
-                        verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.SpaceBetween
-                    ) {
-                        Column(modifier = Modifier.fillMaxWidth(0.72f)) {
-                            Text(t.title, style = JannahType.primary, color = JannahColors.DayText)
-                            if (t.anchor != null) {
-                                Text(t.anchor, style = JannahType.tertiary, color = JannahColors.DayMuted)
+                if (tasks.isEmpty()) {
+                    Text("Nothing open.", style = JannahType.bodySmall, color = JannahColors.Muted)
+                } else {
+                    tasks.forEach { t ->
+                        Row(
+                            modifier = Modifier.fillMaxWidth().padding(vertical = 12.dp),
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Column(modifier = Modifier.weight(1f)) {
+                                Text(t.title, style = JannahType.body, color = JannahColors.Ink)
+                                if (t.anchor != null) {
+                                    Text(t.anchor, style = JannahType.micro, color = JannahColors.Muted)
+                                }
+                            }
+                            Box(
+                                Modifier.padding(8.dp).pressClickable { store.toggle(t.id); refresh++ }
+                            ) {
+                                Text("✓", style = JannahType.title, color = JannahColors.Orange)
+                            }
+                            Box(
+                                Modifier.padding(8.dp).pressClickable { store.delete(t.id); refresh++ }
+                            ) {
+                                Text("×", style = JannahType.body, color = JannahColors.Muted)
                             }
                         }
-                        Row {
-                            Button(
-                                onClick = {
-                                    store.toggle(t.id)
-                                    refresh = refresh + 1
-                                },
-                                colors = ButtonDefaults.buttonColors(
-                                    containerColor = JannahColors.DaySurface,
-                                    contentColor = JannahColors.DayText
-                                )
-                            ) { Text("Done", style = JannahType.tertiary) }
-                            TextButton(onClick = {
-                                store.delete(t.id)
-                                refresh = refresh + 1
-                            }) { Text("×", style = JannahType.primary, color = JannahColors.DayMuted) }
-                        }
+                        Box(Modifier.fillMaxWidth().height(1.dp).background(JannahColors.Border))
                     }
                 }
+                Spacer(Modifier.height(JannahSpacing.xxl))
             }
-
-            Spacer(Modifier.height(JannahSpacing.l))
-
-            Text(
-                "Anchor your day around prayer, not the other way.",
-                style = JannahType.tertiary,
-                color = JannahColors.DayMuted,
-                textAlign = TextAlign.Center
-            )
-
-            Spacer(Modifier.height(JannahSpacing.xl))
         }
     }
 }
