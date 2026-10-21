@@ -40,6 +40,8 @@ fun QuranSearchScreen(onBack: () -> Unit, onNavigateToPage: (Int) -> Unit) {
     val bookmarks = remember { QuranBookmarkStore(ctx) }
 
     var query by remember { mutableStateOf("") }
+    var searchMode by remember { mutableStateOf("quran") } // "quran" or "hadith"
+    var hadithHits by remember { mutableStateOf<List<com.jannahos.HadithStore.Hadith>>(emptyList()) }
     var hits by remember { mutableStateOf<List<QuranSearch.Hit>>(emptyList()) }
     var semanticHits by remember { mutableStateOf<List<QuranSearchEngine.SearchResult>>(emptyList()) }
     var semanticVerses by remember { mutableStateOf<Map<Int, List<QuranApi.Ayah>>>(emptyMap()) } // SurahId -> Ayahs
@@ -63,6 +65,13 @@ fun QuranSearchScreen(onBack: () -> Unit, onNavigateToPage: (Int) -> Unit) {
         loading = true
         error = null
         delay(400) // Debounce
+
+        if (searchMode == "hadith") {
+            hadithHits = com.jannahos.HadithStore.searchAsync(ctx, q)
+            loading = false
+            searched = true
+            return@LaunchedEffect
+        }
 
         // 1. Check Semantic Engine
         val semantic = QuranSearchEngine.search(ctx, q)
@@ -111,6 +120,24 @@ fun QuranSearchScreen(onBack: () -> Unit, onNavigateToPage: (Int) -> Unit) {
                 placeholder = { Text("e.g. Musa, patience, mercy", fontSize = 13.sp) },
                 shape = RoundedCornerShape(12.dp)
             )
+            Spacer(Modifier.height(JannahSpacing.m))
+            
+            // Toggle
+            Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                Box(
+                    Modifier.weight(1f).height(40.dp).clip(RoundedCornerShape(50))
+                        .background(if (searchMode == "quran") JannahColors.Orange else JannahColors.Card)
+                        .pressClickable { searchMode = "quran" },
+                    contentAlignment = Alignment.Center
+                ) { Text("Quran", color = if (searchMode == "quran") JannahColors.OnOrange else JannahColors.Ink, fontWeight = FontWeight.Bold) }
+                
+                Box(
+                    Modifier.weight(1f).height(40.dp).clip(RoundedCornerShape(50))
+                        .background(if (searchMode == "hadith") JannahColors.Orange else JannahColors.Card)
+                        .pressClickable { searchMode = "hadith" },
+                    contentAlignment = Alignment.Center
+                ) { Text("Hadith", color = if (searchMode == "hadith") JannahColors.OnOrange else JannahColors.Ink, fontWeight = FontWeight.Bold) }
+            }
             Spacer(Modifier.height(JannahSpacing.l))
         }
 

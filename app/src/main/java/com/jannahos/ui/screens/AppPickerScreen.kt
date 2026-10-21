@@ -35,6 +35,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.jannahos.AppBlockStore
 import com.jannahos.ui.TopBar
+import com.jannahos.ui.pressClickable
 import com.jannahos.ui.theme.JannahColors
 import com.jannahos.ui.theme.JannahSpacing
 import com.jannahos.ui.theme.JannahType
@@ -85,6 +86,23 @@ fun AppPickerScreen(onBack: () -> Unit) {
             .background(JannahColors.Cream)
     ) {
         TopBar("Blocked apps", onBack = onBack)
+
+        // UX FIX: Show warning if Accessibility is disabled
+        val isAccessibilityEnabled = remember {
+            val service = "${ctx.packageName}/${com.jannahos.FocusAccessibilityService::class.java.canonicalName}"
+            android.provider.Settings.Secure.getString(ctx.contentResolver, android.provider.Settings.Secure.ENABLED_ACCESSIBILITY_SERVICES)?.contains(service) == true
+        }
+        
+        if (!isAccessibilityEnabled) {
+            Box(
+                Modifier.fillMaxWidth().background(JannahColors.Orange).padding(16.dp).pressClickable {
+                    ctx.startActivity(android.content.Intent(android.provider.Settings.ACTION_ACCESSIBILITY_SETTINGS))
+                },
+                contentAlignment = Alignment.Center
+            ) {
+                Text("App Blocker is OFF. Tap here to enable it in Android Settings.", color = JannahColors.OnOrange, fontWeight = FontWeight.Bold)
+            }
+        }
 
         Column(Modifier.padding(horizontal = JannahSpacing.gutter)) {
             Spacer(Modifier.height(JannahSpacing.s))

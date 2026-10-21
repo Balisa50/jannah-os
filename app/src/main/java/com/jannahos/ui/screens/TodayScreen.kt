@@ -186,18 +186,32 @@ fun TodayScreen(onNavigate: (String) -> Unit = {}) {
                     Column {
                         Text("SADAQAH DEBT", style = JannahType.eyebrow, color = JannahColors.OrangeDeep)
                         Spacer(Modifier.height(4.dp))
-                        Text("You owe \$$debt to charity.", fontFamily = FontFamily.Serif, fontSize = 18.sp, fontWeight = FontWeight.Bold, color = JannahColors.Ink)
+                        val currency = SadaqahStore.getCurrency(ctx)
+                        Text("You owe $currency$debt to charity.", fontFamily = FontFamily.Serif, fontSize = 18.sp, fontWeight = FontWeight.Bold, color = JannahColors.Ink)
                         Spacer(Modifier.height(4.dp))
-                        Text("Missed prayers accumulate a $1 penalty. Give it away to clear it.", style = JannahType.caption, color = JannahColors.Muted)
+                        Text("Missed prayers accumulate a ${currency}1 penalty. Give it away to clear it.", style = JannahType.caption, color = JannahColors.Muted)
                         Spacer(Modifier.height(12.dp))
-                        Box(
-                            Modifier
-                                .clip(RoundedCornerShape(50))
-                                .background(JannahColors.OrangeSoft)
-                                .pressClickable { SadaqahStore.clearDebt(ctx) }
-                                .padding(horizontal = 16.dp, vertical = 8.dp)
-                        ) {
-                            Text("I paid it", style = JannahType.caption, color = JannahColors.OrangeDeep, fontWeight = FontWeight.Bold)
+                        var showConfirm by remember { mutableStateOf(false) }
+                        if (showConfirm) {
+                            Text("Did you actually donate this? Faking it is a lie to Allah.", style = JannahType.caption, color = JannahColors.OrangeDeep, fontWeight = FontWeight.Bold)
+                            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                                Box(
+                                    Modifier.clip(RoundedCornerShape(50)).background(JannahColors.Orange).pressClickable {
+                                        SadaqahStore.clearDebt(ctx)
+                                        showConfirm = false
+                                    }.padding(horizontal = 16.dp, vertical = 8.dp)
+                                ) { Text("Yes, I donated", style = JannahType.caption, color = JannahColors.OnOrange, fontWeight = FontWeight.Bold) }
+                                
+                                Box(
+                                    Modifier.clip(RoundedCornerShape(50)).background(JannahColors.Card).pressClickable {
+                                        showConfirm = false
+                                    }.padding(horizontal = 16.dp, vertical = 8.dp)
+                                ) { Text("Cancel", style = JannahType.caption, color = JannahColors.Muted) }
+                            }
+                        } else {
+                            Box(
+                                Modifier.clip(RoundedCornerShape(50)).background(JannahColors.OrangeSoft).pressClickable { showConfirm = true }.padding(horizontal = 16.dp, vertical = 8.dp)
+                            ) { Text("I paid it", style = JannahType.caption, color = JannahColors.OrangeDeep, fontWeight = FontWeight.Bold) }
                         }
                     }
                 }

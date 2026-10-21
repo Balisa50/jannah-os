@@ -36,16 +36,17 @@ class NextPrayerWidget : AppWidgetProvider() {
                     val clockStr = SimpleDateFormat("HH:mm", Locale.getDefault()).format(Date(nextTime))
                     
                     views.setTextViewText(com.jannahos.R.id.widget_prayer_name, SalahTracker.label(nextKey).uppercase())
-                    views.setTextViewText(com.jannahos.R.id.widget_time_left, timeStr)
                     views.setTextViewText(com.jannahos.R.id.widget_time_clock, "at $clockStr")
+                    
+                    // Native chronometer ticks down automatically
+                    views.setChronometer(com.jannahos.R.id.widget_chronometer, nextTime, null, true)
+                    views.setChronometerCountDown(com.jannahos.R.id.widget_chronometer, true)
                 } else {
                     views.setTextViewText(com.jannahos.R.id.widget_prayer_name, "FAJR")
-                    views.setTextViewText(com.jannahos.R.id.widget_time_left, "Tomorrow")
-                    views.setTextViewText(com.jannahos.R.id.widget_time_clock, "")
+                    views.setTextViewText(com.jannahos.R.id.widget_time_clock, "Tomorrow")
                 }
             } catch (e: Exception) {
                 views.setTextViewText(com.jannahos.R.id.widget_prayer_name, "Jannah OS")
-                views.setTextViewText(com.jannahos.R.id.widget_time_left, "Open app")
                 views.setTextViewText(com.jannahos.R.id.widget_time_clock, "")
             }
             
