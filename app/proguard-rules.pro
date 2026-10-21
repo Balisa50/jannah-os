@@ -17,3 +17,9 @@
 
 # Keep App widget receivers
 -keep class com.jannahos.NextPrayerWidget { *; }
+
+# Tink / Security crypto missing annotations
+-dontwarn javax.annotation.concurrent.GuardedBy
+-dontwarn javax.annotation.**
+-keep class com.google.crypto.tink.** { *; }
+-dontwarn com.google.crypto.tink.**
