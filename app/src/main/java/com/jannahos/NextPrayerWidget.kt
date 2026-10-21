@@ -4,6 +4,7 @@ import android.appwidget.AppWidgetManager
 import android.appwidget.AppWidgetProvider
 import android.content.Context
 import android.widget.RemoteViews
+import android.os.SystemClock
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
@@ -38,8 +39,10 @@ class NextPrayerWidget : AppWidgetProvider() {
                     views.setTextViewText(com.jannahos.R.id.widget_prayer_name, SalahTracker.label(nextKey).uppercase())
                     views.setTextViewText(com.jannahos.R.id.widget_time_clock, "at $clockStr")
                     
-                    // Native chronometer ticks down automatically
-                    views.setChronometer(com.jannahos.R.id.widget_chronometer, nextTime, null, true)
+                    // Fix math: Chronometer needs elapsedRealtime() base, not Unix timestamp
+                    val timeLeft = nextTime - now
+                    val base = SystemClock.elapsedRealtime() + timeLeft
+                    views.setChronometer(com.jannahos.R.id.widget_chronometer, base, null, true)
                     views.setChronometerCountDown(com.jannahos.R.id.widget_chronometer, true)
                 } else {
                     views.setTextViewText(com.jannahos.R.id.widget_prayer_name, "FAJR")
