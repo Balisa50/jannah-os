@@ -26,7 +26,7 @@ fun JannahSplashScreen(onTimeout: () -> Unit) {
 
     LaunchedEffect(Unit) {
         visible = true
-        delay(1200)
+        delay(2500)
         onTimeout()
     }
 
