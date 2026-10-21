@@ -37,10 +37,11 @@ import androidx.compose.foundation.layout.windowInsetsPadding
 
 @Composable
 fun QuranLockScreen(onRelease: () -> Unit) {
-    var selectedSurah by remember { mutableStateOf<Int?>(null) }
+    val ctx = LocalContext.current
+    var selectedSurah by remember { mutableStateOf<Int?>(QuranReadingLock.getLastSelectedSurah(ctx).takeIf { it > 0 }) }
 
     if (selectedSurah == null) {
-        SurahPickerScreen(onPicked = { selectedSurah = it })
+        SurahPickerScreen(onPicked = { selectedSurah = it; QuranReadingLock.setLastSelectedSurah(ctx, it) })
     } else {
         ReadingLockSession(surah = selectedSurah!!, onRelease = onRelease)
     }

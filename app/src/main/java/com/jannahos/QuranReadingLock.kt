@@ -26,6 +26,13 @@ object QuranReadingLock {
 
     fun shouldLock(ctx: Context): Boolean = enabled(ctx) && !isDoneToday(ctx)
 
+    fun getLastSelectedSurah(ctx: Context): Int =
+        ctx.getSharedPreferences("lock_session", Context.MODE_PRIVATE).getInt("last_surah", 1)
+
+    fun setLastSelectedSurah(ctx: Context, surah: Int) {
+        ctx.getSharedPreferences("lock_session", Context.MODE_PRIVATE).edit().putInt("last_surah", surah).apply()
+    }
+
     // Remaining time is tracked in memory via the screen, but saved here
     fun getSavedRemainingMs(ctx: Context): Long {
         val ms = ctx.getSharedPreferences("lock_session", Context.MODE_PRIVATE).getLong("remaining", DEFAULT_MS)

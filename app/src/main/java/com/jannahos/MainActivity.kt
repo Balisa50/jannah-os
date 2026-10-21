@@ -20,14 +20,7 @@ import com.jannahos.ui.theme.JannahTheme
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-            requestPermissions(
-                arrayOf(
-                    android.Manifest.permission.POST_NOTIFICATIONS,
-                    android.Manifest.permission.RECORD_AUDIO
-                ), 100
-            )
-        }
+
         setContent {
             JannahTheme {
                 var showSplash by remember { mutableStateOf(true) }
@@ -37,6 +30,18 @@ class MainActivity : ComponentActivity() {
                 }
                 
                 var onboarded by remember { mutableStateOf(Settings.onboardingComplete(this)) }
+                
+                // Request permissions only AFTER splash vanishes
+                androidx.compose.runtime.LaunchedEffect(showSplash) {
+                    if (!showSplash && Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+                        requestPermissions(
+                            arrayOf(
+                                android.Manifest.permission.POST_NOTIFICATIONS,
+                                android.Manifest.permission.RECORD_AUDIO
+                            ), 100
+                        )
+                    }
+                }
                 val crash = remember { App.latestCrash(application) }
                 var showCrash by remember { mutableStateOf(crash != null) }
                 var setupDone by remember { mutableStateOf(Settings.setupComplete(this)) }
