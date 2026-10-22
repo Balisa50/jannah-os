@@ -4,7 +4,7 @@ import android.content.Context
 import org.json.JSONArray
 
 object QuranTextStore {
-    data class Ayah(val surah: Int, val ayah: Int, val text: String)
+    data class Ayah(val surah: Int, val ayah: Int, val arabic: String, val english: String)
 
     private var cache: List<Ayah>? = null
     private val lookupMap = mutableMapOf<String, Ayah>()
@@ -13,36 +13,27 @@ object QuranTextStore {
         cache?.let { return it }
         val list = mutableListOf<Ayah>()
         try {
-            val json = ctx.assets.open("quran_uthmani.json").bufferedReader().use { it.readText() }
-            val root = org.json.JSONObject(json)
-            val surahs = root.getJSONArray("surahs")
-            for (i in 0 until surahs.length()) {
-                val s = surahs.getJSONObject(i)
-                val surahNum = s.getInt("number")
-                val ayahs = s.getJSONArray("ayahs")
-                for (j in 0 until ayahs.length()) {
-                    val a = ayahs.getJSONObject(j)
-                    list.add(Ayah(surahNum, a.getInt("number"), a.getString("text")))
-                }
+            val json = ctx.assets.open("quran_merged.json").bufferedReader().use { it.readText() }
+            val arr = JSONArray(json)
+            for (i in 0 until arr.length()) {
+                val obj = arr.getJSONObject(i)
+                val ayah = Ayah(obj.getInt("surah"), obj.getInt("ayah"), obj.getString("arabic"), obj.getString("english"))
+                list.add(ayah)
+                lookupMap["${ayah.surah}:${ayah.ayah}"] = ayah
             }
-        } catch (e: Exception) {}
+        } catch (e: Exception) { e.printStackTrace() }
         cache = list
-        list.forEach { lookupMap["${it.surah}:${it.ayah}"] = it }
         return list
     }
 
-    suspend fun searchAsync(ctx: Context, query: String): List<Ayah> = kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.IO) {
-        search(ctx, query)
-    }
-
     fun getAyah(ctx: Context, surah: Int, ayah: Int): Ayah? {
-        if (lookupMap.isEmpty()) load(ctx)
+        if (cache == null) load(ctx)
         return lookupMap["$surah:$ayah"]
     }
 
     fun search(ctx: Context, query: String): List<Ayah> {
         val q = query.trim()
         if (q.isEmpty()) return emptyList()
-        return load(ctx).filter { it.text.contains(q) }.take(50)
+        return load(ctx).filter { it.english.contains(q, ignoreCase = true) || it.arabic.contains(q) }.take(50)
     }
 }

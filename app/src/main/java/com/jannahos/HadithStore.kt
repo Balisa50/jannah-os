@@ -2,43 +2,30 @@ package com.jannahos
 
 import android.content.Context
 import org.json.JSONArray
-import org.json.JSONObject
 
 object HadithStore {
-    data class Hadith(val arabic: String, val english: String, val narrator: String, val source: String, val grade: String)
+    data class Hadith(val collection: String, val number: Int, val arabic: String, val english: String)
+
+    private var cache: List<Hadith>? = null
+
+    fun load(ctx: Context): List<Hadith> {
+        cache?.let { return it }
+        val list = mutableListOf<Hadith>()
+        try {
+            val json = ctx.assets.open("hadiths_merged.json").bufferedReader().use { it.readText() }
+            val arr = JSONArray(json)
+            for (i in 0 until arr.length()) {
+                val obj = arr.getJSONObject(i)
+                list.add(Hadith(obj.getString("collection"), obj.getInt("number"), obj.getString("arabic"), obj.getString("english")))
+            }
+        } catch (e: Exception) { e.printStackTrace() }
+        cache = list
+        return list
+    }
 
     suspend fun searchAsync(ctx: Context, query: String): List<Hadith> = kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.IO) {
-        val q = query.lowercase().trim()
+        val q = query.trim()
         if (q.isEmpty()) return@withContext emptyList()
-        val results = mutableListOf<Hadith>()
-        
-        val files = listOf("riyad_salihin.json" to "Riyad as-Salihin", "nawawi40.json" to "40 Hadith Nawawi")
-        for ((file, sourceName) in files) {
-            try {
-                val jsonStr = ctx.assets.open(file).bufferedReader().use { it.readText() }.trim()
-                val arr = if (jsonStr.startsWith("[")) {
-                    JSONArray(jsonStr)
-                } else {
-                    JSONObject(jsonStr).optJSONArray("hadiths") ?: JSONArray()
-                }
-
-                for (i in 0 until arr.length()) {
-                    val obj = arr.getJSONObject(i)
-                    val arabic = obj.optString("arabic", "")
-                    val englishObj = obj.optJSONObject("english")
-                    val englishText = englishObj?.optString("text") ?: ""
-                    val narrator = englishObj?.optString("narrator") ?: "Unknown"
-                    val grade = obj.optString("grade", "Sahih")
-                    
-                    if (englishText.lowercase().contains(q) || arabic.contains(q)) {
-                        results.add(Hadith(arabic, englishText, narrator, sourceName, grade))
-                        if (results.size >= 20) return@withContext results
-                    }
-                }
-            } catch (e: Exception) { 
-                e.printStackTrace()
-            }
-        }
-        return@withContext results
+        load(ctx).filter { it.english.contains(q, ignoreCase = true) || it.arabic.contains(q) }.take(50)
     }
 }
