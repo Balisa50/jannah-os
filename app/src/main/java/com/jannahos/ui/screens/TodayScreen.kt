@@ -290,28 +290,6 @@ fun TodayScreen(onNavigate: (String) -> Unit = {}) {
                 }
                 Spacer(Modifier.height(JannahSpacing.l))
             }
-
-            // FRIDAY KAHF
-            if (com.jannahos.FridayMode.isTodayFriday()) {
-                Box(
-                    Modifier
-                        .fillMaxWidth()
-                        .clip(RoundedCornerShape(JannahSpacing.cardRadius))
-                        .background(JannahColors.Orange)
-                        .pressClickable { onNavigate("quran") }
-                        .padding(JannahSpacing.l)
-                ) {
-                    Column {
-                        Text("FRIDAY", style = JannahType.eyebrow, color = JannahColors.OnOrange.copy(alpha = 0.75f))
-                        Spacer(Modifier.height(4.dp))
-                        Text("Recite Surah Al-Kahf today.", fontFamily = FontFamily.Serif, fontSize = 20.sp, fontWeight = FontWeight.Bold, color = JannahColors.OnOrange)
-                        Spacer(Modifier.height(2.dp))
-                        Text("The Prophet ﷺ said it is a light for you between the two Fridays.", style = JannahType.caption, color = JannahColors.OnOrange.copy(alpha = 0.85f))
-                    }
-                }
-                Spacer(Modifier.height(JannahSpacing.l))
-            }
-
             Text("NEXT PRAYER", style = JannahType.eyebrow, color = JannahColors.OrangeDeep)
             Spacer(Modifier.height(4.dp))
             Row(verticalAlignment = Alignment.Bottom) {

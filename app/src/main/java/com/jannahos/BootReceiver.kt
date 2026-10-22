@@ -10,6 +10,7 @@ class BootReceiver : BroadcastReceiver() {
             // Reschedule the adaptive prayer alarms
             try {
                 PrayerReminderScheduler.scheduleNextReminder(context)
+            FridayKahfScheduler.scheduleAll(context)
             } catch (_: Exception) {}
         }
     }

@@ -126,5 +126,7 @@
             </intent-filter>
             <meta-data android:name="android.appwidget.provider" android:resource="@xml/jannah_widget_info" />
         </receiver>
+    
+        <receiver android:name=".FridayKahfReceiver" android:exported="false" />
     </application>
 </manifest>

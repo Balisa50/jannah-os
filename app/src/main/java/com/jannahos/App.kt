@@ -15,6 +15,7 @@ class App : Application() {
         super.onCreate()
         instance = this
         PrayerReminderScheduler.scheduleNextReminder(this)
+        FridayKahfScheduler.scheduleAll(this)
 
         // Crash logger. Writes to internal filesDir so no storage permission
         // is needed. A crash report screen reads from here on next launch.
