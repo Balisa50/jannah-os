@@ -37,6 +37,7 @@ import androidx.compose.foundation.layout.windowInsetsPadding
 
 @Composable
 fun QuranLockScreen(onRelease: () -> Unit) {
+    val ctx = androidx.compose.ui.platform.LocalContext.current
     val ctx = LocalContext.current
     var selectedSurah by remember { mutableStateOf<Int?>(QuranReadingLock.getLastSelectedSurah(ctx).takeIf { it > 0 }) }
 

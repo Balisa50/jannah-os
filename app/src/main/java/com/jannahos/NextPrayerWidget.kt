@@ -36,7 +36,7 @@ class NextPrayerWidget : AppWidgetProvider() {
                     val timeStr = String.format(Locale.US, "%02d:%02d:%02d", h, m, s)
                     val clockStr = SimpleDateFormat("HH:mm", Locale.getDefault()).format(Date(nextTime))
                     
-                    views.setTextViewText(com.jannahos.R.id.widget_prayer_name, "LEFT TO " + SalahTracker.label(nextKey).uppercase())
+                    views.setTextViewText(com.jannahos.R.id.widget_prayer_name, "LEFT TO " + "LEFT TO " + SalahTracker.label(nextKey).uppercase())
                     views.setTextViewText(com.jannahos.R.id.widget_time_clock, "at $clockStr")
                     
                     // Fix math: Chronometer needs elapsedRealtime() base, not Unix timestamp
