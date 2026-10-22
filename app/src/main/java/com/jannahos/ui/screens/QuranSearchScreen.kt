@@ -121,7 +121,7 @@ fun QuranSearchScreen(onBack: () -> Unit, onNavigateToPage: (Int) -> Unit) {
                     Column(Modifier.fillMaxWidth().padding(horizontal = JannahSpacing.gutter, vertical = JannahSpacing.m)) {
                         Text(h.source, style = JannahType.micro, color = JannahColors.OrangeDeep, fontWeight = FontWeight.Bold)
                         Spacer(Modifier.height(4.dp))
-                        Text(h.text, style = JannahType.bodySmall, color = JannahColors.Ink, lineHeight = 22.sp)
+                        Text(h.english, style = JannahType.bodySmall, color = JannahColors.Ink, lineHeight = 22.sp)
                         Spacer(Modifier.height(4.dp))
                         Text("Narrator: ${h.narrator} · ${h.grade}", style = JannahType.caption, color = JannahColors.Muted)
                     }
