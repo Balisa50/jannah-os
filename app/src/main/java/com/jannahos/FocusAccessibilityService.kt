@@ -26,17 +26,7 @@ class FocusAccessibilityService : AccessibilityService() {
             return
         }
 
-        // 2. CUSTOM APP BLOCKER
-        if (AppBlockStore.isBlocked(this, pkg)) {
-            val blockIntent = Intent(this, BlockActivity::class.java).apply {
-                addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_EXCLUDE_FROM_RECENTS)
-            }
-            startActivity(blockIntent)
-            RegretStore.logAttempt(this, pkg)
-            return
-        }
-
-        // 3. QURAN READING LOCK
+        // 2. QURAN READING LOCK
         if (QuranReadingLock.shouldLock(this)) {
             val intent = Intent(this, MainActivity::class.java).apply {
                 addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP)

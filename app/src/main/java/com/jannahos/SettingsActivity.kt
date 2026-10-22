@@ -41,7 +41,6 @@ import androidx.compose.ui.unit.sp
 import com.jannahos.ui.SwipeBackScreen
 import com.jannahos.ui.pressClickable
 import com.jannahos.ui.TopBar
-import com.jannahos.ui.screens.AppPickerScreen
 import com.jannahos.ui.screens.CityPickerScreen
 import com.jannahos.ui.theme.JannahColors
 import com.jannahos.ui.theme.JannahSpacing
@@ -66,8 +65,7 @@ private fun SettingsScreen(onBack: () -> Unit) {
 
     // Modal routes
     var showCityPicker by remember { mutableStateOf(false) }
-    var showAppPicker by remember { mutableStateOf(false) }
-    var showGuardian by remember { mutableStateOf(false) }
+        var showGuardian by remember { mutableStateOf(false) }
 
     if (showCityPicker) {
         CityPickerScreen(
@@ -83,10 +81,7 @@ private fun SettingsScreen(onBack: () -> Unit) {
         com.jannahos.ui.screens.GuardianSetupScreen(onBack = { showGuardian = false })
         return
     }
-    if (showAppPicker) {
-        AppPickerScreen(onBack = { showAppPicker = false })
-        return
-    }
+        }
 
     // State
     var name by remember { mutableStateOf(Settings.displayName(ctx)) }
@@ -101,9 +96,7 @@ private fun SettingsScreen(onBack: () -> Unit) {
     var cityName by remember { mutableStateOf(CityStore.name(ctx)) }
     var countryName by remember { mutableStateOf(CityStore.country(ctx)) }
     var useCityMode by remember { mutableStateOf(CityStore.useCity(ctx)) }
-    var blockedCount by remember { mutableStateOf(AppBlockStore.count(ctx)) }
-    var blockAlways by remember { mutableStateOf(AppBlockStore.blockAlways(ctx)) }
-    var prayerLockOn by remember { mutableStateOf(PrayerLock.enabled(ctx)) }
+            var prayerLockOn by remember { mutableStateOf(PrayerLock.enabled(ctx)) }
     var silentTahajjud by remember { mutableStateOf<Boolean>(Settings.isTahajjudSilent(ctx)) }
 
     var nameExpanded by remember { mutableStateOf(false) }
