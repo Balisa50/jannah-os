@@ -78,4 +78,12 @@ object Settings {
         ctx.getSharedPreferences("jannah_prefs", android.content.Context.MODE_PRIVATE).edit().putBoolean("tahajjud_silent", silent).apply()
     }
 
+
+    fun isBedtimeLockEnabled(ctx: android.content.Context): Boolean = 
+        ctx.getSharedPreferences("jannah_prefs", android.content.Context.MODE_PRIVATE).getBoolean("bedtime_lock_enabled", false)
+        
+    fun setBedtimeLockEnabled(ctx: android.content.Context, enabled: Boolean) {
+        ctx.getSharedPreferences("jannah_prefs", android.content.Context.MODE_PRIVATE).edit().putBoolean("bedtime_lock_enabled", enabled).apply()
+    }
+
 }

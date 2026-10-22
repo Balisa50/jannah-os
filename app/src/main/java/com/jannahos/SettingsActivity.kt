@@ -1,7 +1,6 @@
 package com.jannahos
 
 import android.content.Context
-import android.content.Intent
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
@@ -25,7 +24,6 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.jannahos.ui.SwipeBackScreen
 import com.jannahos.ui.TopBar
-import com.jannahos.ui.pressClickable
 import com.jannahos.ui.screens.CityPickerScreen
 import com.jannahos.ui.screens.GuardianSetupScreen
 import com.jannahos.ui.theme.JannahColors
@@ -73,6 +71,7 @@ private fun SettingsScreen(onBack: () -> Unit) {
     var prayerLockOn by remember { mutableStateOf(PrayerLock.enabled(ctx)) }
     var lockMinutes by remember { mutableStateOf(PrayerLock.durationMinutes(ctx)) }
     var quranLockOn by remember { mutableStateOf(QuranReadingLock.enabled(ctx)) }
+    var bedtimeLockOn by remember { mutableStateOf(Settings.isBedtimeLockEnabled(ctx)) }
     var silentTahajjud by remember { mutableStateOf(Settings.isTahajjudSilent(ctx)) }
     var cityName by remember { mutableStateOf(CityStore.name(ctx)) }
     var countryName by remember { mutableStateOf(CityStore.country(ctx)) }
@@ -84,69 +83,12 @@ private fun SettingsScreen(onBack: () -> Unit) {
 
     SwipeBackScreen(onBack = onBack) {
         Column(
-            Modifier
-                .fillMaxSize()
-                .verticalScroll(rememberScrollState())
-                .background(JannahColors.Cream)
+            Modifier.fillMaxSize().verticalScroll(rememberScrollState()).background(JannahColors.Cream)
         ) {
             TopBar("Settings", onBack = onBack)
 
-            // ---- LOCKS & FOCUS ----
-            Spacer(Modifier.height(JannahSpacing.s))
-            SectionHeader("Locks & Focus")
-
-            ListRow(
-                title = "Prayer Lock",
-                subtitle = if (prayerLockOn) "Locks ALL apps during Fard prayers" else "Off",
-                toggle = prayerLockOn
-            ) {
-                prayerLockOn = !prayerLockOn
-                PrayerLock.setEnabled(ctx, prayerLockOn)
-                if (prayerLockOn) {
-                    // Check if accessibility is on, if not, prompt
-                    val isEnabled = isAccessibilityServiceEnabled(ctx)
-                    if (!isEnabled) {
-                        showGuardian = true
-                        toast = "Enable Accessibility to activate Prayer Lock"
-                    }
-                }
-                toast = if (prayerLockOn) "Prayer Lock Activated" else "Prayer Lock Off"
-            }
-
-            if (prayerLockOn) {
-                DurationPicker(lockMinutes) { mins ->
-                    lockMinutes = mins
-                    PrayerLock.setDurationMinutes(ctx, mins)
-                    toast = "Duration: $mins minutes"
-                }
-            }
-
-            Divider()
-
-            ListRow(
-                title = "Quran reading lock",
-                subtitle = if (quranLockOn) "A page before the day ends" else "Off",
-                toggle = quranLockOn
-            ) {
-                quranLockOn = !quranLockOn
-                QuranReadingLock.setEnabled(ctx, quranLockOn)
-                toast = if (quranLockOn) "Quran lock on" else "Quran lock off"
-            }
-
-            Divider()
-
-            ListRow(
-                title = "Silent tahajjud",
-                subtitle = if (silentTahajjud) "Vibrate only (no sound)" else "Play alarm sound",
-                toggle = silentTahajjud
-            ) {
-                silentTahajjud = !silentTahajjud
-                Settings.setTahajjudSilent(ctx, silentTahajjud)
-                toast = if (silentTahajjud) "Tahajjud alarm set to vibrate only" else "Tahajjud alarm set to sound"
-            }
-
             // ---- YOU ----
-            Spacer(Modifier.height(JannahSpacing.l))
+            Spacer(Modifier.height(JannahSpacing.s))
             SectionHeader("You")
             ListRow(
                 title = "Name",
@@ -200,6 +142,68 @@ private fun SettingsScreen(onBack: () -> Unit) {
                         toast = "Adhan: ${opt.label}"
                     }
                 }
+            }
+
+            // ---- LOCKS & FOCUS ----
+            Spacer(Modifier.height(JannahSpacing.l))
+            SectionHeader("Locks & Focus")
+
+            ListRow(
+                title = "Prayer Lock",
+                subtitle = if (prayerLockOn) "Locks ALL apps during Fard prayers" else "Off",
+                toggle = prayerLockOn
+            ) {
+                prayerLockOn = !prayerLockOn
+                PrayerLock.setEnabled(ctx, prayerLockOn)
+                if (prayerLockOn && !isAccessibilityServiceEnabled(ctx)) {
+                    showGuardian = true
+                    toast = "Enable Accessibility to activate Prayer Lock"
+                }
+                toast = if (prayerLockOn) "Prayer Lock Activated" else "Prayer Lock Off"
+            }
+
+            if (prayerLockOn) {
+                DurationPicker(lockMinutes) { mins ->
+                    lockMinutes = mins
+                    PrayerLock.setDurationMinutes(ctx, mins)
+                    toast = "Duration: $mins minutes"
+                }
+            }
+
+            Divider()
+
+            ListRow(
+                title = "Quran reading lock",
+                subtitle = if (quranLockOn) "Read a page before the day ends" else "Off",
+                toggle = quranLockOn
+            ) {
+                quranLockOn = !quranLockOn
+                QuranReadingLock.setEnabled(ctx, quranLockOn)
+                toast = if (quranLockOn) "Quran lock on" else "Quran lock off"
+            }
+
+            Divider()
+
+            ListRow(
+                title = "Bedtime lock (Al-Mulk)",
+                subtitle = if (bedtimeLockOn) "Locks phone for 5 mins to read Al-Mulk" else "Off",
+                toggle = bedtimeLockOn
+            ) {
+                bedtimeLockOn = !bedtimeLockOn
+                Settings.setBedtimeLockEnabled(ctx, bedtimeLockOn)
+                toast = if (bedtimeLockOn) "Bedtime lock on" else "Bedtime lock off"
+            }
+
+            Divider()
+
+            ListRow(
+                title = "Silent tahajjud alarm",
+                subtitle = if (silentTahajjud) "Vibrate only (no sound)" else "Play alarm sound",
+                toggle = silentTahajjud
+            ) {
+                silentTahajjud = !silentTahajjud
+                Settings.setTahajjudSilent(ctx, silentTahajjud)
+                toast = if (silentTahajjud) "Tahajjud alarm set to vibrate only" else "Tahajjud alarm set to sound"
             }
 
             // ---- APP ----
