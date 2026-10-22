@@ -63,8 +63,7 @@ class MainActivity : ComponentActivity() {
                                 onReady = {
                                     Settings.setSetupComplete(this)
                                     setupDone = true
-                                },
-                                onSkip = { setupDone = true }
+                                }
                             )
                         }
                         onboarded && showLock -> {
