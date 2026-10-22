@@ -61,12 +61,7 @@
             android:showOnLockScreen="true"
             android:turnScreenOn="true" />
         
-        <activity android:name=".BlockActivity"
-            android:excludeFromRecents="true"
-            android:launchMode="singleInstance"
-            android:taskAffinity=""
-            android:exported="false" />
-            
+                    
         <activity android:name=".TahajjudEvidenceActivity"
             android:exported="false" />
 
