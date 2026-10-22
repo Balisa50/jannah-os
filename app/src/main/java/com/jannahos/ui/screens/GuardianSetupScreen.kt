@@ -54,22 +54,7 @@ fun GuardianSetupScreen(onBack: () -> Unit) {
             Spacer(Modifier.height(JannahSpacing.xl))
 
             // 1. Device Admin
-            GuardianItem(
-                title = "1. Anti-Uninstall (Device Admin)",
-                desc = "Prevents the app from being uninstalled and allows the app to lock your screen.",
-                isActive = adminActive,
-                onClick = {
-                    if (!adminActive) {
-                        val intent = Intent(DevicePolicyManager.ACTION_ADD_DEVICE_ADMIN).apply {
-                            putExtra(DevicePolicyManager.EXTRA_DEVICE_ADMIN, ComponentName(ctx, JannahDeviceAdminReceiver::class.java))
-                            putExtra(DevicePolicyManager.EXTRA_ADD_EXPLANATION, "Jannah needs this to prevent bypassing locks.")
-                        }
-                        ctx.startActivity(intent)
-                    } else {
-                        dpm.removeActiveAdmin(ComponentName(ctx, JannahDeviceAdminReceiver::class.java))
-                    }
-                }
-            )
+            
 
             Spacer(Modifier.height(JannahSpacing.m))
 
