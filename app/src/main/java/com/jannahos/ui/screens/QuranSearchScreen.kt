@@ -176,5 +176,5 @@ fun QuranSearchScreen(onBack: () -> Unit, onNavigateToPage: (Int) -> Unit) {
 
 // Ultra-aggressive dot remover
 private fun stripArabicDots(text: String): String {
-    return text.replace(Regex("[\u06DD\u06DE\u06E9\u0660-\u0669\u06F0-\u06F9]"), "").replace(Regex("\\s+"), " ").trim()
+    return text.replace(Regex("[\u0610-\u061A\u064B-\u065F\u0670\u06D6-\u06ED\u08D3-\u08FF\u06DD\u06DE\u06E9]"), "").replace(Regex("[\u0660-\u0669\u06F0-\u06F9]"), "").replace(Regex("\\s+"), " ").trim()
 }

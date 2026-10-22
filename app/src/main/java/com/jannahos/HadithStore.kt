@@ -18,16 +18,20 @@ object HadithStore {
                 val arr = JSONArray(json)
                 for (i in 0 until arr.length()) {
                     val obj = arr.getJSONObject(i)
-                    val english = obj.optJSONObject("english")?.optString("text") ?: ""
-                    val narrator = obj.optJSONObject("english")?.optString("narrator") ?: "Unknown"
-                    val grade = obj.optJSONObject("english")?.optString("grade") ?: "Sahih"
+                    // The AhmedBaset dataset uses "english" -> "text" and "narrator" directly
+                    val englishObj = obj.optJSONObject("english")
+                    val english = englishObj?.optString("text") ?: ""
+                    val narrator = englishObj?.optString("narrator") ?: "Unknown"
+                    val grade = obj.optString("grade", "Sahih") // Grade is often at the root
                     
                     if (english.lowercase().contains(q)) {
                         results.add(Hadith(english, narrator, sourceName, grade))
                         if (results.size >= 20) return@withContext results
                     }
                 }
-            } catch (e: Exception) { }
+            } catch (e: Exception) { 
+                e.printStackTrace()
+            }
         }
         return@withContext results
     }
