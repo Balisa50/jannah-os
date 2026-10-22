@@ -1,5 +1,11 @@
 package com.jannahos.ui
 
+import androidx.compose.animation.AnimatedContent
+import androidx.compose.animation.togetherWith
+import androidx.compose.animation.slideInHorizontally
+import androidx.compose.animation.slideOutHorizontally
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
@@ -81,13 +87,29 @@ fun OnboardingFlow(onDone: () -> Unit) {
             Spacer(Modifier.height(JannahSpacing.xxl))
 
             Box(Modifier.weight(1f).fillMaxWidth()) {
-                when (step) {
+                AnimatedContent(
+                    targetState = step,
+                    transitionSpec = {
+                        if (targetState > initialState) {
+                            // Forward: slide in from right, slide out to left
+                            (slideInHorizontally(initialOffsetX = { it / 3 }, animationSpec = androidx.compose.animation.core.tween(350)) + fadeIn(androidx.compose.animation.core.tween(350))) togetherWith
+                            (slideOutHorizontally(targetOffsetX = { -it / 3 }, animationSpec = androidx.compose.animation.core.tween(350)) + fadeOut(androidx.compose.animation.core.tween(350)))
+                        } else {
+                            // Backward: slide in from left, slide out to right
+                            (slideInHorizontally(initialOffsetX = { -it / 3 }, animationSpec = androidx.compose.animation.core.tween(350)) + fadeIn(androidx.compose.animation.core.tween(350))) togetherWith
+                            (slideOutHorizontally(targetOffsetX = { it / 3 }, animationSpec = androidx.compose.animation.core.tween(350)) + fadeOut(androidx.compose.animation.core.tween(350)))
+                        }
+                    },
+                    label = "onboarding_transition"
+                ) { currentStep ->
+                    when (currentStep) {
                     0 -> Welcome()
                     1 -> TheFourPillars()
                     2 -> AskName(name) { name = it }
                     3 -> Location(lat, lon, method, { lat = it }, { lon = it }, { method = it })
                     4 -> ChooseLevel(level) { level = it }
                     else -> DoneScreen(name.ifBlank { "friend" })
+                    }
                 }
             }
 
