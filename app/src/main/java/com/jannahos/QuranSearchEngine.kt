@@ -1,51 +1,107 @@
 package com.jannahos
 
-object QuranSearchEngine {
-    data class SearchResult(val surahId: Int, val name: String, val page: Int, val ayahStart: Int = 1, val ayahEnd: Int = 999)
+import android.content.Context
 
-    private val semanticMap = mapOf(
-        "musa" to listOf(SearchResult(18, "Al-Kahf (Musa & Khidr)", 299, 60, 82)),
-        "khidr" to listOf(SearchResult(18, "Al-Kahf (Musa & Khidr)", 299, 60, 82)),
-        "pharaoh" to listOf(SearchResult(20, "Ta-Ha (Pharaoh)", 312, 24, 79)),
-        "firaun" to listOf(SearchResult(20, "Ta-Ha (Pharaoh)", 312, 24, 79)),
-        "crossing the river" to listOf(SearchResult(26, "Ash-Shu'ara (Splitting the Sea)", 367, 52, 68)),
-        "splitting the sea" to listOf(SearchResult(26, "Ash-Shu'ara (Splitting the Sea)", 367, 52, 68)),
-        "yusuf" to listOf(SearchResult(12, "Yusuf", 235)),
-        "maryam" to listOf(SearchResult(19, "Maryam", 305)),
-        "sulaiman" to listOf(SearchResult(27, "An-Naml (Solomon)", 377)),
-        "yunus" to listOf(SearchResult(10, "Yunus", 208)),
-        "ayyub" to listOf(SearchResult(21, "Al-Anbiya (Job)", 322)),
-        "patience" to listOf(SearchResult(2, "Al-Baqarah", 2), SearchResult(103, "Al-Asr", 601)),
-        "anxiety" to listOf(SearchResult(13, "Ar-Ra'd", 249), SearchResult(94, "Ash-Sharh", 596)),
-        "forgiveness" to listOf(SearchResult(39, "Az-Zumar", 458)),
-        "paradise" to listOf(SearchResult(55, "Ar-Rahman", 531))
+object QuranSearchEngine {
+    data class AyahResult(val surah: Int, val ayah: Int, val arabic: String, val english: String, val score: Int)
+    data class HadithResult(val collection: String, val number: Int, val arabic: String, val english: String, val score: Int)
+
+    // English to Arabic name mapping
+    private val synonyms = mapOf(
+        "moses" to "musa", "jesus" to "isa", "mary" to "maryam",
+        "jonah" to "yunus", "pharaoh" to "firaun", "solomon" to "sulaiman",
+        "job" to "ayyub", "joseph" to "yusuf", "abraham" to "ibrahim",
+        "noah" to "nuh", "adam" to "adam", "david" to "dawud",
+        "cross" to "crossed", "river" to "river", "sea" to "sea"
     )
 
-    fun search(ctx: android.content.Context, query: String): List<SearchResult> {
-        // First try semantic
-        val semantic = search(query)
-        if (semantic.isNotEmpty()) return semantic
-        
-        // Then fallback to text search
-        val textResults = QuranTextStore.search(ctx, query)
-        return textResults.map { 
-            SearchResult(it.surah, "Surah ${it.surah}", 1) 
-        }.distinctBy { it.surahId }
-    }
-
-    fun search(query: String): List<SearchResult> {
+    fun searchQuran(ctx: Context, query: String): List<AyahResult> {
         val q = query.lowercase().trim()
         if (q.isEmpty()) return emptyList()
         
-        val results = mutableSetOf<SearchResult>()
-        for ((key, surahs) in semanticMap) {
-            if (q.contains(key)) results.addAll(surahs)
-        }
-        for (surah in QuranCache.SURAHS) {
-            if (surah.second.lowercase().contains(q)) {
-                results.add(SearchResult(surah.first, surah.second, QuranStore.firstPageOfSurah(surah.first)))
+        val tokens = q.split(" ").filter { it.isNotBlank() }
+        val results = mutableListOf<AyahResult>()
+        val allAyahs = QuranTextStore.load(ctx)
+
+        for (ayah in allAyahs) {
+            var score = 0
+            val engLower = ayah.english.lowercase()
+            val araText = ayah.arabic
+
+            for (token in tokens) {
+                // 1. Exact match in English
+                if (engLower.contains(token)) score += 10
+                // 2. Exact match in Arabic
+                if (araText.contains(token)) score += 10
+                // 3. Synonym match
+                val syn = synonyms[token]
+                if (syn != null && (engLower.contains(syn) || araText.contains(syn))) score += 5
+                // 4. Fuzzy match for typos (only for words > 3 chars)
+                if (token.length > 3) {
+                    val words = engLower.split(Regex("\\W+"))
+                    for (w in words) {
+                        if (w.length > 3 && levenshtein(token, w) <= 2) {
+                            score += 2
+                            break
+                        }
+                    }
+                }
+            }
+
+            if (score > 0) {
+                results.add(AyahResult(ayah.surah, ayah.ayah, ayah.arabic, ayah.english, score))
             }
         }
-        return results.toList().sortedBy { it.page }
+
+        return results.sortedByDescending { it.score }.take(50)
+    }
+
+    fun searchHadith(ctx: Context, query: String): List<HadithResult> {
+        val q = query.lowercase().trim()
+        if (q.isEmpty()) return emptyList()
+        
+        val tokens = q.split(" ").filter { it.isNotBlank() }
+        val results = mutableListOf<HadithResult>()
+        val allHadiths = HadithStore.load(ctx)
+
+        for (h in allHadiths) {
+            var score = 0
+            val engLower = h.english.lowercase()
+            val araText = h.arabic
+
+            for (token in tokens) {
+                if (engLower.contains(token)) score += 10
+                if (araText.contains(token)) score += 10
+                if (token.length > 3) {
+                    val words = engLower.split(Regex("\\W+"))
+                    for (w in words) {
+                        if (w.length > 3 && levenshtein(token, w) <= 2) {
+                            score += 2
+                            break
+                        }
+                    }
+                }
+            }
+
+            if (score > 0) {
+                results.add(HadithResult(h.collection, h.number, h.arabic, h.english, score))
+            }
+        }
+
+        return results.sortedByDescending { it.score }.take(50)
+    }
+
+    // Levenshtein distance algorithm for fuzzy matching
+    private fun levenshtein(a: String, b: String): Int {
+        val dp = Array(a.length + 1) { IntArray(b.length + 1) }
+        for (i in 0..a.length) dp[i][0] = i
+        for (j in 0..b.length) dp[0][j] = j
+        for (i in 1..a.length) {
+            for (j in 1..b.length) {
+                val cost = if (a[i - 1] == b[j - 1]) 0 else 1
+                dp[i][j] = minOf(dp[i - 1][j] + 1, dp[i][j - 1] + 1, dp[i - 1][j - 1] + cost)
+            }
+        }
+        return dp[a.length][b.length]
     }
 }

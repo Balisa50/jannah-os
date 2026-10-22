@@ -19,8 +19,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.jannahos.HadithStore
-import com.jannahos.QuranTextStore
+import com.jannahos.QuranSearchEngine
 import com.jannahos.ui.TopBar
 import com.jannahos.ui.pressClickable
 import com.jannahos.ui.theme.JannahColors
@@ -40,8 +39,8 @@ fun QuranSearchScreen(onBack: () -> Unit, onNavigateToPage: (Int) -> Unit) {
 
     var query by remember { mutableStateOf("") }
     var searchMode by remember { mutableStateOf("quran") }
-    var quranHits by remember { mutableStateOf<List<QuranTextStore.Ayah>>(emptyList()) }
-    var hadithHits by remember { mutableStateOf<List<HadithStore.Hadith>>(emptyList()) }
+    var quranHits by remember { mutableStateOf<List<QuranSearchEngine.AyahResult>>(emptyList()) }
+    var hadithHits by remember { mutableStateOf<List<QuranSearchEngine.HadithResult>>(emptyList()) }
     var loading by remember { mutableStateOf(false) }
     var searched by remember { mutableStateOf(false) }
 
@@ -54,11 +53,22 @@ fun QuranSearchScreen(onBack: () -> Unit, onNavigateToPage: (Int) -> Unit) {
             return@LaunchedEffect
         }
         loading = true
-        delay(300)
-        if (searchMode == "hadith") {
-            hadithHits = HadithStore.searchAsync(ctx, q)
-        } else {
-            quranHits = withContext(Dispatchers.IO) { QuranTextStore.search(ctx, q) }
+        delay(400) // Debounce
+
+        withContext(Dispatchers.IO) {
+            if (searchMode == "hadith") {
+                val res = QuranSearchEngine.searchHadith(ctx, q)
+                withContext(Dispatchers.Main) {
+                    hadithHits = res
+                    quranHits = emptyList()
+                }
+            } else {
+                val res = QuranSearchEngine.searchQuran(ctx, q)
+                withContext(Dispatchers.Main) {
+                    quranHits = res
+                    hadithHits = emptyList()
+                }
+            }
         }
         loading = false
         searched = true
@@ -69,7 +79,12 @@ fun QuranSearchScreen(onBack: () -> Unit, onNavigateToPage: (Int) -> Unit) {
 
         Column(Modifier.padding(horizontal = JannahSpacing.gutter)) {
             Spacer(Modifier.height(JannahSpacing.m))
-            OutlinedTextField(value = query, onValueChange = { query = it }, modifier = Modifier.fillMaxWidth(), label = { Text("Search Quran or Hadith", fontSize = 12.sp) }, shape = RoundedCornerShape(12.dp))
+            OutlinedTextField(
+                value = query, onValueChange = { query = it },
+                modifier = Modifier.fillMaxWidth(),
+                label = { Text("Search Quran or Hadith", fontSize = 12.sp) },
+                shape = RoundedCornerShape(12.dp)
+            )
             Spacer(Modifier.height(JannahSpacing.m))
             Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                 Box(Modifier.weight(1f).height(40.dp).clip(RoundedCornerShape(50)).background(if (searchMode == "quran") JannahColors.Orange else JannahColors.Card).pressClickable { searchMode = "quran" }, contentAlignment = Alignment.Center) { Text("Quran", color = if (searchMode == "quran") JannahColors.OnOrange else JannahColors.Ink, fontWeight = FontWeight.Bold) }
@@ -90,7 +105,7 @@ fun QuranSearchScreen(onBack: () -> Unit, onNavigateToPage: (Int) -> Unit) {
                         Text("${h.collection.uppercase()} · ${h.number}", style = JannahType.micro, color = JannahColors.OrangeDeep, fontWeight = FontWeight.Bold)
                         Spacer(Modifier.height(8.dp))
                         if (h.arabic.isNotBlank()) {
-                            Text(h.arabic, fontFamily = UthmanicHafs, fontSize = 22.sp, color = JannahColors.Ink, textAlign = TextAlign.End, lineHeight = 36.sp, modifier = Modifier.fillMaxWidth())
+                            Text(stripAllArabicMarks(h.arabic), fontFamily = UthmanicHafs, fontSize = 22.sp, color = JannahColors.Ink, textAlign = TextAlign.End, lineHeight = 36.sp, modifier = Modifier.fillMaxWidth())
                             Spacer(Modifier.height(8.dp))
                         }
                         Text(h.english, style = JannahType.bodySmall, color = JannahColors.Body, lineHeight = 22.sp)
@@ -103,7 +118,7 @@ fun QuranSearchScreen(onBack: () -> Unit, onNavigateToPage: (Int) -> Unit) {
                     Column(Modifier.fillMaxWidth().padding(horizontal = JannahSpacing.gutter, vertical = JannahSpacing.m)) {
                         Text("Surah ${a.surah} · Ayah ${a.ayah}", style = JannahType.micro, color = JannahColors.OrangeDeep, fontWeight = FontWeight.Bold)
                         Spacer(Modifier.height(8.dp))
-                        Text(a.arabic, fontFamily = UthmanicHafs, fontSize = 24.sp, color = JannahColors.Ink, textAlign = TextAlign.End, lineHeight = 40.sp, modifier = Modifier.fillMaxWidth())
+                        Text(stripAllArabicMarks(a.arabic), fontFamily = UthmanicHafs, fontSize = 24.sp, color = JannahColors.Ink, textAlign = TextAlign.End, lineHeight = 40.sp, modifier = Modifier.fillMaxWidth())
                         Spacer(Modifier.height(8.dp))
                         Text(a.english, style = JannahType.bodySmall, color = JannahColors.Body, lineHeight = 22.sp)
                     }
@@ -112,4 +127,10 @@ fun QuranSearchScreen(onBack: () -> Unit, onNavigateToPage: (Int) -> Unit) {
             }
         }
     }
+}
+
+// ULTIMATE DOT REMOVER: Keeps only standard Arabic letters and spaces
+private fun stripAllArabicMarks(text: String): String {
+    val pattern = Regex("[^\\u0621-\\u064A\\s]")
+    return text.replace(pattern, "").replace(Regex("\\s+"), " ").trim()
 }
