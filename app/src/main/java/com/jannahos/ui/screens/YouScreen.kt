@@ -35,6 +35,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.jannahos.ui.pressClickable
+import com.jannahos.ui.TopBar
 import com.jannahos.BedtimeActivity
 import com.jannahos.SafeStore
 import com.jannahos.Settings
@@ -78,7 +79,7 @@ fun YouScreen() {
     val showFriction = remember { mutableStateOf(false) }
     var showMore by remember { mutableStateOf(false) }
 
-    if (showFormation.value) { FormationScreen(onBack = { showFormation.value = false }); return }
+    
     if (showWeekly.value) { WeeklyReviewScreen(onBack = { showWeekly.value = false }); return }
     if (showDiary.value) { DiaryScreen(onBack = { showDiary.value = false }); return }
     if (showStruggle.value) { StruggleScreen(onBack = { showStruggle.value = false }); return }
