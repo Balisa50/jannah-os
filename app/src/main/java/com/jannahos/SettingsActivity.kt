@@ -1,34 +1,19 @@
 package com.jannahos
 
-import android.app.NotificationChannel
-import android.app.NotificationManager
 import android.content.Context
 import android.content.Intent
-import android.os.Build
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -39,9 +24,10 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.jannahos.ui.SwipeBackScreen
-import com.jannahos.ui.pressClickable
 import com.jannahos.ui.TopBar
+import com.jannahos.ui.pressClickable
 import com.jannahos.ui.screens.CityPickerScreen
+import com.jannahos.ui.screens.GuardianSetupScreen
 import com.jannahos.ui.theme.JannahColors
 import com.jannahos.ui.theme.JannahSpacing
 import com.jannahos.ui.theme.JannahType
@@ -51,9 +37,7 @@ class SettingsActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
         setContent {
             com.jannahos.ui.theme.JannahTheme {
-                Box(Modifier.fillMaxSize().background(JannahColors.Cream)) {
-                    SwipeBackScreen(onBack = { finish() }) { SettingsScreen(onBack = { finish() }) }
-                }
+                SwipeBackScreen(onBack = { finish() }) { SettingsScreen(onBack = { finish() }) }
             }
         }
     }
@@ -63,9 +47,8 @@ class SettingsActivity : ComponentActivity() {
 private fun SettingsScreen(onBack: () -> Unit) {
     val ctx = LocalContext.current
 
-    // Modal routes
     var showCityPicker by remember { mutableStateOf(false) }
-        var showGuardian by remember { mutableStateOf(false) }
+    var showGuardian by remember { mutableStateOf(false) }
 
     if (showCityPicker) {
         CityPickerScreen(
@@ -77,263 +60,217 @@ private fun SettingsScreen(onBack: () -> Unit) {
         )
         return
     }
+    
     if (showGuardian) {
-        com.jannahos.ui.screens.GuardianSetupScreen(onBack = { showGuardian = false })
+        GuardianSetupScreen(onBack = { showGuardian = false })
         return
     }
-        }
 
     // State
     var name by remember { mutableStateOf(Settings.displayName(ctx)) }
-    var lat by remember { mutableStateOf(Settings.lat(ctx).toString()) }
-    var lon by remember { mutableStateOf(Settings.lon(ctx).toString()) }
     var method by remember { mutableStateOf(Settings.method(ctx)) }
     var adhan by remember { mutableStateOf(AdhanSettings.current(ctx)) }
-    var focusOn by remember { mutableStateOf(FocusSession.enabled(ctx)) }
-    var lockOn by remember { mutableStateOf(PrayerLock.enabled(ctx)) }
+    var prayerLockOn by remember { mutableStateOf(PrayerLock.enabled(ctx)) }
     var lockMinutes by remember { mutableStateOf(PrayerLock.durationMinutes(ctx)) }
     var quranLockOn by remember { mutableStateOf(QuranReadingLock.enabled(ctx)) }
+    var silentTahajjud by remember { mutableStateOf(Settings.isTahajjudSilent(ctx)) }
     var cityName by remember { mutableStateOf(CityStore.name(ctx)) }
     var countryName by remember { mutableStateOf(CityStore.country(ctx)) }
-    var useCityMode by remember { mutableStateOf(CityStore.useCity(ctx)) }
-            var prayerLockOn by remember { mutableStateOf(PrayerLock.enabled(ctx)) }
-    var silentTahajjud by remember { mutableStateOf<Boolean>(Settings.isTahajjudSilent(ctx)) }
 
     var nameExpanded by remember { mutableStateOf(false) }
-    var locExpanded by remember { mutableStateOf(false) }
     var methodExpanded by remember { mutableStateOf(false) }
     var adhanExpanded by remember { mutableStateOf(false) }
     var toast by remember { mutableStateOf<String?>(null) }
 
     SwipeBackScreen(onBack = onBack) {
-    Column(
-        Modifier
-            .fillMaxSize()
-            .verticalScroll(rememberScrollState())
-            .background(JannahColors.Cream)
-    ) {
-        TopBar("Settings", onBack = onBack)
-        Spacer(Modifier.height(JannahSpacing.s))
-        SectionHeader("Locks & Focus")
-        
-        ListRow(
-            title = "Prayer Lock",
-            subtitle = if (prayerLockOn) "Locks ALL apps during Fard prayers" else "Off",
-            toggle = prayerLockOn
+        Column(
+            Modifier
+                .fillMaxSize()
+                .verticalScroll(rememberScrollState())
+                .background(JannahColors.Cream)
         ) {
-            prayerLockOn = !prayerLockOn
-            PrayerLock.setEnabled(ctx, prayerLockOn)
+            TopBar("Settings", onBack = onBack)
+
+            // ---- LOCKS & FOCUS ----
+            Spacer(Modifier.height(JannahSpacing.s))
+            SectionHeader("Locks & Focus")
+
+            ListRow(
+                title = "Prayer Lock",
+                subtitle = if (prayerLockOn) "Locks ALL apps during Fard prayers" else "Off",
+                toggle = prayerLockOn
+            ) {
+                prayerLockOn = !prayerLockOn
+                PrayerLock.setEnabled(ctx, prayerLockOn)
+                if (prayerLockOn) {
+                    // Check if accessibility is on, if not, prompt
+                    val isEnabled = isAccessibilityServiceEnabled(ctx)
+                    if (!isEnabled) {
+                        showGuardian = true
+                        toast = "Enable Accessibility to activate Prayer Lock"
+                    }
+                }
+                toast = if (prayerLockOn) "Prayer Lock Activated" else "Prayer Lock Off"
+            }
+
             if (prayerLockOn) {
-                // Ensure accessibility is on
-                showGuardian = true 
-            }
-            toast = if (prayerLockOn) "Prayer Lock Activated" else "Prayer Lock Off"
-        }
-        
-        Divider()
-
-        Spacer(Modifier.height(JannahSpacing.s))
-
-        // ---- YOU ----
-        SectionHeader("You")
-        ListRow(
-            title = "Name",
-            subtitle = if (name.isBlank()) "Not set" else name,
-            onClick = { nameExpanded = !nameExpanded }
-        )
-        if (nameExpanded) {
-            InsetField(name, "First name") {
-                name = it
-                Settings.setDisplayName(ctx, it)
-            }
-        }
-
-        // ---- PRAYER ----
-        Spacer(Modifier.height(JannahSpacing.l))
-        SectionHeader("Prayer")
-
-        ListRow(
-            title = "City",
-            subtitle = if (cityName.isBlank()) "Not set" else "$cityName, $countryName",
-            onClick = { showCityPicker = true }
-        )
-
-        Divider()
-
-        ListRow(
-            title = "Coordinates",
-            subtitle = if (useCityMode) "Using city times" else "%.4f, %.4f".format(Settings.lat(ctx), Settings.lon(ctx)),
-            onClick = { locExpanded = !locExpanded }
-        )
-        if (locExpanded) {
-            InsetField(lat, "Latitude") { lat = it; persistLocation(ctx, lat, lon, method) }
-            InsetField(lon, "Longitude") { lon = it; persistLocation(ctx, lat, lon, method) }
-        }
-
-        Divider()
-
-        ListRow(
-            title = "Calculation method",
-            subtitle = Settings.METHODS.firstOrNull { it.first == method }?.second ?: method,
-            onClick = { methodExpanded = !methodExpanded }
-        )
-        if (methodExpanded) {
-            Settings.METHODS.forEach { (code, label) ->
-                SelectRow(label, method == code) {
-                    method = code
-                    Settings.set(ctx, Settings.lat(ctx), Settings.lon(ctx), code)
-                    toast = "Method: $label"
+                DurationPicker(lockMinutes) { mins ->
+                    lockMinutes = mins
+                    PrayerLock.setDurationMinutes(ctx, mins)
+                    toast = "Duration: $mins minutes"
                 }
             }
-        }
 
-        Divider()
+            Divider()
 
-        ListRow(
-            title = "Adhan sound",
-            subtitle = AdhanSettings.options.firstOrNull { it.id == adhan }?.label ?: "",
-            onClick = { adhanExpanded = !adhanExpanded }
-        )
-        if (adhanExpanded) {
-            AdhanSettings.options.forEach { opt ->
-                SelectRow(opt.label, adhan == opt.id) {
-                    adhan = opt.id
-                    AdhanSettings.set(ctx, opt.id)
-                    toast = "Adhan: ${opt.label}"
-                }
+            ListRow(
+                title = "Quran reading lock",
+                subtitle = if (quranLockOn) "A page before the day ends" else "Off",
+                toggle = quranLockOn
+            ) {
+                quranLockOn = !quranLockOn
+                QuranReadingLock.setEnabled(ctx, quranLockOn)
+                toast = if (quranLockOn) "Quran lock on" else "Quran lock off"
             }
-        }
 
-        Divider()
+            Divider()
 
-        ListRow(
-            title = "Prayer lock",
-            subtitle = if (lockOn) "$lockMinutes min at prayer time" else "Off",
-            toggle = lockOn
-        ) {
-            lockOn = !lockOn
-            PrayerLock.setEnabled(ctx, lockOn)
-            toast = if (lockOn) "Prayer lock on" else "Prayer lock off"
-        }
-        if (lockOn) {
-            DurationPicker(lockMinutes) { mins ->
-                lockMinutes = mins
-                PrayerLock.setDurationMinutes(ctx, mins)
-                toast = "Duration: $mins minutes"
+            ListRow(
+                title = "Silent tahajjud",
+                subtitle = if (silentTahajjud) "Vibrate only (no sound)" else "Play alarm sound",
+                toggle = silentTahajjud
+            ) {
+                silentTahajjud = !silentTahajjud
+                Settings.setTahajjudSilent(ctx, silentTahajjud)
+                toast = if (silentTahajjud) "Tahajjud alarm set to vibrate only" else "Tahajjud alarm set to sound"
             }
-        }
 
-        Divider()
-
-        ListRow(
-            title = "Quran reading lock",
-            subtitle = if (quranLockOn) "A page before the day ends" else "Off",
-            toggle = quranLockOn
-        ) {
-            quranLockOn = !quranLockOn
-            QuranReadingLock.setEnabled(ctx, quranLockOn)
-            toast = if (quranLockOn) "Quran lock on" else "Quran lock off"
-        }
-
-        Divider()
-
-        ListRow(
-            title = "Blocked apps",
-            subtitle = if (blockedCount == 0) "None selected" else "$blockedCount selected",
-            onClick = { showAppPicker = true }
-        )
-
-        Divider()
-
-        ListRow(
-            title = "Focus mode",
-            subtitle = if (focusOn) "On" else "Off",
-            toggle = focusOn
-        ) {
-            focusOn = !focusOn
-            FocusSession.setEnabled(ctx, focusOn)
-            toast = if (focusOn) "Focus mode on" else "Focus mode off"
-        }
-
-        Divider()
-        ListRow(
-            title = "Silent tahajjud",
-            subtitle = if (silentTahajjud) "Vibrate only (no sound)" else "Play alarm sound",
-            toggle = silentTahajjud
-        ) {
-            silentTahajjud = !silentTahajjud
-            Settings.setTahajjudSilent(ctx, silentTahajjud)
-            toast = if (silentTahajjud) "Tahajjud alarm set to vibrate only" else "Tahajjud alarm set to sound"
-        }
-
-        // ---- APP ----
-        Spacer(Modifier.height(JannahSpacing.l))
-        SectionHeader("App")
-
-        ListRow(
-            title = "Send test notification",
-            onClick = {
-                sendTestNotification(ctx)
-                toast = "Notification sent"
-            }
-        )
-        Divider()
-        ListRow(
-            title = "Restart onboarding",
-            onClick = {
-                Settings.resetOnboarding(ctx)
-                toast = "Reopen the app to restart onboarding"
-            }
-        )
-
-        // ---- DATA ----
-        Spacer(Modifier.height(JannahSpacing.l))
-        SectionHeader("Data")
-
-        ListRow(
-            title = "Clear istighfar today",
-            onClick = {
-                IstighfarStore.reset(ctx)
-                toast = "Istighfar cleared"
-            }
-        )
-        Divider()
-        ListRow(
-            title = "Clear planner tasks",
-            onClick = {
-                PlannerStore(ctx).writableDatabase.delete("tasks", null, null)
-                toast = "Planner cleared"
-            }
-        )
-        Divider()
-        ListRow(
-            title = "Erase prayer and tahajjud history",
-            onClick = {
-                Stores.wake(ctx).writableDatabase.delete("events", null, null)
-                toast = "History erased"
-            }
-        )
-
-        if (toast != null) {
-            Spacer(Modifier.height(JannahSpacing.m))
-            Text(
-                toast!!,
-                style = JannahType.caption,
-                color = JannahColors.Orange,
-                textAlign = TextAlign.Center,
-                modifier = Modifier.fillMaxWidth().padding(horizontal = JannahSpacing.gutter)
+            // ---- YOU ----
+            Spacer(Modifier.height(JannahSpacing.l))
+            SectionHeader("You")
+            ListRow(
+                title = "Name",
+                subtitle = if (name.isBlank()) "Not set" else name,
+                onClick = { nameExpanded = !nameExpanded }
             )
-        }
+            if (nameExpanded) {
+                InsetField(name, "First name") {
+                    name = it
+                    Settings.setDisplayName(ctx, it)
+                }
+            }
 
-        Spacer(Modifier.height(JannahSpacing.xxl))
-    }
+            // ---- PRAYER ----
+            Spacer(Modifier.height(JannahSpacing.l))
+            SectionHeader("Prayer")
+
+            ListRow(
+                title = "City",
+                subtitle = if (cityName.isBlank()) "Not set" else "$cityName, $countryName",
+                onClick = { showCityPicker = true }
+            )
+            Divider()
+
+            ListRow(
+                title = "Calculation method",
+                subtitle = Settings.METHODS.firstOrNull { it.first == method }?.second ?: method,
+                onClick = { methodExpanded = !methodExpanded }
+            )
+            if (methodExpanded) {
+                Settings.METHODS.forEach { (code, label) ->
+                    SelectRow(label, method == code) {
+                        method = code
+                        Settings.set(ctx, Settings.lat(ctx), Settings.lon(ctx), code)
+                        toast = "Method: $label"
+                    }
+                }
+            }
+            Divider()
+
+            ListRow(
+                title = "Adhan sound",
+                subtitle = AdhanSettings.options.firstOrNull { it.id == adhan }?.label ?: "",
+                onClick = { adhanExpanded = !adhanExpanded }
+            )
+            if (adhanExpanded) {
+                AdhanSettings.options.forEach { opt ->
+                    SelectRow(opt.label, adhan == opt.id) {
+                        adhan = opt.id
+                        AdhanSettings.set(ctx, opt.id)
+                        toast = "Adhan: ${opt.label}"
+                    }
+                }
+            }
+
+            // ---- APP ----
+            Spacer(Modifier.height(JannahSpacing.l))
+            SectionHeader("App")
+            ListRow(
+                title = "Test notification",
+                onClick = {
+                    sendTestNotification(ctx)
+                    toast = "Notification sent"
+                }
+            )
+            Divider()
+            ListRow(
+                title = "Restart onboarding",
+                onClick = {
+                    Settings.resetOnboarding(ctx)
+                    toast = "Reopen the app to restart onboarding"
+                }
+            )
+
+            // ---- DATA ----
+            Spacer(Modifier.height(JannahSpacing.l))
+            SectionHeader("Data")
+            ListRow(
+                title = "Clear istighfar today",
+                onClick = {
+                    IstighfarStore.reset(ctx)
+                    toast = "Istighfar cleared"
+                }
+            )
+            Divider()
+            ListRow(
+                title = "Clear planner tasks",
+                onClick = {
+                    PlannerStore(ctx).writableDatabase.delete("tasks", null, null)
+                    toast = "Planner cleared"
+                }
+            )
+            Divider()
+            ListRow(
+                title = "Erase prayer and tahajjud history",
+                onClick = {
+                    Stores.wake(ctx).writableDatabase.delete("events", null, null)
+                    toast = "History erased"
+                }
+            )
+
+            if (toast != null) {
+                Spacer(Modifier.height(JannahSpacing.m))
+                Text(
+                    toast!!,
+                    style = JannahType.caption,
+                    color = JannahColors.Orange,
+                    textAlign = TextAlign.Center,
+                    modifier = Modifier.fillMaxWidth().padding(horizontal = JannahSpacing.gutter)
+                )
+            }
+
+            Spacer(Modifier.height(JannahSpacing.xxl))
+        }
     }
 }
 
-private fun persistLocation(ctx: Context, latS: String, lonS: String, method: String) {
-    val latD = latS.toDoubleOrNull() ?: return
-    val lonD = lonS.toDoubleOrNull() ?: return
-    Settings.set(ctx, latD, lonD, method)
+private fun isAccessibilityServiceEnabled(context: Context): Boolean {
+    val service = "${context.packageName}/${FocusAccessibilityService::class.java.canonicalName}"
+    val enabledServices = android.provider.Settings.Secure.getString(
+        context.contentResolver,
+        android.provider.Settings.Secure.ENABLED_ACCESSIBILITY_SERVICES
+    ) ?: return false
+    return enabledServices.contains(service)
 }
 
 @Composable
@@ -342,52 +279,31 @@ private fun SectionHeader(text: String) {
         text.uppercase(),
         style = JannahType.eyebrow,
         color = JannahColors.OrangeDeep,
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(horizontal = JannahSpacing.gutter, vertical = JannahSpacing.s)
+        modifier = Modifier.fillMaxWidth().padding(horizontal = JannahSpacing.gutter, vertical = JannahSpacing.s)
     )
 }
 
 @Composable
-private fun ListRow(
-    title: String,
-    subtitle: String? = null,
-    toggle: Boolean? = null,
-    onClick: () -> Unit
-) {
+private fun ListRow(title: String, subtitle: String? = null, toggle: Boolean? = null, onClick: () -> Unit) {
     Row(
-        Modifier
-            .fillMaxWidth()
-            .clickable(onClick = onClick)
-            .padding(horizontal = JannahSpacing.gutter, vertical = 18.dp),
+        Modifier.fillMaxWidth().clickable(onClick = onClick).padding(horizontal = JannahSpacing.gutter, vertical = 16.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {
         Column(Modifier.weight(1f)) {
-            Text(title,
-                fontFamily = FontFamily.Serif,
-                fontSize = 17.sp,
-                fontWeight = FontWeight.Bold,
-                color = JannahColors.Ink)
+            Text(title, fontFamily = FontFamily.Serif, fontSize = 17.sp, fontWeight = FontWeight.Bold, color = JannahColors.Ink)
             if (!subtitle.isNullOrBlank()) {
                 Spacer(Modifier.height(2.dp))
-                Text(subtitle,
-                    style = JannahType.caption,
-                    color = JannahColors.Muted)
+                Text(subtitle, style = JannahType.caption, color = JannahColors.Muted)
             }
         }
         if (toggle != null) {
             Box(
-                Modifier
-                    .clip(RoundedCornerShape(20.dp))
-                    .background(if (toggle) JannahColors.Orange else JannahColors.Border)
-                    .padding(horizontal = 12.dp, vertical = 6.dp)
+                Modifier.clip(RoundedCornerShape(20.dp)).background(if (toggle) JannahColors.Orange else JannahColors.Border).padding(horizontal = 12.dp, vertical = 6.dp)
             ) {
-                Text(if (toggle) "ON" else "OFF",
-                    style = JannahType.micro,
-                    color = if (toggle) JannahColors.OnOrange else JannahColors.Muted)
+                Text(if (toggle) "ON" else "OFF", style = JannahType.micro, color = if (toggle) JannahColors.OnOrange else JannahColors.Muted)
             }
         } else {
-            Text("→", style = JannahType.body, color = JannahColors.Orange)
+            Text("→", style = JannahType.title, color = JannahColors.Orange)
         }
     }
 }
@@ -395,18 +311,11 @@ private fun ListRow(
 @Composable
 private fun SelectRow(label: String, selected: Boolean, onClick: () -> Unit) {
     Row(
-        Modifier
-            .fillMaxWidth()
-            .clickable(onClick = onClick)
-            .padding(horizontal = JannahSpacing.gutter + 12.dp, vertical = 12.dp),
+        Modifier.fillMaxWidth().clickable(onClick = onClick).padding(horizontal = JannahSpacing.gutter + 12.dp, vertical = 12.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {
-        Text(label,
-            style = JannahType.body,
-            color = if (selected) JannahColors.Ink else JannahColors.Body,
-            fontWeight = if (selected) FontWeight.SemiBold else FontWeight.Normal,
-            modifier = Modifier.weight(1f))
-        if (selected) Text("", style = JannahType.body, color = JannahColors.Orange)
+        Text(label, style = JannahType.body, color = if (selected) JannahColors.Ink else JannahColors.Body, fontWeight = if (selected) FontWeight.SemiBold else FontWeight.Normal, modifier = Modifier.weight(1f))
+        if (selected) Text("✓", style = JannahType.body, color = JannahColors.Orange)
     }
 }
 
@@ -425,27 +334,16 @@ private fun InsetField(value: String, label: String, onChange: (String) -> Unit)
 @Composable
 private fun DurationPicker(current: Int, onPick: (Int) -> Unit) {
     Row(
-        Modifier
-            .fillMaxWidth()
-            .padding(horizontal = JannahSpacing.gutter)
-            .padding(bottom = JannahSpacing.s),
+        Modifier.fillMaxWidth().padding(horizontal = JannahSpacing.gutter).padding(bottom = JannahSpacing.s),
         horizontalArrangement = Arrangement.spacedBy(JannahSpacing.s)
     ) {
         listOf(5, 10, 15, 20).forEach { m ->
             val selected = current == m
             Box(
-                Modifier
-                    .weight(1f)
-                    .height(44.dp)
-                    .clip(RoundedCornerShape(20.dp))
-                    .background(if (selected) JannahColors.Orange else JannahColors.Card)
-                    .clickable { onPick(m) },
+                Modifier.weight(1f).height(44.dp).clip(RoundedCornerShape(20.dp)).background(if (selected) JannahColors.Orange else JannahColors.Card).clickable { onPick(m) },
                 contentAlignment = Alignment.Center
             ) {
-                Text("$m min",
-                    style = JannahType.caption,
-                    color = if (selected) JannahColors.OnOrange else JannahColors.Ink,
-                    fontWeight = FontWeight.SemiBold)
+                Text("$m min", style = JannahType.caption, color = if (selected) JannahColors.OnOrange else JannahColors.Ink, fontWeight = FontWeight.SemiBold)
             }
         }
     }
@@ -453,23 +351,15 @@ private fun DurationPicker(current: Int, onPick: (Int) -> Unit) {
 
 @Composable
 private fun Divider() {
-    Box(
-        Modifier
-            .fillMaxWidth()
-            .padding(horizontal = JannahSpacing.gutter)
-            .height(1.dp)
-            .background(JannahColors.Divider)
-    )
+    Box(Modifier.fillMaxWidth().padding(horizontal = JannahSpacing.gutter).height(1.dp).background(JannahColors.Border))
 }
 
 private fun sendTestNotification(ctx: Context) {
-    val nm = ctx.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
+    val nm = ctx.getSystemService(Context.NOTIFICATION_SERVICE) as android.app.NotificationManager
     val channelId = "test"
-    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+    if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.O) {
         if (nm.getNotificationChannel(channelId) == null) {
-            nm.createNotificationChannel(
-                NotificationChannel(channelId, "Test", NotificationManager.IMPORTANCE_HIGH)
-            )
+            nm.createNotificationChannel(android.app.NotificationChannel(channelId, "Test", android.app.NotificationManager.IMPORTANCE_HIGH))
         }
     }
     val notif = androidx.core.app.NotificationCompat.Builder(ctx, channelId)
