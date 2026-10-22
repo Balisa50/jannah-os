@@ -7,9 +7,6 @@ import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Text
 import androidx.compose.runtime.*
-import androidx.lifecycle.Lifecycle
-import androidx.lifecycle.LifecycleEventObserver
-import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -38,11 +35,13 @@ import androidx.compose.foundation.layout.windowInsetsPadding
 @Composable
 fun QuranLockScreen(onRelease: () -> Unit) {
     val ctx = LocalContext.current
-    val ctx = androidx.compose.ui.platform.LocalContext.current
     var selectedSurah by remember { mutableStateOf<Int?>(QuranReadingLock.getLastSelectedSurah(ctx).takeIf { it > 0 }) }
 
     if (selectedSurah == null) {
-        SurahPickerScreen(onPicked = { selectedSurah = it; QuranReadingLock.setLastSelectedSurah(ctx, it) })
+        SurahPickerScreen(onPicked = { 
+            selectedSurah = it
+            QuranReadingLock.setLastSelectedSurah(ctx, it)
+        })
     } else {
         ReadingLockSession(surah = selectedSurah!!, onRelease = onRelease)
     }
@@ -58,10 +57,7 @@ private fun SurahPickerScreen(onPicked: (Int) -> Unit) {
             items(QuranCache.SURAHS.size) { index ->
                 val surah = QuranCache.SURAHS[index]
                 Row(
-                    Modifier
-                        .fillMaxWidth()
-                        .pressClickable { onPicked(surah.first) }
-                        .padding(horizontal = JannahSpacing.gutter, vertical = 16.dp),
+                    Modifier.fillMaxWidth().pressClickable { onPicked(surah.first) }.padding(horizontal = JannahSpacing.gutter, vertical = 16.dp),
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     Text("${surah.first}", color = JannahColors.OrangeDeep, fontSize = 14.sp, modifier = Modifier.width(32.dp))
@@ -83,23 +79,11 @@ private fun ReadingLockSession(surah: Int, onRelease: () -> Unit) {
 
     var remaining by remember { mutableLongStateOf(QuranReadingLock.getSavedRemainingMs(ctx)) }
     var isDone by remember { mutableStateOf(remaining <= 0L) }
-    val lifecycleOwner = LocalLifecycleOwner.current
 
-    DisposableEffect(lifecycleOwner) {
-        val observer = LifecycleEventObserver { _, event ->
-            if (event == Lifecycle.Event.ON_STOP || event == Lifecycle.Event.ON_PAUSE) {
-                QuranReadingLock.saveRemainingMs(ctx, remaining)
-            }
-        }
-        lifecycleOwner.lifecycle.addObserver(observer)
-        onDispose {
-            lifecycleOwner.lifecycle.removeObserver(observer)
-            QuranReadingLock.saveRemainingMs(ctx, remaining)
-        }
+    DisposableEffect(Unit) {
+        onDispose { QuranReadingLock.saveRemainingMs(ctx, remaining) }
     }
 
-    // The timer only runs while the composable is actively in the composition tree AND the lifecycle is resumed.
-    // Using rememberCoroutineScope tied to the composition ensures it dies the moment you leave.
     LaunchedEffect(isDone) {
         if (isDone) return@LaunchedEffect
         while (remaining > 0L) {
@@ -120,14 +104,12 @@ private fun ReadingLockSession(surah: Int, onRelease: () -> Unit) {
             val pageNum = pageIndex + 1
             val bitmap = remember(pageNum) { MushafImageStore.loadBitmap(ctx, pageNum) }
             if (bitmap != null) {
-                Box(Modifier.fillMaxSize().background(Color.White), contentAlignment = Alignment.Center) {
-                    androidx.compose.foundation.Image(
-                        bitmap = bitmap.asImageBitmap(),
-                        contentDescription = "Page $pageNum",
-                        modifier = Modifier.fillMaxWidth(),
-                        contentScale = ContentScale.FillWidth
-                    )
-                }
+                androidx.compose.foundation.Image(
+                    bitmap = bitmap.asImageBitmap(),
+                    contentDescription = "Page $pageNum",
+                    modifier = Modifier.fillMaxWidth(),
+                    contentScale = ContentScale.FillWidth
+                )
             }
         }
 
@@ -139,22 +121,12 @@ private fun ReadingLockSession(surah: Int, onRelease: () -> Unit) {
         }
 
         if (isDone) {
-            // Overlay to celebrate completion and allow exit
             Box(
-                Modifier
-                    .fillMaxSize()
-                    .background(Color.Black.copy(alpha = 0.5f))
-                    .windowInsetsPadding(WindowInsets.navigationBars)
-                    .padding(JannahSpacing.gutter),
+                Modifier.fillMaxSize().background(Color.Black.copy(alpha = 0.5f)).windowInsetsPadding(WindowInsets.navigationBars).padding(JannahSpacing.gutter),
                 contentAlignment = Alignment.BottomCenter
             ) {
                 Box(
-                    Modifier
-                        .fillMaxWidth()
-                        .height(56.dp)
-                        .clip(RoundedCornerShape(JannahSpacing.pillRadius))
-                        .background(JannahColors.Orange)
-                        .pressClickable { onRelease() },
+                    Modifier.fillMaxWidth().height(56.dp).clip(RoundedCornerShape(JannahSpacing.pillRadius)).background(JannahColors.Orange).pressClickable { onRelease() },
                     contentAlignment = Alignment.Center
                 ) {
                     Text("Exit to Jannah", style = JannahType.button, color = JannahColors.OnOrange, fontWeight = FontWeight.Bold, fontSize = 18.sp)
