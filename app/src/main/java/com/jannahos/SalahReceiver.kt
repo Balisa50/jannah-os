@@ -17,7 +17,7 @@ class SalahReceiver : BroadcastReceiver() {
         val name = SalahTracker.label(prayer)
         
         val nm = context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
-        val channelId = "salah_adhan_channel"
+        val channelId = "salah_adhan_v2"
         
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             val channel = NotificationChannel(channelId, "Prayer Adhan", NotificationManager.IMPORTANCE_HIGH).apply {
@@ -28,6 +28,7 @@ class SalahReceiver : BroadcastReceiver() {
                     .build()
                 setSound(RingtoneManager.getDefaultUri(RingtoneManager.TYPE_ALARM), audioAttributes)
                 enableVibration(true)
+                setBypassDnd(true)
             }
             nm.createNotificationChannel(channel)
         }
@@ -39,7 +40,8 @@ class SalahReceiver : BroadcastReceiver() {
             .setContentTitle("$name")
             .setContentText("It is time for prayer.")
             .setSmallIcon(android.R.drawable.ic_lock_idle_alarm)
-            .setPriority(NotificationCompat.PRIORITY_HIGH)
+            .setColor(android.graphics.Color.parseColor("#C2410C"))
+            .setPriority(NotificationCompat.PRIORITY_MAX)
             .setCategory(NotificationCompat.CATEGORY_ALARM)
             .setAutoCancel(true)
             .setContentIntent(pendingIntent)
