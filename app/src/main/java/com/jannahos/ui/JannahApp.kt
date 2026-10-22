@@ -1,7 +1,6 @@
 package com.jannahos.ui
 
 import androidx.compose.animation.*
-import androidx.compose.animation.core.tween
 import androidx.compose.animation.core.*
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
@@ -106,11 +105,7 @@ fun JannahApp() {
             enterTransition = { slideIntoContainer(AnimatedContentTransitionScope.SlideDirection.Start, tween(350)) },
             exitTransition = { slideOutOfContainer(AnimatedContentTransitionScope.SlideDirection.Start, tween(350)) },
             popEnterTransition = { slideIntoContainer(AnimatedContentTransitionScope.SlideDirection.End, tween(350)) },
-            popExitTransition = { slideOutOfContainer(AnimatedContentTransitionScope.SlideDirection.End, tween(350)) },
-            enterTransition = { slideInHorizontally(initialOffsetX = { it / 4 }, animationSpec = spring(dampingRatio = 0.85f, stiffness = 350f)) + fadeIn(tween(200)) },
-            exitTransition = { slideOutHorizontally(targetOffsetX = { -it / 4 }, animationSpec = spring(dampingRatio = 0.85f, stiffness = 350f)) + fadeOut(tween(200)) },
-            popEnterTransition = { slideInHorizontally(initialOffsetX = { -it / 4 }, animationSpec = spring(dampingRatio = 0.85f, stiffness = 350f)) + fadeIn(tween(200)) },
-            popExitTransition = { slideOutHorizontally(targetOffsetX = { it / 4 }, animationSpec = spring(dampingRatio = 0.85f, stiffness = 350f)) + fadeOut(tween(200)) }
+            popExitTransition = { slideOutOfContainer(AnimatedContentTransitionScope.SlideDirection.End, tween(350)) }
         ) {
             composable("today") { ErrorBoundary("Today") { TodayScreen(onNavigate = goTo) } }
             composable("pray") { ErrorBoundary("Pray") { PrayScreen() } }

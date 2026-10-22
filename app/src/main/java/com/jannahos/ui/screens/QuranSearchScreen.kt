@@ -4,6 +4,7 @@ import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
@@ -19,7 +20,6 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.jannahos.HadithStore
-import com.jannahos.QuranApi
 import com.jannahos.QuranBookmarkStore
 import com.jannahos.QuranSearch
 import com.jannahos.QuranSearchEngine
@@ -39,9 +39,10 @@ fun QuranSearchScreen(onBack: () -> Unit, onNavigateToPage: (Int) -> Unit) {
     BackHandler(onBack = onBack)
     val ctx = LocalContext.current
     val bookmarks = remember { QuranBookmarkStore(ctx) }
+    val listState = rememberLazyListState()
 
     var query by remember { mutableStateOf("") }
-    var searchMode by remember { mutableStateOf("quran") } // "quran" or "hadith"
+    var searchMode by remember { mutableStateOf("quran") }
     var hits by remember { mutableStateOf<List<QuranSearch.Hit>>(emptyList()) }
     var hadithHits by remember { mutableStateOf<List<HadithStore.Hadith>>(emptyList()) }
     var semanticHits by remember { mutableStateOf<List<QuranSearchEngine.SearchResult>>(emptyList()) }
@@ -62,7 +63,7 @@ fun QuranSearchScreen(onBack: () -> Unit, onNavigateToPage: (Int) -> Unit) {
         }
         
         loading = true
-        delay(400) // Debounce
+        delay(400)
 
         if (searchMode == "hadith") {
             hadithHits = withContext(Dispatchers.IO) { HadithStore.searchAsync(ctx, q) }
@@ -78,7 +79,7 @@ fun QuranSearchScreen(onBack: () -> Unit, onNavigateToPage: (Int) -> Unit) {
     }
 
     Column(modifier = Modifier.fillMaxSize().background(JannahColors.Cream)) {
-        TopBar("Search", onBack = onBack)
+        TopBar("Search", onBack = onBack) // Pinned at the top
 
         Column(Modifier.padding(horizontal = JannahSpacing.gutter)) {
             Spacer(Modifier.height(JannahSpacing.m))
@@ -109,7 +110,7 @@ fun QuranSearchScreen(onBack: () -> Unit, onNavigateToPage: (Int) -> Unit) {
             Spacer(Modifier.height(JannahSpacing.l))
         }
 
-        LazyColumn(modifier = Modifier.weight(1f).fillMaxWidth(), contentPadding = PaddingValues(bottom = JannahSpacing.xxl)) {
+        LazyColumn(state = listState, modifier = Modifier.weight(1f).fillMaxWidth(), contentPadding = PaddingValues(bottom = JannahSpacing.xxl)) {
             if (loading) {
                 item { Text("Searching...", style = JannahType.bodySmall, color = JannahColors.Muted, modifier = Modifier.padding(JannahSpacing.gutter)) }
             } else if (searched && hits.isEmpty() && semanticHits.isEmpty() && hadithHits.isEmpty()) {
@@ -174,7 +175,8 @@ fun QuranSearchScreen(onBack: () -> Unit, onNavigateToPage: (Int) -> Unit) {
     }
 }
 
-// Ultra-aggressive dot remover
+// Ultra-aggressive dot remover - strips all diacritics, quranic marks, and arabic numbers
 private fun stripArabicDots(text: String): String {
-    return text.replace(Regex("[\u0610-\u061A\u064B-\u065F\u0670\u06D6-\u06ED\u08D3-\u08FF\u06DD\u06DE\u06E9]"), "").replace(Regex("[\u0660-\u0669\u06F0-\u06F9]"), "").replace(Regex("\\s+"), " ").trim()
+    val pattern = Regex("[\\u0610-\\u061A\\u064B-\\u065F\\u0670\\u06D6-\\u06ED\\u08D3-\\u08FF\\u06DD\\u06DE\\u06E9\\u0660-\\u0669\\u06F0-\\u06F9]")
+    return text.replace(pattern, "").replace(Regex("\\s+"), " ").trim()
 }
