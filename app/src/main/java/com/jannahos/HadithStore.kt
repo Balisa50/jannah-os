@@ -2,6 +2,7 @@ package com.jannahos
 
 import android.content.Context
 import org.json.JSONArray
+import org.json.JSONObject
 
 object HadithStore {
     data class Hadith(val text: String, val narrator: String, val source: String, val grade: String)
@@ -14,12 +15,17 @@ object HadithStore {
         val files = listOf("riyad_salihin.json" to "Riyad as-Salihin", "nawawi40.json" to "40 Hadith Nawawi")
         for ((file, sourceName) in files) {
             try {
-                val json = ctx.assets.open(file).bufferedReader().use { it.readText() }
-                val arr = JSONArray(json)
+                val jsonStr = ctx.assets.open(file).bufferedReader().use { it.readText() }.trim()
+                val arr = if (jsonStr.startsWith("[")) {
+                    JSONArray(jsonStr)
+                } else {
+                    JSONObject(jsonStr).optJSONArray("hadiths") ?: JSONArray()
+                }
+
                 for (i in 0 until arr.length()) {
                     val obj = arr.getJSONObject(i)
                     val englishObj = obj.optJSONObject("english")
-                    val englishText = englishObj?.optString("text") ?: ""
+                    val englishText = englishObj?.optString("text") ?: obj.optString("english") // fallback
                     val narrator = englishObj?.optString("narrator") ?: "Unknown"
                     val grade = obj.optString("grade", "Sahih")
                     
