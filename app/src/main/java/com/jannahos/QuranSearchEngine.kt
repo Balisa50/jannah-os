@@ -6,7 +6,6 @@ object QuranSearchEngine {
     data class AyahResult(val surah: Int, val ayah: Int, val arabic: String, val english: String, val score: Int)
     data class HadithResult(val collection: String, val number: Int, val arabic: String, val english: String, val score: Int)
 
-    // English to Arabic name mapping
     private val synonyms = mapOf(
         "moses" to "musa", "jesus" to "isa", "mary" to "maryam",
         "jonah" to "yunus", "pharaoh" to "firaun", "solomon" to "sulaiman",
@@ -18,7 +17,6 @@ object QuranSearchEngine {
     fun searchQuran(ctx: Context, query: String): List<AyahResult> {
         val q = query.lowercase().trim()
         if (q.isEmpty()) return emptyList()
-        
         val tokens = q.split(" ").filter { it.isNotBlank() }
         val results = mutableListOf<AyahResult>()
         val allAyahs = QuranTextStore.load(ctx)
@@ -28,38 +26,40 @@ object QuranSearchEngine {
             val engLower = ayah.english.lowercase()
             val araText = ayah.arabic
 
+            // 1. Exact Matches (Fast)
             for (token in tokens) {
-                // 1. Exact match in English
-                if (engLower.contains(token)) score += 10
-                // 2. Exact match in Arabic
-                if (araText.contains(token)) score += 10
-                // 3. Synonym match
+                if (engLower.contains(token) || araText.contains(token)) score += 10
+            }
+
+            // 2. Synonym Matches
+            for (token in tokens) {
                 val syn = synonyms[token]
                 if (syn != null && (engLower.contains(syn) || araText.contains(syn))) score += 5
-                // 4. Fuzzy match for typos (only for words > 3 chars)
-                if (token.length > 3) {
-                    val words = engLower.split(Regex("\\W+"))
-                    for (w in words) {
-                        if (w.length > 3 && levenshtein(token, w) <= 2) {
-                            score += 2
-                            break
+            }
+
+            // 3. Fuzzy Match (Only if exact match failed)
+            if (score == 0) {
+                for (token in tokens) {
+                    if (token.length > 3) {
+                        val words = engLower.split(Regex("\\W+"))
+                        for (w in words) {
+                            if (w.length > 3 && levenshtein(token, w) <= 1) {
+                                score += 2
+                                break
+                            }
                         }
                     }
                 }
             }
 
-            if (score > 0) {
-                results.add(AyahResult(ayah.surah, ayah.ayah, ayah.arabic, ayah.english, score))
-            }
+            if (score > 0) results.add(AyahResult(ayah.surah, ayah.ayah, ayah.arabic, ayah.english, score))
         }
-
         return results.sortedByDescending { it.score }.take(50)
     }
 
     fun searchHadith(ctx: Context, query: String): List<HadithResult> {
         val q = query.lowercase().trim()
         if (q.isEmpty()) return emptyList()
-        
         val tokens = q.split(" ").filter { it.isNotBlank() }
         val results = mutableListOf<HadithResult>()
         val allHadiths = HadithStore.load(ctx)
@@ -69,29 +69,37 @@ object QuranSearchEngine {
             val engLower = h.english.lowercase()
             val araText = h.arabic
 
+            // 1. Exact Matches (Fast)
             for (token in tokens) {
-                if (engLower.contains(token)) score += 10
-                if (araText.contains(token)) score += 10
-                if (token.length > 3) {
-                    val words = engLower.split(Regex("\\W+"))
-                    for (w in words) {
-                        if (w.length > 3 && levenshtein(token, w) <= 2) {
-                            score += 2
-                            break
+                if (engLower.contains(token) || araText.contains(token)) score += 10
+            }
+
+            // 2. Synonym Matches
+            for (token in tokens) {
+                val syn = synonyms[token]
+                if (syn != null && engLower.contains(syn)) score += 5
+            }
+
+            // 3. Fuzzy Match (Only if exact match failed)
+            if (score == 0) {
+                for (token in tokens) {
+                    if (token.length > 4) {
+                        val words = engLower.split(Regex("\\W+"))
+                        for (w in words) {
+                            if (w.length > 4 && levenshtein(token, w) <= 1) {
+                                score += 2
+                                break
+                            }
                         }
                     }
                 }
             }
 
-            if (score > 0) {
-                results.add(HadithResult(h.collection, h.number, h.arabic, h.english, score))
-            }
+            if (score > 0) results.add(HadithResult(h.collection, h.number, h.arabic, h.english, score))
         }
-
         return results.sortedByDescending { it.score }.take(50)
     }
 
-    // Levenshtein distance algorithm for fuzzy matching
     private fun levenshtein(a: String, b: String): Int {
         val dp = Array(a.length + 1) { IntArray(b.length + 1) }
         for (i in 0..a.length) dp[i][0] = i

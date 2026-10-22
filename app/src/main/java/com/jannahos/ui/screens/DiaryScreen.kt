@@ -5,6 +5,7 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.OutlinedTextField
@@ -24,7 +25,6 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.jannahos.DiaryClassifier
 import com.jannahos.DiaryStore
-import com.jannahos.ui.TopBar
 import com.jannahos.ui.theme.JannahColors
 import com.jannahos.ui.theme.JannahSpacing
 import com.jannahos.ui.theme.JannahType
@@ -51,18 +51,33 @@ fun DiaryScreen(onBack: () -> Unit, onReacted: (String) -> Unit = {}) {
     Column(
         modifier = Modifier.fillMaxSize().background(JannahColors.Cream)
     ) {
-        TopBar("Diary", onBack = onBack)
+        // 1. SEAMLESS ORANGE TOP BAR
+        Row(
+            Modifier
+                .fillMaxWidth()
+                .background(JannahColors.Orange)
+                .windowInsetsPadding(WindowInsets.statusBars)
+                .padding(horizontal = JannahSpacing.gutter, vertical = 12.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Box(
+                Modifier.size(40.dp).clip(CircleShape).background(JannahColors.OrangeDeep).clickable { onBack() },
+                contentAlignment = Alignment.Center
+            ) { Text("←", fontSize = 20.sp, color = JannahColors.OnOrange) }
+            Spacer(Modifier.width(16.dp))
+            Text("Diary", fontFamily = FontFamily.Serif, fontSize = 22.sp, fontWeight = FontWeight.Bold, color = JannahColors.OnOrange)
+        }
 
         Column(
             modifier = Modifier.weight(1f).verticalScroll(rememberScrollState())
         ) {
+            // 2. BANNER CONTINUES SEAMLESSLY
             Box(
                 Modifier
                     .fillMaxWidth()
-                    .clip(RoundedCornerShape(bottomStart = 24.dp, bottomEnd = 24.dp))
                     .background(JannahColors.Orange)
                     .padding(horizontal = JannahSpacing.gutter)
-                    .padding(top = JannahSpacing.l, bottom = JannahSpacing.xl)
+                    .padding(bottom = JannahSpacing.xl)
             ) {
                 Column {
                     Text("DIARY", style = JannahType.eyebrow, color = JannahColors.OnOrange.copy(alpha = 0.75f))
