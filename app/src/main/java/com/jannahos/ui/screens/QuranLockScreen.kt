@@ -38,7 +38,6 @@ import androidx.compose.foundation.layout.windowInsetsPadding
 @Composable
 fun QuranLockScreen(onRelease: () -> Unit) {
     val ctx = androidx.compose.ui.platform.LocalContext.current
-    val ctx = LocalContext.current
     var selectedSurah by remember { mutableStateOf<Int?>(QuranReadingLock.getLastSelectedSurah(ctx).takeIf { it > 0 }) }
 
     if (selectedSurah == null) {
@@ -75,7 +74,6 @@ private fun SurahPickerScreen(onPicked: (Int) -> Unit) {
 
 @Composable
 private fun ReadingLockSession(surah: Int, onRelease: () -> Unit) {
-    val ctx = LocalContext.current
     val pagerState = rememberPagerState(
         initialPage = (QuranStore.firstPageOfSurah(surah) - 1).coerceIn(0, 603),
         pageCount = { 604 }
