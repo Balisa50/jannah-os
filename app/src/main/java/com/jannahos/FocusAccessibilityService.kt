@@ -5,8 +5,6 @@ import android.content.Intent
 import android.view.accessibility.AccessibilityEvent
 
 class FocusAccessibilityService : AccessibilityService() {
-    private var isBlocking = false
-
 
     override fun onAccessibilityEvent(event: AccessibilityEvent?) {
         if (event == null) return
@@ -16,19 +14,7 @@ class FocusAccessibilityService : AccessibilityService() {
         if (pkg == packageName) return
         if (pkg in ALWAYS_ALLOWED) return
 
-        // 1. Check if app is explicitly blocked
-        if (AppBlockStore.isBlocked(this, pkg)) {
-            // Just block it. If they want a schedule, they can toggle it in settings,
-            // but for now, if it's in the list, it gets blocked.
-            val blockIntent = Intent(this, BlockActivity::class.java).apply {
-                addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK or Intent.FLAG_ACTIVITY_EXCLUDE_FROM_RECENTS)
-            }
-            startActivity(blockIntent)
-            RegretStore.logAttempt(this, pkg)
-            return
-        }
-
-        // 2. Check Prayer Lock
+        // 1. GLOBAL PRAYER LOCK (Blocks EVERYTHING during Fard prayers)
         val prayerLock = PrayerLock.enabled(this) && PrayerLock.sessionActive(this)
         if (prayerLock) {
             val prayer = PrayerLock.sessionPrayer(this) ?: "fajr"
@@ -40,26 +26,29 @@ class FocusAccessibilityService : AccessibilityService() {
             return
         }
 
-        // 3. Check Quran Reading Lock
+        // 2. CUSTOM APP BLOCKER
+        if (AppBlockStore.isBlocked(this, pkg)) {
+            val blockIntent = Intent(this, BlockActivity::class.java).apply {
+                addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_EXCLUDE_FROM_RECENTS)
+            }
+            startActivity(blockIntent)
+            RegretStore.logAttempt(this, pkg)
+            return
+        }
+
+        // 3. QURAN READING LOCK
         if (QuranReadingLock.shouldLock(this)) {
-            // Send user to Jannah OS to do their time
             val intent = Intent(this, MainActivity::class.java).apply {
                 addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP)
                 putExtra("show_quran_lock", true)
             }
             startActivity(intent)
-            // Go home so they can't look at the blocked app in the background
             performGlobalAction(GLOBAL_ACTION_HOME)
             return
         }
     }
 
     override fun onInterrupt() {}
-
-    override fun onServiceConnected() {
-        super.onServiceConnected()
-        isBlocking = false
-    }
 
     companion object {
         private val ALWAYS_ALLOWED = setOf(

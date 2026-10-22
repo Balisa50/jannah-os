@@ -1,7 +1,9 @@
 package com.jannahos.ui.screens
 
+import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -18,6 +20,9 @@ import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.LifecycleEventObserver
+import androidx.lifecycle.compose.LocalLifecycleOwner
 import com.jannahos.MushafImageStore
 import com.jannahos.QuranCache
 import com.jannahos.QuranReadingLock
@@ -27,15 +32,17 @@ import com.jannahos.ui.theme.JannahColors
 import com.jannahos.ui.theme.JannahSpacing
 import com.jannahos.ui.theme.JannahType
 import kotlinx.coroutines.delay
-import androidx.compose.foundation.layout.WindowInsets
-import androidx.compose.foundation.layout.statusBars
-import androidx.compose.foundation.layout.navigationBars
-import androidx.compose.foundation.layout.windowInsetsPadding
 
 @Composable
 fun QuranLockScreen(onRelease: () -> Unit) {
+    BackHandler { /* Force them to read */ }
     val ctx = LocalContext.current
-    var selectedSurah by remember { mutableStateOf<Int?>(QuranReadingLock.getLastSelectedSurah(ctx).takeIf { it > 0 }) }
+    
+    // Check if a session is already active (meaning they left mid-read)
+    val savedRemaining = QuranReadingLock.getSavedRemainingMs(ctx)
+    val savedSurah = QuranReadingLock.getLastSelectedSurah(ctx)
+    
+    var selectedSurah by remember { mutableStateOf<Int?>(if (savedRemaining < QuranReadingLock.DEFAULT_MS) savedSurah else null) }
 
     if (selectedSurah == null) {
         SurahPickerScreen(onPicked = { 
@@ -50,10 +57,10 @@ fun QuranLockScreen(onRelease: () -> Unit) {
 @Composable
 private fun SurahPickerScreen(onPicked: (Int) -> Unit) {
     Column(Modifier.fillMaxSize().background(JannahColors.Cream)) {
-        Box(Modifier.fillMaxWidth().background(JannahColors.Orange).padding(JannahSpacing.gutter).windowInsetsPadding(WindowInsets.statusBars)) {
+        Box(Modifier.fillMaxWidth().background(JannahColors.Orange).padding(horizontal = JannahSpacing.gutter, vertical = JannahSpacing.xxl).windowInsetsPadding(WindowInsets.statusBars)) {
             Text("Choose a Surah to read", color = JannahColors.OnOrange, style = JannahType.title, fontWeight = FontWeight.Bold)
         }
-        androidx.compose.foundation.lazy.LazyColumn(Modifier.fillMaxSize()) {
+        LazyColumn(Modifier.fillMaxSize()) {
             items(QuranCache.SURAHS.size) { index ->
                 val surah = QuranCache.SURAHS[index]
                 Row(
@@ -79,20 +86,39 @@ private fun ReadingLockSession(surah: Int, onRelease: () -> Unit) {
 
     var remaining by remember { mutableLongStateOf(QuranReadingLock.getSavedRemainingMs(ctx)) }
     var isDone by remember { mutableStateOf(remaining <= 0L) }
+    var isForeground by remember { mutableStateOf(true) }
+    val lifecycleOwner = LocalLifecycleOwner.current
 
-    DisposableEffect(Unit) {
-        onDispose { QuranReadingLock.saveRemainingMs(ctx, remaining) }
+    // Rigid Timer: Pauses immediately when app is minimized
+    DisposableEffect(lifecycleOwner) {
+        val observer = LifecycleEventObserver { _, event ->
+            when (event) {
+                Lifecycle.Event.ON_PAUSE -> {
+                    isForeground = false
+                    QuranReadingLock.saveRemainingMs(ctx, remaining)
+                }
+                Lifecycle.Event.ON_RESUME -> isForeground = true
+                else -> {}
+            }
+        }
+        lifecycleOwner.lifecycle.addObserver(observer)
+        onDispose {
+            lifecycleOwner.lifecycle.removeObserver(observer)
+            QuranReadingLock.saveRemainingMs(ctx, remaining)
+        }
     }
 
-    LaunchedEffect(isDone) {
-        if (isDone) return@LaunchedEffect
-        while (remaining > 0L) {
+    LaunchedEffect(isForeground) {
+        if (!isForeground || isDone) return@LaunchedEffect
+        while (remaining > 0L && isForeground) {
             delay(1000)
             remaining -= 1000L
             QuranReadingLock.saveRemainingMs(ctx, remaining)
         }
-        QuranReadingLock.markDoneToday(ctx)
-        isDone = true
+        if (remaining <= 0L) {
+            QuranReadingLock.markDoneToday(ctx)
+            isDone = true
+        }
     }
 
     val mm = (remaining / 60_000L).toInt()

@@ -103,6 +103,7 @@ private fun SettingsScreen(onBack: () -> Unit) {
     var useCityMode by remember { mutableStateOf(CityStore.useCity(ctx)) }
     var blockedCount by remember { mutableStateOf(AppBlockStore.count(ctx)) }
     var blockAlways by remember { mutableStateOf(AppBlockStore.blockAlways(ctx)) }
+    var prayerLockOn by remember { mutableStateOf(PrayerLock.enabled(ctx)) }
     var silentTahajjud by remember { mutableStateOf<Boolean>(Settings.isTahajjudSilent(ctx)) }
 
     var nameExpanded by remember { mutableStateOf(false) }
@@ -119,18 +120,24 @@ private fun SettingsScreen(onBack: () -> Unit) {
             .background(JannahColors.Cream)
     ) {
         TopBar("Settings", onBack = onBack)
-        Box(Modifier.fillMaxWidth().padding(horizontal = JannahSpacing.gutter, vertical = JannahSpacing.s)) {
-            Row(
-                Modifier.fillMaxWidth().clip(RoundedCornerShape(JannahSpacing.cardRadius)).background(JannahColors.Orange).pressClickable { showGuardian = true }.padding(JannahSpacing.m),
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Column(Modifier.weight(1f)) {
-                    Text("GUARDIAN SYSTEM", style = JannahType.eyebrow, color = JannahColors.OnOrange.copy(alpha=0.8f))
-                    Text("Activate Locks & Blocker", fontFamily = FontFamily.Serif, fontWeight = FontWeight.Bold, fontSize = 18.sp, color = JannahColors.OnOrange)
-                }
-                Text("→", fontSize = 20.sp, color = JannahColors.OnOrange, fontWeight = FontWeight.Bold)
+        Spacer(Modifier.height(JannahSpacing.s))
+        SectionHeader("Locks & Focus")
+        
+        ListRow(
+            title = "Prayer Lock",
+            subtitle = if (prayerLockOn) "Locks ALL apps during Fard prayers" else "Off",
+            toggle = prayerLockOn
+        ) {
+            prayerLockOn = !prayerLockOn
+            PrayerLock.setEnabled(ctx, prayerLockOn)
+            if (prayerLockOn) {
+                // Ensure accessibility is on
+                showGuardian = true 
             }
+            toast = if (prayerLockOn) "Prayer Lock Activated" else "Prayer Lock Off"
         }
+        
+        Divider()
 
         Spacer(Modifier.height(JannahSpacing.s))
 
