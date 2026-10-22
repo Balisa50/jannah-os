@@ -12,12 +12,12 @@ object FridayMode {
     fun reminders(): List<Reminder> = listOf(
         Reminder(
             title = "Surah Al-Kahf",
-            body = "Recite Surah Al-Kahf today. The Prophet ﷺ said: \"Whoever recites Surah Al-Kahf on Friday, a light will shine for him between the two Fridays.\"",
+            body = "Recite Surah Al-Kahf today. The Prophet  said: \"Whoever recites Surah Al-Kahf on Friday, a light will shine for him between the two Fridays.\"",
             source = "Al-Hakim, graded sahih by al-Albani"
         ),
         Reminder(
             title = "Abundant salawat",
-            body = "Send salawat on the Prophet ﷺ. He said: \"Whoever sends one salah upon me, Allah sends ten upon him.\"",
+            body = "Send salawat on the Prophet . He said: \"Whoever sends one salah upon me, Allah sends ten upon him.\"",
             source = "Sahih Muslim 408"
         ),
         Reminder(
@@ -27,7 +27,7 @@ object FridayMode {
         ),
         Reminder(
             title = "Ghusl and perfume",
-            body = "The Prophet ﷺ encouraged bathing, wearing clean clothes, and using perfume for Friday.",
+            body = "The Prophet  encouraged bathing, wearing clean clothes, and using perfume for Friday.",
             source = "Sahih al-Bukhari 883"
         )
     )

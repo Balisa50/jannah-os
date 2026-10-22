@@ -100,7 +100,7 @@ fun SunnahScreen(onBack: () -> Unit) {
                             .padding(horizontal = 12.dp, vertical = 8.dp)
                     ) {
                         Text(
-                            if (isDone) "✓" else "${s.rakah}r",
+                            if (isDone) "" else "${s.rakah}r",
                             style = JannahType.micro,
                             color = if (isDone) JannahColors.OnOrange else JannahColors.Muted
                         )
@@ -140,7 +140,7 @@ fun SunnahScreen(onBack: () -> Unit) {
                         style = JannahType.eyebrow, color = JannahColors.OrangeDeep)
                     Spacer(Modifier.height(JannahSpacing.s))
                     Text(
-                        "Umm Habibah reported that the Prophet ﷺ said: \"Whoever prays twelve rak'ah in a day and night, a house will be built for him in Paradise.\" (Sahih Muslim 728). The twelve are: 4 before Dhuhr + 2 after, 2 after Maghrib, 2 after Isha, 2 before Fajr.",
+                        "Umm Habibah reported that the Prophet  said: \"Whoever prays twelve rak'ah in a day and night, a house will be built for him in Paradise.\" (Sahih Muslim 728). The twelve are: 4 before Dhuhr + 2 after, 2 after Maghrib, 2 after Isha, 2 before Fajr.",
                         style = JannahType.bodySmall,
                         color = JannahColors.Body,
                         lineHeight = 20.sp

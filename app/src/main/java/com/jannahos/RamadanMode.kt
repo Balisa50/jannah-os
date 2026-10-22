@@ -63,7 +63,7 @@ object RamadanMode {
     data class DayGuidance(val suhoorNote: String, val iftarDuaArabic: String, val iftarDuaTranslation: String, val iftarSource: String)
 
     val dayGuidance = DayGuidance(
-        suhoorNote = "The Prophet ﷺ said: \"Eat suhoor, for in suhoor there is blessing.\" (Sahih al-Bukhari 1923)",
+        suhoorNote = "The Prophet  said: \"Eat suhoor, for in suhoor there is blessing.\" (Sahih al-Bukhari 1923)",
         iftarDuaArabic = "ذَهَبَ الظَّمَأُ وَابْتَلَّتِ الْعُرُوقُ وَثَبَتَ الأَجْرُ إِنْ شَاءَ اللَّهُ",
         iftarDuaTranslation = "The thirst has gone, the veins are moistened, and the reward is certain if Allah wills.",
         iftarSource = "Sunan Abi Dawud 2357 (graded hasan)"
@@ -74,11 +74,11 @@ object RamadanMode {
 
     val lastTenFocus = listOf(
         NightFocus(21, "Possible Laylat al-Qadr. Pray, make dua, seek forgiveness."),
-        NightFocus(22, "Keep going. The Prophet ﷺ would stay awake and wake his family."),
-        NightFocus(23, "Possible Laylat al-Qadr. Make the dua the Prophet ﷺ taught Aisha."),
+        NightFocus(22, "Keep going. The Prophet  would stay awake and wake his family."),
+        NightFocus(23, "Possible Laylat al-Qadr. Make the dua the Prophet  taught Aisha."),
         NightFocus(24, "Rest, but do not stop. Every night of the ten is precious."),
         NightFocus(25, "Possible Laylat al-Qadr. Increase Quran and dua."),
-        NightFocus(26, "The Prophet ﷺ said: seek it in all of the last ten."),
+        NightFocus(26, "The Prophet  said: seek it in all of the last ten."),
         NightFocus(27, "The most commonly held opinion. Strive tonight."),
         NightFocus(28, "Still the ten. Still the chance."),
         NightFocus(29, "Possible Laylat al-Qadr. The last odd night."),

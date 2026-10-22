@@ -229,7 +229,7 @@ fun QuranSearchScreen(onBack: () -> Unit, onNavigateToPage: (Int) -> Unit) {
                                         bookmarkTick++
                                     }.padding(horizontal = 12.dp, vertical = 6.dp)
                                 ) {
-                                    Text(if (isBookmarked) "★ Saved" else "☆ Save", style = JannahType.micro, color = if (isBookmarked) JannahColors.OnOrange else JannahColors.Muted)
+                                    Text(if (isBookmarked) " Saved" else " Save", style = JannahType.micro, color = if (isBookmarked) JannahColors.OnOrange else JannahColors.Muted)
                                 }
                             }
                         }

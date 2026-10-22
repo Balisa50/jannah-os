@@ -23,7 +23,7 @@ object DiaryClassifier {
             return Result(
                 tag = "milestone_marriage",
                 reactionTitle = "You got married",
-                reactionBody = "May Allah bless your union. The Prophet ﷺ said: \"When a servant of Allah marries, he has completed half of his religion.\"",
+                reactionBody = "May Allah bless your union. The Prophet  said: \"When a servant of Allah marries, he has completed half of his religion.\"",
                 source = "Bayhaqi, Shu'ab al-Iman 5486 (graded hasan by some scholars)",
                 actionRoute = null
             )
@@ -51,7 +51,7 @@ object DiaryClassifier {
             return Result(
                 tag = "milestone_quran",
                 reactionTitle = "Completed",
-                reactionBody = "The Prophet ﷺ said: \"The best of you are those who learn the Quran and teach it.\" Consider teaching a portion to someone this week.",
+                reactionBody = "The Prophet  said: \"The best of you are those who learn the Quran and teach it.\" Consider teaching a portion to someone this week.",
                 source = "Sahih al-Bukhari 5027",
                 actionRoute = null
             )
@@ -118,7 +118,7 @@ object DiaryClassifier {
             return Result(
                 tag = "good_deed_reconcile",
                 reactionTitle = "You made peace",
-                reactionBody = "The Prophet ﷺ said: \"The best of the two is the one who initiates the greeting of peace.\" (Jami' at-Tirmidhi 2489). You did that today.",
+                reactionBody = "The Prophet  said: \"The best of the two is the one who initiates the greeting of peace.\" (Jami' at-Tirmidhi 2489). You did that today.",
                 source = "Jami' at-Tirmidhi 2489 (graded sahih)",
                 actionRoute = null
             )
@@ -139,7 +139,7 @@ object DiaryClassifier {
             return Result(
                 tag = "feeling_sadness",
                 reactionTitle = "You feel low",
-                reactionBody = "The Prophet ﷺ sought refuge from worry and grief. You are not alone in this. Allah is closer than you think.",
+                reactionBody = "The Prophet  sought refuge from worry and grief. You are not alone in this. Allah is closer than you think.",
                 source = "Sahih al-Bukhari 6369",
                 actionRoute = "dhikr",
                 duaRecommendation = "اللَّهُمَّ إِنِّي عَبْدُكَ، ابْنُ عَبْدِكَ، ابْنُ أَمَتِكَ...\n\n(O Allah, I am Your servant, son of Your servant, son of Your maidservant...)"
@@ -160,7 +160,7 @@ object DiaryClassifier {
         if (listM(t, listOf("i dreamt", "i had a dream", "dream last night", "nightmare")))
             return Result(
                 tag = "dream",
-                reactionBody = "Dreams are personal. The Prophet ﷺ taught that good dreams are from Allah, and to seek interpretation only from someone trustworthy. We record it privately. Nothing else.",
+                reactionBody = "Dreams are personal. The Prophet  taught that good dreams are from Allah, and to seek interpretation only from someone trustworthy. We record it privately. Nothing else.",
                 reactionTitle = "A dream",
                 source = "Sahih al-Bukhari 6984",
                 actionRoute = null

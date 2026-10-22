@@ -153,7 +153,7 @@ fun SadaqahScreen(onBack: () -> Unit) {
                         style = JannahType.bodySmall,
                         color = if (selected) JannahColors.OrangeDeep else JannahColors.Body,
                         modifier = Modifier.weight(1f))
-                    if (selected) Text("✓",
+                    if (selected) Text("",
                         style = JannahType.bodySmall, color = JannahColors.Orange)
                 }
                 Spacer(Modifier.height(4.dp))
@@ -264,7 +264,7 @@ fun SadaqahScreen(onBack: () -> Unit) {
                         style = JannahType.eyebrow, color = JannahColors.OrangeDeep)
                     Spacer(Modifier.height(JannahSpacing.s))
                     Text(
-                        "The Prophet ﷺ said: \"Charity does not decrease wealth.\" (Sahih Muslim 2588)",
+                        "The Prophet  said: \"Charity does not decrease wealth.\" (Sahih Muslim 2588)",
                         style = JannahType.bodySmall,
                         color = JannahColors.Body,
                         lineHeight = 20.sp

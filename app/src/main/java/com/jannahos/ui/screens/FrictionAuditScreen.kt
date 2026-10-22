@@ -72,7 +72,7 @@ private fun AuditItem(label: String, checked: Boolean, onToggle: (Boolean) -> Un
         verticalAlignment = Alignment.CenterVertically
     ) {
         Box(Modifier.size(24.dp).clip(RoundedCornerShape(50)).background(if (checked) JannahColors.Orange else JannahColors.Card).pressClickable { onToggle(!checked) }) {
-            if (checked) Text("✓", color = JannahColors.OnOrange, modifier = Modifier.align(Alignment.Center))
+            if (checked) Text("", color = JannahColors.OnOrange, modifier = Modifier.align(Alignment.Center))
         }
         Spacer(Modifier.width(16.dp))
         Text(label, style = JannahType.body, color = JannahColors.Ink)

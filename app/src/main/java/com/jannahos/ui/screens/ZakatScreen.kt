@@ -267,7 +267,7 @@ fun ZakatScreen(onBack: () -> Unit) {
                     )
                     Spacer(Modifier.height(JannahSpacing.s))
                     Text(
-                        "The Prophet ﷺ set nisab for silver at 200 dirhams and for gold at 20 dinars. Different scholarly opinions exist on the exact gram equivalents.",
+                        "The Prophet  set nisab for silver at 200 dirhams and for gold at 20 dinars. Different scholarly opinions exist on the exact gram equivalents.",
                         style = JannahType.caption,
                         color = JannahColors.Muted,
                         lineHeight = 18.sp

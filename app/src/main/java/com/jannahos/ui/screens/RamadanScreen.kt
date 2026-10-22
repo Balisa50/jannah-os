@@ -134,7 +134,7 @@ fun RamadanScreen(onBack: () -> Unit) {
             Text("THE LAST TEN NIGHTS",
                 style = JannahType.eyebrow, color = JannahColors.OrangeDeep)
             Spacer(Modifier.height(JannahSpacing.xs))
-            Text("The Prophet ﷺ would strive in the last ten more than any other time. He would stay awake, wake his family, and tighten his belt.",
+            Text("The Prophet  would strive in the last ten more than any other time. He would stay awake, wake his family, and tighten his belt.",
                 style = JannahType.caption, color = JannahColors.Muted, lineHeight = 18.sp)
             Spacer(Modifier.height(JannahSpacing.s))
 
@@ -223,7 +223,7 @@ fun RamadanScreen(onBack: () -> Unit) {
                         style = JannahType.eyebrow, color = JannahColors.OrangeDeep)
                     Spacer(Modifier.height(JannahSpacing.s))
                     Text(
-                        "Aisha said: \"When the last ten nights began, the Prophet ﷺ would stay awake at night, wake his family, and exert himself in worship.\"",
+                        "Aisha said: \"When the last ten nights began, the Prophet  would stay awake at night, wake his family, and exert himself in worship.\"",
                         style = JannahType.bodySmall,
                         color = JannahColors.Body,
                         lineHeight = 20.sp

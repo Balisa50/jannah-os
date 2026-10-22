@@ -169,7 +169,7 @@ fun AppPickerScreen(onBack: () -> Unit) {
                             contentAlignment = Alignment.Center
                         ) {
                             if (isSelected) {
-                                Text("✓",
+                                Text("",
                                     fontSize = 12.sp,
                                     color = JannahColors.OnOrange,
                                     fontWeight = FontWeight.Bold)

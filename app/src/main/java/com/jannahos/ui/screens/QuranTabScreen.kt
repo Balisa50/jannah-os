@@ -237,7 +237,7 @@ fun BookmarksScreen(onBack: () -> Unit, onOpen: (Int, Int) -> Unit) {
         Column(Modifier.padding(horizontal = JannahSpacing.gutter)) {
             Spacer(Modifier.height(JannahSpacing.l))
             if (marks.isEmpty()) {
-                Text("No bookmarks yet. Tap ☆ on any verse to save it here.", style = JannahType.bodySmall, color = JannahColors.Muted, lineHeight = 22.sp)
+                Text("No bookmarks yet. Tap  on any verse to save it here.", style = JannahType.bodySmall, color = JannahColors.Muted, lineHeight = 22.sp)
             } else {
                 marks.forEachIndexed { i, m ->
                     val surahName = com.jannahos.QuranCache.SURAHS.firstOrNull { it.first == m.surah }?.second ?: "Surah ${m.surah}"

@@ -63,7 +63,7 @@ object EveningReckoning {
         else lines.add("Prayer went unmarked today. Tomorrow is a fresh page.")
 
 if (quranRead) lines.add("Quran opened. The Book was in your hands today.")
-        if (gifted) lines.add("You gave. The Prophet ﷺ said charity does not decrease wealth.")
+        if (gifted) lines.add("You gave. The Prophet  said charity does not decrease wealth.")
         if (fasted) lines.add("You fasted. Allah says: fasting is for Me and I will reward it.")
         if (diaryWritten) lines.add("You wrote. What you write, you own.")
 

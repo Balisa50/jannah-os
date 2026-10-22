@@ -30,7 +30,7 @@ object Companion {
         if (weather != null && WeatherApi.isHot(weather.temperatureC)) {
             return Message(
                 title = "It is hot today",
-                body = "Drink water in sips, not in one breath. The Prophet ﷺ said: \"None of you should drink in one breath; rather drink in two or three.\"",
+                body = "Drink water in sips, not in one breath. The Prophet  said: \"None of you should drink in one breath; rather drink in two or three.\"",
                 source = "Jami' at-Tirmidhi 1886 (graded sahih by al-Albani)",
                 kind = "heat"
             )
@@ -40,7 +40,7 @@ object Companion {
         if (hour in 21..22) {
             return Message(
                 title = "Before sleep",
-                body = "Recite Surah Al-Mulk tonight. The Prophet ﷺ said: \"Whoever recites Surah Al-Mulk every night, Allah will protect him from the punishment of the grave.\"",
+                body = "Recite Surah Al-Mulk tonight. The Prophet  said: \"Whoever recites Surah Al-Mulk every night, Allah will protect him from the punishment of the grave.\"",
                 source = "Jami' at-Tirmidhi 2891 (hasan by some scholars, da'if by others)",
                 kind = "bedtime"
             )

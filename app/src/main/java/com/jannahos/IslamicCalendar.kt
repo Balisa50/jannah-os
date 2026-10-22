@@ -118,7 +118,7 @@ object IslamicCalendar {
         m == 12 && d == 10 -> "Eid al-Adha. The day of sacrifice and celebration."
         m == 1 && d == 10 -> "Ashura. Fasting on this day expiates the sins of the past year. (Sahih Muslim 1162)"
         m == 12 && d == 9 -> "Day of Arafah. Fasting on this day expiates the sins of the past year and the year to come. (Sahih Muslim 1162)"
-        m == 9 && d == 27 -> "The Prophet ﷺ encouraged seeking Laylat al-Qadr on all odd nights of the last ten of Ramadan, not only the 27th."
+        m == 9 && d == 27 -> "The Prophet  encouraged seeking Laylat al-Qadr on all odd nights of the last ten of Ramadan, not only the 27th."
         m == 3 && d == 12 -> "Some Muslims commemorate the Prophet's birthday today. Scholars differ on whether this is a valid practice. No definitive ruling is offered here."
         else -> ""
     }

@@ -1,6 +1,6 @@
 package com.jannahos
 
-// The morning and evening remembrances the Prophet ﷺ taught.
+// The morning and evening remembrances the Prophet  taught.
 // Windows: morning between Fajr and sunrise; evening between Asr and Maghrib.
 // Every entry has a verified source.
 object MorningEveningAdhkar {
@@ -20,7 +20,7 @@ object MorningEveningAdhkar {
             arabic = "اللَّهُ لَا إِلَٰهَ إِلَّا هُوَ الْحَيُّ الْقَيُّومُ ۚ لَا تَأْخُذُهُ سِنَةٌ وَلَا نَوْمٌ",
             transliteration = "Allahu la ilaha illa huwa-l-Hayyu-l-Qayyum...",
             translation = "Allah, there is no deity except Him, the Ever-Living, the Sustainer of existence. (Ayat al-Kursi)",
-            source = "Qur'an 2:255. The Prophet ﷺ said whoever recites it in the morning is protected until evening.",
+            source = "Qur'an 2:255. The Prophet  said whoever recites it in the morning is protected until evening.",
             count = 1
         ),
         Item(

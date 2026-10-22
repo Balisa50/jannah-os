@@ -94,7 +94,7 @@ fun FastScreen(onBack: () -> Unit) {
                 ) {
                     Column {
                         Row(verticalAlignment = Alignment.CenterVertically) {
-                            Text("✓ ",
+                            Text(" ",
                                 style = JannahType.title,
                                 color = JannahColors.Orange)
                             Text("Fasting today",
@@ -155,7 +155,7 @@ fun FastScreen(onBack: () -> Unit) {
                             color = JannahColors.Ink)
                     }
                     if (todayKind == code) {
-                        Text("✓", style = JannahType.title, color = JannahColors.Orange)
+                        Text("", style = JannahType.title, color = JannahColors.Orange)
                     } else {
                         Text("→", style = JannahType.bodySmall, color = JannahColors.Muted)
                     }
@@ -181,7 +181,7 @@ fun FastScreen(onBack: () -> Unit) {
                         color = JannahColors.OrangeDeep)
                     Spacer(Modifier.height(JannahSpacing.s))
                     Text(
-                        "The Prophet ﷺ used to fast on Mondays and Thursdays. He said: \"Deeds are presented on Mondays and Thursdays, and I love that my deeds be presented while I am fasting.\"",
+                        "The Prophet  used to fast on Mondays and Thursdays. He said: \"Deeds are presented on Mondays and Thursdays, and I love that my deeds be presented while I am fasting.\"",
                         style = JannahType.bodySmall,
                         color = JannahColors.Body,
                         lineHeight = 20.sp

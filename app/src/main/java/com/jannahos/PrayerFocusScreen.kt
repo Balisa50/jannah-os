@@ -117,7 +117,7 @@ fun PrayerFocusScreen(prayerName: String, onDone: () -> Unit) {
                     Text("Did you pray the Sunnah Rak'ahs?", fontFamily = FontFamily.Serif, fontWeight = FontWeight.Bold, color = if (isFaceDown) JannahColors.Cream else JannahColors.Ink, textAlign = TextAlign.Center, modifier = Modifier.fillMaxWidth())
                 }
             } else {
-                Text("The Prophet ﷺ said: \"Whoever prays 12 rak'ahs in a day and night will have a house built for him in Paradise.\"", fontFamily = FontFamily.Serif, fontStyle = FontStyle.Italic, fontSize = 14.sp, color = if (isFaceDown) JannahColors.Cream.copy(alpha=0.8f) else JannahColors.Muted, textAlign = TextAlign.Center, lineHeight = 22.sp)
+                Text("The Prophet  said: \"Whoever prays 12 rak'ahs in a day and night will have a house built for him in Paradise.\"", fontFamily = FontFamily.Serif, fontStyle = FontStyle.Italic, fontSize = 14.sp, color = if (isFaceDown) JannahColors.Cream.copy(alpha=0.8f) else JannahColors.Muted, textAlign = TextAlign.Center, lineHeight = 22.sp)
             }
             
             Spacer(Modifier.height(32.dp))

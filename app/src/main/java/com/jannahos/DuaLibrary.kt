@@ -60,7 +60,7 @@ object DuaLibrary {
             transliteration = "Bismillah",
             translation = "In the name of Allah.",
             source = "Sahih al-Bukhari 5376",
-            caveat = "If forgotten at the start, the Prophet ﷺ taught to say: Bismillahi awwalahu wa akhirahu."
+            caveat = "If forgotten at the start, the Prophet  taught to say: Bismillahi awwalahu wa akhirahu."
         ),
         Dua(
             id = "eat_after",
@@ -158,7 +158,7 @@ object DuaLibrary {
             transliteration = "Allahumma anta Rabbi la ilaha illa anta, khalaqtani wa ana 'abduka, wa ana 'ala 'ahdika wa wa'dika ma-stata'tu. A'udhu bika min sharri ma sana'tu. Abu'u laka bi ni'matika 'alayya, wa abu'u bi dhanbi fa-ghfir li fa-innahu la yaghfiru-dh-dhunuba illa anta",
             translation = "O Allah, You are my Lord. There is no god but You. You created me and I am Your servant. I keep Your covenant and promise as much as I am able. I seek refuge in You from the evil I have done. I acknowledge Your favour upon me, and I acknowledge my sin. Forgive me, for none forgives sins but You.",
             source = "Sahih al-Bukhari 6306",
-            caveat = "The Prophet ﷺ said: whoever says this during the day with certainty and dies that day enters Paradise. Whoever says it at night and dies that night enters Paradise."
+            caveat = "The Prophet  said: whoever says this during the day with certainty and dies that day enters Paradise. Whoever says it at night and dies that night enters Paradise."
         ),
         Dua(
             id = "forgive_2",

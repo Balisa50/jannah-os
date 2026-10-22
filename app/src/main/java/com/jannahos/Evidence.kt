@@ -42,7 +42,7 @@ object Evidence {
             english = "And from the night, arise from sleep for prayer as an additional worship for you; it may be that your Lord will raise you to a praised station.",
             reference = "Qur'an 17:79",
             grade = "Qur'an",
-            caveat = "The command here is addressed to the Prophet ﷺ. Scholars differ on whether it is obligatory for him alone or a general recommendation. We present it as a recommendation."
+            caveat = "The command here is addressed to the Prophet . Scholars differ on whether it is obligatory for him alone or a general recommendation. We present it as a recommendation."
         ),
         Source(
             id = "quran_51_17_18",

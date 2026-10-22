@@ -406,7 +406,7 @@ private fun SelectRow(label: String, selected: Boolean, onClick: () -> Unit) {
             color = if (selected) JannahColors.Ink else JannahColors.Body,
             fontWeight = if (selected) FontWeight.SemiBold else FontWeight.Normal,
             modifier = Modifier.weight(1f))
-        if (selected) Text("✓", style = JannahType.body, color = JannahColors.Orange)
+        if (selected) Text("", style = JannahType.body, color = JannahColors.Orange)
     }
 }
 

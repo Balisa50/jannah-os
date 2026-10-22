@@ -403,7 +403,7 @@ fun DuaJournalScreen(onBack: () -> Unit) {
                             color = JannahColors.Ink)
                         Spacer(Modifier.height(JannahSpacing.s))
                         Text(
-                            "The Prophet ﷺ said: \"Whoever does not ask Allah, He becomes angry with him.\" (Jami' at-Tirmidhi 3373). When hardship comes, we forget every dua Allah has already answered. This is your honest record. When you feel forgotten, come back and read it.",
+                            "The Prophet  said: \"Whoever does not ask Allah, He becomes angry with him.\" (Jami' at-Tirmidhi 3373). When hardship comes, we forget every dua Allah has already answered. This is your honest record. When you feel forgotten, come back and read it.",
                             style = JannahType.bodySmall,
                             color = JannahColors.Body,
                             lineHeight = 20.sp

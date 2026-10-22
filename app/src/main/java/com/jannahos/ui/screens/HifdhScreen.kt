@@ -113,7 +113,7 @@ fun HifdhScreen(onBack: () -> Unit) {
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     Box(Modifier.size(24.dp).clip(CircleShape).background(if (isMemorized) JannahColors.Orange else JannahColors.Card)) {
-                        if (isMemorized) Text("✓", color = JannahColors.OnOrange, fontSize = 14.sp, modifier = Modifier.align(Alignment.Center))
+                        if (isMemorized) Text("", color = JannahColors.OnOrange, fontSize = 14.sp, modifier = Modifier.align(Alignment.Center))
                     }
                     Spacer(Modifier.width(16.dp))
                     Column(Modifier.weight(1f)) {

@@ -431,7 +431,7 @@ class TahajjudAlarmActivity : ComponentActivity() {
             Spacer(Modifier.height(JannahSpacing.l))
 
             // ---- SEPARATOR ----
-            Text("─── or ───", style = JannahType.tertiary, color = JannahColors.NightMuted)
+            Text(" or ", style = JannahType.tertiary, color = JannahColors.NightMuted)
 
             Spacer(Modifier.height(JannahSpacing.l))
 

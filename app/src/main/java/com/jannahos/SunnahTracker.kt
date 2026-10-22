@@ -11,12 +11,12 @@ object SunnahTracker {
     data class Sunnah(val id: String, val label: String, val rakah: Int, val note: String)
 
     val rawatib = listOf(
-        Sunnah("fajr_before", "Fajr · 2 before", 2, "The Prophet ﷺ never left these two."),
+        Sunnah("fajr_before", "Fajr · 2 before", 2, "The Prophet  never left these two."),
         Sunnah("dhuhr_before", "Dhuhr · 4 before", 4, ""),
         Sunnah("dhuhr_after", "Dhuhr · 2 after", 2, ""),
         Sunnah("maghrib_after", "Maghrib · 2 after", 2, ""),
         Sunnah("isha_after", "Isha · 2 after", 2, ""),
-        Sunnah("witr", "Witr · odd night prayer", 1, "The Prophet ﷺ said: \"Allah is Witr and He loves witr.\""),
+        Sunnah("witr", "Witr · odd night prayer", 1, "The Prophet  said: \"Allah is Witr and He loves witr.\""),
         Sunnah("duha", "Duha · forenoon", 2, "Recommended between sunrise and Dhuhr.")
     )
 

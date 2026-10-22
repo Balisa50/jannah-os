@@ -152,7 +152,7 @@ fun CharacterScreen(onBack: () -> Unit) {
                             .padding(horizontal = 10.dp, vertical = 6.dp)
                     ) {
                         Text(
-                            if (isDone) "✓" else "·",
+                            if (isDone) "" else "·",
                             style = JannahType.body,
                             color = if (isDone) JannahColors.OnOrange else JannahColors.Muted
                         )
@@ -190,7 +190,7 @@ fun CharacterScreen(onBack: () -> Unit) {
                         style = JannahType.eyebrow, color = JannahColors.OrangeDeep)
                     Spacer(Modifier.height(JannahSpacing.s))
                     Text(
-                        "The Prophet ﷺ said: \"I have only been sent to perfect good character.\" (Ahmad 8952, graded sahih by al-Albani). Character is not separate from worship, it is the fruit of it.",
+                        "The Prophet  said: \"I have only been sent to perfect good character.\" (Ahmad 8952, graded sahih by al-Albani). Character is not separate from worship, it is the fruit of it.",
                         style = JannahType.bodySmall,
                         color = JannahColors.Body,
                         lineHeight = 20.sp

@@ -18,15 +18,15 @@ object Mercy {
             "Qur'an 2:222"
         ),
         Reminder(
-            "The Prophet ﷺ said: \"Allah is more joyful at the repentance of His servant than one of you who finds his lost camel in the desert.\"",
+            "The Prophet  said: \"Allah is more joyful at the repentance of His servant than one of you who finds his lost camel in the desert.\"",
             "Sahih Muslim 2747"
         ),
         Reminder(
-            "The Prophet ﷺ said: \"Every son of Adam sins, and the best of those who sin are those who repent.\"",
+            "The Prophet  said: \"Every son of Adam sins, and the best of those who sin are those who repent.\"",
             "Sunan at-Tirmidhi 2499 (graded hasan)"
         ),
         Reminder(
-            "The Prophet ﷺ said: \"Allah extends His hand at night so that the one who sinned during the day may repent, and He extends His hand during the day so that the one who sinned at night may repent.\"",
+            "The Prophet  said: \"Allah extends His hand at night so that the one who sinned during the day may repent, and He extends His hand during the day so that the one who sinned at night may repent.\"",
             "Sahih Muslim 2759"
         )
     )

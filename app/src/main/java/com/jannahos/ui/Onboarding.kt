@@ -329,7 +329,7 @@ private fun Location(
                     fontWeight = if (selected) FontWeight.SemiBold else FontWeight.Normal,
                     modifier = Modifier.weight(1f)
                 )
-                if (selected) Text("✓", style = JannahType.bodySmall, color = JannahColors.Orange)
+                if (selected) Text("", style = JannahType.bodySmall, color = JannahColors.Orange)
             }
             Spacer(Modifier.height(JannahSpacing.xs))
         }
@@ -378,7 +378,7 @@ private fun ChooseLevel(level: Int, onPick: (Int) -> Unit) {
                     fontWeight = if (selected) FontWeight.SemiBold else FontWeight.Normal,
                     modifier = Modifier.weight(1f)
                 )
-                if (selected) Text("✓", style = JannahType.body, color = JannahColors.Orange)
+                if (selected) Text("", style = JannahType.body, color = JannahColors.Orange)
             }
             Spacer(Modifier.height(JannahSpacing.s))
         }

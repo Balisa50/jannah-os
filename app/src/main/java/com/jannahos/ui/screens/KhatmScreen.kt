@@ -297,7 +297,7 @@ private fun PortionCard(
                     contentAlignment = Alignment.Center
                 ) {
                     Text(
-                        if (isDone) "✓ Done" else "Mark done",
+                        if (isDone) " Done" else "Mark done",
                         style = JannahType.caption,
                         color = when {
                             isDone -> JannahColors.OrangeDeep

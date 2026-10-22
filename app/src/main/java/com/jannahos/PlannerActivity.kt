@@ -128,7 +128,7 @@ class PlannerActivity : ComponentActivity() {
                             Box(
                                 Modifier.padding(8.dp).pressClickable { store.toggle(t.id); refresh++ }
                             ) {
-                                Text("✓", style = JannahType.title, color = JannahColors.Orange)
+                                Text("", style = JannahType.title, color = JannahColors.Orange)
                             }
                             Box(
                                 Modifier.padding(8.dp).pressClickable { store.delete(t.id); refresh++ }
