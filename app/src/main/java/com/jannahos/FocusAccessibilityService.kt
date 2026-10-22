@@ -6,7 +6,6 @@ import android.view.accessibility.AccessibilityEvent
 
 class FocusAccessibilityService : AccessibilityService() {
     
-    // Cooldown to prevent infinite loops
     private var lastLockTime = 0L
 
     override fun onAccessibilityEvent(event: AccessibilityEvent?) {
@@ -19,7 +18,7 @@ class FocusAccessibilityService : AccessibilityService() {
         if (pkg == packageName) return
         if (pkg in ALWAYS_ALLOWED) return
 
-        // 2. SAFETY: 5-second cooldown to stop the spazzing loop
+        // 2. SAFETY: 5-second cooldown to stop any accidental loops
         val now = System.currentTimeMillis()
         if (now - lastLockTime < 5000) return
 
@@ -43,6 +42,8 @@ class FocusAccessibilityService : AccessibilityService() {
                 putExtra("show_quran_lock", true)
             }
             startActivity(intent)
+            // Note: I removed performGlobalAction(GLOBAL_ACTION_HOME) here. 
+            // It just overlays the lock screen now.
             lastLockTime = now
             return
         }
@@ -61,14 +62,15 @@ class FocusAccessibilityService : AccessibilityService() {
     override fun onInterrupt() {}
 
     companion object {
+        // Added ALL main Samsung, Google, Xiaomi, etc. launchers so the Home screen never triggers a lock.
         private val ALWAYS_ALLOWED = setOf(
             "com.android.systemui", "com.android.settings", "com.android.phone",
             "com.samsung.android.incallui", "com.android.dialer", "com.samsung.android.dialer",
             "com.android.server.telecom", "android", "com.google.android.dialer",
             "com.android.emergency", "com.jannahos",
-            // SAFETY: Add ALL phone launchers so it never loops on the home screen
-            "com.sec.android.app.launcher", "com.android.launcher3", "com.google.android.apps.nexuslauncher",
-            "com.android.launcher", "com.miui.home", "com.huawei.android.launcher"
+            "com.sec.android.app.launcher", "com.android.launcher3", 
+            "com.google.android.apps.nexuslauncher", "com.android.launcher",
+            "com.miui.home", "com.huawei.android.launcher"
         )
     }
 }
