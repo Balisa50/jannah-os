@@ -5,12 +5,12 @@ git add -A
 git commit -m "Auto-build: $(date +'%Y-%m-%d %H:%M:%S')" || true
 git push origin main
 
-echo "Waiting for cloud server to start..."
+echo "Waiting 10 seconds for the cloud server to start..."
 sleep 10
 
 echo "Watching build..."
 RUN_ID=$(gh run list --limit 1 --json databaseId --jq '.[0].databaseId')
-gh run watch $RUN_ID
+gh run watch $RUN_ID || true
 
 STATUS=$(gh run view $RUN_ID --json conclusion --jq '.conclusion')
 if [ "$STATUS" != "success" ]; then
@@ -19,6 +19,7 @@ if [ "$STATUS" != "success" ]; then
 fi
 
 echo "Downloading APK..."
+rm -rf ./apk_output
 gh run download $RUN_ID -n Jannah-APK -D ./apk_output
 
 echo "Moving APK to Downloads..."
