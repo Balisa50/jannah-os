@@ -1,5 +1,6 @@
 package com.jannahos.ui.screens
 
+import android.content.Context
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -8,6 +9,7 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
@@ -20,9 +22,12 @@ import com.jannahos.ui.theme.JannahType
 
 @Composable
 fun FrictionAuditScreen(onBack: () -> Unit) {
-    var matVisible by remember { mutableStateOf(false) }
-    var phoneAway by remember { mutableStateOf(false) }
-    var appOnHome by remember { mutableStateOf(false) }
+    val ctx = LocalContext.current
+    val prefs = remember { ctx.getSharedPreferences("friction_prefs", Context.MODE_PRIVATE) }
+    
+    var matVisible by remember { mutableStateOf(prefs.getBoolean("matVisible", false)) }
+    var phoneAway by remember { mutableStateOf(prefs.getBoolean("phoneAway", false)) }
+    var appOnHome by remember { mutableStateOf(prefs.getBoolean("appOnHome", false)) }
     
     val score = listOf(matVisible, phoneAway, appOnHome).count { it }
 
@@ -39,9 +44,9 @@ fun FrictionAuditScreen(onBack: () -> Unit) {
             
             Spacer(Modifier.height(JannahSpacing.xl))
             
-            AuditItem("Prayer mat is visible on the floor", matVisible) { matVisible = it }
-            AuditItem("Phone is in another room during Quran time", phoneAway) { phoneAway = it }
-            AuditItem("Quran app is on the home screen", appOnHome) { appOnHome = it }
+            AuditItem("Prayer mat is visible on the floor", matVisible) { matVisible = it; prefs.edit().putBoolean("matVisible", it).apply() }
+            AuditItem("Phone is in another room during Quran time", phoneAway) { phoneAway = it; prefs.edit().putBoolean("phoneAway", it).apply() }
+            AuditItem("Quran app is on the home screen", appOnHome) { appOnHome = it; prefs.edit().putBoolean("appOnHome", it).apply() }
             
             Spacer(Modifier.height(JannahSpacing.xl))
             
@@ -67,12 +72,9 @@ fun FrictionAuditScreen(onBack: () -> Unit) {
 
 @Composable
 private fun AuditItem(label: String, checked: Boolean, onToggle: (Boolean) -> Unit) {
-    Row(
-        Modifier.fillMaxWidth().pressClickable { onToggle(!checked) }.padding(vertical = 16.dp),
-        verticalAlignment = Alignment.CenterVertically
-    ) {
+    Row(Modifier.fillMaxWidth().pressClickable { onToggle(!checked) }.padding(vertical = 16.dp), verticalAlignment = Alignment.CenterVertically) {
         Box(Modifier.size(24.dp).clip(RoundedCornerShape(50)).background(if (checked) JannahColors.Orange else JannahColors.Card).pressClickable { onToggle(!checked) }) {
-            if (checked) Text("", color = JannahColors.OnOrange, modifier = Modifier.align(Alignment.Center))
+            if (checked) Text("✓", color = JannahColors.OnOrange, modifier = Modifier.align(Alignment.Center))
         }
         Spacer(Modifier.width(16.dp))
         Text(label, style = JannahType.body, color = JannahColors.Ink)

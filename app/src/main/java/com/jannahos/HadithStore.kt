@@ -5,7 +5,7 @@ import org.json.JSONArray
 import org.json.JSONObject
 
 object HadithStore {
-    data class Hadith(val text: String, val narrator: String, val source: String, val grade: String)
+    data class Hadith(val arabic: String, val english: String, val narrator: String, val source: String, val grade: String)
 
     suspend fun searchAsync(ctx: Context, query: String): List<Hadith> = kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.IO) {
         val q = query.lowercase().trim()
@@ -24,13 +24,14 @@ object HadithStore {
 
                 for (i in 0 until arr.length()) {
                     val obj = arr.getJSONObject(i)
+                    val arabic = obj.optString("arabic", "")
                     val englishObj = obj.optJSONObject("english")
-                    val englishText = englishObj?.optString("text") ?: obj.optString("english") // fallback
+                    val englishText = englishObj?.optString("text") ?: ""
                     val narrator = englishObj?.optString("narrator") ?: "Unknown"
                     val grade = obj.optString("grade", "Sahih")
                     
-                    if (englishText.lowercase().contains(q)) {
-                        results.add(Hadith(englishText, narrator, sourceName, grade))
+                    if (englishText.lowercase().contains(q) || arabic.contains(q)) {
+                        results.add(Hadith(arabic, englishText, narrator, sourceName, grade))
                         if (results.size >= 20) return@withContext results
                     }
                 }
