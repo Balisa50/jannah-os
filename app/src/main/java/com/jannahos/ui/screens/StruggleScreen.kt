@@ -372,5 +372,17 @@ fun StruggleScreen(onBack: () -> Unit) {
 
             Spacer(Modifier.height(JannahSpacing.l))
 
-            
+            Box(
+                Modifier
+                    .clip(RoundedCornerShape(JannahSpacing.pillRadius))
+                    .background(JannahColors.Ink)
+                    .clickable(onClick = onBack)
+                    .padding(horizontal = 24.dp, vertical = 14.dp)
+            ) {
+                Text("← Back", style = JannahType.button, color = JannahColors.OnOrange)
+            }
+
+            Spacer(Modifier.height(JannahSpacing.xxl))
+        }
+    }
 }
