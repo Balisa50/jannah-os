@@ -114,7 +114,7 @@ fun JannahApp() {
             composable("quran") { 
                 ErrorBoundary("Quran") { 
                     QuranTabScreen(
-                        onNavigateToSurah = { surah -> nav.navigate("mushaf/${QuranStore.firstPageOfSurah(surah)}") },
+                        onNavigateToSurah = { surah -> nav.navigate("mushaf/${QuranStore.firstPageOfSurah(surah)}/604") },
                         onNavigateToSearch = { nav.navigate("search") }
                     ) 
                 } 
@@ -129,10 +129,11 @@ fun JannahApp() {
                 } 
             }
             
-            composable("mushaf/{startPage}") { backStackEntry ->
+            composable("mushaf/{startPage}/{endPage}") { backStackEntry ->
                 val startPage = backStackEntry.arguments?.getString("startPage")?.toIntOrNull() ?: 1
+                val endPage = backStackEntry.arguments?.getString("endPage")?.toIntOrNull() ?: 604
                 ErrorBoundary("Quran Reader") { 
-                    MushafPageScreen(startPage = startPage, onBack = { nav.popBackStack() }) 
+                    MushafPageScreen(startPage = startPage, endPage = endPage, onBack = { nav.popBackStack() }) 
                 }
             }
         }

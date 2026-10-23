@@ -27,17 +27,18 @@ import com.jannahos.ui.theme.JannahType
 @Composable
 fun QuranTabScreen(
     onNavigateToSurah: (Int) -> Unit = {},
-    onNavigateToSearch: () -> Unit = {}
+    onNavigateToSearch: () -> Unit = {},
+    onNavigateToRange: (Int, Int) -> Unit = { _, _ -> }
 ) {
     var showKhatm by remember { mutableStateOf(false) }
     var showSearch by remember { mutableStateOf(false) }
 
     if (showKhatm) { 
-        KhatmScreen(onBack = { showKhatm = false }, onOpenPage = { page -> onNavigateToSurah(page) })
+        KhatmScreen(onBack = { showKhatm = false }, onOpenRange = { start, end -> onNavigateToRange(start, end) })
         return 
     }
     if (showSearch) { 
-        QuranSearchScreen(onBack = { showSearch = false }, onNavigateToPage = { page -> onNavigateToSurah(page) })
+        QuranSearchScreen(onBack = { showSearch = false }, onNavigateToPage = { page -> onNavigateToRange(page, 604) })
         return 
     }
 

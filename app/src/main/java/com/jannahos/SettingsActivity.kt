@@ -91,6 +91,28 @@ private fun SettingsScreen(onBack: () -> Unit) {
             Settings.setTahajjudSilent(ctx, silentTahajjud)
         }
         
+        Spacer(Modifier.height(JannahSpacing.l))
+        SectionHeader("App")
+        ListRow("Send test notification", "Check if notifications work") { 
+            // Trigger test notification
+            val nm = ctx.getSystemService(Context.NOTIFICATION_SERVICE) as android.app.NotificationManager
+            val channelId = "test"
+            if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.O) {
+                nm.createNotificationChannel(android.app.NotificationChannel(channelId, "Test", android.app.NotificationManager.IMPORTANCE_HIGH))
+            }
+            val notif = androidx.core.app.NotificationCompat.Builder(ctx, channelId)
+                .setSmallIcon(android.R.drawable.ic_lock_idle_alarm)
+                .setContentTitle("Jannah")
+                .setContentText("Notifications are working.")
+                .setPriority(androidx.core.app.NotificationCompat.PRIORITY_HIGH)
+                .build()
+            nm.notify(1, notif)
+        }
+        Divider()
+        ListRow("Restart onboarding", "See the welcome screens again") { 
+            Settings.resetOnboarding(ctx)
+        }
+        
         Spacer(Modifier.height(JannahSpacing.xxl))
     }
 }

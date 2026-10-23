@@ -6,7 +6,6 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Text
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -24,113 +23,63 @@ import com.jannahos.MushafImageStore
 import com.jannahos.ui.SwipeBackScreen
 import com.jannahos.ui.pressClickable
 import com.jannahos.ui.theme.JannahColors
-import com.jannahos.ui.theme.JannahSpacing
 import com.jannahos.ui.theme.JannahType
-import kotlinx.coroutines.launch
 
 @Composable
-fun MushafPageScreen(startPage: Int = 1, onBack: () -> Unit) {
+fun MushafPageScreen(startPage: Int, endPage: Int = 604, onBack: () -> Unit) {
     SwipeBackScreen(onBack = onBack) {
-        MushafPageContent(startPage = startPage, onBack = onBack)
-    }
-}
-
-@Composable
-private fun MushafPageContent(startPage: Int, onBack: () -> Unit) {
-    val ctx = LocalContext.current
-    val pagerState = rememberPagerState(
-        initialPage = startPage.coerceIn(1, 604) - 1,
-        pageCount = { 604 }
-    )
-    val currentPage = pagerState.currentPage + 1
-    val scope = rememberCoroutineScope()
-
-    Column(Modifier.fillMaxSize().background(JannahColors.Cream)) {
+        val ctx = LocalContext.current
+        val pageCount = endPage - startPage + 1
         
-        // 1. SLIM TOP HEADER
-        Row(
-            Modifier
-                .fillMaxWidth()
-                .background(JannahColors.Cream)
-                .windowInsetsPadding(WindowInsets.statusBars)
-                .padding(horizontal = 12.dp, vertical = 6.dp), // Reduced padding
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            Box(
-                Modifier.size(32.dp).clip(CircleShape).background(JannahColors.Card).pressClickable { onBack() }, // Smaller button
-                contentAlignment = Alignment.Center
-            ) { Text("←", fontSize = 16.sp, color = JannahColors.Ink) }
-            Spacer(Modifier.width(12.dp))
-            Text("Quran", fontFamily = FontFamily.Serif, fontSize = 18.sp, fontWeight = FontWeight.Bold, color = JannahColors.Ink) // Smaller text
-        }
+        val pagerState = rememberPagerState(
+            initialPage = 0, // 0 index maps to startPage
+            pageCount = { pageCount }
+        )
+        
+        val currentRealPage = startPage + pagerState.currentPage
+        val scope = rememberCoroutineScope()
 
-        // 2. PURE WHITE EDGE-TO-EDGE READING AREA
-        Box(
-            Modifier
-                .weight(1f)
-                .fillMaxWidth()
-                .background(Color.White), // Pure white background matching the page
-            contentAlignment = Alignment.Center
-        ) {
+        Box(Modifier.fillMaxSize().background(Color(0xFFFFFCF3))) {
             HorizontalPager(
                 state = pagerState,
                 modifier = Modifier.fillMaxSize(),
                 pageSpacing = 0.dp,
-                beyondViewportPageCount = 1,
-                verticalAlignment = Alignment.CenterVertically // Forces vertical centering
+                beyondViewportPageCount = 1
             ) { pageIndex ->
-                val pageNum = pageIndex + 1
-                val bitmap = remember(pageNum) { MushafImageStore.loadBitmap(ctx, pageNum) }
-                
+                val realPageNum = startPage + pageIndex
+                val bitmap = remember(realPageNum) { MushafImageStore.loadBitmap(ctx, realPageNum) }
                 if (bitmap != null) {
-                    // Wrap in a centered container
-                    Box(
+                    Image(
+                        bitmap = bitmap.asImageBitmap(),
+                        contentDescription = "Page $realPageNum",
                         modifier = Modifier.fillMaxSize(),
-                        contentAlignment = Alignment.Center
-                    ) {
-                        Image(
-                            bitmap = bitmap.asImageBitmap(),
-                            contentDescription = "Page $pageNum",
-                            modifier = Modifier.fillMaxSize().padding(horizontal = 8.dp),
-                            contentScale = ContentScale.Fit 
-                        )
-                    }
-                } else {
-                    Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                        Text("Loading...", style = JannahType.caption, color = JannahColors.Muted)
-                    }
+                        contentScale = ContentScale.Fit
+                    )
                 }
             }
-        }
 
-        // 3. SLIM BOTTOM FOOTER
-        Row(
-            Modifier
-                .fillMaxWidth()
-                .background(JannahColors.Cream)
-                .windowInsetsPadding(WindowInsets.navigationBars)
-                .padding(horizontal = 12.dp, vertical = 4.dp), // Reduced vertical padding
-            horizontalArrangement = Arrangement.SpaceBetween,
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            NavPill("←") { if (pagerState.currentPage > 0) scope.launch { pagerState.animateScrollToPage(pagerState.currentPage - 1) } }
-            
-            Text("$currentPage / 604", style = JannahType.bodySmall, color = JannahColors.Ink, fontWeight = FontWeight.Bold) // Smaller, cleaner text
-            
-            NavPill("→") { if (pagerState.currentPage < 603) scope.launch { pagerState.animateScrollToPage(pagerState.currentPage + 1) } }
-        }
-    }
-}
+            // Top Bar
+            Row(
+                Modifier.fillMaxWidth().background(JannahColors.Cream.copy(alpha = 0.95f)).windowInsetsPadding(WindowInsets.statusBars).padding(horizontal = 16.dp, vertical = 12.dp),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Box(Modifier.size(40.dp).clip(CircleShape).background(JannahColors.Card).pressClickable { onBack() }, contentAlignment = Alignment.Center) {
+                    Text("←", fontSize = 20.sp, color = JannahColors.Ink)
+                }
+                Spacer(Modifier.width(16.dp))
+                Text("Quran", fontFamily = FontFamily.Serif, fontSize = 22.sp, fontWeight = FontWeight.Bold, color = JannahColors.Ink)
+            }
 
-@Composable
-private fun NavPill(label: String, onClick: () -> Unit) {
-    Box(
-        Modifier
-            .clip(RoundedCornerShape(50))
-            .background(JannahColors.Card)
-            .pressClickable(onClick = onClick)
-            .padding(horizontal = 16.dp, vertical = 6.dp) // Smaller buttons
-    ) {
-        Text(label, style = JannahType.bodySmall, color = JannahColors.Ink)
+            // Bottom Counter
+            Box(
+                Modifier.align(Alignment.BottomCenter).fillMaxWidth().background(JannahColors.Cream.copy(alpha = 0.95f)).windowInsetsPadding(WindowInsets.navigationBars).padding(16.dp),
+                contentAlignment = Alignment.Center
+            ) {
+                Text(
+                    "Page ${currentRealPage} of $endPage (${pagerState.currentPage + 1} / $pageCount)", 
+                    style = JannahType.bodySmall, color = JannahColors.Ink, fontWeight = FontWeight.Bold
+                )
+            }
+        }
     }
 }
