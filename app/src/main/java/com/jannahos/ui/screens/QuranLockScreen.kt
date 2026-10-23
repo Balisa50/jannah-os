@@ -32,13 +32,13 @@ import com.jannahos.ui.theme.JannahColors
 import com.jannahos.ui.theme.JannahSpacing
 import com.jannahos.ui.theme.JannahType
 import kotlinx.coroutines.delay
+import java.util.Calendar
 
 @Composable
 fun QuranLockScreen(onRelease: () -> Unit) {
     BackHandler { /* Force them to read */ }
     val ctx = LocalContext.current
     
-    // Check if a session is already active (meaning they left mid-read)
     val savedRemaining = QuranReadingLock.getSavedRemainingMs(ctx)
     val savedSurah = QuranReadingLock.getLastSelectedSurah(ctx)
     
@@ -125,6 +125,17 @@ private fun ReadingLockSession(surah: Int, onRelease: () -> Unit) {
     val ss = ((remaining / 1000L) % 60).toInt()
     val timeText = String.format(java.util.Locale.US, "%02d:%02d", mm, ss)
 
+    // CALCULATE THE LOOPHOLE
+    val now = Calendar.getInstance()
+    val midnight = Calendar.getInstance().apply {
+        set(Calendar.HOUR_OF_DAY, 23)
+        set(Calendar.MINUTE, 59)
+        set(Calendar.SECOND, 59)
+    }
+    val timeUntilMidnight = midnight.timeInMillis - now.timeInMillis
+    // Only allow snooze if there is more than 15 minutes left in the day
+    val canSnooze = timeUntilMidnight > 15 * 60 * 1000L
+
     Box(Modifier.fillMaxSize().background(Color(0xFFFFFCF3))) {
         HorizontalPager(state = pagerState, modifier = Modifier.fillMaxSize(), pageSpacing = 0.dp) { pageIndex ->
             val pageNum = pageIndex + 1
@@ -142,6 +153,20 @@ private fun ReadingLockSession(surah: Int, onRelease: () -> Unit) {
         Box(Modifier.align(Alignment.TopCenter).fillMaxWidth().background(JannahColors.Orange).padding(horizontal = JannahSpacing.gutter, vertical = 12.dp).windowInsetsPadding(WindowInsets.statusBars)) {
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Text(if (isDone) "UNLOCKED" else "READING LOCK", style = JannahType.eyebrow, color = JannahColors.OnOrange.copy(alpha = 0.75f), modifier = Modifier.weight(1f))
+                
+                if (!isDone && canSnooze) {
+                    Box(
+                        Modifier.clip(RoundedCornerShape(50)).background(JannahColors.OnOrange.copy(alpha = 0.15f)).pressClickable {
+                            com.jannahos.QuranLockScheduler.scheduleSnooze(ctx, 15)
+                            com.jannahos.QuranReadingLock.setActiveToday(ctx, false)
+                            onRelease()
+                        }.padding(horizontal = 12.dp, vertical = 6.dp)
+                    ) {
+                        Text("Snooze 15m", style = JannahType.micro, color = JannahColors.OnOrange, fontWeight = FontWeight.Bold)
+                    }
+                    Spacer(Modifier.width(8.dp))
+                }
+                
                 Text(timeText, fontFamily = FontFamily.Serif, fontSize = 22.sp, fontWeight = FontWeight.Bold, color = JannahColors.OnOrange)
             }
         }
