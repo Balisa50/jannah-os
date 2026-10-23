@@ -29,14 +29,14 @@ class PrayerReminderReceiver : BroadcastReceiver() {
             val clockStr = SimpleDateFormat("HH:mm", Locale.getDefault()).format(Date(nextTime))
             val name = SalahTracker.label(nextKey).uppercase()
 
-            showNotification(ctx, name, clockStr, timeStr, nextTime)
+            showNotification(ctx, name, clockStr, timeStr)
         }
         
         // Schedule the next one in the adaptive chain
         PrayerReminderScheduler.scheduleNextReminder(ctx)
     }
 
-    private fun showNotification(ctx: Context, prayer: String, clock: String, timeLeft: String, targetTime: Long) {
+    private fun showNotification(ctx: Context, prayer: String, clock: String, timeLeft: String) {
         val channelId = "jannah_adaptive_prayer"
         val nm = ctx.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
 
@@ -57,11 +57,11 @@ class PrayerReminderReceiver : BroadcastReceiver() {
             .setContentTitle("$prayer at $clock")
             .setContentText(timeLeft)
             .setSmallIcon(android.R.drawable.ic_lock_idle_alarm)
-            .setColor(android.graphics.Color.parseColor("#C2410C")) // Jannah Orange
+            .setColor(android.graphics.Color.parseColor("#C2410C"))
             .setPriority(NotificationCompat.PRIORITY_HIGH)
-            .setCategory(NotificationCompat.CATEGORY_ALARM)
+            .setCategory(NotificationCompat.CATEGORY_REMINDER)
             .setVibrate(longArrayOf(0, 500, 200, 500))
-            .setTimeoutAfter(30_000) // Auto-dismisses after 30 seconds!
+            .setTimeoutAfter(30_000) // Auto-dismisses after 30 seconds
             .setAutoCancel(true)
             .setContentIntent(pendingIntent)
             .build()

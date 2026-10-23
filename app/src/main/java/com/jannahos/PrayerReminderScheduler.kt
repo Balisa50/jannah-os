@@ -5,7 +5,6 @@ import android.app.PendingIntent
 import android.content.Context
 import android.content.Intent
 import android.os.Build
-import java.util.Calendar
 
 object PrayerReminderScheduler {
 
@@ -19,7 +18,7 @@ object PrayerReminderScheduler {
 
         val diff = nextTime - now
         
-        // Adaptive Intervals (Breathing logic)
+        // Adaptive Intervals
         val intervalMs = when {
             diff > 2 * 60 * 60 * 1000L -> 60 * 60 * 1000L // > 2 hours: every hour
             diff > 60 * 60 * 1000L -> 30 * 60 * 1000L     // 1-2 hours: every 30 mins
@@ -28,7 +27,6 @@ object PrayerReminderScheduler {
             else -> 2 * 60 * 1000L                        // < 10 mins: every 2 mins
         }
 
-        // Don't schedule past the prayer time
         val triggerTime = minOf(now + intervalMs, nextTime)
 
         val alarmManager = ctx.getSystemService(Context.ALARM_SERVICE) as AlarmManager

@@ -94,5 +94,6 @@
             </intent-filter>
         </receiver>
 
+            <receiver android:name=".PrayerReminderReceiver" android:exported="false" />
     </application>
 </manifest>
