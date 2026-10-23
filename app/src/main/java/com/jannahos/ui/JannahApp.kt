@@ -115,8 +115,7 @@ fun JannahApp() {
                 ErrorBoundary("Quran") { 
                     QuranTabScreen(
                         onNavigateToSurah = { surah -> nav.navigate("mushaf/${QuranStore.firstPageOfSurah(surah)}") },
-                        onNavigateToSearch = { nav.navigate("search") },
-                        onNavigateToBookmarks = { nav.navigate("bookmarks") }
+                        onNavigateToSearch = { nav.navigate("search") }
                     ) 
                 } 
             }
@@ -128,15 +127,6 @@ fun JannahApp() {
                         onNavigateToPage = { page -> nav.navigate("mushaf/$page") }
                     ) 
                 } 
-            }
-            
-            composable("bookmarks") {
-                ErrorBoundary("Bookmarks") {
-                    BookmarksScreen(
-                        onBack = { nav.popBackStack() },
-                        onOpen = { surah, _ -> nav.navigate("mushaf/${QuranStore.firstPageOfSurah(surah)}") }
-                    )
-                }
             }
             
             composable("mushaf/{startPage}") { backStackEntry ->

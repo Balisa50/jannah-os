@@ -1,6 +1,5 @@
 package com.jannahos.ui.screens
 
-import android.content.Intent
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
@@ -28,8 +27,7 @@ import com.jannahos.ui.theme.JannahType
 @Composable
 fun QuranTabScreen(
     onNavigateToSurah: (Int) -> Unit = {},
-    onNavigateToSearch: () -> Unit = {},
-    onNavigateToBookmarks: () -> Unit = {}
+    onNavigateToSearch: () -> Unit = {}
 ) {
     var showKhatm by remember { mutableStateOf(false) }
     var showSearch by remember { mutableStateOf(false) }
@@ -45,7 +43,6 @@ fun QuranTabScreen(
 
     val ctx = LocalContext.current
     val last = remember { QuranBookmarks.lastSurah(ctx) }
-    val bookmarkCount = remember { com.jannahos.SafeStore.quranBookmarks(ctx).size }
     val completedDays = KhatmStore.getCompleted(ctx)
 
     Column(modifier = Modifier.fillMaxSize().verticalScroll(rememberScrollState()).background(JannahColors.Cream)) {
@@ -73,11 +70,6 @@ fun QuranTabScreen(
                 }
                 Box(Modifier.weight(1f).clip(RoundedCornerShape(50)).background(JannahColors.Card).pressClickable { showKhatm = true }.padding(vertical = 12.dp), contentAlignment = Alignment.Center) {
                     Text(if (completedDays == 0) "Start Plan" else "Plan: $completedDays", style = JannahType.bodySmall, color = JannahColors.Ink, fontWeight = FontWeight.SemiBold)
-                }
-                if (bookmarkCount > 0) {
-                    Box(Modifier.weight(1f).clip(RoundedCornerShape(50)).background(JannahColors.Card).pressClickable { onNavigateToBookmarks() }.padding(vertical = 12.dp), contentAlignment = Alignment.Center) {
-                        Text("Saved ($bookmarkCount)", style = JannahType.bodySmall, color = JannahColors.Ink, fontWeight = FontWeight.SemiBold)
-                    }
                 }
             }
 

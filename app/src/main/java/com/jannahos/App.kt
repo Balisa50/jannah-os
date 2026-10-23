@@ -10,20 +10,14 @@ import java.util.Locale
 import kotlin.concurrent.thread
 
 class App : Application() {
-    companion object {
-        var instance: App? = null
-    }
-
     override fun onCreate() {
         super.onCreate()
         instance = this
         
-        // Auto-schedule adhan and locks
         try {
             SalahScheduler.schedule(this, Settings.lat(this), Settings.lon(this))
         } catch (_: Exception) {}
 
-        // Crash logger
         val prev = Thread.getDefaultUncaughtExceptionHandler()
         Thread.setDefaultUncaughtExceptionHandler { t, throwable ->
             try {
@@ -43,15 +37,19 @@ class App : Application() {
         }
     }
 
-    fun latestCrash(application: Application): String? {
-        return try {
-            val dir = File(application.filesDir, "crashes")
-            if (!dir.exists()) return null
-            val files = dir.listFiles()?.sortedByDescending { it.name } ?: return null
-            val newest = files.firstOrNull() ?: return null
-            val text = newest.readText()
-            newest.delete()
-            text
-        } catch (_: Throwable) { null }
+    companion object {
+        var instance: App? = null
+
+        fun latestCrash(application: Application): String? {
+            return try {
+                val dir = File(application.filesDir, "crashes")
+                if (!dir.exists()) return null
+                val files = dir.listFiles()?.sortedByDescending { it.name } ?: return null
+                val newest = files.firstOrNull() ?: return null
+                val text = newest.readText()
+                newest.delete()
+                text
+            } catch (_: Throwable) { null }
+        }
     }
 }
