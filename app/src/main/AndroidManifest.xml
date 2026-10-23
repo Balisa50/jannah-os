@@ -46,7 +46,7 @@
 
         <!-- Lock / Overlay Activities -->
         <activity
-            android:name=".SalahCommitmentActivity"
+            android:name=".SalahCommitmentActivity" android:excludeFromRecents="true" android:taskAffinity=""
             android:exported="false"
             android:showOnLockScreen="true"
             android:turnScreenOn="true" />

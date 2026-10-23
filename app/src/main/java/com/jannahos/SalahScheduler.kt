@@ -37,9 +37,16 @@ object SalahScheduler {
             if (t <= now) continue
             val pi = pendingIntent(context, name, code)
             
-            // setAlarmClock is the most aggressive, survives Doze mode
-            val alarmClockInfo = AlarmManager.AlarmClockInfo(t, pi)
-            am.setAlarmClock(alarmClockInfo, pi)
+            // Use setExactAndAllowWhileIdle instead of setAlarmClock to avoid call ringtone
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+                if (am.canScheduleExactAlarms()) {
+                    am.setExactAndAllowWhileIdle(AlarmManager.RTC_WAKEUP, t, pi)
+                } else {
+                    am.setAndAllowWhileIdle(AlarmManager.RTC_WAKEUP, t, pi)
+                }
+            } else {
+                am.setExactAndAllowWhileIdle(AlarmManager.RTC_WAKEUP, t, pi)
+            }
         }
     }
 

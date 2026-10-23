@@ -6,24 +6,23 @@ import android.app.PendingIntent
 import android.app.Service
 import android.content.Context
 import android.content.Intent
-import android.media.AudioAttributes
-import android.media.MediaPlayer
-import android.media.RingtoneManager
 import android.os.Build
 import android.os.IBinder
+import android.os.VibrationEffect
+import android.os.Vibrator
 import androidx.core.app.NotificationCompat
 
 class AdhanService : Service() {
-    private var mediaPlayer: MediaPlayer? = null
+    private var vibrator: Vibrator? = null
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
         val prayer = intent?.getStringExtra("prayer") ?: "fajr"
         val name = SalahTracker.label(prayer)
 
-        val channelId = "adhan_channel_v4"
+        val channelId = "adhan_channel_v5"
         val nm = getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            val channel = NotificationChannel(channelId, "Adhan", NotificationManager.IMPORTANCE_HIGH).apply {
+            val channel = NotificationChannel(channelId, "Prayer Alerts", NotificationManager.IMPORTANCE_HIGH).apply {
                 setSound(null, null)
                 enableVibration(true)
             }
@@ -34,40 +33,35 @@ class AdhanService : Service() {
         val pendingIntent = PendingIntent.getActivity(this, 0, launchIntent, PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT)
 
         val notif = NotificationCompat.Builder(this, channelId)
-            .setContentTitle("$name Adhan")
-            .setContentText("It is time for prayer.")
+            .setContentTitle("$name Time")
+            .setContentText("Put the phone down. Go pray.")
             .setSmallIcon(android.R.drawable.ic_lock_idle_alarm)
             .setColor(android.graphics.Color.parseColor("#C2410C"))
             .setPriority(NotificationCompat.PRIORITY_MAX)
             .setCategory(NotificationCompat.CATEGORY_ALARM)
             .setContentIntent(pendingIntent)
+            .setFullScreenIntent(pendingIntent, true)
             .build()
 
         startForeground(2, notif)
 
-        try {
-            val uri = RingtoneManager.getDefaultUri(RingtoneManager.TYPE_ALARM)
-            mediaPlayer = MediaPlayer().apply {
-                setDataSource(this@AdhanService, uri)
-                setAudioAttributes(AudioAttributes.Builder()
-                    .setUsage(AudioAttributes.USAGE_ALARM)
-                    .setContentType(AudioAttributes.CONTENT_TYPE_SONIFICATION)
-                    .build())
-                isLooping = false
-                setOnCompletionListener { stopSelf() }
-                prepare()
-                start()
+        // Vibrate pattern: wait 0ms, vibrate 1000ms, sleep 500ms, repeat
+        vibrator = getSystemService(Context.VIBRATOR_SERVICE) as Vibrator
+        if (vibrator?.hasVibrator() == true) {
+            val pattern = longArrayOf(0, 1000, 500, 1000, 500, 1000, 500, 1000)
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                vibrator?.vibrate(VibrationEffect.createWaveform(pattern, -1))
+            } else {
+                @Suppress("DEPRECATION")
+                vibrator?.vibrate(pattern, -1)
             }
-        } catch (e: Exception) {
-            stopSelf()
         }
 
         return START_NOT_STICKY
     }
 
     override fun onDestroy() {
-        mediaPlayer?.release()
-        mediaPlayer = null
+        vibrator?.cancel()
         super.onDestroy()
     }
 

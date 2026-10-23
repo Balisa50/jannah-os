@@ -1,24 +1,22 @@
 package com.jannahos
 
+import android.content.Intent
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.BackHandler
 import androidx.activity.compose.setContent
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Text
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.jannahos.ui.pressClickable
 import com.jannahos.ui.theme.JannahColors
 import com.jannahos.ui.theme.JannahSpacing
 import com.jannahos.ui.theme.JannahTheme
@@ -26,6 +24,7 @@ import com.jannahos.ui.theme.JannahType
 import kotlinx.coroutines.delay
 
 class SalahCommitmentActivity : ComponentActivity() {
+    
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         val prayer = intent.getStringExtra("prayer") ?: "fajr"
@@ -35,6 +34,25 @@ class SalahCommitmentActivity : ComponentActivity() {
                 PrayerLockContent(prayer = prayer, onFinish = { finish() })
             }
         }
+    }
+
+    // If user tries to press Home or open recent apps, force them back
+    override fun onUserLeaveHint() {
+        super.onUserLeaveHint()
+        relaunchLock()
+    }
+
+    override fun onPause() {
+        super.onPause()
+        relaunchLock()
+    }
+
+    private fun relaunchLock() {
+        val intent = Intent(this, SalahCommitmentActivity::class.java).apply {
+            putExtra("prayer", intent.getStringExtra("prayer") ?: "fajr")
+            addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP)
+        }
+        startActivity(intent)
     }
 }
 
