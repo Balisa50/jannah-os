@@ -31,19 +31,15 @@ object SalahScheduler {
         val map = todayTimes(lat, lon)
         val am = context.getSystemService(Context.ALARM_SERVICE) as AlarmManager
         val now = System.currentTimeMillis()
+        
         for ((name, code) in PRAYERS) {
             val t = map[name] ?: continue
             if (t <= now) continue
             val pi = pendingIntent(context, name, code)
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
-                if (am.canScheduleExactAlarms()) {
-                    am.setExactAndAllowWhileIdle(AlarmManager.RTC_WAKEUP, t, pi)
-                } else {
-                    am.setAndAllowWhileIdle(AlarmManager.RTC_WAKEUP, t, pi)
-                }
-            } else {
-                am.setExactAndAllowWhileIdle(AlarmManager.RTC_WAKEUP, t, pi)
-            }
+            
+            // setAlarmClock is the most aggressive, survives Doze mode
+            val alarmClockInfo = AlarmManager.AlarmClockInfo(t, pi)
+            am.setAlarmClock(alarmClockInfo, pi)
         }
     }
 
@@ -58,7 +54,6 @@ object SalahScheduler {
         )
     }
 
-    // API (with fallback)
     fun todayTimes(lat: Double, lon: Double): Map<String, Long> {
         val ctx: android.content.Context? = App.instance
         if (ctx != null) {
@@ -80,7 +75,6 @@ object SalahScheduler {
         return calculateTimesLocally(lat, lon)
     }
 
-    // Local offline calculation
     fun localTimes(lat: Double, lon: Double): Map<String, Long> {
         return calculateTimesLocally(lat, lon)
     }
@@ -100,7 +94,6 @@ object SalahScheduler {
                 "isha" to prayerTimes.isha.time
             )
         } catch (e: Exception) {
-            // If all else fails, return today's times based on rough estimates
             val now = System.currentTimeMillis()
             return mapOf(
                 "fajr" to now + 5 * 60 * 60 * 1000L,

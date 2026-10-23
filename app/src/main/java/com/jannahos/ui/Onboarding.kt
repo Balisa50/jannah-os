@@ -38,7 +38,7 @@ fun OnboardingFlow(onDone: () -> Unit) {
             Spacer(Modifier.height(JannahSpacing.xxl))
             
             Row(horizontalArrangement = Arrangement.spacedBy(JannahSpacing.xs)) {
-                repeat(5) { i ->
+                repeat(4) { i ->
                     Box(Modifier.size(if (i == step) 24.dp else 6.dp, 6.dp).clip(CircleShape).background(if (i <= step) JannahColors.Orange else JannahColors.Border))
                 }
             }
@@ -48,20 +48,16 @@ fun OnboardingFlow(onDone: () -> Unit) {
             Box(Modifier.weight(1f).fillMaxWidth()) {
                 when (step) {
                     0 -> Welcome()
-                    1 -> WhatYouGet()
-                    2 -> AskName(name) { name = it }
-                    3 -> AskCity(city) { city = it }
+                    1 -> AskName(name) { name = it }
+                    2 -> AskCity(city) { city = it }
                     else -> DoneScreen(name.ifBlank { "friend" })
                 }
             }
 
             Box(
                 modifier = Modifier.fillMaxWidth().height(56.dp).clip(RoundedCornerShape(JannahSpacing.pillRadius)).background(JannahColors.Ink).clickable {
-                    if (step == 4) {
+                    if (step == 3) {
                         Settings.setDisplayName(ctx, name)
-                        if (city.isNotBlank()) {
-                            // City will be set in settings later
-                        }
                         onDone()
                     } else {
                         step += 1
@@ -69,7 +65,7 @@ fun OnboardingFlow(onDone: () -> Unit) {
                 },
                 contentAlignment = Alignment.Center
             ) {
-                Text(if (step == 4) "Begin" else "Continue", style = JannahType.button, color = JannahColors.OnOrange)
+                Text(if (step == 3) "Begin" else "Continue", style = JannahType.button, color = JannahColors.OnOrange)
             }
             Spacer(Modifier.height(JannahSpacing.l))
         }
@@ -81,32 +77,7 @@ private fun Welcome() {
     Column(Modifier.fillMaxSize().verticalScroll(rememberScrollState()), horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.Center) {
         Text("Jannah", fontFamily = FontFamily.Serif, fontSize = 48.sp, fontWeight = FontWeight.Bold, color = JannahColors.Ink)
         Spacer(Modifier.height(JannahSpacing.s))
-        Text("The operating system for your worship.", fontFamily = FontFamily.Serif, fontStyle = FontStyle.Italic, fontSize = 18.sp, color = JannahColors.Orange, textAlign = TextAlign.Center, lineHeight = 26.sp)
-        Spacer(Modifier.height(JannahSpacing.xxl))
-        Text("Not another app you have to open. A guardian that comes for you.", style = JannahType.body, color = JannahColors.Body, textAlign = TextAlign.Center, lineHeight = 24.sp)
-    }
-}
-
-@Composable
-private fun WhatYouGet() {
-    Column(Modifier.fillMaxSize().verticalScroll(rememberScrollState())) {
-        Text("What you get.", fontFamily = FontFamily.Serif, fontSize = 32.sp, fontWeight = FontWeight.Bold, color = JannahColors.Ink)
-        Spacer(Modifier.height(JannahSpacing.l))
-        
-        Feature("Prayer times", "Calculated for your exact city. Adhan that actually rings.")
-        Feature("Quran reader", "604 pages. Locked ranges so you actually finish.")
-        Feature("Reading Plan", "Pick your pace. Get exact pages every day.")
-        Feature("Locks & Focus", "Your phone locks during Fard prayer. It won't let you skip.")
-        Feature("Diary", "Write how you feel. The dashboard gives you verses to heal.")
-    }
-}
-
-@Composable
-private fun Feature(title: String, desc: String) {
-    Column(Modifier.fillMaxWidth().padding(vertical = 10.dp)) {
-        Text(title, fontFamily = FontFamily.Serif, fontSize = 18.sp, fontWeight = FontWeight.Bold, color = JannahColors.Ink)
-        Spacer(Modifier.height(2.dp))
-        Text(desc, style = JannahType.bodySmall, color = JannahColors.Body, lineHeight = 22.sp)
+        Text("A quiet space for worship.", fontFamily = FontFamily.Serif, fontStyle = FontStyle.Italic, fontSize = 18.sp, color = JannahColors.Orange, textAlign = TextAlign.Center)
     }
 }
 
@@ -115,7 +86,7 @@ private fun AskName(current: String, onChange: (String) -> Unit) {
     Column(Modifier.fillMaxSize().verticalScroll(rememberScrollState()), horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.Center) {
         Text("What should we call you?", fontFamily = FontFamily.Serif, fontSize = 26.sp, fontWeight = FontWeight.Bold, color = JannahColors.Ink, textAlign = TextAlign.Center)
         Spacer(Modifier.height(JannahSpacing.l))
-        OutlinedTextField(value = current, onValueChange = onChange, label = { Text("Your name") }, modifier = Modifier.fillMaxWidth())
+        OutlinedTextField(value = current, onValueChange = onChange, label = { Text("Name") }, modifier = Modifier.fillMaxWidth())
     }
 }
 
@@ -133,6 +104,6 @@ private fun DoneScreen(name: String) {
     Column(Modifier.fillMaxSize().verticalScroll(rememberScrollState()), horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.Center) {
         Text("You're set, $name.", fontFamily = FontFamily.Serif, fontSize = 30.sp, fontWeight = FontWeight.Bold, color = JannahColors.Ink, textAlign = TextAlign.Center)
         Spacer(Modifier.height(JannahSpacing.m))
-        Text("Come back tonight. Sleep with intention.", fontFamily = FontFamily.Serif, fontStyle = FontStyle.Italic, fontSize = 17.sp, color = JannahColors.Orange, textAlign = TextAlign.Center)
+        Text("Everything is ready.", fontFamily = FontFamily.Serif, fontStyle = FontStyle.Italic, fontSize = 17.sp, color = JannahColors.Orange, textAlign = TextAlign.Center)
     }
 }

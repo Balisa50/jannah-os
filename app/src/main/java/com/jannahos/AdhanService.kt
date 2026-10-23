@@ -20,7 +20,7 @@ class AdhanService : Service() {
         val prayer = intent?.getStringExtra("prayer") ?: "fajr"
         val name = SalahTracker.label(prayer)
 
-        val channelId = "adhan_channel_v3"
+        val channelId = "adhan_channel_v4"
         val nm = getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             val channel = NotificationChannel(channelId, "Adhan", NotificationManager.IMPORTANCE_HIGH).apply {

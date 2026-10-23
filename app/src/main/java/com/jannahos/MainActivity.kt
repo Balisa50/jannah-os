@@ -20,6 +20,17 @@ import com.jannahos.ui.theme.JannahTheme
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         
+        // Ask for battery optimization exemption (critical for alarms)
+        if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.M) {
+            val pm = getSystemService(android.os.PowerManager::class.java)
+            if (pm != null && !pm.isIgnoringBatteryOptimizations(packageName)) {
+                val intent = android.content.Intent(android.provider.Settings.ACTION_REQUEST_IGNORE_BATTERY_OPTIMIZATIONS).apply {
+                    data = android.net.Uri.parse("package:$packageName")
+                }
+                startActivity(intent)
+            }
+        }
+        
         if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.S) {
             val alarmManager = getSystemService(android.app.AlarmManager::class.java)
             if (alarmManager != null && !alarmManager.canScheduleExactAlarms()) {
