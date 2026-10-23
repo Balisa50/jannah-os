@@ -18,11 +18,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.jannahos.CityStore
-import com.jannahos.QiblaActivity
-import com.jannahos.SalahScheduler
-import com.jannahos.SalahTracker
-import com.jannahos.Settings
+import com.jannahos.*
 import com.jannahos.ui.pressClickable
 import com.jannahos.ui.theme.JannahColors
 import com.jannahos.ui.theme.JannahSpacing
@@ -36,27 +32,11 @@ import java.util.Locale
 fun PrayScreen() {
     val ctx = LocalContext.current
     var tick by remember { mutableStateOf(0) }
-    var reminderMsg by remember { mutableStateOf<String?>(null) }
-    
     LaunchedEffect(Unit) { while (true) { delay(1000); tick++ } }
 
     val lat = Settings.lat(ctx)
     val lon = Settings.lon(ctx)
-    val todayKey = remember { SimpleDateFormat("yyyy-MM-dd", Locale.US).format(Date()) }
-    val useCity = remember { CityStore.useCity(ctx) }
-    val cityName = remember { CityStore.name(ctx) }
-
-    var times by remember { mutableStateOf(SalahScheduler.localTimes(lat, lon)) }
-    
-    LaunchedEffect(todayKey, useCity) {
-        kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.IO) {
-            val fresh = SalahScheduler.todayTimes(lat, lon)
-            kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.Main) {
-                times = fresh
-            }
-        }
-    }
-
+    val times = remember { SalahScheduler.todayTimes(lat, lon) }
     val hhmm = SimpleDateFormat("HH:mm", Locale.getDefault())
     val ordered = listOf("fajr", "dhuhr", "asr", "maghrib", "isha")
     val now = System.currentTimeMillis()
@@ -67,37 +47,18 @@ fun PrayScreen() {
         String.format(Locale.US, "%02d:%02d:%02d", diffMs / 3600000, (diffMs / 60000) % 60, (diffMs / 1000) % 60)
     } else "--:--:--"
 
-    Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .verticalScroll(rememberScrollState())
-            .background(JannahColors.Cream)
-    ) {
-        Box(
-            Modifier
-                .fillMaxWidth()
-                .padding(horizontal = JannahSpacing.gutter)
-                .padding(top = JannahSpacing.l, bottom = JannahSpacing.m)
-        ) {
+    Column(modifier = Modifier.fillMaxSize().verticalScroll(rememberScrollState()).background(JannahColors.Cream)) {
+        Box(Modifier.fillMaxWidth().padding(horizontal = JannahSpacing.gutter).padding(top = JannahSpacing.l, bottom = JannahSpacing.m)) {
             Column {
                 Text("Prayer", fontFamily = FontFamily.Serif, fontSize = 26.sp, fontWeight = FontWeight.Bold, color = JannahColors.Ink)
                 Spacer(Modifier.height(2.dp))
-                Text(
-                    if (useCity && cityName.isNotBlank()) "Today in $cityName" else "Today for your location",
-                    style = JannahType.caption, color = JannahColors.Muted
-                )
+                Text("Today for your location", style = JannahType.caption, color = JannahColors.Muted)
             }
         }
 
         Column(Modifier.padding(horizontal = JannahSpacing.gutter)) {
             if (nextKey != null && nextTime != null) {
-                Box(
-                    Modifier
-                        .fillMaxWidth()
-                        .clip(RoundedCornerShape(JannahSpacing.cardRadius))
-                        .background(JannahColors.Orange)
-                        .padding(JannahSpacing.l)
-                ) {
+                Box(Modifier.fillMaxWidth().clip(RoundedCornerShape(JannahSpacing.cardRadius)).background(JannahColors.Orange).padding(JannahSpacing.l)) {
                     Column {
                         Text("NEXT", style = JannahType.eyebrow, color = JannahColors.OnOrange.copy(alpha = 0.75f))
                         Spacer(Modifier.height(4.dp))
@@ -113,42 +74,23 @@ fun PrayScreen() {
                 Spacer(Modifier.height(JannahSpacing.m))
             }
 
-            Box(
-                Modifier
-                    .fillMaxWidth()
-                    .clip(RoundedCornerShape(JannahSpacing.cardRadius))
-                    .background(JannahColors.Card)
-            ) {
+            Box(Modifier.fillMaxWidth().clip(RoundedCornerShape(JannahSpacing.cardRadius)).background(JannahColors.Card)) {
                 Column {
                     ordered.forEachIndexed { i, key ->
                         val t = times[key]
                         val isNext = key == nextKey
-                        Row(
-                            Modifier
-                                .fillMaxWidth()
-                                .padding(horizontal = JannahSpacing.l, vertical = 16.dp),
-                            verticalAlignment = Alignment.CenterVertically
-                        ) {
+                        Row(Modifier.fillMaxWidth().padding(horizontal = JannahSpacing.l, vertical = 16.dp), verticalAlignment = Alignment.CenterVertically) {
                             Text(SalahTracker.label(key), fontFamily = FontFamily.Serif, fontSize = 18.sp, fontWeight = if (isNext) FontWeight.Bold else FontWeight.Medium, color = if (isNext) JannahColors.Orange else JannahColors.Ink, modifier = Modifier.weight(1f))
                             Text(t?.let { hhmm.format(Date(it)) } ?: "—", style = JannahType.body, color = if (isNext) JannahColors.Orange else JannahColors.Muted, fontWeight = if (isNext) FontWeight.SemiBold else FontWeight.Normal)
                         }
-                        if (i < ordered.size - 1) {
-                            Box(Modifier.fillMaxWidth().height(1.dp).background(JannahColors.Border))
-                        }
+                        if (i < ordered.size - 1) Box(Modifier.fillMaxWidth().height(1.dp).background(JannahColors.Border))
                     }
                 }
             }
 
             Spacer(Modifier.height(JannahSpacing.m))
 
-            Box(
-                Modifier
-                    .fillMaxWidth()
-                    .clip(RoundedCornerShape(JannahSpacing.cardRadius))
-                    .background(JannahColors.Card)
-                    .pressClickable { ctx.startActivity(Intent(ctx, QiblaActivity::class.java)) }
-                    .padding(JannahSpacing.l)
-            ) {
+            Box(Modifier.fillMaxWidth().clip(RoundedCornerShape(JannahSpacing.cardRadius)).background(JannahColors.Card).pressClickable { ctx.startActivity(Intent(ctx, QiblaActivity::class.java)) }.padding(JannahSpacing.l)) {
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     Column(Modifier.weight(1f)) {
                         Text("Qibla direction", fontFamily = FontFamily.Serif, fontSize = 17.sp, fontWeight = FontWeight.Bold, color = JannahColors.Ink)
@@ -158,8 +100,8 @@ fun PrayScreen() {
                     Text("→", style = JannahType.title, color = JannahColors.Orange)
                 }
             }
-
-            Spacer(Modifier.height(JannahSpacing.m))
-
             
+            Spacer(Modifier.height(JannahSpacing.xxl))
+        }
+    }
 }

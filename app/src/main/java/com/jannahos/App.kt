@@ -10,18 +10,20 @@ import java.util.Locale
 import kotlin.concurrent.thread
 
 class App : Application() {
+    companion object {
+        var instance: App? = null
+    }
 
     override fun onCreate() {
         super.onCreate()
         instance = this
-        SalahScheduler.schedule(this, Settings.lat(this), Settings.lon(this))
-        SalahScheduler.scheduleNextReminder(this)
-        instance = this
-        PrayerReminderScheduler.scheduleNextReminder(this)
-        FridayKahfScheduler.scheduleAll(this)
+        
+        // Auto-schedule adhan and locks
+        try {
+            SalahScheduler.schedule(this, Settings.lat(this), Settings.lon(this))
+        } catch (_: Exception) {}
 
-        // Crash logger. Writes to internal filesDir so no storage permission
-        // is needed. A crash report screen reads from here on next launch.
+        // Crash logger
         val prev = Thread.getDefaultUncaughtExceptionHandler()
         Thread.setDefaultUncaughtExceptionHandler { t, throwable ->
             try {
@@ -31,7 +33,6 @@ class App : Application() {
                 val dir = File(filesDir, "crashes")
                 if (!dir.exists()) dir.mkdirs()
                 File(dir, "crash_$stamp.txt").writeText(sw.toString())
-                // Keep only the last 5
                 dir.listFiles()?.sortedByDescending { it.name }?.drop(5)?.forEach { it.delete() }
             } catch (_: Throwable) {}
             prev?.uncaughtException(t, throwable)
@@ -42,18 +43,15 @@ class App : Application() {
         }
     }
 
-    companion object {
-        var instance: App? = null
-        fun latestCrash(application: Application): String? {
-            return try {
-                val dir = File(application.filesDir, "crashes")
-                if (!dir.exists()) return null
-                val files = dir.listFiles()?.sortedByDescending { it.name } ?: return null
-                val newest = files.firstOrNull() ?: return null
-                val text = newest.readText()
-                newest.delete()
-                text
-            } catch (_: Throwable) { null }
-        }
+    fun latestCrash(application: Application): String? {
+        return try {
+            val dir = File(application.filesDir, "crashes")
+            if (!dir.exists()) return null
+            val files = dir.listFiles()?.sortedByDescending { it.name } ?: return null
+            val newest = files.firstOrNull() ?: return null
+            val text = newest.readText()
+            newest.delete()
+            text
+        } catch (_: Throwable) { null }
     }
 }
