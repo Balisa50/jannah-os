@@ -32,12 +32,11 @@ fun MushafPageScreen(startPage: Int, endPage: Int = 604, onBack: () -> Unit) {
         val pageCount = endPage - startPage + 1
         
         val pagerState = rememberPagerState(
-            initialPage = 0, // 0 index maps to startPage
+            initialPage = 0,
             pageCount = { pageCount }
         )
         
         val currentRealPage = startPage + pagerState.currentPage
-        val scope = rememberCoroutineScope()
 
         Box(Modifier.fillMaxSize().background(Color(0xFFFFFCF3))) {
             HorizontalPager(

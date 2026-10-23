@@ -48,7 +48,6 @@ fun QiblaScreen() {
     val lat = Settings.lat(ctx)
     val lon = Settings.lon(ctx)
 
-    // Kaaba coordinates
     val kaabaLat = 21.4225
     val kaabaLon = 39.8262
 
@@ -59,23 +58,6 @@ fun QiblaScreen() {
     val x = cos(lat1) * kotlin.math.tan(lat2) - sin(lat1) * cos(dLon)
     var bearing = atan2(y, x) * 180.0 / PI
     if (bearing < 0) bearing += 360.0
-
-    var sensorAvailable by remember { mutableStateOf(false) }
-    var deviceHeading by remember { mutableFloatStateOf(0f) }
-
-    DisposableEffect(Unit) {
-        val sensorManager = ctx.getSystemService(Context.SENSOR_SERVICE) as SensorManager
-        val accelerometer = sensorManager.getDefaultSensor(Sensor.TYPE_ACCELEROMETER)
-        val magnetometer = sensorManager.getDefaultSensor(Sensor.TYPE_MAGNETIC_FIELD)
-
-        if (accelerometer != null && magnetometer != null) {
-            sensorAvailable = true
-            // We would normally calculate heading here, but for production robustness
-            // and to fix the "no compass" issue, we fallback to the static math if sensor fails.
-        }
-
-        onDispose { }
-    }
 
     Column(Modifier.fillMaxSize().background(JannahColors.Cream)) {
         TopBar("Qibla", onBack = { })

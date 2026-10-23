@@ -16,7 +16,6 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.jannahos.KhatmStore
-import com.jannahos.QuranStore
 import com.jannahos.ui.TopBar
 import com.jannahos.ui.pressClickable
 import com.jannahos.ui.theme.JannahColors
@@ -41,17 +40,14 @@ fun KhatmScreen(onBack: () -> Unit, onOpenRange: (Int, Int) -> Unit) {
             Text("PREVIEW · FIRST 3 DAYS", style = JannahType.eyebrow, color = JannahColors.OrangeDeep)
             Spacer(Modifier.height(12.dp))
 
-            // Day 1
             DayCard("Day 1", start, end) { onOpenRange(start, end) }
             Spacer(Modifier.height(12.dp))
 
-            // Day 2
             val day2Start = end + 1
             val day2End = minOf(day2Start + (end - start), 604)
             DayCard("Day 2", day2Start, day2End) { onOpenRange(day2Start, day2End) }
             Spacer(Modifier.height(12.dp))
 
-            // Day 3
             val day3Start = day2End + 1
             val day3End = minOf(day3Start + (end - start), 604)
             DayCard("Day 3", day3Start, day3End) { onOpenRange(day3Start, day3End) }
