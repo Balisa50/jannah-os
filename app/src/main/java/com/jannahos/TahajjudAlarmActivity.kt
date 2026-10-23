@@ -20,6 +20,7 @@ import androidx.compose.ui.unit.sp
 import com.jannahos.ui.theme.JannahColors
 import com.jannahos.ui.theme.JannahTheme
 import com.jannahos.ui.theme.JannahType
+import com.jannahos.ui.theme.JannahSpacing
 
 class TahajjudAlarmActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
