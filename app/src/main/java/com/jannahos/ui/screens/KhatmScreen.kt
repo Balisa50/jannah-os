@@ -5,6 +5,7 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -30,6 +31,7 @@ fun KhatmScreen(onBack: () -> Unit, onOpenRange: (Int, Int) -> Unit) {
 
     val target = KhatmStore.getTarget(ctx)
     val completed = KhatmStore.getCompleted(ctx)
+    var daysInput by remember { mutableStateOf(target.toString()) }
     val (start, end) = KhatmStore.getPagesForDay(ctx)
 
     Column(Modifier.fillMaxSize().background(JannahColors.Cream)) {
@@ -37,6 +39,28 @@ fun KhatmScreen(onBack: () -> Unit, onOpenRange: (Int, Int) -> Unit) {
         
         Column(Modifier.weight(1f).verticalScroll(rememberScrollState()).padding(JannahSpacing.gutter)) {
             
+            // CUSTOM DAYS INPUT
+            Text("CHOOSE YOUR PACE", style = JannahType.eyebrow, color = JannahColors.OrangeDeep)
+            Spacer(Modifier.height(8.dp))
+            OutlinedTextField(
+                value = daysInput,
+                onValueChange = { daysInput = it },
+                label = { Text("Number of days (e.g., 10, 30, 45)") },
+                modifier = Modifier.fillMaxWidth(),
+                shape = RoundedCornerShape(12.dp)
+            )
+            Spacer(Modifier.height(8.dp))
+            Box(Modifier.fillMaxWidth().height(44.dp).clip(RoundedCornerShape(50)).background(JannahColors.Orange).pressClickable {
+                val days = daysInput.toIntOrNull() ?: 30
+                KhatmStore.setTarget(ctx, days)
+                KhatmStore.reset(ctx)
+                refresh++
+            }, contentAlignment = Alignment.Center) {
+                Text("Save Plan", color = JannahColors.OnOrange, fontWeight = FontWeight.Bold)
+            }
+            
+            Spacer(Modifier.height(32.dp))
+
             Text("PREVIEW · FIRST 3 DAYS", style = JannahType.eyebrow, color = JannahColors.OrangeDeep)
             Spacer(Modifier.height(12.dp))
 

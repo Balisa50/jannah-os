@@ -109,7 +109,7 @@ fun JannahApp() {
         ) {
             composable("today") { ErrorBoundary("Today") { TodayScreen(onNavigate = goTo) } }
             composable("pray") { ErrorBoundary("Pray") { PrayScreen() } }
-            composable("you") { ErrorBoundary("You") { YouScreen() } }
+            composable("you") { ErrorBoundary("You") { YouScreen(onNavigate = goTo) } }
             
             composable("quran") { 
                 ErrorBoundary("Quran") { 
@@ -128,6 +128,13 @@ fun JannahApp() {
                     ) 
                 } 
             }
+            
+
+            composable("diary") { ErrorBoundary("Diary") { DiaryScreen(onBack = { nav.popBackStack() }) } }
+            composable("backup") { ErrorBoundary("Backup") { BackupScreen(onBack = { nav.popBackStack() }) } }
+            composable("weekly") { ErrorBoundary("Weekly Review") { WeeklyReviewScreen(onBack = { nav.popBackStack() }) } }
+            composable("struggle") { ErrorBoundary("Struggle") { StruggleScreen(onBack = { nav.popBackStack() }) } }
+            composable("letters") { ErrorBoundary("Letters") { LettersScreen(onBack = { nav.popBackStack() }) } }
             
             composable("mushaf/{startPage}/{endPage}") { backStackEntry ->
                 val startPage = backStackEntry.arguments?.getString("startPage")?.toIntOrNull() ?: 1

@@ -7,7 +7,7 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Text
-import androidx.compose.runtime.*
+import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -16,31 +16,17 @@ import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.jannahos.*
+import com.jannahos.BedtimeActivity
+import com.jannahos.Settings
+import com.jannahos.SettingsActivity
 import com.jannahos.ui.pressClickable
 import com.jannahos.ui.theme.JannahColors
 import com.jannahos.ui.theme.JannahSpacing
 import com.jannahos.ui.theme.JannahType
 
 @Composable
-fun YouScreen() {
+fun YouScreen(onNavigate: (String) -> Unit = {}) {
     val ctx = LocalContext.current
-    var refresh by remember { mutableStateOf(0) }
-    val ignore = refresh
-
-    // Navigation state
-    var showDiary by remember { mutableStateOf(false) }
-    var showStruggle by remember { mutableStateOf(false) }
-    var showLetters by remember { mutableStateOf(false) }
-    var showWeekly by remember { mutableStateOf(false) }
-    var showBackup by remember { mutableStateOf(false) }
-
-    if (showDiary) { DiaryScreen(onBack = { showDiary = false }); return }
-    if (showStruggle) { StruggleScreen(onBack = { showStruggle = false }); return }
-    if (showLetters) { LettersScreen(onBack = { showLetters = false }); return }
-    if (showWeekly) { WeeklyReviewScreen(onBack = { showWeekly = false }); return }
-    if (showBackup) { BackupScreen(onBack = { showBackup = false }); return }
-
     val name = Settings.displayName(ctx)
 
     Column(modifier = Modifier.fillMaxSize().verticalScroll(rememberScrollState()).background(JannahColors.Cream)) {
@@ -61,17 +47,17 @@ fun YouScreen() {
         Column(Modifier.padding(horizontal = JannahSpacing.gutter)) {
             
             SectionLabel("YOUR PRACTICE")
-            ListRow("Weekly review") { showWeekly = true }
+            ListRow("Weekly review") { onNavigate("weekly") }
             Divider()
-            ListRow("Diary") { showDiary = true }
+            ListRow("Diary") { onNavigate("diary") }
             Divider()
-            ListRow("Private commitments") { showStruggle = true }
+            ListRow("Private commitments") { onNavigate("struggle") }
             Divider()
             ListRow("Tonight's plan") { ctx.startActivity(Intent(ctx, BedtimeActivity::class.java)) }
             Divider()
-            ListRow("Letters to future self") { showLetters = true }
+            ListRow("Letters to future self") { onNavigate("letters") }
             Divider()
-            ListRow("Backup & restore") { showBackup = true }
+            ListRow("Backup & restore") { onNavigate("backup") }
             
             Spacer(Modifier.height(JannahSpacing.l))
             
