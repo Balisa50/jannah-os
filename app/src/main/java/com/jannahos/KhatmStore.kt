@@ -22,6 +22,13 @@ object KhatmStore {
         ctx.getSharedPreferences(PREFS, Context.MODE_PRIVATE).edit().putInt(KEY_COMPLETED_DAYS, 0).apply()
     }
 
+    fun getRangeForDay(ctx: Context, dayIndex: Int): Pair<Int, Int> {
+        val target = getTarget(ctx)
+        val start = (dayIndex * 604 / target) + 1
+        val end = ((dayIndex + 1) * 604 / target)
+        return Pair(start, end)
+    }
+
     fun getPagesForDay(ctx: Context): Pair<Int, Int> {
         val target = getTarget(ctx)
         val totalPages = 604

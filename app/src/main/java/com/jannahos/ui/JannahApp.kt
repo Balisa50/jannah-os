@@ -109,13 +109,14 @@ fun JannahApp() {
         ) {
             composable("today") { ErrorBoundary("Today") { TodayScreen(onNavigate = goTo) } }
             composable("pray") { ErrorBoundary("Pray") { PrayScreen() } }
-            composable("you") { ErrorBoundary("You") { YouScreen(onNavigate = goTo) } }
+            composable("you") { ErrorBoundary("You") { YouScreen(onNavigate = { route -> nav.navigate(route) { launchSingleTop = true } }) } }
             
             composable("quran") { 
                 ErrorBoundary("Quran") { 
                     QuranTabScreen(
                         onNavigateToSurah = { surah -> nav.navigate("mushaf/${QuranStore.firstPageOfSurah(surah)}/604") },
-                        onNavigateToSearch = { nav.navigate("search") }
+                        onNavigateToSearch = { nav.navigate("search") },
+                        onNavigateToRange = { start, end -> nav.navigate("mushaf/$start/$end") }
                     ) 
                 } 
             }

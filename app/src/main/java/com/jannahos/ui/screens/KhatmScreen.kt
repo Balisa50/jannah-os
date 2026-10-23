@@ -2,9 +2,10 @@ package com.jannahos.ui.screens
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.runtime.*
@@ -32,82 +33,96 @@ fun KhatmScreen(onBack: () -> Unit, onOpenRange: (Int, Int) -> Unit) {
     val target = KhatmStore.getTarget(ctx)
     val completed = KhatmStore.getCompleted(ctx)
     var daysInput by remember { mutableStateOf(target.toString()) }
-    val (start, end) = KhatmStore.getPagesForDay(ctx)
 
     Column(Modifier.fillMaxSize().background(JannahColors.Cream)) {
         TopBar("Reading Plan", onBack = onBack)
         
-        Column(Modifier.weight(1f).verticalScroll(rememberScrollState()).padding(JannahSpacing.gutter)) {
-            
-            // CUSTOM DAYS INPUT
+        Column(Modifier.padding(horizontal = JannahSpacing.gutter)) {
+            Spacer(Modifier.height(16.dp))
             Text("CHOOSE YOUR PACE", style = JannahType.eyebrow, color = JannahColors.OrangeDeep)
             Spacer(Modifier.height(8.dp))
-            OutlinedTextField(
-                value = daysInput,
-                onValueChange = { daysInput = it },
-                label = { Text("Number of days (e.g., 10, 30, 45)") },
-                modifier = Modifier.fillMaxWidth(),
-                shape = RoundedCornerShape(12.dp)
-            )
-            Spacer(Modifier.height(8.dp))
-            Box(Modifier.fillMaxWidth().height(44.dp).clip(RoundedCornerShape(50)).background(JannahColors.Orange).pressClickable {
-                val days = daysInput.toIntOrNull() ?: 30
-                KhatmStore.setTarget(ctx, days)
-                KhatmStore.reset(ctx)
-                refresh++
-            }, contentAlignment = Alignment.Center) {
-                Text("Save Plan", color = JannahColors.OnOrange, fontWeight = FontWeight.Bold)
+            Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp), verticalAlignment = Alignment.CenterVertically) {
+                OutlinedTextField(
+                    value = daysInput,
+                    onValueChange = { daysInput = it },
+                    modifier = Modifier.weight(1f),
+                    label = { Text("Days", fontSize = 12.sp) },
+                    shape = RoundedCornerShape(12.dp)
+                )
+                Box(
+                    Modifier.height(56.dp).width(100.dp).clip(RoundedCornerShape(50)).background(JannahColors.Orange).pressClickable {
+                        val days = daysInput.toIntOrNull() ?: 30
+                        if (days > 0 && days <= 604) {
+                            KhatmStore.setTarget(ctx, days)
+                            KhatmStore.reset(ctx)
+                            refresh++
+                        }
+                    }, 
+                    contentAlignment = Alignment.Center
+                ) {
+                    Text("Save", color = JannahColors.OnOrange, fontWeight = FontWeight.Bold)
+                }
             }
-            
-            Spacer(Modifier.height(32.dp))
-
-            Text("PREVIEW · FIRST 3 DAYS", style = JannahType.eyebrow, color = JannahColors.OrangeDeep)
-            Spacer(Modifier.height(12.dp))
-
-            DayCard("Day 1", start, end) { onOpenRange(start, end) }
-            Spacer(Modifier.height(12.dp))
-
-            val day2Start = end + 1
-            val day2End = minOf(day2Start + (end - start), 604)
-            DayCard("Day 2", day2Start, day2End) { onOpenRange(day2Start, day2End) }
-            Spacer(Modifier.height(12.dp))
-
-            val day3Start = day2End + 1
-            val day3End = minOf(day3Start + (end - start), 604)
-            DayCard("Day 3", day3Start, day3End) { onOpenRange(day3Start, day3End) }
-            
-            Spacer(Modifier.height(32.dp))
-            Text("Progress: $completed of $target days completed", style = JannahType.bodySmall, color = JannahColors.Muted)
             Spacer(Modifier.height(8.dp))
+            Text("Progress: $completed of $target days", style = JannahType.caption, color = JannahColors.Muted)
+            Spacer(Modifier.height(4.dp))
             Box(Modifier.fillMaxWidth().height(6.dp).clip(RoundedCornerShape(3.dp)).background(JannahColors.Border)) {
                 Box(Modifier.fillMaxWidth(if (target == 0) 0f else completed.toFloat() / target).height(6.dp).clip(RoundedCornerShape(3.dp)).background(JannahColors.Orange))
             }
-
-            Spacer(Modifier.height(32.dp))
-            Box(
-                Modifier.fillMaxWidth().height(56.dp).clip(RoundedCornerShape(JannahSpacing.pillRadius))
-                    .background(if (completed >= target) JannahColors.Border else JannahColors.Ink)
-                    .pressClickable(enabled = completed < target) {
-                        KhatmStore.markDayCompleted(ctx)
-                        refresh++
-                    }, 
-                contentAlignment = Alignment.Center
-            ) {
-                Text(if (completed >= target) "Plan Complete" else "I read today's pages", style = JannahType.button, color = JannahColors.OnOrange)
-            }
         }
-    }
-}
 
-@Composable
-private fun DayCard(dayText: String, start: Int, end: Int, onClick: () -> Unit) {
-    Box(Modifier.fillMaxWidth().clip(RoundedCornerShape(12.dp)).background(JannahColors.Card).pressClickable { onClick() }.padding(16.dp)) {
-        Column {
-            Text(dayText, style = JannahType.micro, color = JannahColors.OrangeDeep, fontWeight = FontWeight.Bold)
-            Spacer(Modifier.height(4.dp))
-            Text("Pages $start to $end", fontFamily = FontFamily.Serif, fontSize = 18.sp, fontWeight = FontWeight.Bold, color = JannahColors.Ink)
-            Spacer(Modifier.height(4.dp))
-            Text("${end - start + 1} pages", style = JannahType.caption, color = JannahColors.Muted)
+        Spacer(Modifier.height(16.dp))
+
+        LazyColumn(
+            Modifier.weight(1f).fillMaxWidth().padding(horizontal = JannahSpacing.gutter),
+            contentPadding = PaddingValues(bottom = JannahSpacing.xxl),
+            verticalArrangement = Arrangement.spacedBy(8.dp)
+        ) {
+            items(target) { index ->
+                val dayNumber = index + 1
+                val (start, end) = KhatmStore.getRangeForDay(ctx, index)
+                val isCompleted = index < completed
+                val isActive = index == completed
+                val isLocked = index > completed
+                
+                Row(
+                    Modifier.fillMaxWidth().clip(RoundedCornerShape(12.dp))
+                        .background(JannahColors.Card)
+                        .pressClickable(enabled = !isLocked) { if (isActive || isCompleted) onOpenRange(start, end) }
+                        .padding(16.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Column(Modifier.weight(1f)) {
+                        Text("Day $dayNumber", style = JannahType.micro, color = JannahColors.OrangeDeep, fontWeight = FontWeight.Bold)
+                        Spacer(Modifier.height(4.dp))
+                        Text("Pages $start to $end", fontFamily = FontFamily.Serif, fontSize = 16.sp, fontWeight = FontWeight.Bold, color = if (isLocked) JannahColors.Muted else JannahColors.Ink)
+                        Spacer(Modifier.height(2.dp))
+                        Text("${end - start + 1} pages", style = JannahType.caption, color = JannahColors.Muted)
+                    }
+                    
+                    Box(
+                        Modifier.size(36.dp).clip(CircleShape)
+                            .background(
+                                when {
+                                    isCompleted -> JannahColors.Orange
+                                    isActive -> JannahColors.OrangeSoft
+                                    else -> JannahColors.Border
+                                }
+                            )
+                            .pressClickable(enabled = isActive) { 
+                                KhatmStore.markDayCompleted(ctx)
+                                refresh++
+                            },
+                        contentAlignment = Alignment.Center
+                    ) {
+                        when {
+                            isCompleted -> Text("✓", color = JannahColors.OnOrange, fontWeight = FontWeight.Bold, fontSize = 18.sp)
+                            isActive -> Text("○", color = JannahColors.Orange, fontWeight = FontWeight.Bold, fontSize = 18.sp)
+                            else -> Text("🔒", fontSize = 14.sp)
+                        }
+                    }
+                }
+            }
         }
     }
 }
