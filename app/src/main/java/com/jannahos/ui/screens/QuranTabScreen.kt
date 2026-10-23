@@ -18,7 +18,6 @@ import androidx.compose.ui.unit.sp
 import com.jannahos.KhatmStore
 import com.jannahos.QuranBookmarks
 import com.jannahos.QuranCache
-import com.jannahos.QuranStore
 import com.jannahos.ui.pressClickable
 import com.jannahos.ui.theme.JannahColors
 import com.jannahos.ui.theme.JannahSpacing
@@ -28,20 +27,8 @@ import com.jannahos.ui.theme.JannahType
 fun QuranTabScreen(
     onNavigateToSurah: (Int) -> Unit = {},
     onNavigateToSearch: () -> Unit = {},
-    onNavigateToRange: (Int, Int) -> Unit = { _, _ -> }
+    onNavigateToPlan: () -> Unit = {}
 ) {
-    var showKhatm by remember { mutableStateOf(false) }
-    var showSearch by remember { mutableStateOf(false) }
-
-    if (showKhatm) { 
-        KhatmScreen(onBack = { showKhatm = false }, onOpenRange = { start, end -> onNavigateToRange(start, end) })
-        return 
-    }
-    if (showSearch) { 
-        QuranSearchScreen(onBack = { showSearch = false }, onNavigateToPage = { page -> onNavigateToRange(page, 604) })
-        return 
-    }
-
     val ctx = LocalContext.current
     val last = remember { QuranBookmarks.lastSurah(ctx) }
     val completedDays = KhatmStore.getCompleted(ctx)
@@ -66,10 +53,10 @@ fun QuranTabScreen(
             Spacer(Modifier.height(JannahSpacing.m))
 
             Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                Box(Modifier.weight(1f).clip(RoundedCornerShape(50)).background(JannahColors.Card).pressClickable { showSearch = true }.padding(vertical = 12.dp), contentAlignment = Alignment.Center) {
+                Box(Modifier.weight(1f).clip(RoundedCornerShape(50)).background(JannahColors.Card).pressClickable { onNavigateToSearch() }.padding(vertical = 12.dp), contentAlignment = Alignment.Center) {
                     Text("Search", style = JannahType.bodySmall, color = JannahColors.Ink, fontWeight = FontWeight.SemiBold)
                 }
-                Box(Modifier.weight(1f).clip(RoundedCornerShape(50)).background(JannahColors.Card).pressClickable { showKhatm = true }.padding(vertical = 12.dp), contentAlignment = Alignment.Center) {
+                Box(Modifier.weight(1f).clip(RoundedCornerShape(50)).background(JannahColors.Card).pressClickable { onNavigateToPlan() }.padding(vertical = 12.dp), contentAlignment = Alignment.Center) {
                     Text(if (completedDays == 0) "Start Plan" else "Plan: $completedDays", style = JannahType.bodySmall, color = JannahColors.Ink, fontWeight = FontWeight.SemiBold)
                 }
             }

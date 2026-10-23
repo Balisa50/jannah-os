@@ -109,33 +109,28 @@ fun JannahApp() {
         ) {
             composable("today") { ErrorBoundary("Today") { TodayScreen(onNavigate = goTo) } }
             composable("pray") { ErrorBoundary("Pray") { PrayScreen() } }
-            composable("you") { ErrorBoundary("You") { YouScreen(onNavigate = { route -> nav.navigate(route) { launchSingleTop = true } }) } }
             
             composable("quran") { 
                 ErrorBoundary("Quran") { 
                     QuranTabScreen(
                         onNavigateToSurah = { surah -> nav.navigate("mushaf/${QuranStore.firstPageOfSurah(surah)}/604") },
                         onNavigateToSearch = { nav.navigate("search") },
-                        onNavigateToRange = { start, end -> nav.navigate("mushaf/$start/$end") }
+                        onNavigateToPlan = { nav.navigate("plan") }
                     ) 
                 } 
             }
             
             composable("search") { 
                 ErrorBoundary("Search") { 
-                    QuranSearchScreen(
-                        onBack = { nav.popBackStack() }, 
-                        onNavigateToPage = { page -> nav.navigate("mushaf/$page") }
-                    ) 
+                    QuranSearchScreen(onBack = { nav.popBackStack() }, onNavigateToPage = { page -> nav.navigate("mushaf/$page/604") }) 
                 } 
             }
             
-
-            composable("diary") { ErrorBoundary("Diary") { DiaryScreen(onBack = { nav.popBackStack() }) } }
-            composable("backup") { ErrorBoundary("Backup") { BackupScreen(onBack = { nav.popBackStack() }) } }
-            composable("weekly") { ErrorBoundary("Weekly Review") { WeeklyReviewScreen(onBack = { nav.popBackStack() }) } }
-            composable("struggle") { ErrorBoundary("Struggle") { StruggleScreen(onBack = { nav.popBackStack() }) } }
-            composable("letters") { ErrorBoundary("Letters") { LettersScreen(onBack = { nav.popBackStack() }) } }
+            composable("plan") { 
+                ErrorBoundary("Plan") { 
+                    KhatmScreen(onBack = { nav.popBackStack() }, onOpenRange = { start, end -> nav.navigate("mushaf/$start/$end") }) 
+                } 
+            }
             
             composable("mushaf/{startPage}/{endPage}") { backStackEntry ->
                 val startPage = backStackEntry.arguments?.getString("startPage")?.toIntOrNull() ?: 1
@@ -144,6 +139,17 @@ fun JannahApp() {
                     MushafPageScreen(startPage = startPage, endPage = endPage, onBack = { nav.popBackStack() }) 
                 }
             }
+            
+            composable("you") { 
+                ErrorBoundary("You") { 
+                    YouScreen(onNavigate = { route -> nav.navigate(route) }) 
+                } 
+            }
+            composable("diary") { ErrorBoundary("Diary") { DiaryScreen(onBack = { nav.popBackStack() }) } }
+            composable("backup") { ErrorBoundary("Backup") { BackupScreen(onBack = { nav.popBackStack() }) } }
+            composable("weekly") { ErrorBoundary("Weekly") { WeeklyReviewScreen(onBack = { nav.popBackStack() }) } }
+            composable("struggle") { ErrorBoundary("Struggle") { StruggleScreen(onBack = { nav.popBackStack() }) } }
+            composable("letters") { ErrorBoundary("Letters") { LettersScreen(onBack = { nav.popBackStack() }) } }
         }
     }
 }
