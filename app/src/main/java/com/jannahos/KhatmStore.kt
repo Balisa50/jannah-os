@@ -18,6 +18,10 @@ object KhatmStore {
         ctx.getSharedPreferences(PREFS, Context.MODE_PRIVATE).edit().putInt(KEY_COMPLETED_DAYS, current + 1).apply()
     }
 
+    fun reset(ctx: Context) {
+        ctx.getSharedPreferences(PREFS, Context.MODE_PRIVATE).edit().putInt(KEY_COMPLETED_DAYS, 0).apply()
+    }
+
     fun getPagesForDay(ctx: Context): Pair<Int, Int> {
         val target = getTarget(ctx)
         val totalPages = 604
