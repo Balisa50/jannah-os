@@ -11,15 +11,14 @@ import androidx.core.app.NotificationCompat
 
 class QuranLockReceiver : BroadcastReceiver() {
     override fun onReceive(ctx: Context, intent: Intent) {
-        // Activate the lock for today
         QuranReadingLock.setActiveToday(ctx, true)
         
-        // Send a notification to wake them up to read
-        val channelId = "quran_random_lock"
+        val channelId = "quran_lock_full"
         val nm = ctx.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
         
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             val channel = NotificationChannel(channelId, "Quran Lock", NotificationManager.IMPORTANCE_HIGH).apply {
+                setSound(null, null)
                 enableVibration(true)
             }
             nm.createNotificationChannel(channel)
@@ -36,9 +35,11 @@ class QuranLockReceiver : BroadcastReceiver() {
             .setContentText("It is time to read your daily page.")
             .setSmallIcon(android.R.drawable.ic_lock_idle_alarm)
             .setColor(android.graphics.Color.parseColor("#C2410C"))
-            .setPriority(NotificationCompat.PRIORITY_HIGH)
-            .setAutoCancel(true)
+            .setPriority(NotificationCompat.PRIORITY_MAX)
+            .setCategory(NotificationCompat.CATEGORY_ALARM)
             .setContentIntent(pendingIntent)
+            .setFullScreenIntent(pendingIntent, true) // THIS FORCES THE SCREEN
+            .setAutoCancel(true)
             .build()
 
         nm.notify(777, notif)

@@ -2,6 +2,7 @@ package com.jannahos
 
 import android.app.NotificationChannel
 import android.app.NotificationManager
+import android.app.PendingIntent
 import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
@@ -10,36 +11,35 @@ import androidx.core.app.NotificationCompat
 
 class BedtimeReceiver : BroadcastReceiver() {
     override fun onReceive(context: Context, intent: Intent) {
-        val nm = context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
-        val channelId = "bedtime"
+        if (!Settings.isBedtimeLockEnabled(context)) return
 
+        val channelId = "bedtime_lock_full"
+        val nm = context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
+        
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            if (nm.getNotificationChannel(channelId) == null) {
-                val ch = NotificationChannel(
-                    channelId, "Bedtime", NotificationManager.IMPORTANCE_DEFAULT
-                )
-                ch.description = "Gentle reminder before your intended bedtime"
-                nm.createNotificationChannel(ch)
+            val channel = NotificationChannel(channelId, "Bedtime Lock", NotificationManager.IMPORTANCE_HIGH).apply {
+                setSound(null, null)
             }
+            nm.createNotificationChannel(channel)
         }
 
-        val onTonight = TahajjudPlan.isOnTonight(context)
-        val body = if (onTonight)
-            "Tonight is a tahajjud night. Sleep soon."
-        else
-            "Wind down. Return to sleep on time."
+        val launchIntent = Intent(context, BedtimeLockActivity::class.java).apply {
+            addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP)
+        }
+        val pendingIntent = PendingIntent.getActivity(context, 0, launchIntent, PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT)
 
         val notif = NotificationCompat.Builder(context, channelId)
+            .setContentTitle("Bedtime")
+            .setContentText("Time to read Surah Al-Mulk.")
             .setSmallIcon(android.R.drawable.ic_lock_idle_alarm)
-            .setContentTitle("Bedtime in 30 minutes")
-            .setContentText(body)
-            .setPriority(NotificationCompat.PRIORITY_DEFAULT)
+            .setColor(android.graphics.Color.parseColor("#C2410C"))
+            .setPriority(NotificationCompat.PRIORITY_MAX)
+            .setCategory(NotificationCompat.CATEGORY_ALARM)
+            .setContentIntent(pendingIntent)
+            .setFullScreenIntent(pendingIntent, true)
             .setAutoCancel(true)
             .build()
 
-        nm.notify(6201, notif)
-
-        // Re-arm for tomorrow.
-        BedtimeScheduler.schedule(context)
+        nm.notify(888, notif)
     }
 }
