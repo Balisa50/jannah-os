@@ -57,29 +57,29 @@ fun YouScreen() {
     var showMore by remember { mutableStateOf(false) }
 
     // Navigation routing
-    if (showFormation) { FormationScreen(onBack = { showFormation = false }); return }
-    if (showWeekly) { WeeklyReviewScreen(onBack = { showWeekly = false }); return }
-    if (showDiary) { DiaryScreen(onBack = { showDiary = false }); return }
-    if (showStruggle) { StruggleScreen(onBack = { showStruggle = false }); return }
-    if (showCompanion) { CompanionScreen(onBack = { showCompanion = false }, onNavigate = { r -> showCompanion = false }); return }
-    if (showLetters) { LettersScreen(onBack = { showLetters = false }); return }
-    if (showDuaJournal) { DuaJournalScreen(onBack = { showDuaJournal = false }); return }
-    if (showFast) { FastScreen(onBack = { showFast = false }); return }
-    if (showSleep) { SleepScreen(onBack = { showSleep = false }); return }
-    if (showBackup) { BackupScreen(onBack = { showBackup = false }); return }
-    if (showDuas) { DuaLibraryScreen(onBack = { showDuas = false }); return }
-    if (showCalendar) { CalendarScreen(onBack = { showCalendar = false }); return }
-    if (showZakat) { ZakatScreen(onBack = { showZakat = false }); return }
-    if (showHifdh) { HifdhScreen(onBack = { showHifdh = false }); return }
-    if (showCharacter) { CharacterScreen(onBack = { showCharacter = false }); return }
-    if (showSunnah) { SunnahScreen(onBack = { showSunnah = false }); return }
-    if (showAdhkar) { AdhkarScreen(onBack = { showAdhkar = false }); return }
-    if (showSadaqah) { SadaqahScreen(onBack = { showSadaqah = false }); return }
-    if (showAbout) { AboutScreen(onBack = { showAbout = false }); return }
-    if (showRamadan) { RamadanScreen(onBack = { showRamadan = false }); return }
-    if (showFinance) { FinanceScreen(onBack = { showFinance = false }); return }
-    if (showIfThen) { IfThenScreen(onBack = { showIfThen = false }); return }
-    if (showFriction) { FrictionAuditScreen(onBack = { showFriction = false }); return }
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
 
     val name = Settings.displayName(ctx)
     val level = TahajjudPlan.level(ctx)
@@ -126,63 +126,18 @@ fun YouScreen() {
             Spacer(Modifier.height(JannahSpacing.l))
 
             SectionLabel("YOUR PRACTICE")
-            ListRow("Weekly review") { showWeekly = true }
-            Divider()
+            
             ListRow("Diary") { showDiary = true }
             Divider()
-            ListRow("Private commitments") { showStruggle = true }
-            Divider()
+            
             ListRow("Tonight's plan") { ctx.startActivity(Intent(ctx, BedtimeActivity::class.java)) }
             Divider()
             ListRow("Dua journal") { showDuaJournal = true }
             Divider()
-            ListRow("Letters to future self") { showLetters = true }
-            Divider()
-            ListRow("Companion") { showCompanion = true }
-            Divider()
-            ListRow("If-Then Planner") { showIfThen = true }
-            Divider()
-            ListRow("Friction Audit") { showFriction = true }
             
-            Spacer(Modifier.height(JannahSpacing.l))
-
-            if (showMore) {
-                SectionLabel("MORE")
-                ListRow("Sunnah prayers") { showSunnah = true }
-                Divider()
-                ListRow("Adhkar") { showAdhkar = true }
-                Divider()
-                ListRow("Dua library") { showDuas = true }
-                Divider()
-                ListRow("Hifdh") { showHifdh = true }
-                Divider()
-                ListRow("Fasting") { showFast = true }
-                Divider()
-                ListRow("Sadaqah log") { showSadaqah = true }
-                Divider()
-                ListRow("Zakat calculator") { showZakat = true }
-                Divider()
-                ListRow("Finance") { showFinance = true }
-                Divider()
-                ListRow("Sleep log") { showSleep = true }
-                Divider()
-                ListRow("Character") { showCharacter = true }
-                Divider()
-                ListRow("Islamic calendar") { showCalendar = true }
-                Spacer(Modifier.height(JannahSpacing.l))
-                Box(modifier = Modifier.fillMaxWidth().clip(RoundedCornerShape(JannahSpacing.pillRadius)).pressClickable { showMore = false }.padding(vertical = 12.dp), contentAlignment = Alignment.Center) {
-                    Text("Show less", style = JannahType.caption, color = JannahColors.Muted)
-                }
-            } else {
-                Box(modifier = Modifier.fillMaxWidth().height(52.dp).clip(RoundedCornerShape(JannahSpacing.pillRadius)).background(JannahColors.Card).pressClickable { showMore = true }, contentAlignment = Alignment.Center) {
-                    Text("More tools", style = JannahType.button, color = JannahColors.Ink)
-                }
-            }
-
-            Spacer(Modifier.height(JannahSpacing.l))
-            SectionLabel("SETTINGS")
-            ListRow("About") { showAbout = true }
-            Divider()
+            
+            
+            
             ListRow("Backup & restore") { showBackup = true }
             Divider()
             ListRow("Settings") { ctx.startActivity(Intent(ctx, SettingsActivity::class.java)) }

@@ -206,26 +206,7 @@ private fun SettingsScreen(onBack: () -> Unit) {
                 toast = if (silentTahajjud) "Tahajjud alarm set to vibrate only" else "Tahajjud alarm set to sound"
             }
 
-            // ---- APP ----
-            Spacer(Modifier.height(JannahSpacing.l))
-            SectionHeader("App")
-            ListRow(
-                title = "Test notification",
-                onClick = {
-                    sendTestNotification(ctx)
-                    toast = "Notification sent"
-                }
-            )
-            Divider()
-            ListRow(
-                title = "Restart onboarding",
-                onClick = {
-                    Settings.resetOnboarding(ctx)
-                    toast = "Reopen the app to restart onboarding"
-                }
-            )
-
-            // ---- DATA ----
+            
             Spacer(Modifier.height(JannahSpacing.l))
             SectionHeader("Data")
             ListRow(

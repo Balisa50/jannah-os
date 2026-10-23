@@ -122,13 +122,6 @@ fun TodayScreen(onNavigate: (String) -> Unit = {}) {
                     color = Color.White.copy(alpha = 0.8f)
                 )
                 Spacer(Modifier.height(8.dp))
-                Text(
-                    RightNow.getMessage(),
-                    style = JannahType.caption,
-                    color = JannahColors.Orange,
-                    fontWeight = FontWeight.Bold,
-                    fontStyle = FontStyle.Italic
-                )
             }
         }
 

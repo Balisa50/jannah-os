@@ -9,37 +9,49 @@ import java.util.Calendar
 import kotlin.random.Random
 
 object QuranLockScheduler {
+    private val safeWindows = listOf(Pair(480, 660), Pair(840, 1020), Pair(1200, 1320))
+
     fun scheduleRandomLock(ctx: Context) {
         val alarmManager = ctx.getSystemService(Context.ALARM_SERVICE) as AlarmManager
-        
-        // Calculate milliseconds until midnight
         val now = Calendar.getInstance()
-        val midnight = Calendar.getInstance().apply {
-            set(Calendar.HOUR_OF_DAY, 23)
-            set(Calendar.MINUTE, 59)
-            set(Calendar.SECOND, 0)
-        }
-        
-        val timeUntilMidnight = midnight.timeInMillis - now.timeInMillis
-        if (timeUntilMidnight <= 0) return
+        val currentMinute = now.get(Calendar.HOUR_OF_DAY) * 60 + now.get(Calendar.MINUTE)
+        var targetMinute = -1
 
-        // Pick a random time between now and midnight (e.g., 10 mins from now to 11:59 PM)
-        val randomOffset = Random.nextLong(10 * 60 * 1000L, timeUntilMidnight)
-        val triggerTime = now.timeInMillis + randomOffset
-
-        val intent = Intent(ctx, QuranLockReceiver::class.java)
-        val pendingIntent = PendingIntent.getBroadcast(
-            ctx, 777, intent, PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
-        )
-
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
-            if (alarmManager.canScheduleExactAlarms()) {
-                alarmManager.setExactAndAllowWhileIdle(AlarmManager.RTC_WAKEUP, triggerTime, pendingIntent)
-            } else {
-                alarmManager.setAndAllowWhileIdle(AlarmManager.RTC_WAKEUP, triggerTime, pendingIntent)
+        for (window in safeWindows) {
+            if (currentMinute < window.second) {
+                val start = maxOf(currentMinute + 30, window.first)
+                if (start < window.second) {
+                    targetMinute = Random.nextInt(start, window.second)
+                    break
+                }
             }
+        }
+        if (targetMinute == -1) {
+            targetMinute = Random.nextInt(safeWindows[0].first, safeWindows[0].second)
+            now.add(Calendar.DAY_OF_YEAR, 1)
+        }
+        val triggerTime = Calendar.getInstance().apply {
+            set(Calendar.HOUR_OF_DAY, targetMinute / 60)
+            set(Calendar.MINUTE, targetMinute % 60)
+            set(Calendar.SECOND, 0)
+        }.timeInMillis
+        scheduleAlarm(ctx, alarmManager, triggerTime)
+    }
+
+    fun scheduleSnooze(ctx: Context, minutes: Int) {
+        val alarmManager = ctx.getSystemService(Context.ALARM_SERVICE) as AlarmManager
+        val triggerTime = System.currentTimeMillis() + (minutes * 60_000L)
+        scheduleAlarm(ctx, alarmManager, triggerTime)
+    }
+
+    private fun scheduleAlarm(ctx: Context, am: AlarmManager, timeMs: Long) {
+        val intent = Intent(ctx, QuranLockReceiver::class.java)
+        val pendingIntent = PendingIntent.getBroadcast(ctx, 777, intent, PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE)
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+            if (am.canScheduleExactAlarms()) am.setExactAndAllowWhileIdle(AlarmManager.RTC_WAKEUP, timeMs, pendingIntent)
+            else am.setAndAllowWhileIdle(AlarmManager.RTC_WAKEUP, timeMs, pendingIntent)
         } else {
-            alarmManager.setExactAndAllowWhileIdle(AlarmManager.RTC_WAKEUP, triggerTime, pendingIntent)
+            am.setExactAndAllowWhileIdle(AlarmManager.RTC_WAKEUP, timeMs, pendingIntent)
         }
     }
 }
