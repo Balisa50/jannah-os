@@ -161,31 +161,5 @@ fun PrayScreen() {
 
             Spacer(Modifier.height(JannahSpacing.m))
 
-            Box(
-                Modifier
-                    .fillMaxWidth()
-                    .height(52.dp)
-                    .clip(RoundedCornerShape(JannahSpacing.pillRadius))
-                    .background(JannahColors.Ink)
-                    .pressClickable {
-                        if (!SalahScheduler.canUseExactAlarms(ctx)) {
-                            reminderMsg = "Enable Alarms & reminders in system settings."
-                        } else {
-                            SalahScheduler.schedule(ctx, lat, lon)
-                            reminderMsg = "Reminders set for today."
-                        }
-                    },
-                contentAlignment = Alignment.Center
-            ) {
-                Text("Set prayer reminders", style = JannahType.button, color = JannahColors.OnOrange)
-            }
-
-            if (reminderMsg != null) {
-                Spacer(Modifier.height(JannahSpacing.s))
-                Text(reminderMsg!!, style = JannahType.caption, color = JannahColors.Orange, textAlign = TextAlign.Center, modifier = Modifier.fillMaxWidth())
-            }
-
-            Spacer(Modifier.height(JannahSpacing.xxl))
-        }
-    }
+            
 }

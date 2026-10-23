@@ -111,19 +111,7 @@ fun YouScreen() {
         Spacer(Modifier.height(JannahSpacing.m))
 
         Column(Modifier.padding(horizontal = JannahSpacing.gutter)) {
-            // Formation
-            Box(modifier = Modifier.fillMaxWidth().clip(RoundedCornerShape(JannahSpacing.cardRadius)).background(JannahColors.Orange).pressClickable { showFormation = true }.padding(JannahSpacing.l)) {
-                Row(verticalAlignment = Alignment.CenterVertically) {
-                    Column(Modifier.weight(1f)) {
-                        Text("TAHAJJUD", style = JannahType.eyebrow, color = JannahColors.OnOrange.copy(alpha = 0.75f))
-                        Spacer(Modifier.height(6.dp))
-                        Text(when (level) { 1 -> "One night a week"; 2 -> "Two nights a week"; 3 -> "Three nights a week"; else -> "Every night" },
-                            fontFamily = FontFamily.Serif, fontSize = 20.sp, fontWeight = FontWeight.Bold, color = JannahColors.OnOrange)
-                    }
-                    Text("→", fontFamily = FontFamily.Serif, fontSize = 22.sp, fontWeight = FontWeight.Bold, color = JannahColors.OnOrange)
-                }
-            }
-            Spacer(Modifier.height(JannahSpacing.l))
+            
 
             SectionLabel("YOUR PRACTICE")
             

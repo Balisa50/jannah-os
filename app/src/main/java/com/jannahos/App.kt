@@ -14,6 +14,9 @@ class App : Application() {
     override fun onCreate() {
         super.onCreate()
         instance = this
+        SalahScheduler.schedule(this, Settings.lat(this), Settings.lon(this))
+        SalahScheduler.scheduleNextReminder(this)
+        instance = this
         PrayerReminderScheduler.scheduleNextReminder(this)
         FridayKahfScheduler.scheduleAll(this)
 
