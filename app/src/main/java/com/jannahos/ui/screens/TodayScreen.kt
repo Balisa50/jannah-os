@@ -96,6 +96,52 @@ fun TodayScreen(onNavigate: (String) -> Unit = {}) {
             
             Spacer(Modifier.height(JannahSpacing.l))
 
+            // RAMADAN OS
+            val ramadan = RamadanMode.current()
+            if (ramadan.active) {
+                val now = System.currentTimeMillis()
+                val fajrTime = prayerTimes["fajr"] ?: now
+                val maghribTime = prayerTimes["maghrib"] ?: now
+                
+                Box(Modifier.fillMaxWidth().clip(RoundedCornerShape(JannahSpacing.cardRadius)).background(JannahColors.Orange).padding(JannahSpacing.l)) {
+                    Column {
+                        Text("RAMADAN · DAY ${ramadan.dayOfRamadan}", style = JannahType.eyebrow, color = JannahColors.OnOrange.copy(alpha = 0.75f))
+                        Spacer(Modifier.height(8.dp))
+                        
+                        if (now < fajrTime) {
+                            Text("Suhoor ends in", fontFamily = FontFamily.Serif, fontSize = 18.sp, color = JannahColors.OnOrange)
+                            val diff = fajrTime - now
+                            val h = diff / 3600000
+                            val m = (diff / 60000) % 60
+                            Text(String.format(Locale.US, "%02dh %02dm", h, m), fontFamily = FontFamily.Serif, fontSize = 32.sp, fontWeight = FontWeight.Bold, color = JannahColors.OnOrange)
+                        } else if (now < maghribTime) {
+                            Text("Iftar in", fontFamily = FontFamily.Serif, fontSize = 18.sp, color = JannahColors.OnOrange)
+                            val diff = maghribTime - now
+                            val h = diff / 3600000
+                            val m = (diff / 60000) % 60
+                            Text(String.format(Locale.US, "%02dh %02dm", h, m), fontFamily = FontFamily.Serif, fontSize = 32.sp, fontWeight = FontWeight.Bold, color = JannahColors.OnOrange)
+                            
+                            Spacer(Modifier.height(16.dp))
+                            val isFasted = RamadanStore.isFastedToday(ctx)
+                            Row(verticalAlignment = Alignment.CenterVertically) {
+                                Box(Modifier.size(24.dp).clip(RoundedCornerShape(50)).background(if (isFasted) JannahColors.OnOrange else JannahColors.OnOrange.copy(alpha = 0.3f)).pressClickable { 
+                                    RamadanStore.setFastedToday(ctx, !isFasted)
+                                }, contentAlignment = Alignment.Center) {
+                                    if (isFasted) Text("✓", color = JannahColors.OrangeDeep, fontSize = 14.sp, fontWeight = FontWeight.Bold)
+                                }
+                                Spacer(Modifier.width(8.dp))
+                                Text("I am fasting today", style = JannahType.bodySmall, color = JannahColors.OnOrange)
+                            }
+                        } else {
+                            Text("Iftar complete.", fontFamily = FontFamily.Serif, fontSize = 24.sp, fontWeight = FontWeight.Bold, color = JannahColors.OnOrange)
+                            Spacer(Modifier.height(4.dp))
+                            Text("May Allah accept your fast.", fontFamily = FontFamily.Serif, fontStyle = FontStyle.Italic, fontSize = 16.sp, color = JannahColors.OnOrange.copy(alpha = 0.9f))
+                        }
+                    }
+                }
+                Spacer(Modifier.height(JannahSpacing.l))
+            }
+
             // DAILY HADITH (Moved up for visibility)
             Box(Modifier.fillMaxWidth().clip(RoundedCornerShape(JannahSpacing.cardRadius)).background(JannahColors.Card).padding(JannahSpacing.l)) {
                 Column {

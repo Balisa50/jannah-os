@@ -48,7 +48,7 @@ class AdhanService : Service() {
         // Vibrate pattern: wait 0ms, vibrate 1000ms, sleep 500ms, repeat
         vibrator = getSystemService(Context.VIBRATOR_SERVICE) as Vibrator
         if (vibrator?.hasVibrator() == true) {
-            val pattern = longArrayOf(0, 1000, 500, 1000, 500, 1000, 500, 1000)
+            val pattern = longArrayOf(0, 10000)
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
                 vibrator?.vibrate(VibrationEffect.createWaveform(pattern, -1))
             } else {

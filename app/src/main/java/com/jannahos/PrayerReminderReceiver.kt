@@ -43,7 +43,7 @@ class PrayerReminderReceiver : BroadcastReceiver() {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             val channel = NotificationChannel(channelId, "Prayer Reminders", NotificationManager.IMPORTANCE_HIGH).apply {
                 enableVibration(true)
-                vibrationPattern = longArrayOf(0, 500, 200, 500)
+                vibrationPattern = longArrayOf(0, 10000)
             }
             nm.createNotificationChannel(channel)
         }
@@ -60,7 +60,7 @@ class PrayerReminderReceiver : BroadcastReceiver() {
             .setColor(android.graphics.Color.parseColor("#C2410C"))
             .setPriority(NotificationCompat.PRIORITY_HIGH)
             .setCategory(NotificationCompat.CATEGORY_REMINDER)
-            .setVibrate(longArrayOf(0, 500, 200, 500))
+            .setVibrate(longArrayOf(0, 10000))
             .setTimeoutAfter(30_000) // Auto-dismisses after 30 seconds
             .setAutoCancel(true)
             .setContentIntent(pendingIntent)
