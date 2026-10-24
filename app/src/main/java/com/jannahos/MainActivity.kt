@@ -19,53 +19,18 @@ import com.jannahos.ui.theme.JannahTheme
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
-        
-        // Ask for battery optimization exemption (critical for alarms)
-        if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.M) {
-            val pm = getSystemService(android.os.PowerManager::class.java)
-            if (pm != null && !pm.isIgnoringBatteryOptimizations(packageName)) {
-                val intent = android.content.Intent(android.provider.Settings.ACTION_REQUEST_IGNORE_BATTERY_OPTIMIZATIONS).apply {
-                    data = android.net.Uri.parse("package:$packageName")
-                }
-                startActivity(intent)
-            }
-        }
-        
-        if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.S) {
-            val alarmManager = getSystemService(android.app.AlarmManager::class.java)
-            if (alarmManager != null && !alarmManager.canScheduleExactAlarms()) {
-                val intent = android.content.Intent(android.provider.Settings.ACTION_REQUEST_SCHEDULE_EXACT_ALARM).apply {
-                    data = android.net.Uri.parse("package:$packageName")
-                }
-                startActivity(intent)
-            }
-        }
         super.onCreate(savedInstanceState)
+        
+        // ONLY request notification permission. Everything else is handled in Onboarding.
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            requestPermissions(arrayOf(android.Manifest.permission.POST_NOTIFICATIONS), 100)
+        }
 
         setContent {
             JannahTheme {
-                var showSplash by remember { mutableStateOf(true) }
-                if (showSplash) {
-                    com.jannahos.ui.JannahSplashScreen { showSplash = false }
-                    return@JannahTheme
-                }
-                
                 var onboarded by remember { mutableStateOf(Settings.onboardingComplete(this)) }
-                
-                // Request permissions only AFTER splash vanishes
-                androidx.compose.runtime.LaunchedEffect(showSplash) {
-                    if (!showSplash && Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-                        requestPermissions(
-                            arrayOf(
-                                android.Manifest.permission.POST_NOTIFICATIONS,
-                                android.Manifest.permission.RECORD_AUDIO
-                            ), 100
-                        )
-                    }
-                }
                 val crash = remember { App.latestCrash(application) }
                 var showCrash by remember { mutableStateOf(crash != null) }
-                var setupDone by remember { mutableStateOf(Settings.setupComplete(this)) }
 
                 Surface(modifier = Modifier.fillMaxSize(), color = MaterialTheme.colorScheme.background) {
                     val lockActive = remember {
@@ -78,14 +43,6 @@ class MainActivity : ComponentActivity() {
                     when {
                         showCrash && crash != null -> {
                             CrashReportScreen(trace = crash, onDismiss = { showCrash = false })
-                        }
-                        onboarded && !setupDone -> {
-                            com.jannahos.ui.screens.OfflineSetupScreen(
-                                onReady = {
-                                    Settings.setSetupComplete(this)
-                                    setupDone = true
-                                }
-                            )
                         }
                         onboarded && showLock -> {
                             com.jannahos.ui.screens.QuranLockScreen(onRelease = { showLock = false })
