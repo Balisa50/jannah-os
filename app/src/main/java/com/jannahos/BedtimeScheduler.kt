@@ -26,12 +26,12 @@ object BedtimeScheduler {
 
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
             if (am.canScheduleExactAlarms()) {
-                am.setExactAndAllowWhileIdle(AlarmManager.RTC_WAKEUP, cal.timeInMillis, pi)
+                am.setAlarmClock(AlarmManager.AlarmClockInfo(cal.timeInMillis, pi), pi)
             } else {
                 am.setAndAllowWhileIdle(AlarmManager.RTC_WAKEUP, cal.timeInMillis, pi)
             }
         } else {
-            am.setExactAndAllowWhileIdle(AlarmManager.RTC_WAKEUP, cal.timeInMillis, pi)
+            am.setAlarmClock(AlarmManager.AlarmClockInfo(cal.timeInMillis, pi), pi)
         }
     }
 }

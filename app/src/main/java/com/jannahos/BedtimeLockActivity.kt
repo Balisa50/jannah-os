@@ -27,9 +27,15 @@ import kotlinx.coroutines.delay
 class BedtimeLockActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        if (LockState.remainingMs <= 0L) LockState.remainingMs = 5 * 60_000L
         setContent {
             JannahTheme {
-                BedtimeLockContent(onDone = { finishAndRemoveTask() })
+                BedtimeLockContent(onDone = { 
+                    LockState.isLockActive = false
+                    LockState.remainingMs = 0L
+                    BedtimeStore.setLockActive(this, false)
+                    finishAndRemoveTask() 
+                })
             }
         }
     }
@@ -37,13 +43,14 @@ class BedtimeLockActivity : ComponentActivity() {
 
 @Composable
 fun BedtimeLockContent(onDone: () -> Unit) {
-    var remaining by remember { mutableLongStateOf(5 * 60_000L) }
-    var isDone by remember { mutableStateOf(false) }
+    var remaining by remember { mutableLongStateOf(LockState.remainingMs) }
+    var isDone by remember { mutableStateOf(remaining <= 0L) }
 
     LaunchedEffect(Unit) {
         while (remaining > 0L) {
             delay(1000)
             remaining -= 1000L
+            LockState.remainingMs = remaining
         }
         isDone = true
     }

@@ -5,46 +5,51 @@ import android.content.Intent
 import android.view.accessibility.AccessibilityEvent
 
 class FocusAccessibilityService : AccessibilityService() {
-    private var lastLockTime = 0L
-
     override fun onAccessibilityEvent(event: AccessibilityEvent?) {
         if (event == null) return
+        
+        // 1. If a lock is active, block the notification shade from being pulled down
+        if (LockState.isLockActive) {
+            performGlobalAction(GLOBAL_ACTION_DISMISS_NOTIFICATION_SHADE)
+            return
+        }
+
         if (event.eventType != AccessibilityEvent.TYPE_WINDOW_STATE_CHANGED) return
         val pkg = event.packageName?.toString() ?: return
         if (pkg == packageName) return
         if (pkg in ALWAYS_ALLOWED) return
 
-        val now = System.currentTimeMillis()
-        if (now - lastLockTime < 5000) return // 5s cooldown stops rogue loops
-
+        // 2. Trigger Prayer Lock
         val prayerLock = PrayerLock.enabled(this) && PrayerLock.sessionActive(this)
         if (prayerLock) {
+            LockState.isLockActive = true
             val prayer = PrayerLock.sessionPrayer(this) ?: "fajr"
             val intent = Intent(this, SalahCommitmentActivity::class.java).apply {
                 addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP)
                 putExtra("prayer", prayer)
             }
             startActivity(intent)
-            lastLockTime = now
             return
         }
 
+        // 3. Trigger Quran Lock
         if (QuranReadingLock.shouldLock(this)) {
+            LockState.isLockActive = true
             val intent = Intent(this, MainActivity::class.java).apply {
                 addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP)
                 putExtra("show_quran_lock", true)
             }
             startActivity(intent)
-            lastLockTime = now
             return
         }
         
-        if (Settings.isBedtimeLockEnabled(this)) {
+        // 4. Trigger Bedtime Lock
+        if (Settings.isBedtimeLockEnabled(this) && BedtimeStore.isLockActive(this)) {
+             LockState.isLockActive = true
              val intent = Intent(this, BedtimeLockActivity::class.java).apply {
                 addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP)
             }
             startActivity(intent)
-            lastLockTime = now
             return
         }
     }
@@ -57,9 +62,7 @@ class FocusAccessibilityService : AccessibilityService() {
             "com.samsung.android.incallui", "com.android.dialer", "com.samsung.android.dialer",
             "com.android.server.telecom", "android", "com.google.android.dialer",
             "com.android.emergency", "com.jannahos",
-            "com.sec.android.app.launcher", "com.android.launcher3", 
-            "com.google.android.apps.nexuslauncher", "com.android.launcher",
-            "com.miui.home", "com.huawei.android.launcher"
+            "com.sec.android.app.launcher", "com.android.launcher3"
         )
     }
 }

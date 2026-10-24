@@ -3,20 +3,26 @@ package com.jannahos
 import android.content.Context
 
 object BedtimeStore {
-    private const val PREFS = "jannah_bedtime"
+    private const val PREFS = "bedtime_prefs"
     private const val KEY_HOUR = "hour"
-    private const val KEY_MIN = "min"
+    private const val KEY_MINUTE = "minute"
+    private const val KEY_LOCK_ACTIVE = "lock_active"
 
-    fun set(context: Context, hour: Int, minute: Int) {
-        context.getSharedPreferences(PREFS, Context.MODE_PRIVATE)
-            .edit()
+    fun get(ctx: Context): Pair<Int, Int> {
+        val prefs = ctx.getSharedPreferences(PREFS, Context.MODE_PRIVATE)
+        return Pair(prefs.getInt(KEY_HOUR, 23), prefs.getInt(KEY_MINUTE, 0))
+    }
+
+    fun set(ctx: Context, hour: Int, minute: Int) {
+        ctx.getSharedPreferences(PREFS, Context.MODE_PRIVATE).edit()
             .putInt(KEY_HOUR, hour)
-            .putInt(KEY_MIN, minute)
+            .putInt(KEY_MINUTE, minute)
             .apply()
     }
 
-    fun get(context: Context): Pair<Int, Int> {
-        val p = context.getSharedPreferences(PREFS, Context.MODE_PRIVATE)
-        return p.getInt(KEY_HOUR, 22) to p.getInt(KEY_MIN, 30)
+    fun setLockActive(ctx: Context, active: Boolean) {
+        ctx.getSharedPreferences(PREFS, Context.MODE_PRIVATE).edit().putBoolean(KEY_LOCK_ACTIVE, active).apply()
     }
+
+    fun isLockActive(ctx: Context): Boolean = ctx.getSharedPreferences(PREFS, Context.MODE_PRIVATE).getBoolean(KEY_LOCK_ACTIVE, false)
 }

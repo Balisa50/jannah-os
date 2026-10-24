@@ -86,7 +86,7 @@ private fun ReadingLockSession(surah: Int, onRelease: () -> Unit) {
         pageCount = { 604 }
     )
 
-    var remaining by remember { mutableLongStateOf(QuranReadingLock.getSavedRemainingMs(ctx)) }
+    var remaining by remember { mutableLongStateOf(LockState.remainingMs) }
     var isDone by remember { mutableStateOf(remaining <= 0L) }
     var isForeground by remember { mutableStateOf(true) }
     val lifecycleOwner = LocalLifecycleOwner.current
@@ -97,7 +97,7 @@ private fun ReadingLockSession(surah: Int, onRelease: () -> Unit) {
             when (event) {
                 Lifecycle.Event.ON_PAUSE -> {
                     isForeground = false
-                    QuranReadingLock.saveRemainingMs(ctx, remaining)
+                    LockState.remainingMs = remaining
                 }
                 Lifecycle.Event.ON_RESUME -> isForeground = true
                 else -> {}
@@ -106,7 +106,7 @@ private fun ReadingLockSession(surah: Int, onRelease: () -> Unit) {
         lifecycleOwner.lifecycle.addObserver(observer)
         onDispose {
             lifecycleOwner.lifecycle.removeObserver(observer)
-            QuranReadingLock.saveRemainingMs(ctx, remaining)
+            LockState.remainingMs = remaining
         }
     }
 
@@ -115,7 +115,7 @@ private fun ReadingLockSession(surah: Int, onRelease: () -> Unit) {
         while (remaining > 0L && isForeground) {
             delay(1000)
             remaining -= 1000L
-            QuranReadingLock.saveRemainingMs(ctx, remaining)
+            LockState.remainingMs = remaining
         }
         if (remaining <= 0L) {
             QuranReadingLock.markDoneToday(ctx)
@@ -161,7 +161,7 @@ private fun ReadingLockSession(surah: Int, onRelease: () -> Unit) {
                         Modifier.clip(RoundedCornerShape(50)).background(JannahColors.OnOrange.copy(alpha = 0.15f)).pressClickable {
                             com.jannahos.QuranLockScheduler.scheduleSnooze(ctx, 15)
                             com.jannahos.QuranReadingLock.setActiveToday(ctx, false)
-                            LockState.isLockActive = false; LockState.isLockActive = false; onRelease()
+                            LockState.isLockActive = false; LockState.isLockActive = false; LockState.remainingMs = 0L; onRelease()
                         }.padding(horizontal = 12.dp, vertical = 6.dp)
                     ) {
                         Text("Snooze 15m", style = JannahType.micro, color = JannahColors.OnOrange, fontWeight = FontWeight.Bold)
@@ -179,7 +179,7 @@ private fun ReadingLockSession(surah: Int, onRelease: () -> Unit) {
                 contentAlignment = Alignment.BottomCenter
             ) {
                 Box(
-                    Modifier.fillMaxWidth().height(56.dp).clip(RoundedCornerShape(JannahSpacing.pillRadius)).background(JannahColors.Orange).pressClickable { LockState.isLockActive = false; LockState.isLockActive = false; onRelease() },
+                    Modifier.fillMaxWidth().height(56.dp).clip(RoundedCornerShape(JannahSpacing.pillRadius)).background(JannahColors.Orange).pressClickable { LockState.isLockActive = false; LockState.isLockActive = false; LockState.remainingMs = 0L; onRelease() },
                     contentAlignment = Alignment.Center
                 ) {
                     Text("Exit to Jannah", style = JannahType.button, color = JannahColors.OnOrange, fontWeight = FontWeight.Bold, fontSize = 18.sp)

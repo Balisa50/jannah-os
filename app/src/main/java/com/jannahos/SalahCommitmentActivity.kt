@@ -5,19 +5,19 @@ import androidx.activity.ComponentActivity
 import androidx.activity.compose.BackHandler
 import androidx.activity.compose.setContent
 import androidx.compose.foundation.background
-import androidx.compose.ui.draw.clip
-import com.jannahos.ui.pressClickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.material3.Text
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.jannahos.ui.pressClickable
 import com.jannahos.ui.theme.JannahColors
 import com.jannahos.ui.theme.JannahSpacing
 import com.jannahos.ui.theme.JannahTheme
@@ -28,10 +28,14 @@ class SalahCommitmentActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         val prayer = intent.getStringExtra("prayer") ?: "fajr"
-        
+        if (LockState.remainingMs <= 0L) LockState.remainingMs = PrayerLock.durationMinutes(this) * 60_000L
         setContent {
             JannahTheme {
-                PrayerLockContent(prayer = prayer, onFinish = { finishAndRemoveTask() })
+                PrayerLockContent(prayer = prayer, onFinish = { 
+                    LockState.isLockActive = false
+                    LockState.remainingMs = 0L
+                    finishAndRemoveTask() 
+                })
             }
         }
     }
@@ -39,17 +43,15 @@ class SalahCommitmentActivity : ComponentActivity() {
 
 @Composable
 fun PrayerLockContent(prayer: String, onFinish: () -> Unit) {
-    val ctx = androidx.compose.ui.platform.LocalContext.current
     BackHandler { /* Cannot go back */ }
-    
-    val durationMinutes = PrayerLock.durationMinutes(ctx)
-    var remaining by remember { mutableLongStateOf(durationMinutes * 60_000L) }
-    var isDone by remember { mutableStateOf(false) }
+    var remaining by remember { mutableLongStateOf(LockState.remainingMs) }
+    var isDone by remember { mutableStateOf(remaining <= 0L) }
 
     LaunchedEffect(Unit) {
         while (remaining > 0L) {
             delay(1000)
             remaining -= 1000L
+            LockState.remainingMs = remaining
         }
         isDone = true
     }
