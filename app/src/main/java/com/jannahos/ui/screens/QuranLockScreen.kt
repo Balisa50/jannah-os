@@ -101,11 +101,10 @@ private fun ReadingLockSession(surah: Int, onRelease: () -> Unit) {
 
     var remaining by remember { mutableLongStateOf(QuranReadingLock.getSavedRemainingMs(ctx)) }
     var isDone by remember { mutableStateOf(remaining <= 0L) }
-    var isForeground by remember { mutableStateOf(true) }
 
-    LaunchedEffect(isForeground) {
-        if (!isForeground || isDone) return@LaunchedEffect
-        while (remaining > 0L && isForeground) {
+    LaunchedEffect(isDone) {
+        if (isDone) return@LaunchedEffect
+        while (remaining > 0L) {
             delay(1000)
             remaining -= 1000L
             LockState.remainingMs = remaining
