@@ -38,45 +38,66 @@ fun MushafPageScreen(startPage: Int, endPage: Int = 604, onBack: () -> Unit) {
         
         val currentRealPage = startPage + pagerState.currentPage
 
-        Box(Modifier.fillMaxSize().background(Color(0xFFFFFCF3))) {
-            HorizontalPager(
-                state = pagerState,
-                modifier = Modifier.fillMaxSize(),
-                pageSpacing = 0.dp,
-                beyondViewportPageCount = 1
-            ) { pageIndex ->
-                val realPageNum = startPage + pageIndex
-                val bitmap = remember(realPageNum) { MushafImageStore.loadBitmap(ctx, realPageNum) }
-                if (bitmap != null) {
-                    Image(
-                        bitmap = bitmap.asImageBitmap(),
-                        contentDescription = "Page $realPageNum",
-                        modifier = Modifier.fillMaxSize(),
-                        contentScale = ContentScale.Fit
-                    )
-                }
-            }
-
-            // Top Bar
+        Column(Modifier.fillMaxSize().background(JannahColors.Cream)) {
+            
+            // 1. THIN ORANGE TOP BAR
             Row(
-                Modifier.fillMaxWidth().background(JannahColors.Cream.copy(alpha = 0.95f)).windowInsetsPadding(WindowInsets.statusBars).padding(horizontal = 16.dp, vertical = 12.dp),
+                Modifier
+                    .fillMaxWidth()
+                    .background(JannahColors.Orange)
+                    .windowInsetsPadding(WindowInsets.statusBars)
+                    .padding(horizontal = 12.dp, vertical = 6.dp),
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                Box(Modifier.size(40.dp).clip(CircleShape).background(JannahColors.Card).pressClickable { onBack() }, contentAlignment = Alignment.Center) {
-                    Text("←", fontSize = 20.sp, color = JannahColors.Ink)
+                Box(
+                    Modifier.size(32.dp).clip(CircleShape).background(JannahColors.OrangeDeep).pressClickable { onBack() },
+                    contentAlignment = Alignment.Center
+                ) {
+                    Text("←", fontSize = 16.sp, color = JannahColors.OnOrange, fontWeight = FontWeight.Bold)
                 }
-                Spacer(Modifier.width(16.dp))
-                Text("Quran", fontFamily = FontFamily.Serif, fontSize = 22.sp, fontWeight = FontWeight.Bold, color = JannahColors.Ink)
+                Spacer(Modifier.width(12.dp))
+                Text("Quran", fontFamily = FontFamily.Serif, fontSize = 18.sp, fontWeight = FontWeight.Bold, color = JannahColors.OnOrange)
             }
 
-            // Bottom Counter
+            // 2. MAXIMUM QURAN PAGE
             Box(
-                Modifier.align(Alignment.BottomCenter).fillMaxWidth().background(JannahColors.Cream.copy(alpha = 0.95f)).windowInsetsPadding(WindowInsets.navigationBars).padding(16.dp),
+                Modifier
+                    .weight(1f)
+                    .fillMaxWidth()
+                    .background(Color(0xFFFFFCF3)) // The paper color
+                    .padding(horizontal = 4.dp, vertical = 4.dp) // Very small gap so it doesn't touch the bezel
+            ) {
+                HorizontalPager(
+                    state = pagerState,
+                    modifier = Modifier.fillMaxSize(),
+                    pageSpacing = 0.dp,
+                    beyondViewportPageCount = 1
+                ) { pageIndex ->
+                    val realPageNum = startPage + pageIndex
+                    val bitmap = remember(realPageNum) { MushafImageStore.loadBitmap(ctx, realPageNum) }
+                    if (bitmap != null) {
+                        Image(
+                            bitmap = bitmap.asImageBitmap(),
+                            contentDescription = "Page $realPageNum",
+                            modifier = Modifier.fillMaxSize(),
+                            contentScale = ContentScale.Fit
+                        )
+                    }
+                }
+            }
+
+            // 3. THIN ORANGE BOTTOM BAR
+            Box(
+                Modifier
+                    .fillMaxWidth()
+                    .background(JannahColors.Orange)
+                    .windowInsetsPadding(WindowInsets.navigationBars)
+                    .padding(vertical = 8.dp),
                 contentAlignment = Alignment.Center
             ) {
                 Text(
-                    "Page ${currentRealPage} of $endPage (${pagerState.currentPage + 1} / $pageCount)", 
-                    style = JannahType.bodySmall, color = JannahColors.Ink, fontWeight = FontWeight.Bold
+                    "Page $currentRealPage of $endPage (${pagerState.currentPage + 1} / $pageCount)", 
+                    style = JannahType.micro, color = JannahColors.OnOrange, fontWeight = FontWeight.Bold
                 )
             }
         }
