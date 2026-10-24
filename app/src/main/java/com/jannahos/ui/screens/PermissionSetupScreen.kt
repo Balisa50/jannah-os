@@ -10,7 +10,6 @@ import android.provider.Settings
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Text
@@ -37,12 +36,10 @@ fun PermissionSetupScreen(onAllSet: () -> Unit) {
     val ctx = LocalContext.current
     val lifecycleOwner = LocalLifecycleOwner.current
 
-    // State to track permissions
     var accessibilityOn by remember { mutableStateOf(isAccessibilityEnabled(ctx)) }
     var batteryOn by remember { mutableStateOf(isBatteryOptimizationDisabled(ctx)) }
     var alarmsOn by remember { mutableStateOf(canScheduleExactAlarms(ctx)) }
 
-    // Re-check permissions every time the user returns to this screen
     DisposableEffect(lifecycleOwner) {
         val observer = LifecycleEventObserver { _, event ->
             if (event == Lifecycle.Event.ON_RESUME) {
@@ -58,18 +55,18 @@ fun PermissionSetupScreen(onAllSet: () -> Unit) {
     Column(Modifier.fillMaxSize().background(JannahColors.Cream).verticalScroll(rememberScrollState()).padding(JannahSpacing.gutter)) {
         Spacer(Modifier.height(JannahSpacing.xxl))
         
-        Text("One last thing.", fontFamily = FontFamily.Serif, fontSize = 32.sp, fontWeight = FontWeight.Bold, color = JannahColors.Ink)
+        Text("System Setup.", fontFamily = FontFamily.Serif, fontSize = 32.sp, fontWeight = FontWeight.Bold, color = JannahColors.Ink)
         Spacer(Modifier.height(8.dp))
-        Text("To keep you on track, Jannah needs a few system permissions.", style = JannahType.body, color = JannahColors.Body, lineHeight = 24.sp)
+        Text("Jannah works in the background. To protect your focus and ring the Adhan, it needs these permissions.", style = JannahType.body, color = JannahColors.Body, lineHeight = 24.sp)
 
         Spacer(Modifier.height(JannahSpacing.xl))
 
         // 1. Accessibility
         PermissionCard(
             title = "App Protection",
-            description = "Required to lock distracting apps during prayer and Quran time.",
+            description = "Blocks distracting apps during prayer and Quran time.",
             isGranted = accessibilityOn,
-            actionText = if (accessibilityOn) "Enabled" else "Enable Protection"
+            actionText = if (accessibilityOn) "Enabled" else "Enable"
         ) {
             ctx.startActivity(Intent(Settings.ACTION_ACCESSIBILITY_SETTINGS))
         }
@@ -79,9 +76,9 @@ fun PermissionSetupScreen(onAllSet: () -> Unit) {
         // 2. Battery Optimization
         PermissionCard(
             title = "Background Alarms",
-            description = "Required so Android doesn't kill the Adhan alarm when your phone is asleep.",
+            description = "Ensures the Adhan rings even when your phone is asleep.",
             isGranted = batteryOn,
-            actionText = if (batteryOn) "Allowed" else "Allow Background"
+            actionText = if (batteryOn) "Allowed" else "Allow"
         ) {
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
                 val intent = Intent(Settings.ACTION_REQUEST_IGNORE_BATTERY_OPTIMIZATIONS).apply {
@@ -96,9 +93,9 @@ fun PermissionSetupScreen(onAllSet: () -> Unit) {
         // 3. Exact Alarms
         PermissionCard(
             title = "Exact Timings",
-            description = "Required to schedule the Adhan at the exact minute.",
+            description = "Schedules the Adhan at the exact minute.",
             isGranted = alarmsOn,
-            actionText = if (alarmsOn) "Allowed" else "Allow Alarms"
+            actionText = if (alarmsOn) "Allowed" else "Allow"
         ) {
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
                 val intent = Intent(Settings.ACTION_REQUEST_SCHEDULE_EXACT_ALARM).apply {
@@ -116,7 +113,7 @@ fun PermissionSetupScreen(onAllSet: () -> Unit) {
                 .pressClickable(enabled = accessibilityOn) { onAllSet() },
             contentAlignment = Alignment.Center
         ) {
-            Text(if (accessibilityOn) "Continue" else "Enable App Protection to continue", style = JannahType.button, color = JannahColors.OnOrange)
+            Text(if (accessibilityOn) "Finish Setup" else "Enable App Protection to continue", style = JannahType.button, color = JannahColors.OnOrange)
         }
     }
 }
