@@ -1,6 +1,5 @@
 package com.jannahos
 
-import android.content.Intent
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.BackHandler
@@ -28,22 +27,11 @@ class SalahCommitmentActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
         val prayer = intent.getStringExtra("prayer") ?: "fajr"
         
-        // Reset the lock state when the activity closes
-        LockState.isLockActive = true
-        
         setContent {
             JannahTheme {
-                PrayerLockContent(prayer = prayer, onFinish = { 
-                    LockState.isLockActive = false
-                    finish() 
-                })
+                PrayerLockContent(prayer = prayer, onFinish = { finishAndRemoveTask() })
             }
         }
-    }
-    
-    override fun onDestroy() {
-        super.onDestroy()
-        LockState.isLockActive = false
     }
 }
 
@@ -54,13 +42,14 @@ fun PrayerLockContent(prayer: String, onFinish: () -> Unit) {
     
     val durationMinutes = PrayerLock.durationMinutes(ctx)
     var remaining by remember { mutableLongStateOf(durationMinutes * 60_000L) }
+    var isDone by remember { mutableStateOf(false) }
 
     LaunchedEffect(Unit) {
         while (remaining > 0L) {
             delay(1000)
             remaining -= 1000L
         }
-        onFinish()
+        isDone = true
     }
 
     val mm = (remaining / 60_000L).toInt()
@@ -71,21 +60,25 @@ fun PrayerLockContent(prayer: String, onFinish: () -> Unit) {
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.Center
     ) {
-        Text("PRAYER LOCK", style = JannahType.eyebrow, color = JannahColors.OrangeDeep)
-        Spacer(Modifier.height(16.dp))
-        Text("${SalahTracker.label(prayer)} time.", fontFamily = FontFamily.Serif, fontSize = 36.sp, fontWeight = FontWeight.Bold, color = JannahColors.Ink, textAlign = TextAlign.Center)
-        Spacer(Modifier.height(24.dp))
-        Text("Put the phone down. Go pray.", fontFamily = FontFamily.Serif, fontStyle = FontStyle.Italic, fontSize = 20.sp, color = JannahColors.Muted, textAlign = TextAlign.Center)
-        
-        Spacer(Modifier.height(48.dp))
-        
-        Text(String.format("%02d:%02d", mm, ss), fontFamily = FontFamily.Serif, fontSize = 64.sp, fontWeight = FontWeight.Bold, color = JannahColors.Orange)
-        
-        Spacer(Modifier.height(48.dp))
-        
-        Text(
-            "\"Indeed, prayer prohibits immorality and wrongdoing.\" (Qur'an 29:45)",
-            fontFamily = FontFamily.Serif, fontStyle = FontStyle.Italic, fontSize = 16.sp, color = JannahColors.Ink, textAlign = TextAlign.Center, lineHeight = 24.sp
-        )
+        if (isDone) {
+            Text("Prayer time complete.", fontFamily = FontFamily.Serif, fontSize = 32.sp, fontWeight = FontWeight.Bold, color = JannahColors.Ink, textAlign = TextAlign.Center)
+            Spacer(Modifier.height(16.dp))
+            Text("May Allah accept your prayer.", fontFamily = FontFamily.Serif, fontStyle = FontStyle.Italic, fontSize = 18.sp, color = JannahColors.Orange, textAlign = TextAlign.Center)
+            Spacer(Modifier.height(32.dp))
+            Box(
+                Modifier.fillMaxWidth().height(56.dp).clip(androidx.compose.foundation.shape.RoundedCornerShape(JannahSpacing.pillRadius)).background(JannahColors.Orange).pressClickable { onFinish() },
+                contentAlignment = Alignment.Center
+            ) {
+                Text("Finish", style = JannahType.button, color = JannahColors.OnOrange, fontWeight = FontWeight.Bold)
+            }
+        } else {
+            Text("PRAYER LOCK", style = JannahType.eyebrow, color = JannahColors.OrangeDeep)
+            Spacer(Modifier.height(16.dp))
+            Text("${SalahTracker.label(prayer)} time.", fontFamily = FontFamily.Serif, fontSize = 36.sp, fontWeight = FontWeight.Bold, color = JannahColors.Ink, textAlign = TextAlign.Center)
+            Spacer(Modifier.height(24.dp))
+            Text("Put the phone down. Go pray.", fontFamily = FontFamily.Serif, fontStyle = FontStyle.Italic, fontSize = 20.sp, color = JannahColors.Muted, textAlign = TextAlign.Center)
+            Spacer(Modifier.height(48.dp))
+            Text(String.format("%02d:%02d", mm, ss), fontFamily = FontFamily.Serif, fontSize = 64.sp, fontWeight = FontWeight.Bold, color = JannahColors.Orange)
+        }
     }
 }
