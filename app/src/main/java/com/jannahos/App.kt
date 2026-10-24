@@ -16,7 +16,7 @@ class App : Application() {
         
         try {
             SalahScheduler.schedule(this, Settings.lat(this), Settings.lon(this))
-            PrayerReminderScheduler.scheduleNextReminder(this)
+            PrayerReminderScheduler.scheduleNext(this)
         } catch (_: Exception) {}
 
         val prev = Thread.getDefaultUncaughtExceptionHandler()

@@ -9,7 +9,7 @@ class BootReceiver : BroadcastReceiver() {
         if (intent.action == Intent.ACTION_BOOT_COMPLETED) {
             // Reschedule the adaptive prayer alarms
             try {
-                PrayerReminderScheduler.scheduleNextReminder(context)
+                PrayerReminderScheduler.scheduleNext(context)
             FridayKahfScheduler.scheduleAll(context)
             } catch (_: Exception) {}
         }
