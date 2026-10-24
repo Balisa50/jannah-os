@@ -21,6 +21,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.jannahos.Settings
+import com.jannahos.ui.screens.PermissionSetupScreen
 import com.jannahos.ui.theme.*
 
 @Composable
@@ -29,6 +30,9 @@ fun OnboardingFlow(onDone: () -> Unit) {
     var step by remember { mutableStateOf(0) }
     var name by remember { mutableStateOf("") }
     var city by remember { mutableStateOf("") }
+    var showPermissions by remember { mutableStateOf(false) }
+
+    if (showPermissions) { PermissionSetupScreen(onAllSet = onDone); return }
 
     ScreenScaffold {
         Column(
@@ -58,7 +62,7 @@ fun OnboardingFlow(onDone: () -> Unit) {
                 modifier = Modifier.fillMaxWidth().height(56.dp).clip(RoundedCornerShape(JannahSpacing.pillRadius)).background(JannahColors.Ink).clickable {
                     if (step == 3) {
                         Settings.setDisplayName(ctx, name)
-                        onDone()
+                        showPermissions = true
                     } else {
                         step += 1
                     }
