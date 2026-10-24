@@ -24,6 +24,7 @@ import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
 import androidx.lifecycle.compose.LocalLifecycleOwner
 import com.jannahos.MushafImageStore
+import com.jannahos.LockState
 import com.jannahos.QuranCache
 import com.jannahos.QuranReadingLock
 import com.jannahos.QuranStore

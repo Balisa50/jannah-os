@@ -1,7 +1,5 @@
 package com.jannahos.ui.screens
 
-import android.app.admin.DevicePolicyManager
-import android.content.ComponentName
 import android.content.Context
 import android.content.Intent
 import android.provider.Settings
@@ -17,11 +15,11 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.jannahos.DevicePolicyHelper
-import com.jannahos.JannahDeviceAdminReceiver
+import com.jannahos.FocusAccessibilityService
 import com.jannahos.ui.TopBar
 import com.jannahos.ui.pressClickable
 import com.jannahos.ui.theme.JannahColors
@@ -31,8 +29,7 @@ import com.jannahos.ui.theme.JannahType
 @Composable
 fun GuardianSetupScreen(onBack: () -> Unit) {
     val ctx = LocalContext.current
-    val dpm = ctx.getSystemService(Context.DEVICE_POLICY_SERVICE) as DevicePolicyManager
-    val adminActive = dpm.isAdminActive(ComponentName(ctx, JannahDeviceAdminReceiver::class.java))
+    val isAccessibilityEnabled = isAccessibilityServiceEnabled(ctx)
 
     Column(
         Modifier
@@ -40,71 +37,48 @@ fun GuardianSetupScreen(onBack: () -> Unit) {
             .background(JannahColors.Cream)
             .verticalScroll(rememberScrollState())
     ) {
-        TopBar("Guardian System", onBack = onBack)
+        TopBar("App Protection", onBack = onBack)
 
         Column(Modifier.padding(JannahSpacing.gutter)) {
-            Text("The Guardian intercepts apps, locks your screen for prayer, and prompts you for Tahajjud evidence without you opening the app.", style = JannahType.body, color = JannahColors.Ink)
-            
-            Spacer(Modifier.height(JannahSpacing.m))
-            
-            Box(Modifier.fillMaxWidth().clip(RoundedCornerShape(12.dp)).background(JannahColors.OrangeSoft).padding(12.dp)) {
-                Text("To make the locks work, you MUST enable both Device Admin and Accessibility in your phone's settings.", style = JannahType.bodySmall, color = JannahColors.OrangeDeep, fontWeight = FontWeight.Bold)
-            }
+            Text("To block distracting apps during prayer and Quran time, Jannah needs Accessibility permission.", style = JannahType.body, color = JannahColors.Ink)
             
             Spacer(Modifier.height(JannahSpacing.xl))
 
-            // 1. Device Admin
-            
-
-            Spacer(Modifier.height(JannahSpacing.m))
-
-            // 2. Accessibility
-            GuardianItem(
-                title = "2. App Blocker (Accessibility)",
-                desc = "Intercepts distracting apps and redirects you to Jannah OS.",
-                isActive = isAccessibilityServiceEnabled(ctx),
-                onClick = {
-                    val intent = Intent(Settings.ACTION_ACCESSIBILITY_SETTINGS)
-                    ctx.startActivity(intent)
+            Row(
+                Modifier
+                    .fillMaxWidth()
+                    .clip(RoundedCornerShape(JannahSpacing.cardRadius))
+                    .background(JannahColors.Card)
+                    .pressClickable {
+                        if (!isAccessibilityEnabled) {
+                            ctx.startActivity(Intent(Settings.ACTION_ACCESSIBILITY_SETTINGS))
+                        } else {
+                            ctx.startActivity(Intent(Settings.ACTION_ACCESSIBILITY_SETTINGS))
+                        }
+                    }
+                    .padding(JannahSpacing.m),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Column(Modifier.weight(1f)) {
+                    Text("App Blocker (Accessibility)", fontFamily = FontFamily.Serif, fontWeight = FontWeight.Bold, fontSize = 16.sp, color = JannahColors.Ink)
+                    Spacer(Modifier.height(4.dp))
+                    Text("Intercepts distracting apps and redirects you to Jannah OS.", style = JannahType.caption, color = JannahColors.Muted)
                 }
-            )
-
-            Spacer(Modifier.height(JannahSpacing.m))
-
-
-        }
-    }
-}
-
-@Composable
-private fun GuardianItem(title: String, desc: String, isActive: Boolean, onClick: () -> Unit) {
-    Row(
-        Modifier
-            .fillMaxWidth()
-            .clip(RoundedCornerShape(JannahSpacing.cardRadius))
-            .background(JannahColors.Card)
-            .pressClickable(onClick = onClick)
-            .padding(JannahSpacing.m),
-        verticalAlignment = Alignment.CenterVertically
-    ) {
-        Column(Modifier.weight(1f)) {
-            Text(title, fontFamily = androidx.compose.ui.text.font.FontFamily.Serif, fontWeight = FontWeight.Bold, fontSize = 16.sp, color = JannahColors.Ink)
-            Spacer(Modifier.height(4.dp))
-            Text(desc, style = JannahType.caption, color = JannahColors.Muted)
-        }
-        Box(
-            Modifier
-                .clip(RoundedCornerShape(50))
-                .background(if (isActive) JannahColors.Orange else JannahColors.Border)
-                .padding(horizontal = 12.dp, vertical = 6.dp)
-        ) {
-            Text(if (isActive) "Active" else "Enable", style = JannahType.micro, color = if (isActive) JannahColors.OnOrange else JannahColors.Muted)
+                Box(
+                    Modifier
+                        .clip(RoundedCornerShape(50))
+                        .background(if (isAccessibilityEnabled) JannahColors.Orange else JannahColors.Border)
+                        .padding(horizontal = 12.dp, vertical = 6.dp)
+                ) {
+                    Text(if (isAccessibilityEnabled) "Active" else "Enable", style = JannahType.micro, color = if (isAccessibilityEnabled) JannahColors.OnOrange else JannahColors.Muted)
+                }
+            }
         }
     }
 }
 
 private fun isAccessibilityServiceEnabled(context: Context): Boolean {
-    val service = "${context.packageName}/${com.jannahos.FocusAccessibilityService::class.java.canonicalName}"
+    val service = "${context.packageName}/${FocusAccessibilityService::class.java.canonicalName}"
     val enabledServices = Settings.Secure.getString(
         context.contentResolver,
         Settings.Secure.ENABLED_ACCESSIBILITY_SERVICES

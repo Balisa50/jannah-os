@@ -13,6 +13,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import com.jannahos.ui.JannahApp
+import com.jannahos.LockState
 import com.jannahos.ui.screens.CrashReportScreen
 import com.jannahos.ui.OnboardingFlow
 import com.jannahos.ui.theme.JannahTheme
