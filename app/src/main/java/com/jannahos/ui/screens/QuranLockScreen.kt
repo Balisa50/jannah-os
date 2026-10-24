@@ -20,11 +20,8 @@ import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.lifecycle.Lifecycle
-import androidx.lifecycle.LifecycleEventObserver
-import androidx.lifecycle.compose.LocalLifecycleOwner
-import com.jannahos.MushafImageStore
 import com.jannahos.LockState
+import com.jannahos.MushafImageStore
 import com.jannahos.QuranCache
 import com.jannahos.QuranReadingLock
 import com.jannahos.QuranStore
@@ -37,10 +34,13 @@ import java.util.Calendar
 
 @Composable
 fun QuranLockScreen(onRelease: () -> Unit) {
-    LockState.isLockActive = true
     BackHandler { /* Force them to read */ }
     val ctx = LocalContext.current
     
+    LaunchedEffect(Unit) {
+        LockState.isLockActive = true
+    }
+
     val savedRemaining = QuranReadingLock.getSavedRemainingMs(ctx)
     val savedSurah = QuranReadingLock.getLastSelectedSurah(ctx)
     
@@ -52,7 +52,20 @@ fun QuranLockScreen(onRelease: () -> Unit) {
             QuranReadingLock.setLastSelectedSurah(ctx, it)
         })
     } else {
-        ReadingLockSession(surah = selectedSurah!!, onRelease = onRelease)
+        ReadingLockSession(
+            surah = selectedSurah!!, 
+            onRelease = { 
+                // 1. Clear the lock state completely
+                LockState.isLockActive = false
+                LockState.remainingMs = 0L
+                
+                // 2. Mark it as done for today so the service doesn't re-trigger it
+                QuranReadingLock.markDoneToday(ctx)
+                
+                // 3. Tell MainActivity to hide the lock screen
+                onRelease() 
+            }
+        )
     }
 }
 
@@ -86,29 +99,9 @@ private fun ReadingLockSession(surah: Int, onRelease: () -> Unit) {
         pageCount = { 604 }
     )
 
-    var remaining by remember { mutableLongStateOf(LockState.remainingMs) }
+    var remaining by remember { mutableLongStateOf(QuranReadingLock.getSavedRemainingMs(ctx)) }
     var isDone by remember { mutableStateOf(remaining <= 0L) }
     var isForeground by remember { mutableStateOf(true) }
-    val lifecycleOwner = LocalLifecycleOwner.current
-
-    // Rigid Timer: Pauses immediately when app is minimized
-    DisposableEffect(lifecycleOwner) {
-        val observer = LifecycleEventObserver { _, event ->
-            when (event) {
-                Lifecycle.Event.ON_PAUSE -> {
-                    isForeground = false
-                    LockState.remainingMs = remaining
-                }
-                Lifecycle.Event.ON_RESUME -> isForeground = true
-                else -> {}
-            }
-        }
-        lifecycleOwner.lifecycle.addObserver(observer)
-        onDispose {
-            lifecycleOwner.lifecycle.removeObserver(observer)
-            LockState.remainingMs = remaining
-        }
-    }
 
     LaunchedEffect(isForeground) {
         if (!isForeground || isDone) return@LaunchedEffect
@@ -118,7 +111,6 @@ private fun ReadingLockSession(surah: Int, onRelease: () -> Unit) {
             LockState.remainingMs = remaining
         }
         if (remaining <= 0L) {
-            QuranReadingLock.markDoneToday(ctx)
             isDone = true
         }
     }
@@ -127,7 +119,6 @@ private fun ReadingLockSession(surah: Int, onRelease: () -> Unit) {
     val ss = ((remaining / 1000L) % 60).toInt()
     val timeText = String.format(java.util.Locale.US, "%02d:%02d", mm, ss)
 
-    // CALCULATE THE LOOPHOLE
     val now = Calendar.getInstance()
     val midnight = Calendar.getInstance().apply {
         set(Calendar.HOUR_OF_DAY, 23)
@@ -135,7 +126,6 @@ private fun ReadingLockSession(surah: Int, onRelease: () -> Unit) {
         set(Calendar.SECOND, 59)
     }
     val timeUntilMidnight = midnight.timeInMillis - now.timeInMillis
-    // Only allow snooze if there is more than 15 minutes left in the day
     val canSnooze = timeUntilMidnight > 15 * 60 * 1000L
 
     Box(Modifier.fillMaxSize().background(Color(0xFFFFFCF3))) {
@@ -161,7 +151,8 @@ private fun ReadingLockSession(surah: Int, onRelease: () -> Unit) {
                         Modifier.clip(RoundedCornerShape(50)).background(JannahColors.OnOrange.copy(alpha = 0.15f)).pressClickable {
                             com.jannahos.QuranLockScheduler.scheduleSnooze(ctx, 15)
                             com.jannahos.QuranReadingLock.setActiveToday(ctx, false)
-                            LockState.isLockActive = false; LockState.isLockActive = false; LockState.remainingMs = 0L; onRelease()
+                            LockState.isLockActive = false
+                            onRelease()
                         }.padding(horizontal = 12.dp, vertical = 6.dp)
                     ) {
                         Text("Snooze 15m", style = JannahType.micro, color = JannahColors.OnOrange, fontWeight = FontWeight.Bold)
@@ -179,7 +170,9 @@ private fun ReadingLockSession(surah: Int, onRelease: () -> Unit) {
                 contentAlignment = Alignment.BottomCenter
             ) {
                 Box(
-                    Modifier.fillMaxWidth().height(56.dp).clip(RoundedCornerShape(JannahSpacing.pillRadius)).background(JannahColors.Orange).pressClickable { LockState.isLockActive = false; LockState.isLockActive = false; LockState.remainingMs = 0L; onRelease() },
+                    Modifier.fillMaxWidth().height(56.dp).clip(RoundedCornerShape(JannahSpacing.pillRadius)).background(JannahColors.Orange).pressClickable { 
+                        onRelease() 
+                    },
                     contentAlignment = Alignment.Center
                 ) {
                     Text("Exit to Jannah", style = JannahType.button, color = JannahColors.OnOrange, fontWeight = FontWeight.Bold, fontSize = 18.sp)
