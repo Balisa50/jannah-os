@@ -36,6 +36,7 @@ import java.util.Calendar
 
 @Composable
 fun QuranLockScreen(onRelease: () -> Unit) {
+    LockState.isLockActive = true
     BackHandler { /* Force them to read */ }
     val ctx = LocalContext.current
     
@@ -159,7 +160,8 @@ private fun ReadingLockSession(surah: Int, onRelease: () -> Unit) {
                         Modifier.clip(RoundedCornerShape(50)).background(JannahColors.OnOrange.copy(alpha = 0.15f)).pressClickable {
                             com.jannahos.QuranLockScheduler.scheduleSnooze(ctx, 15)
                             com.jannahos.QuranReadingLock.setActiveToday(ctx, false)
-                            onRelease()
+                            LockState.isLockActive = false
+        onRelease()
                         }.padding(horizontal = 12.dp, vertical = 6.dp)
                     ) {
                         Text("Snooze 15m", style = JannahType.micro, color = JannahColors.OnOrange, fontWeight = FontWeight.Bold)
@@ -177,7 +179,8 @@ private fun ReadingLockSession(surah: Int, onRelease: () -> Unit) {
                 contentAlignment = Alignment.BottomCenter
             ) {
                 Box(
-                    Modifier.fillMaxWidth().height(56.dp).clip(RoundedCornerShape(JannahSpacing.pillRadius)).background(JannahColors.Orange).pressClickable { onRelease() },
+                    Modifier.fillMaxWidth().height(56.dp).clip(RoundedCornerShape(JannahSpacing.pillRadius)).background(JannahColors.Orange).pressClickable { LockState.isLockActive = false
+        onRelease() },
                     contentAlignment = Alignment.Center
                 ) {
                     Text("Exit to Jannah", style = JannahType.button, color = JannahColors.OnOrange, fontWeight = FontWeight.Bold, fontSize = 18.sp)

@@ -24,35 +24,26 @@ import com.jannahos.ui.theme.JannahType
 import kotlinx.coroutines.delay
 
 class SalahCommitmentActivity : ComponentActivity() {
-    
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         val prayer = intent.getStringExtra("prayer") ?: "fajr"
         
+        // Reset the lock state when the activity closes
+        LockState.isLockActive = true
+        
         setContent {
             JannahTheme {
-                PrayerLockContent(prayer = prayer, onFinish = { finish() })
+                PrayerLockContent(prayer = prayer, onFinish = { 
+                    LockState.isLockActive = false
+                    finish() 
+                })
             }
         }
     }
-
-    // If user tries to press Home or open recent apps, force them back
-    override fun onUserLeaveHint() {
-        super.onUserLeaveHint()
-        relaunchLock()
-    }
-
-    override fun onPause() {
-        super.onPause()
-        relaunchLock()
-    }
-
-    private fun relaunchLock() {
-        val intent = Intent(this, SalahCommitmentActivity::class.java).apply {
-            putExtra("prayer", intent.getStringExtra("prayer") ?: "fajr")
-            addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP)
-        }
-        startActivity(intent)
+    
+    override fun onDestroy() {
+        super.onDestroy()
+        LockState.isLockActive = false
     }
 }
 

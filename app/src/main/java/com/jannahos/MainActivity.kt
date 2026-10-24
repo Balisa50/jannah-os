@@ -19,6 +19,8 @@ import com.jannahos.ui.theme.JannahTheme
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
+        
+        LockState.isLockActive = false
         super.onCreate(savedInstanceState)
         
         // ONLY request notification permission. Everything else is handled in Onboarding.
