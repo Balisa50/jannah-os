@@ -9,10 +9,12 @@ import androidx.activity.compose.BackHandler
 import androidx.activity.compose.setContent
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Text
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.font.FontWeight
@@ -49,15 +51,8 @@ class SalahCommitmentActivity : ComponentActivity() {
         }
     }
 
-    override fun onStart() {
-        super.onStart()
-        LockState.isLockActive = true
-    }
-
-    override fun onStop() {
-        LockState.isLockActive = false
-        super.onStop()
-    }
+    override fun onStart() { super.onStart(); LockState.isLockActive = true }
+    override fun onStop() { LockState.isLockActive = false; super.onStop() }
 
     private fun completeLock() {
         LockState.release(this)
@@ -102,7 +97,7 @@ private fun LockScreen(prayer: String, onFinish: () -> Unit) {
             Text("May Allah accept your prayer.", fontFamily = FontFamily.Serif, fontStyle = FontStyle.Italic, fontSize = 18.sp, color = JannahColors.Orange, textAlign = TextAlign.Center)
             Spacer(Modifier.height(32.dp))
             Box(
-                Modifier.fillMaxWidth().height(56.dp).clip(androidx.compose.foundation.shape.RoundedCornerShape(JannahSpacing.pillRadius)).background(JannahColors.Orange).pressClickable { onFinish() },
+                Modifier.fillMaxWidth().height(56.dp).clip(RoundedCornerShape(JannahSpacing.pillRadius)).background(JannahColors.Orange).pressClickable { onFinish() },
                 contentAlignment = Alignment.Center
             ) {
                 Text("Finish", style = JannahType.button, color = JannahColors.OnOrange, fontWeight = FontWeight.Bold)

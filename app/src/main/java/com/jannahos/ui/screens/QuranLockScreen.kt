@@ -55,14 +55,8 @@ fun QuranLockScreen(onRelease: () -> Unit) {
         ReadingLockSession(
             surah = selectedSurah!!, 
             onRelease = { 
-                // 1. Clear the lock state completely
-                LockState.isLockActive = false
-                LockState.remainingMs = 0L
-                
-                // 2. Mark it as done for today so the service doesn't re-trigger it
+                LockState.release(ctx)
                 QuranReadingLock.markDoneToday(ctx)
-                
-                // 3. Tell MainActivity to hide the lock screen
                 onRelease() 
             }
         )
@@ -94,23 +88,23 @@ private fun SurahPickerScreen(onPicked: (Int) -> Unit) {
 @Composable
 private fun ReadingLockSession(surah: Int, onRelease: () -> Unit) {
     val ctx = LocalContext.current
+    
+    // Arm the lock with the duration if not already armed
+    if (!LockState.isEnforcing()) {
+        LockState.arm(ctx, QuranReadingLock.getSavedRemainingMs(ctx))
+    }
+
     val pagerState = rememberPagerState(
         initialPage = (QuranStore.firstPageOfSurah(surah) - 1).coerceIn(0, 603),
         pageCount = { 604 }
     )
 
-    var remaining by remember { mutableLongStateOf(QuranReadingLock.getSavedRemainingMs(ctx)) }
-    var isDone by remember { mutableStateOf(remaining <= 0L) }
-
-    LaunchedEffect(isDone) {
-        if (isDone) return@LaunchedEffect
+    var remaining by remember { mutableLongStateOf(LockState.remainingMs()) }
+    
+    LaunchedEffect(Unit) {
         while (remaining > 0L) {
-            delay(1000)
-            remaining -= 1000L
-            LockState.remainingMs = remaining
-        }
-        if (remaining <= 0L) {
-            isDone = true
+            delay(250)
+            remaining = LockState.remainingMs()
         }
     }
 
@@ -126,6 +120,8 @@ private fun ReadingLockSession(surah: Int, onRelease: () -> Unit) {
     }
     val timeUntilMidnight = midnight.timeInMillis - now.timeInMillis
     val canSnooze = timeUntilMidnight > 15 * 60 * 1000L
+
+    BackHandler(enabled = remaining > 0L) { }
 
     Box(Modifier.fillMaxSize().background(Color(0xFFFFFCF3))) {
         HorizontalPager(state = pagerState, modifier = Modifier.fillMaxSize(), pageSpacing = 0.dp) { pageIndex ->
@@ -143,14 +139,14 @@ private fun ReadingLockSession(surah: Int, onRelease: () -> Unit) {
 
         Box(Modifier.align(Alignment.TopCenter).fillMaxWidth().background(JannahColors.Orange).padding(horizontal = JannahSpacing.gutter, vertical = 12.dp).windowInsetsPadding(WindowInsets.statusBars)) {
             Row(verticalAlignment = Alignment.CenterVertically) {
-                Text(if (isDone) "UNLOCKED" else "READING LOCK", style = JannahType.eyebrow, color = JannahColors.OnOrange.copy(alpha = 0.75f), modifier = Modifier.weight(1f))
+                Text(if (remaining <= 0L) "UNLOCKED" else "READING LOCK", style = JannahType.eyebrow, color = JannahColors.OnOrange.copy(alpha = 0.75f), modifier = Modifier.weight(1f))
                 
-                if (!isDone && canSnooze) {
+                if (remaining > 0L && canSnooze) {
                     Box(
                         Modifier.clip(RoundedCornerShape(50)).background(JannahColors.OnOrange.copy(alpha = 0.15f)).pressClickable {
                             com.jannahos.QuranLockScheduler.scheduleSnooze(ctx, 15)
                             com.jannahos.QuranReadingLock.setActiveToday(ctx, false)
-                            LockState.isLockActive = false
+                            LockState.release(ctx)
                             onRelease()
                         }.padding(horizontal = 12.dp, vertical = 6.dp)
                     ) {
@@ -163,7 +159,7 @@ private fun ReadingLockSession(surah: Int, onRelease: () -> Unit) {
             }
         }
 
-        if (isDone) {
+        if (remaining <= 0L) {
             Box(
                 Modifier.fillMaxSize().background(Color.Black.copy(alpha = 0.5f)).windowInsetsPadding(WindowInsets.navigationBars).padding(JannahSpacing.gutter),
                 contentAlignment = Alignment.BottomCenter
