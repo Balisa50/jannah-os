@@ -36,7 +36,10 @@ private val TABS = listOf(
 )
 private val TAB_ROUTES: Set<String> = TABS.map { it.route }.toSet()
 
-private fun NavBackStackEntry.isTab(): Boolean = destination.route in TAB_ROUTES
+private fun NavBackStackEntry.isTab(): Boolean {
+    val r = destination.route ?: return false
+    return r in TAB_ROUTES
+}
 
 @Composable
 fun JannahApp() {
@@ -71,14 +74,6 @@ fun JannahApp() {
     if (showComeback && cs != null) { ScreenScaffold { ErrorBoundary("Comeback") { ComebackScreen(cs, onDismiss = { showComeback = false }) } }; return }
     if (showReflection) { ScreenScaffold { ErrorBoundary("Morning reflection") { MorningReflectionScreen(onDismiss = { showReflection = false }) } }; return }
     if (showEv) { ScreenScaffold { ErrorBoundary("Evening reckoning") { EveningScreen(onDismiss = { showEv = false }) } }; return }
-
-    // Tab switches: fast fade. Sub-route pushes: smooth slide. Both shorter than the previous 350ms.
-    val tabEnter = fadeIn(tween(120))
-    val tabExit = fadeOut(tween(120))
-    val pushEnter = slideIntoContainer(AnimatedContentTransitionScope.SlideDirection.Start, tween(280)) + fadeIn(tween(200))
-    val pushExit = slideOutOfContainer(AnimatedContentTransitionScope.SlideDirection.Start, tween(280)) + fadeOut(tween(200))
-    val popEnter = slideIntoContainer(AnimatedContentTransitionScope.SlideDirection.End, tween(280)) + fadeIn(tween(200))
-    val popExit = slideOutOfContainer(AnimatedContentTransitionScope.SlideDirection.End, tween(280)) + fadeOut(tween(200))
 
     Scaffold(
         containerColor = JannahColors.Cream,
@@ -115,16 +110,20 @@ fun JannahApp() {
             startDestination = "today",
             modifier = Modifier.fillMaxSize().padding(padding),
             enterTransition = {
-                if (initialState.isTab() && targetState.isTab()) tabEnter else pushEnter
+                if (initialState.isTab() && targetState.isTab()) fadeIn(tween(120))
+                else slideIntoContainer(AnimatedContentTransitionScope.SlideDirection.Start, tween(280)) + fadeIn(tween(200))
             },
             exitTransition = {
-                if (initialState.isTab() && targetState.isTab()) tabExit else pushExit
+                if (initialState.isTab() && targetState.isTab()) fadeOut(tween(120))
+                else slideOutOfContainer(AnimatedContentTransitionScope.SlideDirection.Start, tween(280)) + fadeOut(tween(200))
             },
             popEnterTransition = {
-                if (initialState.isTab() && targetState.isTab()) tabEnter else popEnter
+                if (initialState.isTab() && targetState.isTab()) fadeIn(tween(120))
+                else slideIntoContainer(AnimatedContentTransitionScope.SlideDirection.End, tween(280)) + fadeIn(tween(200))
             },
             popExitTransition = {
-                if (initialState.isTab() && targetState.isTab()) tabExit else popExit
+                if (initialState.isTab() && targetState.isTab()) fadeOut(tween(120))
+                else slideOutOfContainer(AnimatedContentTransitionScope.SlideDirection.End, tween(280)) + fadeOut(tween(200))
             }
         ) {
             composable("today") { ErrorBoundary("Today") { TodayScreen(onNavigate = goTo) } }
