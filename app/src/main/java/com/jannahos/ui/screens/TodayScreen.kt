@@ -109,7 +109,7 @@ fun TodayScreen(onNavigate: (String) -> Unit = {}) {
                 val fajrTime = prayerTimes["fajr"] ?: nowT
                 val maghribTime = prayerTimes["maghrib"] ?: nowT
 
-                Box(Modifier.fillMaxWidth().clip(RoundedCornerShape(JannahSpacing.cardRadius)).background(JannahColors.Orange).padding(JannahSpacing.l)) {
+                Box(Modifier.fillMaxWidth().clip(RoundedCornerShape(JannahSpacing.cardRadius)).background(JannahColors.Orange).pressClickable { onNavigate("ramadan") }.padding(JannahSpacing.l)) {
                     Column {
                         Text("RAMADAN · DAY ${ramadan.dayOfRamadan}", style = JannahType.eyebrow, color = JannahColors.OnOrange.copy(alpha = 0.75f))
                         Spacer(Modifier.height(8.dp))

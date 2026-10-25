@@ -4,7 +4,6 @@ import android.app.AlarmManager
 import android.app.NotificationManager
 import android.content.Context
 import android.content.Intent
-import android.net.Uri
 import android.os.Build
 import android.os.PowerManager
 import android.provider.Settings
@@ -57,14 +56,13 @@ fun PermissionSetupScreen(onAllSet: () -> Unit) {
 
     Column(Modifier.fillMaxSize().background(JannahColors.Cream).verticalScroll(rememberScrollState()).padding(JannahSpacing.gutter)) {
         Spacer(Modifier.height(JannahSpacing.xxl))
-        
+
         Text("System Setup.", fontFamily = FontFamily.Serif, fontSize = 32.sp, fontWeight = FontWeight.Bold, color = JannahColors.Ink)
         Spacer(Modifier.height(8.dp))
         Text("Jannah works in the background. To protect your focus and ring the Adhan, it needs these permissions.", style = JannahType.body, color = JannahColors.Body, lineHeight = 24.sp)
 
         Spacer(Modifier.height(JannahSpacing.xl))
 
-        // 1. Accessibility
         PermissionCard(
             title = "App Protection",
             description = "Blocks distracting apps during prayer and Quran time.",
@@ -76,7 +74,6 @@ fun PermissionSetupScreen(onAllSet: () -> Unit) {
 
         Spacer(Modifier.height(JannahSpacing.m))
 
-        // 2. Battery Optimization
         PermissionCard(
             title = "Background Alarms",
             description = "Ensures the Adhan rings even when your phone is asleep.",
@@ -84,16 +81,12 @@ fun PermissionSetupScreen(onAllSet: () -> Unit) {
             actionText = if (batteryOn) "Allowed" else "Allow"
         ) {
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-                val intent = Intent(Settings.ACTION_REQUEST_IGNORE_BATTERY_OPTIMIZATIONS).apply {
-                    data = Uri.parse("package:${ctx.packageName}")
-                }
-                ctx.startActivity(intent)
+                ctx.startActivity(Intent(Settings.ACTION_IGNORE_BATTERY_OPTIMIZATION_SETTINGS))
             }
         }
 
         Spacer(Modifier.height(JannahSpacing.m))
 
-        // 3. Exact Alarms
         PermissionCard(
             title = "Exact Timings",
             description = "Schedules the Adhan at the exact minute.",
@@ -101,16 +94,18 @@ fun PermissionSetupScreen(onAllSet: () -> Unit) {
             actionText = if (alarmsOn) "Allowed" else "Allow"
         ) {
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
-                val intent = Intent(Settings.ACTION_REQUEST_SCHEDULE_EXACT_ALARM).apply {
-                    data = Uri.parse("package:${ctx.packageName}")
+                try {
+                    ctx.startActivity(Intent(Settings.ACTION_REQUEST_SCHEDULE_EXACT_ALARM))
+                } catch (_: Throwable) {
+                    ctx.startActivity(Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS).apply {
+                        data = android.net.Uri.parse("package:${ctx.packageName}")
+                    })
                 }
-                ctx.startActivity(intent)
             }
         }
 
         Spacer(Modifier.height(JannahSpacing.m))
 
-        // 4. DND (Digital Sanctuary)
         PermissionCard(
             title = "Digital Sanctuary",
             description = "Silences all notifications while you pray or read Quran.",
@@ -169,7 +164,7 @@ private fun isBatteryOptimizationDisabled(context: Context): Boolean {
 private fun canScheduleExactAlarms(context: Context): Boolean {
     if (Build.VERSION.SDK_INT < Build.VERSION_CODES.S) return true
     val am = context.getSystemService(Context.ALARM_SERVICE) as AlarmManager
-    return am.canScheduleExactAlarms()
+    return try { am.canScheduleExactAlarms() } catch (_: Throwable) { false }
 }
 
 private fun isDndAllowed(context: Context): Boolean {

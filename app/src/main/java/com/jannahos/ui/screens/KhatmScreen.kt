@@ -6,8 +6,10 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -29,14 +31,14 @@ fun KhatmScreen(onBack: () -> Unit, onOpenRange: (Int, Int) -> Unit) {
     val ctx = LocalContext.current
     var refresh by remember { mutableStateOf(0) }
     val ignore = refresh
-
     val target = KhatmStore.getTarget(ctx)
     val completed = KhatmStore.getCompleted(ctx)
     var daysInput by remember { mutableStateOf(target.toString()) }
+    var pendingReset by remember { mutableStateOf<Int?>(null) }
 
     Column(Modifier.fillMaxSize().background(JannahColors.Cream)) {
         TopBar("Reading Plan", onBack = onBack)
-        
+
         Column(Modifier.padding(horizontal = JannahSpacing.gutter)) {
             Spacer(Modifier.height(16.dp))
             Text("CHOOSE YOUR PACE", style = JannahType.eyebrow, color = JannahColors.OrangeDeep)
@@ -53,11 +55,17 @@ fun KhatmScreen(onBack: () -> Unit, onOpenRange: (Int, Int) -> Unit) {
                     Modifier.height(56.dp).width(100.dp).clip(RoundedCornerShape(50)).background(JannahColors.Orange).pressClickable {
                         val days = daysInput.toIntOrNull() ?: 30
                         if (days > 0 && days <= 604) {
-                            KhatmStore.setTarget(ctx, days)
-                            KhatmStore.reset(ctx)
-                            refresh++
+                            if (days == target) {
+                                refresh++
+                            } else if (completed > 0) {
+                                pendingReset = days
+                            } else {
+                                KhatmStore.setTarget(ctx, days)
+                                KhatmStore.reset(ctx)
+                                refresh++
+                            }
                         }
-                    }, 
+                    },
                     contentAlignment = Alignment.Center
                 ) {
                     Text("Save", color = JannahColors.OnOrange, fontWeight = FontWeight.Bold)
@@ -84,7 +92,7 @@ fun KhatmScreen(onBack: () -> Unit, onOpenRange: (Int, Int) -> Unit) {
                 val isCompleted = index < completed
                 val isActive = index == completed
                 val isLocked = index > completed
-                
+
                 Row(
                     Modifier.fillMaxWidth().clip(RoundedCornerShape(12.dp))
                         .background(JannahColors.Card)
@@ -99,7 +107,7 @@ fun KhatmScreen(onBack: () -> Unit, onOpenRange: (Int, Int) -> Unit) {
                         Spacer(Modifier.height(2.dp))
                         Text("${end - start + 1} pages", style = JannahType.caption, color = JannahColors.Muted)
                     }
-                    
+
                     Box(
                         Modifier.size(36.dp).clip(CircleShape)
                             .background(
@@ -109,7 +117,7 @@ fun KhatmScreen(onBack: () -> Unit, onOpenRange: (Int, Int) -> Unit) {
                                     else -> JannahColors.Border
                                 }
                             )
-                            .pressClickable(enabled = isActive) { 
+                            .pressClickable(enabled = isActive) {
                                 KhatmStore.markDayCompleted(ctx)
                                 refresh++
                             },
@@ -118,11 +126,36 @@ fun KhatmScreen(onBack: () -> Unit, onOpenRange: (Int, Int) -> Unit) {
                         when {
                             isCompleted -> Text("✓", color = JannahColors.OnOrange, fontWeight = FontWeight.Bold, fontSize = 18.sp)
                             isActive -> Text("○", color = JannahColors.Orange, fontWeight = FontWeight.Bold, fontSize = 18.sp)
-                            else -> Text("🔒", fontSize = 14.sp)
+                            else -> Text("·", color = JannahColors.Muted, fontWeight = FontWeight.Bold, fontSize = 20.sp)
                         }
                     }
                 }
             }
         }
+    }
+
+    pendingReset?.let { newDays ->
+        AlertDialog(
+            onDismissRequest = { pendingReset = null },
+            containerColor = JannahColors.Surface,
+            title = {
+                Text("Change pace?", fontFamily = FontFamily.Serif, fontWeight = FontWeight.Bold, color = JannahColors.Ink)
+            },
+            text = {
+                Text("You have completed $completed of $target days. Changing pace will reset this progress. Continue?",
+                    style = JannahType.bodySmall, color = JannahColors.Body, lineHeight = 20.sp)
+            },
+            confirmButton = {
+                TextButton(onClick = {
+                    KhatmStore.setTarget(ctx, newDays)
+                    KhatmStore.reset(ctx)
+                    pendingReset = null
+                    refresh++
+                }) { Text("Change anyway", color = JannahColors.Orange, fontWeight = FontWeight.Bold) }
+            },
+            dismissButton = {
+                TextButton(onClick = { pendingReset = null }) { Text("Cancel", color = JannahColors.Muted) }
+            }
+        )
     }
 }
