@@ -34,17 +34,17 @@ fun AboutScreen(onBack: () -> Unit) {
 
         Column(Modifier.padding(horizontal = JannahSpacing.gutter)) {
             Spacer(Modifier.height(JannahSpacing.l))
-            
+
             Text("Jannah OS", fontFamily = FontFamily.Serif, fontSize = 28.sp, fontWeight = FontWeight.Bold, color = JannahColors.Ink)
             Spacer(Modifier.height(JannahSpacing.s))
             Text("A quiet space for worship.", style = JannahType.body, color = JannahColors.Orange)
-            
+
             Spacer(Modifier.height(JannahSpacing.xl))
 
             Text("PRIVACY", style = JannahType.eyebrow, color = JannahColors.OrangeDeep)
             Spacer(Modifier.height(JannahSpacing.s))
             Text(
-                "No accounts. No ads. No tracking. Your data is encrypted and stays on this device. You can export or erase everything in Settings at any time.",
+                "No accounts, no ads, no analytics. Your personal records — diary, deeds, khatm progress, bookmarks, private commitments — are stored only on this device and are never uploaded. Quran pages and tafsir are fetched on demand from alquran.cloud using only the page or surah number, not your identity. You can export or erase your records from Backup & restore at any time.",
                 style = JannahType.bodySmall, color = JannahColors.Body, lineHeight = 22.sp
             )
 
@@ -84,7 +84,7 @@ fun AboutScreen(onBack: () -> Unit) {
                     lineHeight = 24.sp
                 )
             }
-            
+
             Spacer(Modifier.height(JannahSpacing.xxl))
         }
     }

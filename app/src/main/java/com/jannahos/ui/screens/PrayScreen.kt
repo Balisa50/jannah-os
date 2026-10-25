@@ -15,7 +15,6 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.jannahos.*
@@ -31,21 +30,37 @@ import java.util.Locale
 @Composable
 fun PrayScreen() {
     val ctx = LocalContext.current
-    var tick by remember { mutableStateOf(0) }
-    LaunchedEffect(Unit) { while (true) { delay(1000); tick++ } }
-
     val lat = Settings.lat(ctx)
     val lon = Settings.lon(ctx)
-    val times = remember { SalahScheduler.todayTimes(lat, lon) }
+
+    var times by remember { mutableStateOf(SalahScheduler.todayTimes(lat, lon)) }
+    var dateKey by remember { mutableStateOf(SimpleDateFormat("yyyy-MM-dd", Locale.US).format(Date())) }
+    var now by remember { mutableLongStateOf(System.currentTimeMillis()) }
+
+    LaunchedEffect(Unit) {
+        while (true) {
+            delay(1000)
+            val fresh = System.currentTimeMillis()
+            now = fresh
+            val freshKey = SimpleDateFormat("yyyy-MM-dd", Locale.US).format(Date(fresh))
+            if (freshKey != dateKey) {
+                dateKey = freshKey
+                times = SalahScheduler.todayTimes(lat, lon)
+            }
+        }
+    }
+
     val hhmm = SimpleDateFormat("HH:mm", Locale.getDefault())
     val ordered = listOf("fajr", "dhuhr", "asr", "maghrib", "isha")
-    val now = System.currentTimeMillis()
     val nextKey = ordered.firstOrNull { (times[it] ?: 0L) > now }
-    val nextTime = nextKey?.let { times[it] }
-    val diffMs = (nextTime ?: 0L) - now
-    val countdown = if (nextTime != null && diffMs > 0) {
-        String.format(Locale.US, "%02d:%02d:%02d", diffMs / 3600000, (diffMs / 60000) % 60, (diffMs / 1000) % 60)
-    } else "--:--:--"
+    val isTomorrow = nextKey == null
+    val nextTime: Long = nextKey?.let { times[it] } ?: ((times["fajr"] ?: 0L) + 24L * 60 * 60 * 1000L)
+    val nextLabel = nextKey?.let { SalahTracker.label(it) } ?: "Fajr"
+    val diffMs = (nextTime - now).coerceAtLeast(0L)
+    val countdown = String.format(
+        Locale.US, "%02d:%02d:%02d",
+        diffMs / 3600000, (diffMs / 60000) % 60, (diffMs / 1000) % 60
+    )
 
     Column(modifier = Modifier.fillMaxSize().verticalScroll(rememberScrollState()).background(JannahColors.Cream)) {
         Box(Modifier.fillMaxWidth().padding(horizontal = JannahSpacing.gutter).padding(top = JannahSpacing.l, bottom = JannahSpacing.m)) {
@@ -57,22 +72,27 @@ fun PrayScreen() {
         }
 
         Column(Modifier.padding(horizontal = JannahSpacing.gutter)) {
-            if (nextKey != null && nextTime != null) {
-                Box(Modifier.fillMaxWidth().clip(RoundedCornerShape(JannahSpacing.cardRadius)).background(JannahColors.Orange).padding(JannahSpacing.l)) {
-                    Column {
-                        Text("NEXT", style = JannahType.eyebrow, color = JannahColors.OnOrange.copy(alpha = 0.75f))
-                        Spacer(Modifier.height(4.dp))
-                        Text(SalahTracker.label(nextKey), fontFamily = FontFamily.Serif, fontSize = 30.sp, fontWeight = FontWeight.Bold, color = JannahColors.OnOrange)
-                        Spacer(Modifier.height(2.dp))
-                        Row(verticalAlignment = Alignment.Bottom) {
-                            Text(countdown, fontFamily = FontFamily.Serif, fontSize = 22.sp, fontWeight = FontWeight.Bold, color = JannahColors.OnOrange)
-                            Spacer(Modifier.padding(horizontal = 4.dp))
-                            Text("· " + hhmm.format(Date(nextTime)), fontFamily = FontFamily.Serif, fontStyle = FontStyle.Italic, fontSize = 16.sp, color = JannahColors.OnOrange.copy(alpha = 0.85f), modifier = Modifier.padding(bottom = 3.dp))
-                        }
+            Box(Modifier.fillMaxWidth().clip(RoundedCornerShape(JannahSpacing.cardRadius)).background(JannahColors.Orange).padding(JannahSpacing.l)) {
+                Column {
+                    Text(if (isTomorrow) "TOMORROW" else "NEXT", style = JannahType.eyebrow, color = JannahColors.OnOrange.copy(alpha = 0.75f))
+                    Spacer(Modifier.height(4.dp))
+                    Text(nextLabel, fontFamily = FontFamily.Serif, fontSize = 30.sp, fontWeight = FontWeight.Bold, color = JannahColors.OnOrange)
+                    Spacer(Modifier.height(2.dp))
+                    Row(verticalAlignment = Alignment.Bottom) {
+                        Text(countdown, fontFamily = FontFamily.Serif, fontSize = 22.sp, fontWeight = FontWeight.Bold, color = JannahColors.OnOrange)
+                        Spacer(Modifier.padding(horizontal = 4.dp))
+                        Text(
+                            "· " + hhmm.format(Date(nextTime)),
+                            fontFamily = FontFamily.Serif,
+                            fontStyle = FontStyle.Italic,
+                            fontSize = 16.sp,
+                            color = JannahColors.OnOrange.copy(alpha = 0.85f),
+                            modifier = Modifier.padding(bottom = 3.dp)
+                        )
                     }
                 }
-                Spacer(Modifier.height(JannahSpacing.m))
             }
+            Spacer(Modifier.height(JannahSpacing.m))
 
             Box(Modifier.fillMaxWidth().clip(RoundedCornerShape(JannahSpacing.cardRadius)).background(JannahColors.Card)) {
                 Column {
@@ -100,7 +120,7 @@ fun PrayScreen() {
                     Text("→", style = JannahType.title, color = JannahColors.Orange)
                 }
             }
-            
+
             Spacer(Modifier.height(JannahSpacing.xxl))
         }
     }

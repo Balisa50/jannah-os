@@ -169,6 +169,7 @@ fun JannahApp() {
             composable("weekly") { ErrorBoundary("Weekly") { WeeklyReviewScreen(onBack = { nav.popBackStack() }) } }
             composable("struggle") { ErrorBoundary("Struggle") { StruggleScreen(onBack = { nav.popBackStack() }) } }
             composable("letters") { ErrorBoundary("Letters") { LettersScreen(onBack = { nav.popBackStack() }) } }
+            composable("about") { ErrorBoundary("About") { AboutScreen(onBack = { nav.popBackStack() }) } }
         }
     }
 }

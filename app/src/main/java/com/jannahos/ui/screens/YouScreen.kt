@@ -63,6 +63,8 @@ fun YouScreen(onNavigate: (String) -> Unit = {}) {
             
             SectionLabel("SETTINGS")
             ListRow("App Settings") { ctx.startActivity(Intent(ctx, SettingsActivity::class.java)) }
+            Divider()
+            ListRow("About Jannah") { onNavigate("about") }
             Spacer(Modifier.height(JannahSpacing.xxl))
         }
     }

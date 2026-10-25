@@ -36,8 +36,17 @@ import java.util.Locale
 fun TodayScreen(onNavigate: (String) -> Unit = {}) {
     val ctx = LocalContext.current
     var prayerTimes by remember { mutableStateOf(SalahScheduler.localTimes(Settings.lat(ctx), Settings.lon(ctx))) }
-    val todayKey = remember { SimpleDateFormat("yyyy-MM-dd", Locale.US).format(Date()) }
-    
+    var todayKey by remember { mutableStateOf(SimpleDateFormat("yyyy-MM-dd", Locale.US).format(Date())) }
+
+    // Poll for date rollover; when it changes, todayKey updates and the fetch below re-fires.
+    LaunchedEffect(Unit) {
+        while (true) {
+            delay(60_000)
+            val fresh = SimpleDateFormat("yyyy-MM-dd", Locale.US).format(Date())
+            if (fresh != todayKey) todayKey = fresh
+        }
+    }
+
     LaunchedEffect(todayKey) {
         kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.IO) {
             val fresh = SalahScheduler.todayTimes(Settings.lat(ctx), Settings.lon(ctx))
@@ -65,7 +74,6 @@ fun TodayScreen(onNavigate: (String) -> Unit = {}) {
     val hadith = DailyHadith.today()
 
     Column(modifier = Modifier.fillMaxSize().verticalScroll(rememberScrollState()).background(JannahColors.Cream)) {
-        // HERO
         Box(Modifier.fillMaxWidth().height(260.dp).clip(RoundedCornerShape(bottomStart = 24.dp, bottomEnd = 24.dp))) {
             Image(painter = painterResource(id = com.jannahos.R.drawable.hero_today), contentDescription = "Today", contentScale = ContentScale.Crop, modifier = Modifier.fillMaxSize())
             Box(Modifier.fillMaxSize().background(Brush.verticalGradient(colors = listOf(Color.Transparent, Color.Black.copy(alpha = 0.2f), Color.Black.copy(alpha = 0.8f)))))
@@ -81,7 +89,6 @@ fun TodayScreen(onNavigate: (String) -> Unit = {}) {
         Spacer(Modifier.height(JannahSpacing.m))
 
         Column(Modifier.padding(horizontal = JannahSpacing.gutter)) {
-            // NEXT PRAYER
             Text("NEXT PRAYER", style = JannahType.eyebrow, color = JannahColors.OrangeDeep)
             Spacer(Modifier.height(4.dp))
             Row(verticalAlignment = Alignment.Bottom) {
@@ -93,38 +100,37 @@ fun TodayScreen(onNavigate: (String) -> Unit = {}) {
             LiveCountdown(displayTime)
             Spacer(Modifier.height(4.dp))
             Text(if (nextKey == null) "Tomorrow" else SimpleDateFormat("HH:mm", Locale.getDefault()).format(Date(displayTime)), style = JannahType.caption, color = JannahColors.Muted)
-            
+
             Spacer(Modifier.height(JannahSpacing.l))
 
-            // RAMADAN OS
             val ramadan = RamadanMode.current()
             if (ramadan.active) {
-                val now = System.currentTimeMillis()
-                val fajrTime = prayerTimes["fajr"] ?: now
-                val maghribTime = prayerTimes["maghrib"] ?: now
-                
+                val nowT = System.currentTimeMillis()
+                val fajrTime = prayerTimes["fajr"] ?: nowT
+                val maghribTime = prayerTimes["maghrib"] ?: nowT
+
                 Box(Modifier.fillMaxWidth().clip(RoundedCornerShape(JannahSpacing.cardRadius)).background(JannahColors.Orange).padding(JannahSpacing.l)) {
                     Column {
                         Text("RAMADAN · DAY ${ramadan.dayOfRamadan}", style = JannahType.eyebrow, color = JannahColors.OnOrange.copy(alpha = 0.75f))
                         Spacer(Modifier.height(8.dp))
-                        
-                        if (now < fajrTime) {
+
+                        if (nowT < fajrTime) {
                             Text("Suhoor ends in", fontFamily = FontFamily.Serif, fontSize = 18.sp, color = JannahColors.OnOrange)
-                            val diff = fajrTime - now
+                            val diff = fajrTime - nowT
                             val h = diff / 3600000
                             val m = (diff / 60000) % 60
                             Text(String.format(Locale.US, "%02dh %02dm", h, m), fontFamily = FontFamily.Serif, fontSize = 32.sp, fontWeight = FontWeight.Bold, color = JannahColors.OnOrange)
-                        } else if (now < maghribTime) {
+                        } else if (nowT < maghribTime) {
                             Text("Iftar in", fontFamily = FontFamily.Serif, fontSize = 18.sp, color = JannahColors.OnOrange)
-                            val diff = maghribTime - now
+                            val diff = maghribTime - nowT
                             val h = diff / 3600000
                             val m = (diff / 60000) % 60
                             Text(String.format(Locale.US, "%02dh %02dm", h, m), fontFamily = FontFamily.Serif, fontSize = 32.sp, fontWeight = FontWeight.Bold, color = JannahColors.OnOrange)
-                            
+
                             Spacer(Modifier.height(16.dp))
                             val isFasted = RamadanStore.isFastedToday(ctx)
                             Row(verticalAlignment = Alignment.CenterVertically) {
-                                Box(Modifier.size(24.dp).clip(RoundedCornerShape(50)).background(if (isFasted) JannahColors.OnOrange else JannahColors.OnOrange.copy(alpha = 0.3f)).pressClickable { 
+                                Box(Modifier.size(24.dp).clip(RoundedCornerShape(50)).background(if (isFasted) JannahColors.OnOrange else JannahColors.OnOrange.copy(alpha = 0.3f)).pressClickable {
                                     RamadanStore.setFastedToday(ctx, !isFasted)
                                 }, contentAlignment = Alignment.Center) {
                                     if (isFasted) Text("✓", color = JannahColors.OrangeDeep, fontSize = 14.sp, fontWeight = FontWeight.Bold)
@@ -142,7 +148,6 @@ fun TodayScreen(onNavigate: (String) -> Unit = {}) {
                 Spacer(Modifier.height(JannahSpacing.l))
             }
 
-            // DAILY HADITH (Moved up for visibility)
             Box(Modifier.fillMaxWidth().clip(RoundedCornerShape(JannahSpacing.cardRadius)).background(JannahColors.Card).padding(JannahSpacing.l)) {
                 Column {
                     Text("HADITH · ${hadith.theme.uppercase()}", style = JannahType.eyebrow, color = JannahColors.OrangeDeep)
@@ -155,7 +160,6 @@ fun TodayScreen(onNavigate: (String) -> Unit = {}) {
 
             Spacer(Modifier.height(JannahSpacing.m))
 
-            // DYNAMIC DIARY REFLECTION (Psychological integration)
             val latestEntry = remember { com.jannahos.DiaryStore(ctx).recent(1).firstOrNull() }
             if (latestEntry != null && (System.currentTimeMillis() - latestEntry.ts) < 24 * 60 * 60 * 1000) {
                 val result = com.jannahos.DiaryClassifier.classify(latestEntry.text)
@@ -175,7 +179,6 @@ fun TodayScreen(onNavigate: (String) -> Unit = {}) {
                 }
             }
 
-            // QURAN CONTINUE
             Box(Modifier.fillMaxWidth().clip(RoundedCornerShape(JannahSpacing.cardRadius)).background(JannahColors.Card).pressClickable { onNavigate("quran") }.padding(JannahSpacing.l)) {
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     Column(Modifier.weight(1f)) {
