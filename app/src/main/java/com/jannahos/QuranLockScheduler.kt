@@ -9,6 +9,7 @@ import java.util.Calendar
 import kotlin.random.Random
 
 object QuranLockScheduler {
+    private const val REQ_CODE = 777
     private val safeWindows = listOf(Pair(480, 660), Pair(840, 1020), Pair(1200, 1320))
 
     fun scheduleRandomLock(ctx: Context) {
@@ -44,12 +45,29 @@ object QuranLockScheduler {
         scheduleAlarm(ctx, alarmManager, triggerTime)
     }
 
+    fun cancel(ctx: Context) {
+        val am = ctx.getSystemService(Context.ALARM_SERVICE) as AlarmManager
+        val intent = Intent(ctx, QuranLockReceiver::class.java)
+        val pi = PendingIntent.getBroadcast(
+            ctx, REQ_CODE, intent,
+            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+        )
+        am.cancel(pi)
+        pi.cancel()
+    }
+
     private fun scheduleAlarm(ctx: Context, am: AlarmManager, timeMs: Long) {
         val intent = Intent(ctx, QuranLockReceiver::class.java)
-        val pendingIntent = PendingIntent.getBroadcast(ctx, 777, intent, PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE)
+        val pendingIntent = PendingIntent.getBroadcast(
+            ctx, REQ_CODE, intent,
+            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+        )
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
-            if (am.canScheduleExactAlarms()) am.setExactAndAllowWhileIdle(AlarmManager.RTC_WAKEUP, timeMs, pendingIntent)
-            else am.setAndAllowWhileIdle(AlarmManager.RTC_WAKEUP, timeMs, pendingIntent)
+            if (am.canScheduleExactAlarms()) {
+                am.setExactAndAllowWhileIdle(AlarmManager.RTC_WAKEUP, timeMs, pendingIntent)
+            } else {
+                am.setAndAllowWhileIdle(AlarmManager.RTC_WAKEUP, timeMs, pendingIntent)
+            }
         } else {
             am.setExactAndAllowWhileIdle(AlarmManager.RTC_WAKEUP, timeMs, pendingIntent)
         }

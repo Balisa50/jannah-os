@@ -30,17 +30,16 @@ fun MushafPageScreen(startPage: Int, endPage: Int = 604, onBack: () -> Unit) {
     SwipeBackScreen(onBack = onBack) {
         val ctx = LocalContext.current
         val pageCount = endPage - startPage + 1
-        
+
         val pagerState = rememberPagerState(
             initialPage = 0,
             pageCount = { pageCount }
         )
-        
+
         val currentRealPage = startPage + pagerState.currentPage
 
         Column(Modifier.fillMaxSize().background(JannahColors.Cream)) {
-            
-            // 1. THIN ORANGE TOP BAR
+
             Row(
                 Modifier
                     .fillMaxWidth()
@@ -59,13 +58,11 @@ fun MushafPageScreen(startPage: Int, endPage: Int = 604, onBack: () -> Unit) {
                 Text("Quran", fontFamily = FontFamily.Serif, fontSize = 18.sp, fontWeight = FontWeight.Bold, color = JannahColors.OnOrange)
             }
 
-            // 2. MAXIMUM QURAN PAGE
             Box(
                 Modifier
                     .weight(1f)
                     .fillMaxWidth()
-                    .background(Color(0xFFFFFCF3)) // The paper color
-                    .padding(horizontal = 4.dp, vertical = 4.dp) // Very small gap so it doesn't touch the bezel
+                    .background(Color(0xFFFFFCF3))
             ) {
                 HorizontalPager(
                     state = pagerState,
@@ -86,7 +83,6 @@ fun MushafPageScreen(startPage: Int, endPage: Int = 604, onBack: () -> Unit) {
                 }
             }
 
-            // 3. THIN ORANGE BOTTOM BAR
             Box(
                 Modifier
                     .fillMaxWidth()
@@ -96,7 +92,7 @@ fun MushafPageScreen(startPage: Int, endPage: Int = 604, onBack: () -> Unit) {
                 contentAlignment = Alignment.Center
             ) {
                 Text(
-                    "Page $currentRealPage of $endPage (${pagerState.currentPage + 1} / $pageCount)", 
+                    "Page $currentRealPage of $endPage (${pagerState.currentPage + 1} / $pageCount)",
                     style = JannahType.micro, color = JannahColors.OnOrange, fontWeight = FontWeight.Bold
                 )
             }

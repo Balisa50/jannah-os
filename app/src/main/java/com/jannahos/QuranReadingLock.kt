@@ -17,10 +17,10 @@ object QuranReadingLock {
     fun setEnabled(ctx: Context, on: Boolean) {
         ctx.getSharedPreferences(PREFS, Context.MODE_PRIVATE).edit().putBoolean(KEY_ENABLED, on).apply()
         if (on) {
-            // Schedule the random lock for today
             QuranLockScheduler.scheduleRandomLock(ctx)
         } else {
             setActiveToday(ctx, false)
+            QuranLockScheduler.cancel(ctx)
         }
     }
 
