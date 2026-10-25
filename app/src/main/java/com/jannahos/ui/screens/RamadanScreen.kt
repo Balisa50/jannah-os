@@ -29,14 +29,13 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontFamily
-import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.jannahos.KhatmStore
 import com.jannahos.LaylatulQadrStore
 import com.jannahos.RamadanMode
-import com.jannahos.ui.TopBar
 import com.jannahos.ui.pressClickable
 import com.jannahos.ui.theme.JannahColors
 import com.jannahos.ui.theme.JannahSpacing
@@ -117,9 +116,64 @@ fun RamadanScreen(onBack: () -> Unit) {
                 }
             }
 
+            if (phase.active) {
+                Spacer(Modifier.height(JannahSpacing.m))
+
+                val target = KhatmStore.getTarget(ctx)
+                val completedDays = KhatmStore.getCompleted(ctx)
+                val expected = (phase.dayOfRamadan - 1).coerceAtLeast(0)
+                val ahead = completedDays - expected
+
+                Box(
+                    Modifier.fillMaxWidth().clip(RoundedCornerShape(JannahSpacing.cardRadius))
+                        .background(JannahColors.Card).padding(JannahSpacing.l)
+                ) {
+                    Column {
+                        Text("RAMADAN KHATM", style = JannahType.eyebrow, color = JannahColors.OrangeDeep)
+                        Spacer(Modifier.height(JannahSpacing.s))
+                        Text("$completedDays of $target days completed",
+                            style = JannahType.bodySmall, color = JannahColors.Ink, fontWeight = FontWeight.Bold)
+                        Spacer(Modifier.height(4.dp))
+
+                        if (completedDays >= target) {
+                            Text("Khatm complete, alhamdulillah.",
+                                style = JannahType.body, color = JannahColors.OrangeDeep, fontWeight = FontWeight.Bold)
+                        } else {
+                            val statusText = when {
+                                completedDays == 0 -> "Start tonight."
+                                ahead > 0 -> "Ahead by $ahead ${if (ahead == 1) "day" else "days"}."
+                                ahead < 0 -> "Behind by ${-ahead} ${if (-ahead == 1) "day" else "days"}."
+                                else -> "On pace."
+                            }
+                            val paceColor = when {
+                                ahead > 0 -> JannahColors.OrangeDeep
+                                ahead < 0 -> JannahColors.Danger
+                                else -> JannahColors.Ink
+                            }
+                            Text(statusText, style = JannahType.body, color = paceColor, fontWeight = FontWeight.Bold)
+                            Spacer(Modifier.height(JannahSpacing.xs))
+                            val idx = completedDays.coerceIn(0, target - 1)
+                            val (startPage, endPage) = KhatmStore.getRangeForDay(ctx, idx)
+                            Text("Next: pages $startPage to $endPage",
+                                style = JannahType.caption, color = JannahColors.Muted)
+                            Spacer(Modifier.height(2.dp))
+                            Box(
+                                Modifier.fillMaxWidth().height(4.dp)
+                                    .clip(RoundedCornerShape(2.dp)).background(JannahColors.Border)
+                            ) {
+                                Box(
+                                    Modifier.fillMaxWidth(
+                                        if (target == 0) 0f else (completedDays.toFloat() / target).coerceIn(0f, 1f)
+                                    ).height(4.dp).clip(RoundedCornerShape(2.dp)).background(JannahColors.Orange)
+                                )
+                            }
+                        }
+                    }
+                }
+            }
+
             Spacer(Modifier.height(JannahSpacing.l))
 
-            // ─── LAYLATUL QADR TRACKER ───
             Text("THE LAST TEN NIGHTS", style = JannahType.eyebrow, color = JannahColors.OrangeDeep)
             Spacer(Modifier.height(JannahSpacing.xs))
             Text("Tap a night when you stand in prayer. Progress saves automatically.",

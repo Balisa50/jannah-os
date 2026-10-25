@@ -128,10 +128,12 @@ fun TodayScreen(onNavigate: (String) -> Unit = {}) {
                             Text(String.format(Locale.US, "%02dh %02dm", h, m), fontFamily = FontFamily.Serif, fontSize = 32.sp, fontWeight = FontWeight.Bold, color = JannahColors.OnOrange)
 
                             Spacer(Modifier.height(16.dp))
-                            val isFasted = RamadanStore.isFastedToday(ctx)
+                            var isFasted by remember { mutableStateOf(RamadanStore.isFastedToday(ctx)) }
                             Row(verticalAlignment = Alignment.CenterVertically) {
                                 Box(Modifier.size(24.dp).clip(RoundedCornerShape(50)).background(if (isFasted) JannahColors.OnOrange else JannahColors.OnOrange.copy(alpha = 0.3f)).pressClickable {
-                                    RamadanStore.setFastedToday(ctx, !isFasted)
+                                    val next = !isFasted
+                                    RamadanStore.setFastedToday(ctx, next)
+                                    isFasted = next
                                 }, contentAlignment = Alignment.Center) {
                                     if (isFasted) Text("✓", color = JannahColors.OrangeDeep, fontSize = 14.sp, fontWeight = FontWeight.Bold)
                                 }
