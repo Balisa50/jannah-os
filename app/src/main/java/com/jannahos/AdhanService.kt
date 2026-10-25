@@ -10,6 +10,7 @@ import android.os.Build
 import android.os.IBinder
 import android.os.VibrationEffect
 import android.os.Vibrator
+import android.os.VibratorManager
 import androidx.core.app.NotificationCompat
 
 class AdhanService : Service() {
@@ -19,17 +20,17 @@ class AdhanService : Service() {
         val prayer = intent?.getStringExtra("prayer") ?: "fajr"
         val name = SalahTracker.label(prayer)
 
-        val channelId = "adhan_channel_v5"
+        val channelId = "adhan_lock_channel"
         val nm = getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            val channel = NotificationChannel(channelId, "Prayer Alerts", NotificationManager.IMPORTANCE_HIGH).apply {
+            val channel = NotificationChannel(channelId, "Prayer Lock", NotificationManager.IMPORTANCE_HIGH).apply {
                 setSound(null, null)
-                enableVibration(true)
+                enableVibration(false)
             }
             nm.createNotificationChannel(channel)
         }
 
-        val launchIntent = packageManager.getLaunchIntentForPackage(packageName)
+        val launchIntent = SalahCommitmentActivity.intent(this).putExtra("prayer", prayer)
         val pendingIntent = PendingIntent.getActivity(this, 0, launchIntent, PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT)
 
         val notif = NotificationCompat.Builder(this, channelId)
@@ -43,19 +44,25 @@ class AdhanService : Service() {
             .setFullScreenIntent(pendingIntent, true)
             .build()
 
-        startForeground(2, notif)
-
-        // Vibrate pattern: wait 0ms, vibrate 1000ms, sleep 500ms, repeat
-        vibrator = getSystemService(Context.VIBRATOR_SERVICE) as Vibrator
-        if (vibrator?.hasVibrator() == true) {
-            val pattern = longArrayOf(0, 10000)
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-                vibrator?.vibrate(VibrationEffect.createWaveform(pattern, -1))
-            } else {
-                @Suppress("DEPRECATION")
-                vibrator?.vibrate(pattern, -1)
-            }
+        if (Build.VERSION.SDK_INT >= 34) {
+            startForeground(2, notif, android.content.pm.ServiceInfo.FOREGROUND_SERVICE_TYPE_MEDIA_PLAYBACK)
+        } else {
+            startForeground(2, notif)
         }
+
+        // Vibrate violently for 10 seconds
+        vibrator = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+            (getSystemService(Context.VIBRATOR_MANAGER_SERVICE) as VibratorManager).defaultVibrator
+        } else {
+            @Suppress("DEPRECATION") getSystemService(Context.VIBRATOR_SERVICE) as Vibrator
+        }
+        vibrator?.vibrate(VibrationEffect.createWaveform(longArrayOf(0, 600, 400), 0))
+
+        android.os.Handler(mainLooper).postDelayed({
+            vibrator?.cancel()
+            stopForeground(STOP_FOREGROUND_REMOVE)
+            stopSelf()
+        }, 10000L)
 
         return START_NOT_STICKY
     }
