@@ -1,6 +1,7 @@
 package com.jannahos.ui.screens
 
 import android.app.AlarmManager
+import android.app.NotificationManager
 import android.content.Context
 import android.content.Intent
 import android.net.Uri
@@ -39,9 +40,7 @@ fun PermissionSetupScreen(onAllSet: () -> Unit) {
     var accessibilityOn by remember { mutableStateOf(isAccessibilityEnabled(ctx)) }
     var batteryOn by remember { mutableStateOf(isBatteryOptimizationDisabled(ctx)) }
     var alarmsOn by remember { mutableStateOf(canScheduleExactAlarms(ctx)) }
-    var dndOn by remember { mutableStateOf((ctx.getSystemService(Context.NOTIFICATION_SERVICE) as android.app.NotificationManager).isNotificationPolicyAccessGranted) }
-    var dndOn by remember { mutableStateOf((ctx.getSystemService(Context.NOTIFICATION_SERVICE) as android.app.NotificationManager).isNotificationPolicyAccessGranted) }
-    var dndOn by remember { mutableStateOf((ctx.getSystemService(Context.NOTIFICATION_SERVICE) as android.app.NotificationManager).isNotificationPolicyAccessGranted) }
+    var dndOn by remember { mutableStateOf(isDndAllowed(ctx)) }
 
     DisposableEffect(lifecycleOwner) {
         val observer = LifecycleEventObserver { _, event ->
@@ -49,9 +48,7 @@ fun PermissionSetupScreen(onAllSet: () -> Unit) {
                 accessibilityOn = isAccessibilityEnabled(ctx)
                 batteryOn = isBatteryOptimizationDisabled(ctx)
                 alarmsOn = canScheduleExactAlarms(ctx)
-                dndOn = (ctx.getSystemService(Context.NOTIFICATION_SERVICE) as android.app.NotificationManager).isNotificationPolicyAccessGranted
-                dndOn = (ctx.getSystemService(Context.NOTIFICATION_SERVICE) as android.app.NotificationManager).isNotificationPolicyAccessGranted
-                dndOn = (ctx.getSystemService(Context.NOTIFICATION_SERVICE) as android.app.NotificationManager).isNotificationPolicyAccessGranted
+                dndOn = isDndAllowed(ctx)
             }
         }
         lifecycleOwner.lifecycle.addObserver(observer)
@@ -96,42 +93,6 @@ fun PermissionSetupScreen(onAllSet: () -> Unit) {
 
         Spacer(Modifier.height(JannahSpacing.m))
 
-        // 4. DND
-        PermissionCard(
-            title = "Digital Sanctuary (DND)",
-            description = "Silences all notifications while you pray or read Quran.",
-            isGranted = dndOn,
-            actionText = if (dndOn) "Allowed" else "Allow"
-        ) {
-            ctx.startActivity(Intent(android.provider.Settings.ACTION_NOTIFICATION_POLICY_ACCESS_SETTINGS))
-        }
-
-        Spacer(Modifier.height(JannahSpacing.m))
-
-        // 4. DND
-        PermissionCard(
-            title = "Digital Sanctuary (DND)",
-            description = "Silences all notifications while you pray or read Quran.",
-            isGranted = dndOn,
-            actionText = if (dndOn) "Allowed" else "Allow"
-        ) {
-            ctx.startActivity(Intent(android.provider.Settings.ACTION_NOTIFICATION_POLICY_ACCESS_SETTINGS))
-        }
-
-        Spacer(Modifier.height(JannahSpacing.m))
-
-        // 4. DND
-        PermissionCard(
-            title = "Digital Sanctuary (DND)",
-            description = "Silences all notifications while you pray or read Quran.",
-            isGranted = dndOn,
-            actionText = if (dndOn) "Allowed" else "Allow"
-        ) {
-            ctx.startActivity(Intent(android.provider.Settings.ACTION_NOTIFICATION_POLICY_ACCESS_SETTINGS))
-        }
-
-        Spacer(Modifier.height(JannahSpacing.m))
-
         // 3. Exact Alarms
         PermissionCard(
             title = "Exact Timings",
@@ -145,6 +106,18 @@ fun PermissionSetupScreen(onAllSet: () -> Unit) {
                 }
                 ctx.startActivity(intent)
             }
+        }
+
+        Spacer(Modifier.height(JannahSpacing.m))
+
+        // 4. DND (Digital Sanctuary)
+        PermissionCard(
+            title = "Digital Sanctuary",
+            description = "Silences all notifications while you pray or read Quran.",
+            isGranted = dndOn,
+            actionText = if (dndOn) "Allowed" else "Allow"
+        ) {
+            ctx.startActivity(Intent(Settings.ACTION_NOTIFICATION_POLICY_ACCESS_SETTINGS))
         }
 
         Spacer(Modifier.height(JannahSpacing.xxl))
@@ -197,4 +170,9 @@ private fun canScheduleExactAlarms(context: Context): Boolean {
     if (Build.VERSION.SDK_INT < Build.VERSION_CODES.S) return true
     val am = context.getSystemService(Context.ALARM_SERVICE) as AlarmManager
     return am.canScheduleExactAlarms()
+}
+
+private fun isDndAllowed(context: Context): Boolean {
+    val nm = context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
+    return nm.isNotificationPolicyAccessGranted
 }
