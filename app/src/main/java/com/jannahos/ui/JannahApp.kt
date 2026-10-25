@@ -15,6 +15,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
+import androidx.navigation.NavBackStackEntry
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
@@ -33,6 +34,9 @@ private val TABS = listOf(
     Tab("quran", "Quran", Icons.Default.Menu),
     Tab("you",   "You",   Icons.Default.Person)
 )
+private val TAB_ROUTES: Set<String> = TABS.map { it.route }.toSet()
+
+private fun NavBackStackEntry.isTab(): Boolean = destination.route in TAB_ROUTES
 
 @Composable
 fun JannahApp() {
@@ -40,8 +44,8 @@ fun JannahApp() {
     val nav = rememberNavController()
     val backStack by nav.currentBackStackEntryAsState()
     val currentRoute = backStack?.destination?.route ?: "today"
-    
-    val showBottomBar = currentRoute in listOf("today", "pray", "quran", "you")
+
+    val showBottomBar = currentRoute in TAB_ROUTES
 
     var comebackState by remember { mutableStateOf<ComebackCheck.State?>(null) }
     var showReflection by remember { mutableStateOf(false) }
@@ -67,6 +71,14 @@ fun JannahApp() {
     if (showComeback && cs != null) { ScreenScaffold { ErrorBoundary("Comeback") { ComebackScreen(cs, onDismiss = { showComeback = false }) } }; return }
     if (showReflection) { ScreenScaffold { ErrorBoundary("Morning reflection") { MorningReflectionScreen(onDismiss = { showReflection = false }) } }; return }
     if (showEv) { ScreenScaffold { ErrorBoundary("Evening reckoning") { EveningScreen(onDismiss = { showEv = false }) } }; return }
+
+    // Tab switches: fast fade. Sub-route pushes: smooth slide. Both shorter than the previous 350ms.
+    val tabEnter = fadeIn(tween(120))
+    val tabExit = fadeOut(tween(120))
+    val pushEnter = slideIntoContainer(AnimatedContentTransitionScope.SlideDirection.Start, tween(280)) + fadeIn(tween(200))
+    val pushExit = slideOutOfContainer(AnimatedContentTransitionScope.SlideDirection.Start, tween(280)) + fadeOut(tween(200))
+    val popEnter = slideIntoContainer(AnimatedContentTransitionScope.SlideDirection.End, tween(280)) + fadeIn(tween(200))
+    val popExit = slideOutOfContainer(AnimatedContentTransitionScope.SlideDirection.End, tween(280)) + fadeOut(tween(200))
 
     Scaffold(
         containerColor = JannahColors.Cream,
@@ -102,48 +114,56 @@ fun JannahApp() {
             navController = nav,
             startDestination = "today",
             modifier = Modifier.fillMaxSize().padding(padding),
-            enterTransition = { slideIntoContainer(AnimatedContentTransitionScope.SlideDirection.Start, tween(350)) },
-            exitTransition = { slideOutOfContainer(AnimatedContentTransitionScope.SlideDirection.Start, tween(350)) },
-            popEnterTransition = { slideIntoContainer(AnimatedContentTransitionScope.SlideDirection.End, tween(350)) },
-            popExitTransition = { slideOutOfContainer(AnimatedContentTransitionScope.SlideDirection.End, tween(350)) }
+            enterTransition = {
+                if (initialState.isTab() && targetState.isTab()) tabEnter else pushEnter
+            },
+            exitTransition = {
+                if (initialState.isTab() && targetState.isTab()) tabExit else pushExit
+            },
+            popEnterTransition = {
+                if (initialState.isTab() && targetState.isTab()) tabEnter else popEnter
+            },
+            popExitTransition = {
+                if (initialState.isTab() && targetState.isTab()) tabExit else popExit
+            }
         ) {
             composable("today") { ErrorBoundary("Today") { TodayScreen(onNavigate = goTo) } }
             composable("pray") { ErrorBoundary("Pray") { PrayScreen() } }
-            
-            composable("quran") { 
-                ErrorBoundary("Quran") { 
+
+            composable("quran") {
+                ErrorBoundary("Quran") {
                     QuranTabScreen(
                         onNavigateToSurah = { surah -> nav.navigate("mushaf/${QuranStore.firstPageOfSurah(surah)}/604") },
                         onNavigateToSearch = { nav.navigate("search") },
                         onNavigateToPlan = { nav.navigate("plan") }
-                    ) 
-                } 
+                    )
+                }
             }
-            
-            composable("search") { 
-                ErrorBoundary("Search") { 
-                    QuranSearchScreen(onBack = { nav.popBackStack() }, onNavigateToPage = { page -> nav.navigate("mushaf/$page/604") }) 
-                } 
+
+            composable("search") {
+                ErrorBoundary("Search") {
+                    QuranSearchScreen(onBack = { nav.popBackStack() }, onNavigateToPage = { page -> nav.navigate("mushaf/$page/604") })
+                }
             }
-            
-            composable("plan") { 
-                ErrorBoundary("Plan") { 
-                    KhatmScreen(onBack = { nav.popBackStack() }, onOpenRange = { start, end -> nav.navigate("mushaf/$start/$end") }) 
-                } 
+
+            composable("plan") {
+                ErrorBoundary("Plan") {
+                    KhatmScreen(onBack = { nav.popBackStack() }, onOpenRange = { start, end -> nav.navigate("mushaf/$start/$end") })
+                }
             }
-            
+
             composable("mushaf/{startPage}/{endPage}") { backStackEntry ->
                 val startPage = backStackEntry.arguments?.getString("startPage")?.toIntOrNull() ?: 1
                 val endPage = backStackEntry.arguments?.getString("endPage")?.toIntOrNull() ?: 604
-                ErrorBoundary("Quran Reader") { 
-                    MushafPageScreen(startPage = startPage, endPage = endPage, onBack = { nav.popBackStack() }) 
+                ErrorBoundary("Quran Reader") {
+                    MushafPageScreen(startPage = startPage, endPage = endPage, onBack = { nav.popBackStack() })
                 }
             }
-            
-            composable("you") { 
-                ErrorBoundary("You") { 
-                    YouScreen(onNavigate = { route -> nav.navigate(route) }) 
-                } 
+
+            composable("you") {
+                ErrorBoundary("You") {
+                    YouScreen(onNavigate = { route -> nav.navigate(route) })
+                }
             }
             composable("diary") { ErrorBoundary("Diary") { DiaryScreen(onBack = { nav.popBackStack() }) } }
             composable("backup") { ErrorBoundary("Backup") { BackupScreen(onBack = { nav.popBackStack() }) } }
