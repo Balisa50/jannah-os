@@ -66,7 +66,7 @@ fun QuranLockScreen(onRelease: () -> Unit) {
 @Composable
 private fun SurahPickerScreen(onPicked: (Int) -> Unit) {
     Column(Modifier.fillMaxSize().background(JannahColors.Cream)) {
-        Box(Modifier.fillMaxWidth().background(JannahColors.Orange).padding(horizontal = JannahSpacing.gutter, vertical = JannahSpacing.xxl).windowInsetsPadding(WindowInsets.statusBars)) {
+        Box(Modifier.fillMaxWidth().background(JannahColors.Orange).windowInsetsPadding(WindowInsets.statusBars).padding(horizontal = JannahSpacing.gutter, vertical = 16.dp)) {
             Text("Choose a Surah to read", color = JannahColors.OnOrange, style = JannahType.title, fontWeight = FontWeight.Bold)
         }
         LazyColumn(Modifier.fillMaxSize()) {
@@ -166,6 +166,7 @@ private fun ReadingLockSession(surah: Int, onRelease: () -> Unit) {
             ) {
                 Box(
                     Modifier.fillMaxWidth().height(56.dp).clip(RoundedCornerShape(JannahSpacing.pillRadius)).background(JannahColors.Orange).pressClickable { 
+                        LockState.release(ctx)
                         onRelease() 
                     },
                     contentAlignment = Alignment.Center

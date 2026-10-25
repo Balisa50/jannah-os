@@ -31,10 +31,12 @@ import kotlinx.coroutines.delay
 class BedtimeLockActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        overridePendingTransition(0, 0)
         LockState.restore(this)
         
         if (!LockState.isEnforcing()) {
             finishAndRemoveTask()
+        overridePendingTransition(0, 0)
             return
         }
 
@@ -47,7 +49,8 @@ class BedtimeLockActivity : ComponentActivity() {
                 BedtimeLockContent(onDone = { 
                     LockState.release(this)
                     BedtimeStore.setLockActive(this, false)
-                    finishAndRemoveTask() 
+                    finishAndRemoveTask()
+        overridePendingTransition(0, 0) 
                 })
             }
         }

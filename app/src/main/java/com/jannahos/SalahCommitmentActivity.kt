@@ -31,10 +31,12 @@ import kotlinx.coroutines.delay
 class SalahCommitmentActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        overridePendingTransition(0, 0)
         LockState.restore(this)
         
         if (!LockState.isEnforcing()) {
             finishAndRemoveTask()
+        overridePendingTransition(0, 0)
             return
         }
 
@@ -57,6 +59,7 @@ class SalahCommitmentActivity : ComponentActivity() {
     private fun completeLock() {
         LockState.release(this)
         finishAndRemoveTask()
+        overridePendingTransition(0, 0)
     }
 
     companion object {
