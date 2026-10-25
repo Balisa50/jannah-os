@@ -1,5 +1,7 @@
 package com.jannahos.ui
 
+import androidx.compose.animation.*
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
@@ -30,14 +32,11 @@ fun OnboardingFlow(onDone: () -> Unit) {
     var step by remember { mutableStateOf(0) }
     var name by remember { mutableStateOf("") }
 
-    // Step 2 is the System Setup
     if (step == 2) {
-        PermissionSetupScreen(
-            onAllSet = {
-                Settings.setDisplayName(ctx, name)
-                onDone()
-            }
-        )
+        PermissionSetupScreen(onAllSet = {
+            Settings.setDisplayName(ctx, name)
+            onDone()
+        })
         return
     }
 
@@ -57,19 +56,29 @@ fun OnboardingFlow(onDone: () -> Unit) {
             Spacer(Modifier.height(JannahSpacing.xxl))
 
             Box(Modifier.weight(1f).fillMaxWidth()) {
-                when (step) {
-                    0 -> Welcome()
-                    1 -> AskName(name) { name = it }
+                AnimatedContent(
+                    targetState = step,
+                    transitionSpec = {
+                        if (targetState > initialState) {
+                            (slideInHorizontally(initialOffsetX = { it / 3 }, animationSpec = tween(350)) + fadeIn(tween(350))) togetherWith
+                            (slideOutHorizontally(targetOffsetX = { -it / 3 }, animationSpec = tween(350)) + fadeOut(tween(350)))
+                        } else {
+                            (slideInHorizontally(initialOffsetX = { -it / 3 }, animationSpec = tween(350)) + fadeIn(tween(350))) togetherWith
+                            (slideOutHorizontally(targetOffsetX = { it / 3 }, animationSpec = tween(350)) + fadeOut(tween(350)))
+                        }
+                    },
+                    label = "onboarding_transition"
+                ) { currentStep ->
+                    when (currentStep) {
+                        0 -> Welcome()
+                        1 -> AskName(name) { name = it }
+                    }
                 }
             }
 
             Box(
                 modifier = Modifier.fillMaxWidth().height(56.dp).clip(RoundedCornerShape(JannahSpacing.pillRadius)).background(JannahColors.Ink).clickable {
-                    if (step == 1) {
-                        step = 2
-                    } else {
-                        step = 1
-                    }
+                    if (step == 1) step = 2 else step = 1
                 },
                 contentAlignment = Alignment.Center
             ) {

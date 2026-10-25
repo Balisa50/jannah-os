@@ -39,6 +39,9 @@ fun PermissionSetupScreen(onAllSet: () -> Unit) {
     var accessibilityOn by remember { mutableStateOf(isAccessibilityEnabled(ctx)) }
     var batteryOn by remember { mutableStateOf(isBatteryOptimizationDisabled(ctx)) }
     var alarmsOn by remember { mutableStateOf(canScheduleExactAlarms(ctx)) }
+    var dndOn by remember { mutableStateOf((ctx.getSystemService(Context.NOTIFICATION_SERVICE) as android.app.NotificationManager).isNotificationPolicyAccessGranted) }
+    var dndOn by remember { mutableStateOf((ctx.getSystemService(Context.NOTIFICATION_SERVICE) as android.app.NotificationManager).isNotificationPolicyAccessGranted) }
+    var dndOn by remember { mutableStateOf((ctx.getSystemService(Context.NOTIFICATION_SERVICE) as android.app.NotificationManager).isNotificationPolicyAccessGranted) }
 
     DisposableEffect(lifecycleOwner) {
         val observer = LifecycleEventObserver { _, event ->
@@ -46,6 +49,9 @@ fun PermissionSetupScreen(onAllSet: () -> Unit) {
                 accessibilityOn = isAccessibilityEnabled(ctx)
                 batteryOn = isBatteryOptimizationDisabled(ctx)
                 alarmsOn = canScheduleExactAlarms(ctx)
+                dndOn = (ctx.getSystemService(Context.NOTIFICATION_SERVICE) as android.app.NotificationManager).isNotificationPolicyAccessGranted
+                dndOn = (ctx.getSystemService(Context.NOTIFICATION_SERVICE) as android.app.NotificationManager).isNotificationPolicyAccessGranted
+                dndOn = (ctx.getSystemService(Context.NOTIFICATION_SERVICE) as android.app.NotificationManager).isNotificationPolicyAccessGranted
             }
         }
         lifecycleOwner.lifecycle.addObserver(observer)
@@ -86,6 +92,42 @@ fun PermissionSetupScreen(onAllSet: () -> Unit) {
                 }
                 ctx.startActivity(intent)
             }
+        }
+
+        Spacer(Modifier.height(JannahSpacing.m))
+
+        // 4. DND
+        PermissionCard(
+            title = "Digital Sanctuary (DND)",
+            description = "Silences all notifications while you pray or read Quran.",
+            isGranted = dndOn,
+            actionText = if (dndOn) "Allowed" else "Allow"
+        ) {
+            ctx.startActivity(Intent(android.provider.Settings.ACTION_NOTIFICATION_POLICY_ACCESS_SETTINGS))
+        }
+
+        Spacer(Modifier.height(JannahSpacing.m))
+
+        // 4. DND
+        PermissionCard(
+            title = "Digital Sanctuary (DND)",
+            description = "Silences all notifications while you pray or read Quran.",
+            isGranted = dndOn,
+            actionText = if (dndOn) "Allowed" else "Allow"
+        ) {
+            ctx.startActivity(Intent(android.provider.Settings.ACTION_NOTIFICATION_POLICY_ACCESS_SETTINGS))
+        }
+
+        Spacer(Modifier.height(JannahSpacing.m))
+
+        // 4. DND
+        PermissionCard(
+            title = "Digital Sanctuary (DND)",
+            description = "Silences all notifications while you pray or read Quran.",
+            isGranted = dndOn,
+            actionText = if (dndOn) "Allowed" else "Allow"
+        ) {
+            ctx.startActivity(Intent(android.provider.Settings.ACTION_NOTIFICATION_POLICY_ACCESS_SETTINGS))
         }
 
         Spacer(Modifier.height(JannahSpacing.m))

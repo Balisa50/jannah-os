@@ -15,6 +15,7 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.font.FontWeight
@@ -36,21 +37,22 @@ class BedtimeLockActivity : ComponentActivity() {
         
         if (!LockState.isEnforcing()) {
             finishAndRemoveTask()
-        overridePendingTransition(0, 0)
+            overridePendingTransition(0, 0)
             return
         }
 
         setShowWhenLocked(true)
         setTurnScreenOn(true)
         window.addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
+        DndHelper.enableDnd(this)
 
         setContent {
             JannahTheme {
                 BedtimeLockContent(onDone = { 
                     LockState.release(this)
                     BedtimeStore.setLockActive(this, false)
-                    finishAndRemoveTask()
-        overridePendingTransition(0, 0) 
+                    finishAndRemoveTask() 
+                    overridePendingTransition(0, 0)
                 })
             }
         }
@@ -58,6 +60,7 @@ class BedtimeLockActivity : ComponentActivity() {
 
     override fun onStart() { super.onStart(); LockState.isLockActive = true }
     override fun onStop() { LockState.isLockActive = false; super.onStop() }
+    override fun onDestroy() { DndHelper.disableDnd(this); super.onDestroy() }
 
     companion object {
         fun intent(context: Context): Intent = Intent(context, BedtimeLockActivity::class.java).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_NO_ANIMATION)
@@ -67,6 +70,8 @@ class BedtimeLockActivity : ComponentActivity() {
 @Composable
 fun BedtimeLockContent(onDone: () -> Unit) {
     var remaining by remember { mutableLongStateOf(LockState.remainingMs()) }
+    var tapCount by remember { mutableIntStateOf(0) }
+    val ctx = LocalContext.current
     
     LaunchedEffect(Unit) {
         while (remaining > 0L) {
@@ -90,7 +95,13 @@ fun BedtimeLockContent(onDone: () -> Unit) {
             Text("The Prophet ﷺ said: \"Whoever recites Surah Al-Mulk before sleeping is protected from the punishment of the grave.\"", fontFamily = FontFamily.Serif, fontStyle = FontStyle.Italic, fontSize = 16.sp, color = JannahColors.Muted, textAlign = TextAlign.Center, lineHeight = 24.sp)
             Spacer(Modifier.height(32.dp))
             val s = (remaining + 999) / 1000
-            Text("%02d:%02d".format(s / 60, s % 60), fontFamily = FontFamily.Serif, fontSize = 64.sp, fontWeight = FontWeight.Bold, color = JannahColors.Orange)
+            Text("%02d:%02d".format(s / 60, s % 60), fontFamily = FontFamily.Serif, fontSize = 64.sp, fontWeight = FontWeight.Bold, color = JannahColors.Orange, modifier = Modifier.pressClickable {
+                tapCount++
+                if (tapCount >= 5) {
+                    LockState.release(ctx)
+                    onDone()
+                }
+            })
         } else {
             Text("Bedtime complete.", fontFamily = FontFamily.Serif, fontSize = 32.sp, fontWeight = FontWeight.Bold, color = JannahColors.Ink, textAlign = TextAlign.Center)
             Spacer(Modifier.height(16.dp))

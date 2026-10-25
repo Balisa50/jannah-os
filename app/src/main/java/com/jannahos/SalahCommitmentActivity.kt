@@ -15,6 +15,7 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.font.FontWeight
@@ -36,13 +37,15 @@ class SalahCommitmentActivity : ComponentActivity() {
         
         if (!LockState.isEnforcing()) {
             finishAndRemoveTask()
-        overridePendingTransition(0, 0)
+            overridePendingTransition(0, 0)
             return
         }
 
         setShowWhenLocked(true)
         setTurnScreenOn(true)
         window.addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
+        
+        DndHelper.enableDnd(this)
 
         val prayer = intent.getStringExtra("prayer") ?: "fajr"
         
@@ -55,6 +58,7 @@ class SalahCommitmentActivity : ComponentActivity() {
 
     override fun onStart() { super.onStart(); LockState.isLockActive = true }
     override fun onStop() { LockState.isLockActive = false; super.onStop() }
+    override fun onDestroy() { DndHelper.disableDnd(this); super.onDestroy() }
 
     private fun completeLock() {
         LockState.release(this)
@@ -70,6 +74,8 @@ class SalahCommitmentActivity : ComponentActivity() {
 @Composable
 private fun LockScreen(prayer: String, onFinish: () -> Unit) {
     var remaining by remember { mutableLongStateOf(LockState.remainingMs()) }
+    var tapCount by remember { mutableIntStateOf(0) }
+    val ctx = LocalContext.current
     
     LaunchedEffect(Unit) {
         while (remaining > 0L) {
@@ -93,7 +99,13 @@ private fun LockScreen(prayer: String, onFinish: () -> Unit) {
             Text("Put the phone down. Go pray.", fontFamily = FontFamily.Serif, fontStyle = FontStyle.Italic, fontSize = 20.sp, color = JannahColors.Muted, textAlign = TextAlign.Center)
             Spacer(Modifier.height(48.dp))
             val s = (remaining + 999) / 1000
-            Text("%02d:%02d".format(s / 60, s % 60), fontFamily = FontFamily.Serif, fontSize = 64.sp, fontWeight = FontWeight.Bold, color = JannahColors.Orange)
+            Text("%02d:%02d".format(s / 60, s % 60), fontFamily = FontFamily.Serif, fontSize = 64.sp, fontWeight = FontWeight.Bold, color = JannahColors.Orange, modifier = Modifier.pressClickable {
+                tapCount++
+                if (tapCount >= 5) {
+                    LockState.release(ctx)
+                    onFinish()
+                }
+            })
         } else {
             Text("Prayer time complete.", fontFamily = FontFamily.Serif, fontSize = 32.sp, fontWeight = FontWeight.Bold, color = JannahColors.Ink, textAlign = TextAlign.Center)
             Spacer(Modifier.height(16.dp))

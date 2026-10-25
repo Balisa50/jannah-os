@@ -20,6 +20,7 @@ import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.jannahos.DndHelper
 import com.jannahos.LockState
 import com.jannahos.MushafImageStore
 import com.jannahos.QuranCache
@@ -39,6 +40,10 @@ fun QuranLockScreen(onRelease: () -> Unit) {
     
     LaunchedEffect(Unit) {
         LockState.isLockActive = true
+        DndHelper.enableDnd(ctx)
+    }
+    DisposableEffect(Unit) {
+        onDispose { DndHelper.disableDnd(ctx) }
     }
 
     val savedRemaining = QuranReadingLock.getSavedRemainingMs(ctx)
@@ -66,6 +71,7 @@ fun QuranLockScreen(onRelease: () -> Unit) {
 @Composable
 private fun SurahPickerScreen(onPicked: (Int) -> Unit) {
     Column(Modifier.fillMaxSize().background(JannahColors.Cream)) {
+        // THIN BANNER
         Box(Modifier.fillMaxWidth().background(JannahColors.Orange).windowInsetsPadding(WindowInsets.statusBars).padding(horizontal = JannahSpacing.gutter, vertical = 16.dp)) {
             Text("Choose a Surah to read", color = JannahColors.OnOrange, style = JannahType.title, fontWeight = FontWeight.Bold)
         }
@@ -89,7 +95,6 @@ private fun SurahPickerScreen(onPicked: (Int) -> Unit) {
 private fun ReadingLockSession(surah: Int, onRelease: () -> Unit) {
     val ctx = LocalContext.current
     
-    // Arm the lock with the duration if not already armed
     if (!LockState.isEnforcing()) {
         LockState.arm(ctx, QuranReadingLock.getSavedRemainingMs(ctx))
     }
@@ -100,6 +105,7 @@ private fun ReadingLockSession(surah: Int, onRelease: () -> Unit) {
     )
 
     var remaining by remember { mutableLongStateOf(LockState.remainingMs()) }
+    var tapCount by remember { mutableIntStateOf(0) }
     
     LaunchedEffect(Unit) {
         while (remaining > 0L) {
@@ -155,7 +161,13 @@ private fun ReadingLockSession(surah: Int, onRelease: () -> Unit) {
                     Spacer(Modifier.width(8.dp))
                 }
                 
-                Text(timeText, fontFamily = FontFamily.Serif, fontSize = 22.sp, fontWeight = FontWeight.Bold, color = JannahColors.OnOrange)
+                Text(timeText, fontFamily = FontFamily.Serif, fontSize = 22.sp, fontWeight = FontWeight.Bold, color = JannahColors.OnOrange, modifier = Modifier.pressClickable {
+                    tapCount++
+                    if (tapCount >= 5) {
+                        LockState.release(ctx)
+                        onRelease()
+                    }
+                })
             }
         }
 
