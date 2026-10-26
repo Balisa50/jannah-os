@@ -1,20 +1,29 @@
+import java.util.Properties
+
 plugins {
     id("com.android.application")
     id("org.jetbrains.kotlin.android") version "2.0.21"
     id("org.jetbrains.kotlin.plugin.compose") version "2.0.21"
 }
 
+val localProps = Properties().apply {
+    val f = rootProject.file("local.properties")
+    if (f.exists()) f.inputStream().use { load(it) }
+}
+
+fun credential(key: String): String =
+    localProps.getProperty(key) ?: System.getenv(key) ?: ""
+
 android {
     signingConfigs {
         create("release") {
             storeFile = file("../jannah.keystore")
-            storePassword = "jannah123"
-            keyAlias = "jannah"
-            keyPassword = "jannah123"
+            storePassword = credential("KEYSTORE_PASSWORD").ifEmpty { "jannah123" }
+            keyAlias = credential("KEY_ALIAS").ifEmpty { "jannah" }
+            keyPassword = credential("KEY_PASSWORD").ifEmpty { "jannah123" }
         }
     }
 
-    
     namespace = "com.jannahos"
     compileSdk = 34
     defaultConfig {
@@ -32,7 +41,6 @@ android {
             proguardFiles(getDefaultProguardFile("proguard-android-optimize.txt"), "proguard-rules.pro")
         }
     }
-
     buildFeatures { compose = true }
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_17
