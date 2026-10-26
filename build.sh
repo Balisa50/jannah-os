@@ -1,29 +1,16 @@
-#!/data/data/com.termux/files/usr/bin/bash
-
+#!/bin/bash
 echo "Pushing code to GitHub..."
-git add -A
-git commit -m "Auto-build: $(date +'%Y-%m-%d %H:%M:%S')" || true
 git push origin main
 
 echo "Waiting 10 seconds for the cloud server to start..."
 sleep 10
 
 echo "Watching build..."
-RUN_ID=$(gh run list --limit 1 --json databaseId --jq '.[0].databaseId')
-gh run watch $RUN_ID || true
+gh run watch $(gh run list -L 1 --json databaseId --jq '.[0].databaseId') --exit-status
 
-STATUS=$(gh run view $RUN_ID --json conclusion --jq '.conclusion')
-if [ "$STATUS" != "success" ]; then
-    echo "Build failed. Run: gh run view $RUN_ID --log-failed"
-    exit 1
-fi
-
-echo "Downloading APK..."
+echo "Downloading APK from Release..."
 rm -rf ./apk_output
-gh run download $RUN_ID -n Jannah-APK -D ./apk_output
-
-echo "Moving APK to Downloads..."
-cp ./apk_output/app-debug.apk ~/storage/shared/Download/Jannah-Latest.apk
+gh release download latest -p "*.apk" -D ./apk_output
+cp ./apk_output/*.apk ~/storage/shared/Download/Jannah-Latest.apk
 rm -rf ./apk_output
-
 echo "Success. Install Jannah-Latest.apk from your Downloads folder."
