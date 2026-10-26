@@ -52,6 +52,16 @@
             android:theme="@android:style/Theme.Material.Light.NoActionBar" />
 
         <activity
+            android:name=".PrayerAlarmActivity"
+            android:exported="false"
+            android:showWhenLocked="true"
+            android:turnScreenOn="true"
+            android:excludeFromRecents="true"
+            android:taskAffinity=""
+            android:launchMode="singleInstance"
+            android:theme="@android:style/Theme.Material.NoActionBar" />
+
+        <activity
             android:name=".TahajjudAlarmActivity"
             android:exported="false"
             android:showWhenLocked="true"

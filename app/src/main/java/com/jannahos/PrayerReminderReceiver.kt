@@ -8,66 +8,46 @@ import android.content.Context
 import android.content.Intent
 import android.os.Build
 import androidx.core.app.NotificationCompat
-import java.text.SimpleDateFormat
-import java.util.Date
-import java.util.Locale
 
 class PrayerReminderReceiver : BroadcastReceiver() {
-    override fun onReceive(ctx: Context, intent: Intent) {
-        val times = SalahScheduler.todayTimes(Settings.lat(ctx), Settings.lon(ctx))
-        val now = System.currentTimeMillis()
-        val ordered = listOf("fajr", "dhuhr", "asr", "maghrib", "isha")
-        
-        val nextKey = ordered.firstOrNull { (times[it] ?: 0L) > now }
-        
-        if (nextKey != null) {
-            val nextTime = times[nextKey] ?: now
-            val diff = nextTime - now
-            val h = diff / 3600000
-            val m = (diff / 60000) % 60
-            val timeStr = if (h > 0) "${h}h ${m}m left" else "${m}m left"
-            val clockStr = SimpleDateFormat("HH:mm", Locale.getDefault()).format(Date(nextTime))
-            val name = SalahTracker.label(nextKey).uppercase()
+    override fun onReceive(context: Context, intent: Intent) {
+        val prayer = intent.getStringExtra("prayer") ?: "Fajr"
 
-            // Show the escalating alert
-            showNotification(ctx, name, clockStr, timeStr)
+        // 1. Start the Full-Screen Activity
+        val activityIntent = Intent(context, PrayerAlarmActivity::class.java).apply {
+            addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK)
+            putExtra("prayer", prayer)
         }
+        context.startActivity(activityIntent)
+
+        // 2. Fire a high-priority notification (In case the activity is blocked by OEM)
+        val channelId = "prayer_alarm_channel"
+        val nm = context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
         
-        // Chain the next alarm in the sequence
-        PrayerReminderScheduler.scheduleNext(ctx)
-    }
-
-    private fun showNotification(ctx: Context, prayer: String, clock: String, timeLeft: String) {
-        val channelId = "jannah_escalating_prayer"
-        val nm = ctx.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
-
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            val channel = NotificationChannel(channelId, "Prayer Countdowns", NotificationManager.IMPORTANCE_HIGH).apply {
+            val channel = NotificationChannel(channelId, "Prayer Alarms", NotificationManager.IMPORTANCE_HIGH).apply {
+                description = "Alarms for prayer times"
                 enableVibration(true)
-                vibrationPattern = longArrayOf(0, 10000) // 10-second violent vibration
+                vibrationPattern = longArrayOf(0, 1000, 500, 1000)
                 setBypassDnd(true)
             }
             nm.createNotificationChannel(channel)
         }
 
-        val launchIntent = ctx.packageManager.getLaunchIntentForPackage(ctx.packageName)
-        val pendingIntent = PendingIntent.getActivity(
-            ctx, 0, launchIntent, PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT
+        val fullScreenPendingIntent = PendingIntent.getActivity(
+            context, 0, activityIntent, PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
         )
 
-        val notif = NotificationCompat.Builder(ctx, channelId)
-            .setContentTitle("$prayer at $clock")
-            .setContentText(timeLeft)
+        val notification = NotificationCompat.Builder(context, channelId)
             .setSmallIcon(android.R.drawable.ic_lock_idle_alarm)
-            .setColor(android.graphics.Color.parseColor("#C2410C"))
+            .setContentTitle("$prayer Time")
+            .setContentText("It is time to pray.")
             .setPriority(NotificationCompat.PRIORITY_MAX)
             .setCategory(NotificationCompat.CATEGORY_ALARM)
-            .setVibrate(longArrayOf(0, 10000))
-            .setTimeoutAfter(30_000) // Drops off after 30 seconds
-            .setAutoCancel(true)
-            .setContentIntent(pendingIntent)
+            .setFullScreenIntent(fullScreenPendingIntent, true)
+            .setOngoing(true) // Prevents swiping it away until handled
             .build()
 
-        nm.notify(100, notif)
+        nm.notify(1001, notification)
     }
 }
