@@ -38,7 +38,7 @@ fun OnboardingFlow(onDone: () -> Unit) {
         CityPickerScreen(onBack = { showCityPicker = false }, onPicked = { c, cn ->
             CityStore.set(ctx, c, cn)
             showCityPicker = false
-            step = 4 // Move to permissions after city
+            step = 4
         })
         return
     }
@@ -63,7 +63,8 @@ fun OnboardingFlow(onDone: () -> Unit) {
                 }.padding(16.dp))
             }
 
-            // Step Indicator
+            Spacer(Modifier.height(JannahSpacing.xxl))
+
             Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
                 repeat(4) { i ->
                     Box(Modifier.size(if (i == step) 24.dp else 6.dp, 6.dp).clip(CircleShape).background(if (i <= step) JannahColors.Orange else JannahColors.Border))

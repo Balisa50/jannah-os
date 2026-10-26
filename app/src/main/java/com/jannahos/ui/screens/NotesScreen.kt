@@ -22,10 +22,12 @@ import androidx.compose.ui.unit.sp
 import com.jannahos.DiaryStore
 import com.jannahos.IslamicContentApi
 import com.jannahos.SmartTextEngine
+import com.jannahos.TafsirApi
 import com.jannahos.ui.ScreenHeader
 import com.jannahos.ui.theme.JannahColors
 import com.jannahos.ui.theme.JannahSpacing
 import com.jannahos.ui.theme.JannahType
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import java.text.SimpleDateFormat
@@ -79,15 +81,15 @@ fun NotesScreen(onBack: () -> Unit) {
                     val ayah = ref[1].toIntOrNull()
                     if (surah != null && ayah != null) {
                         scope.launch {
-                            val tafsir = withContext(kotlinx.coroutines.Dispatchers.IO) { TafsirApi.fetch(surah, ayah) }
+                            val tafsir = withContext(Dispatchers.IO) { TafsirApi.fetch(surah, ayah) }
                             text = text.replace(command, "\n\n${tafsir ?: "[Tafsir offline or not found]"}\n\n")
                         }
                     }
                 }
             } else if (parts[0] == "/dua") {
                 val duas = listOf(
-                    "اللَّهُمَّ إِنِّي أَسْأَلُكَ الْهُدَى وَالتُّقَى وَالْعَفَافَ وَالْغِنَى - O Allah, I ask You for guidance, piety, chastity and contentment.",
-                    "رَبَّنَا آتِنَا فِي الدُّنْيَا حَسَنَةً وَفِي الآخِرَةِ حَسَنَةً وَقِنَا عَذَابَ النَّارِ - Our Lord, give us good in this world and good in the Hereafter, and protect us from the punishment of the Fire."
+                    "اللَّهُمَّ إِنِّي أَسْأَلُكَ الْهُدَى وَالتُّقَى وَالْعَفَافَ وَالْغِنَى\nO Allah, I ask You for guidance, piety, chastity and contentment.",
+                    "رَبَّنَا آتِنَا فِي الدُّنْيَا حَسَنَةً وَفِي الآخِرَةِ حَسَنَةً وَقِنَا عَذَابَ النَّارِ\nOur Lord, give us good in this world and good in the Hereafter, and protect us from the punishment of the Fire."
                 )
                 text = text.replace(command, "\n\n${duas.random()}\n\n")
             }
@@ -112,17 +114,16 @@ fun NotesScreen(onBack: () -> Unit) {
                         onValueChange = { 
                             val smart = SmartTextEngine.process(it)
                             text = smart
-                            if (smart.endsWith(" ") && (smart.contains("/quran ") || smart.contains("/hadith "))) {
-                                // Auto-trigger if it ends with a space
+                            if (smart.endsWith(" ") && (smart.contains("/quran ") || smart.contains("/hadith ") || smart.contains("/tafsir ") || smart.contains("/dua "))) {
                                 val lastLine = smart.lines().last { it.isNotBlank() }
-                                if (lastLine.startsWith("/quran") || lastLine.startsWith("/hadith")) {
+                                if (lastLine.startsWith("/quran") || lastLine.startsWith("/hadith") || lastLine.startsWith("/tafsir") || lastLine.startsWith("/dua")) {
                                     processCommand(lastLine)
                                 }
                             }
                         },
                         modifier = Modifier.fillMaxWidth().height(200.dp),
                         textStyle = androidx.compose.ui.text.TextStyle(fontFamily = FontFamily.Serif, fontSize = 18.sp, color = JannahColors.Ink, lineHeight = 28.sp),
-                        placeholder = { Text("Type /quran 2:255 or /hadith bukhari 1...\n\nOr try typing sallahu alaihi wa salaam", style = JannahType.bodySmall, color = JannahColors.Faint) }
+                        placeholder = { Text("Try /quran 2:255, /hadith bukhari 1, /tafsir 1:1, /dua, or 'sallahu alaihi wa salaam'", style = JannahType.bodySmall, color = JannahColors.Faint) }
                     )
                     
                     Spacer(Modifier.height(JannahSpacing.s))

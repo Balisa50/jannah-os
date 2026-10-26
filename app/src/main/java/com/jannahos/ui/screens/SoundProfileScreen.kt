@@ -12,12 +12,10 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.jannahos.Settings
 import com.jannahos.ui.ScreenHeader
 import com.jannahos.ui.theme.JannahColors
 import com.jannahos.ui.theme.JannahSpacing
@@ -26,7 +24,6 @@ import com.jannahos.ui.theme.JannahType
 @Composable
 fun SoundProfileScreen(onBack: () -> Unit) {
     BackHandler(onBack = onBack)
-    val ctx = LocalContext.current
     var selected by remember { mutableStateOf("Makkah") }
 
     Column(Modifier.fillMaxSize().background(JannahColors.Cream)) {
