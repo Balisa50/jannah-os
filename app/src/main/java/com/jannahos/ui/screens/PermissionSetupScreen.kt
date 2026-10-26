@@ -8,6 +8,8 @@ import android.net.Uri
 import android.os.Build
 import android.os.PowerManager
 import android.provider.Settings
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
@@ -41,6 +43,13 @@ fun PermissionSetupScreen(onAllSet: () -> Unit) {
     var batteryOn by remember { mutableStateOf(isBatteryOptimizationDisabled(ctx)) }
     var alarmsOn by remember { mutableStateOf(canScheduleExactAlarms(ctx)) }
     var dndOn by remember { mutableStateOf(isDndAllowed(ctx)) }
+    var notificationsOn by remember { mutableStateOf(areNotificationsEnabled(ctx)) }
+
+    val notificationLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.RequestPermission()
+    ) { isGranted ->
+        notificationsOn = isGranted
+    }
 
     DisposableEffect(lifecycleOwner) {
         val observer = LifecycleEventObserver { _, event ->
@@ -49,6 +58,7 @@ fun PermissionSetupScreen(onAllSet: () -> Unit) {
                 batteryOn = isBatteryOptimizationDisabled(ctx)
                 alarmsOn = canScheduleExactAlarms(ctx)
                 dndOn = isDndAllowed(ctx)
+                notificationsOn = areNotificationsEnabled(ctx)
             }
         }
         lifecycleOwner.lifecycle.addObserver(observer)
@@ -58,12 +68,29 @@ fun PermissionSetupScreen(onAllSet: () -> Unit) {
     Column(Modifier.fillMaxSize().background(JannahColors.Cream).verticalScroll(rememberScrollState()).padding(JannahSpacing.gutter)) {
         Spacer(Modifier.height(JannahSpacing.xxl))
 
-        Text("System Setup.", fontFamily = FontFamily.Serif, fontSize = 32.sp, fontWeight = FontWeight.Bold, color = JannahColors.Ink)
+        Text("Final steps.", fontFamily = FontFamily.Serif, fontSize = 32.sp, fontWeight = FontWeight.Bold, color = JannahColors.Ink)
         Spacer(Modifier.height(8.dp))
         Text("Jannah works silently in the background. It needs these permissions to lock apps and ring alarms.", style = JannahType.body, color = JannahColors.Body, lineHeight = 24.sp)
 
         Spacer(Modifier.height(JannahSpacing.xl))
 
+        // 1. Notifications
+        PermissionCard(
+            title = "Notifications",
+            description = "Required for Adhan alarms and prayer reminders.",
+            isGranted = notificationsOn,
+            actionText = if (notificationsOn) "Enabled" else "Enable"
+        ) {
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+                notificationLauncher.launch(android.Manifest.permission.POST_NOTIFICATIONS)
+            } else {
+                notificationsOn = true
+            }
+        }
+
+        Spacer(Modifier.height(JannahSpacing.m))
+
+        // 2. Accessibility
         PermissionCard(
             title = "App Protection",
             description = "Blocks distracting apps during prayer and Quran time.",
@@ -75,6 +102,7 @@ fun PermissionSetupScreen(onAllSet: () -> Unit) {
 
         Spacer(Modifier.height(JannahSpacing.m))
 
+        // 3. Battery
         PermissionCard(
             title = "Background Alarms",
             description = "Ensures the Adhan rings. Open App Info, tap 'Battery', and select 'Unrestricted'.",
@@ -89,6 +117,7 @@ fun PermissionSetupScreen(onAllSet: () -> Unit) {
 
         Spacer(Modifier.height(JannahSpacing.m))
 
+        // 4. Exact Alarms
         PermissionCard(
             title = "Exact Timings",
             description = "Schedules the Adhan at the exact minute.",
@@ -108,6 +137,7 @@ fun PermissionSetupScreen(onAllSet: () -> Unit) {
 
         Spacer(Modifier.height(JannahSpacing.m))
 
+        // 5. DND
         PermissionCard(
             title = "Digital Sanctuary",
             description = "Silences all notifications while you pray or read Quran.",
@@ -119,13 +149,14 @@ fun PermissionSetupScreen(onAllSet: () -> Unit) {
 
         Spacer(Modifier.height(JannahSpacing.xxl))
 
+        val allRequiredGranted = notificationsOn && accessibilityOn
         Box(
             Modifier.fillMaxWidth().height(56.dp).clip(RoundedCornerShape(JannahSpacing.pillRadius))
-                .background(if (accessibilityOn) JannahColors.Ink else JannahColors.Border)
-                .pressClickable(enabled = accessibilityOn) { onAllSet() },
+                .background(if (allRequiredGranted) JannahColors.Ink else JannahColors.Border)
+                .pressClickable(enabled = allRequiredGranted) { onAllSet() },
             contentAlignment = Alignment.Center
         ) {
-            Text(if (accessibilityOn) "Finish Setup" else "Enable App Protection to continue", style = JannahType.button, color = JannahColors.OnOrange)
+            Text(if (allRequiredGranted) "Finish Setup" else "Enable required permissions to continue", style = JannahType.button, color = JannahColors.OnOrange, fontSize = 15.sp, textAlign = androidx.compose.ui.text.style.TextAlign.Center)
         }
     }
 }
@@ -172,4 +203,12 @@ private fun canScheduleExactAlarms(context: Context): Boolean {
 private fun isDndAllowed(context: Context): Boolean {
     val nm = context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
     return nm.isNotificationPolicyAccessGranted
+}
+
+private fun areNotificationsEnabled(context: Context): Boolean {
+    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+        val nm = context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
+        return nm.areNotificationsEnabled()
+    }
+    return true
 }

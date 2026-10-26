@@ -117,16 +117,16 @@ private fun Welcome() {
 @Composable
 private fun Philosophy() {
     Column(Modifier.fillMaxSize().verticalScroll(rememberScrollState()), verticalArrangement = Arrangement.Center) {
-        Text("A shield, not a feed.", fontFamily = FontFamily.Serif, fontSize = 32.sp, fontWeight = FontWeight.Bold, color = JannahColors.Ink, lineHeight = 38.sp)
+        Text("Quiet by design.", fontFamily = FontFamily.Serif, fontSize = 36.sp, fontWeight = FontWeight.Bold, color = JannahColors.Ink, lineHeight = 42.sp)
         Spacer(Modifier.height(JannahSpacing.l))
         
-        Text("This app is designed to pull you away from the screen, not keep you on it. It works silently in the background.", style = JannahType.body, color = JannahColors.Body, lineHeight = 24.sp)
-        Spacer(Modifier.height(JannahSpacing.m))
+        Text("Jannah is not meant to be opened every day. It runs silently in the background to protect your focus and build habits.", style = JannahType.body, color = JannahColors.Body, lineHeight = 24.sp)
+        Spacer(Modifier.height(JannahSpacing.l))
         
-        Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
-            PhilosophyItem("Prayer Locks", "The screen locks during Fard prayers.")
-            PhilosophyItem("Adhan Alarms", "Escalating reminders before every prayer.")
-            PhilosophyItem("Quran Guide", "A fixed daily reading session before midnight.")
+        Column(verticalArrangement = Arrangement.spacedBy(20.dp)) {
+            PhilosophyItem("Prayer Locks", "Screen locks during Fard prayers.")
+            PhilosophyItem("Adhan Alarms", "Reminders before every prayer.")
+            PhilosophyItem("Quran Guide", "A fixed daily reading session.")
         }
     }
 }

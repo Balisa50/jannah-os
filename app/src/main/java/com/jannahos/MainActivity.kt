@@ -24,10 +24,7 @@ class MainActivity : ComponentActivity() {
         LockState.isLockActive = false
         super.onCreate(savedInstanceState)
         
-        // ONLY request notification permission. Everything else is handled in Onboarding.
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-            requestPermissions(arrayOf(android.Manifest.permission.POST_NOTIFICATIONS), 100)
-        }
+        // Permissions are requested during onboarding, not here.
 
         setContent {
             JannahTheme {
