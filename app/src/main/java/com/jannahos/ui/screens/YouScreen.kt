@@ -39,6 +39,7 @@ fun YouScreen(onNavigate: (String) -> Unit = {}) {
             ListRow("Private commitments") { onNavigate("struggle") }
             ListRow("Tonight's plan") { ctx.startActivity(Intent(ctx, BedtimeActivity::class.java)) }
             ListRow("Letters to future self") { onNavigate("letters") }
+            ListRow("Morning & Evening Adhkar") { onNavigate("adhkar") }
             ListRow("Backup & restore") { onNavigate("backup") }
 
             Spacer(Modifier.height(JannahSpacing.xl))

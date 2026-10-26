@@ -27,6 +27,7 @@ import com.jannahos.ui.theme.JannahColors
 import com.jannahos.ui.theme.JannahSpacing
 import com.jannahos.ui.theme.JannahType
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
@@ -71,6 +72,24 @@ fun NotesScreen(onBack: () -> Unit) {
                         text = text.replace(command, "\n\n${hadith ?: "[Hadith not found]"}\n\n")
                     }
                 }
+            } else if (parts[0] == "/tafsir" && parts.size >= 2) {
+                val ref = parts[1].split(":")
+                if (ref.size == 2) {
+                    val surah = ref[0].toIntOrNull()
+                    val ayah = ref[1].toIntOrNull()
+                    if (surah != null && ayah != null) {
+                        scope.launch {
+                            val tafsir = withContext(kotlinx.coroutines.Dispatchers.IO) { TafsirApi.fetch(surah, ayah) }
+                            text = text.replace(command, "\n\n${tafsir ?: "[Tafsir offline or not found]"}\n\n")
+                        }
+                    }
+                }
+            } else if (parts[0] == "/dua") {
+                val duas = listOf(
+                    "اللَّهُمَّ إِنِّي أَسْأَلُكَ الْهُدَى وَالتُّقَى وَالْعَفَافَ وَالْغِنَى - O Allah, I ask You for guidance, piety, chastity and contentment.",
+                    "رَبَّنَا آتِنَا فِي الدُّنْيَا حَسَنَةً وَفِي الآخِرَةِ حَسَنَةً وَقِنَا عَذَابَ النَّارِ - Our Lord, give us good in this world and good in the Hereafter, and protect us from the punishment of the Fire."
+                )
+                text = text.replace(command, "\n\n${duas.random()}\n\n")
             }
         }
     }
