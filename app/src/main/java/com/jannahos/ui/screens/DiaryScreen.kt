@@ -1,11 +1,18 @@
 package com.jannahos.ui.screens
 
 import androidx.activity.compose.BackHandler
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.slideInVertically
+import androidx.compose.animation.slideOutVertically
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.BasicTextField
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
@@ -16,8 +23,10 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalHapticFeedback
+import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.input.KeyboardCapitalization
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -31,6 +40,31 @@ import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
 
+private data class SlashCommand(val trigger: String, val label: String, val content: String)
+
+private val COMMANDS = listOf(
+    SlashCommand(
+        "/fatihah", "Surah Al-Fatihah",
+        "بِسْمِ اللَّهِ الرَّحْمَٰنِ الرَّحِيمِ ﴿١﴾ الْحَمْدُ لِلَّهِ رَبِّ الْعَالَمِينَ ﴿٢﴾\n\nThe Opening."
+    ),
+    SlashCommand(
+        "/kursi", "Ayat al-Kursi",
+        "اللَّهُ لَا إِلَٰهَ إِلَّا هُوَ الْحَيُّ الْقَيُّومُ ۚ لَا تَأْخُذُهُ سِنَةٌ وَلَا نَوْمٌ\n\nAllah - there is no deity except Him, the Ever-Living, the Sustainer of existence. (2:255)"
+    ),
+    SlashCommand(
+        "/anxiety", "Dua for Anxiety",
+        "اللَّهُمَّ إِنِّي أَعُوذُ بِكَ مِنَ الْهَمِّ وَالْحَزَنِ\n\nO Allah, I seek refuge in You from anxiety and sorrow."
+    ),
+    SlashCommand(
+        "/forgive", "Sayyid al-Istighfar",
+        "اللَّهُمَّ أَنْتَ رَبِّي لَا إِلَهَ إِلَّا أَنْتَ، خَلَقْتَنِي وَأَنَا عَبْدُكَ\n\nO Allah, You are my Lord, none has the right to be worshipped but You. You created me and I am Your servant."
+    ),
+    SlashCommand(
+        "/hadith", "Hadith on Intentions",
+        "إِنَّمَا الأَعْمَالُ بِالنِّيَّاتِ\n\nActions are judged by intentions. (Bukhari 1)"
+    )
+)
+
 @Composable
 fun DiaryScreen(onBack: () -> Unit) {
     BackHandler(onBack = onBack)
@@ -42,6 +76,7 @@ fun DiaryScreen(onBack: () -> Unit) {
     val entries = store.recent(30)
     var writing by remember { mutableStateOf(false) }
     var text by remember { mutableStateOf("") }
+    var showSlashMenu by remember { mutableStateOf(false) }
     val dayFmt = SimpleDateFormat("EEE d MMM · HH:mm", Locale.getDefault())
 
     Column(modifier = Modifier.fillMaxSize().background(JannahColors.Cream)) {
@@ -57,11 +92,52 @@ fun DiaryScreen(onBack: () -> Unit) {
                     }
                     Spacer(Modifier.height(JannahSpacing.l))
                 } else {
-                    OutlinedTextField(
-                        value = text, onValueChange = { text = it },
-                        modifier = Modifier.fillMaxWidth().height(200.dp),
-                        placeholder = { Text("What did you do today? Say it plainly. It stays here.", style = JannahType.bodySmall, color = JannahColors.Faint) }
-                    )
+                    // THE ELITE EDITOR
+                    Box {
+                        androidx.compose.foundation.text.BasicTextField(
+                            value = text,
+                            onValueChange = { newText ->
+                                text = newText
+                                // Detect if the user just typed "/"
+                                if (newText.endsWith("/")) {
+                                    showSlashMenu = true
+                                } else if (!newText.endsWith("/") && showSlashMenu) {
+                                    showSlashMenu = false
+                                }
+                            },
+                            textStyle = TextStyle(fontFamily = FontFamily.Serif, fontSize = 18.sp, color = JannahColors.Ink, lineHeight = 28.sp),
+                            keyboardOptions = KeyboardOptions(capitalization = KeyboardCapitalization.Sentences),
+                            modifier = Modifier.fillMaxWidth().heightIn(min = 200.dp).background(JannahColors.Card).padding(16.dp)
+                        )
+                        
+                        if (text.isEmpty()) {
+                            Text("What did you do today? Say it plainly. It stays here.\n\nType / to insert Quran or Hadith.", style = JannahType.bodySmall, color = JannahColors.Faint, modifier = Modifier.padding(20.dp))
+                        }
+                    }
+
+                    // SLASH COMMAND MENU
+                    AnimatedVisibility(
+                        visible = showSlashMenu,
+                        enter = slideInVertically { it } + fadeIn(),
+                        exit = slideOutVertically { it } + fadeOut()
+                    ) {
+                        Column(Modifier.fillMaxWidth().background(JannahColors.Surface).padding(8.dp)) {
+                            COMMANDS.forEach { cmd ->
+                                Row(
+                                    Modifier.fillMaxWidth().clickable {
+                                        // Replace the trailing "/" with the command content
+                                        text = text.dropLast(1) + cmd.content + "\n\n"
+                                        showSlashMenu = false
+                                    }.padding(12.dp),
+                                    verticalAlignment = Alignment.CenterVertically
+                                ) {
+                                    Text(cmd.trigger, style = JannahType.micro, color = JannahColors.Orange, modifier = Modifier.width(72.dp))
+                                    Text(cmd.label, style = JannahType.bodySmall, color = JannahColors.Ink)
+                                }
+                            }
+                        }
+                    }
+
                     Spacer(Modifier.height(JannahSpacing.s))
                     Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(JannahSpacing.s)) {
                         Box(Modifier.weight(1f).height(52.dp).clip(RoundedCornerShape(JannahSpacing.pillRadius)).background(JannahColors.Card).clickable { writing = false; text = "" }, contentAlignment = Alignment.Center) { Text("Cancel", style = JannahType.button, color = JannahColors.Muted) }
