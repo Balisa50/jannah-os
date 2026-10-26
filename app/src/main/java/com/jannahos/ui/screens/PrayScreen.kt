@@ -65,7 +65,6 @@ fun PrayScreen() {
         }
 
         Column(Modifier.padding(horizontal = JannahSpacing.gutter)) {
-            // Next Prayer Header
             Text(if (isTomorrow) "TOMORROW" else "NEXT", style = JannahType.eyebrow, color = JannahColors.OrangeDeep)
             Spacer(Modifier.height(8.dp))
             Text(nextLabel, fontFamily = FontFamily.Serif, fontSize = 32.sp, fontWeight = FontWeight.Bold, color = JannahColors.Ink)
@@ -80,7 +79,6 @@ fun PrayScreen() {
             Box(Modifier.fillMaxWidth().height(1.dp).background(JannahColors.Divider))
             Spacer(Modifier.height(32.dp))
 
-            // Clean List
             ordered.forEachIndexed { i, key ->
                 val t = times[key]
                 val isNext = key == nextKey
@@ -93,7 +91,6 @@ fun PrayScreen() {
 
             Spacer(Modifier.height(32.dp))
 
-            // Qibla Link
             Row(Modifier.fillMaxWidth().pressClickable { ctx.startActivity(Intent(ctx, QiblaActivity::class.java)) }.padding(vertical = 16.dp), verticalAlignment = Alignment.CenterVertically) {
                 Text("Qibla direction", fontFamily = FontFamily.Serif, fontSize = 20.sp, fontWeight = FontWeight.Bold, color = JannahColors.Ink, modifier = Modifier.weight(1f))
                 Text("→", style = JannahType.title, color = JannahColors.Orange)
