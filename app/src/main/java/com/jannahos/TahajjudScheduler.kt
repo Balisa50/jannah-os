@@ -6,79 +6,47 @@ import android.content.Context
 import android.content.Intent
 import android.os.Build
 import java.util.Calendar
-import java.util.Date
 
 object TahajjudScheduler {
+    private const val REQ_CODE = 999
 
-    private const val REQ_CODE = 4201
-    private const val PREFS = "jannah_prefs"
-    private const val KEY_NEXT = "next_tahajjud_ms"
+    fun scheduleAlarm(ctx: Context, minutesBeforeFajr: Int) {
+        val lat = Settings.lat(ctx)
+        val lon = Settings.lon(ctx)
+        val times = SalahScheduler.todayTimes(lat, lon)
+        var fajrTime = times["fajr"] ?: return
 
-    fun schedule(context: Context, at: Date) {
-        val am = context.getSystemService(Context.ALARM_SERVICE) as AlarmManager
-        val pi = pendingIntent(context)
+        // If Fajr has already passed today, schedule for tomorrow's Fajr
+        if (fajrTime < System.currentTimeMillis()) {
+            val tomorrow = Calendar.getInstance().apply { add(Calendar.DAY_OF_YEAR, 1) }
+            val tomorrowTimes = SalahScheduler.todayTimes(lat, lon) // Assuming this gives today's times
+            fajrTime = tomorrowTimes["fajr"]?.plus(24 * 60 * 60 * 1000L) ?: return
+        }
 
-        val canExact = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S)
-            am.canScheduleExactAlarms() else true
+        val triggerTime = fajrTime - (minutesBeforeFajr * 60 * 1000L)
+        
+        // Don't schedule if the time is in the past
+        if (triggerTime < System.currentTimeMillis()) return
 
-        if (canExact) {
-            am.setExactAndAllowWhileIdle(AlarmManager.RTC_WAKEUP, at.time, pi)
+        val am = ctx.getSystemService(Context.ALARM_SERVICE) as AlarmManager
+        val intent = Intent(ctx, TahajjudAlarmReceiver::class.java)
+        val pi = PendingIntent.getBroadcast(ctx, REQ_CODE, intent, PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE)
+
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+            if (am.canScheduleExactAlarms()) {
+                am.setExactAndAllowWhileIdle(AlarmManager.RTC_WAKEUP, triggerTime, pi)
+            } else {
+                am.setAndAllowWhileIdle(AlarmManager.RTC_WAKEUP, triggerTime, pi)
+            }
         } else {
-            am.setAndAllowWhileIdle(AlarmManager.RTC_WAKEUP, at.time, pi)
-        }
-
-        context.getSharedPreferences(PREFS, Context.MODE_PRIVATE)
-            .edit().putLong(KEY_NEXT, at.time).apply()
-    }
-
-    fun scheduleBackup(context: Context, minutesFromNow: Int) {
-        val at = Date(System.currentTimeMillis() + minutesFromNow * 60L * 1000L)
-        val am = context.getSystemService(Context.ALARM_SERVICE) as AlarmManager
-        val intent = Intent(context, TahajjudAlarmReceiver::class.java)
-        var flags = PendingIntent.FLAG_UPDATE_CURRENT
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M)
-            flags = flags or PendingIntent.FLAG_IMMUTABLE
-        val pi = PendingIntent.getBroadcast(context, 4299, intent, flags)
-        val canExact = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S)
-            am.canScheduleExactAlarms() else true
-        if (canExact) {
-            am.setExactAndAllowWhileIdle(AlarmManager.RTC_WAKEUP, at.time, pi)
-        } else {
-            am.setAndAllowWhileIdle(AlarmManager.RTC_WAKEUP, at.time, pi)
+            am.setExactAndAllowWhileIdle(AlarmManager.RTC_WAKEUP, triggerTime, pi)
         }
     }
 
-    fun cancel(context: Context) {
-        val am = context.getSystemService(Context.ALARM_SERVICE) as AlarmManager
-        am.cancel(pendingIntent(context))
-        context.getSharedPreferences(PREFS, Context.MODE_PRIVATE)
-            .edit().remove(KEY_NEXT).apply()
-    }
-
-    fun nextScheduled(context: Context): Long =
-        context.getSharedPreferences(PREFS, Context.MODE_PRIVATE)
-            .getLong(KEY_NEXT, 0L)
-
-    private fun pendingIntent(context: Context): PendingIntent {
-        val intent = Intent(context, TahajjudAlarmReceiver::class.java)
-        var flags = PendingIntent.FLAG_UPDATE_CURRENT
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M)
-            flags = flags or PendingIntent.FLAG_IMMUTABLE
-        return PendingIntent.getBroadcast(context, REQ_CODE, intent, flags)
-    }
-
-    // Compute tonight's tahajjud time for a saved location.
-    fun computeTonight(lat: Double, lon: Double): Date {
-        val now = Date()
-        val lastThird = PrayerCalculator.lastThirdOfNight(lat, lon, now)
-
-        // If last third already passed, target tomorrow's.
-        val cal = Calendar.getInstance()
-        cal.time = lastThird
-        if (cal.time.before(now)) {
-            cal.add(Calendar.DAY_OF_YEAR, 1)
-            return PrayerCalculator.lastThirdOfNight(lat, lon, cal.time)
-        }
-        return lastThird
+    fun cancel(ctx: Context) {
+        val am = ctx.getSystemService(Context.ALARM_SERVICE) as AlarmManager
+        val intent = Intent(ctx, TahajjudAlarmReceiver::class.java)
+        val pi = PendingIntent.getBroadcast(ctx, REQ_CODE, intent, PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE)
+        am.cancel(pi)
     }
 }

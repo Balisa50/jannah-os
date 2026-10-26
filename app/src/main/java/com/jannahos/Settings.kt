@@ -71,19 +71,32 @@ object Settings {
         "GULF" to "Gulf Region"
     )
 
-    fun isTahajjudSilent(ctx: android.content.Context): Boolean = 
-        ctx.getSharedPreferences("jannah_prefs", android.content.Context.MODE_PRIVATE).getBoolean("tahajjud_silent", false)
-        
-    fun setTahajjudSilent(ctx: android.content.Context, silent: Boolean) {
-        ctx.getSharedPreferences("jannah_prefs", android.content.Context.MODE_PRIVATE).edit().putBoolean("tahajjud_silent", silent).apply()
+    fun isTahajjudSilent(ctx: Context): Boolean =
+        ctx.getSharedPreferences("jannah_prefs", Context.MODE_PRIVATE).getBoolean("tahajjud_silent", false)
+
+    fun setTahajjudSilent(ctx: Context, silent: Boolean) {
+        ctx.getSharedPreferences("jannah_prefs", Context.MODE_PRIVATE).edit().putBoolean("tahajjud_silent", silent).apply()
     }
 
+    fun isBedtimeLockEnabled(ctx: Context): Boolean =
+        ctx.getSharedPreferences("jannah_prefs", Context.MODE_PRIVATE).getBoolean("bedtime_lock_enabled", false)
 
-    fun isBedtimeLockEnabled(ctx: android.content.Context): Boolean = 
-        ctx.getSharedPreferences("jannah_prefs", android.content.Context.MODE_PRIVATE).getBoolean("bedtime_lock_enabled", false)
-        
-    fun setBedtimeLockEnabled(ctx: android.content.Context, enabled: Boolean) {
-        ctx.getSharedPreferences("jannah_prefs", android.content.Context.MODE_PRIVATE).edit().putBoolean("bedtime_lock_enabled", enabled).apply()
+    fun setBedtimeLockEnabled(ctx: Context, enabled: Boolean) {
+        ctx.getSharedPreferences("jannah_prefs", Context.MODE_PRIVATE).edit().putBoolean("bedtime_lock_enabled", enabled).apply()
     }
 
+    // Tahajjud Logic
+    fun isTahajjudEnabled(ctx: Context): Boolean =
+        ctx.getSharedPreferences(PREFS, Context.MODE_PRIVATE).getBoolean("tahajjud_enabled", false)
+
+    fun setTahajjudEnabled(ctx: Context, enabled: Boolean) {
+        ctx.getSharedPreferences(PREFS, Context.MODE_PRIVATE).edit().putBoolean("tahajjud_enabled", enabled).apply()
+    }
+
+    fun getTahajjudOffset(ctx: Context): Int =
+        ctx.getSharedPreferences(PREFS, Context.MODE_PRIVATE).getInt("tahajjud_offset", 60)
+
+    fun setTahajjudOffset(ctx: Context, minutes: Int) {
+        ctx.getSharedPreferences(PREFS, Context.MODE_PRIVATE).edit().putInt("tahajjud_offset", minutes).apply()
+    }
 }
