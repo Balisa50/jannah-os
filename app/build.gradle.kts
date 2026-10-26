@@ -4,33 +4,17 @@ plugins {
     id("org.jetbrains.kotlin.plugin.compose") version "2.0.21"
 }
 
-// Keystore credentials resolution order:
-//   1. local.properties (developer machine, git-ignored)
-//   2. Environment variables (CI / GitHub Actions Secrets)
-//   3. Hardcoded fallbacks (only so the current debug pipeline keeps building)
-//
-// For a real public release: regenerate jannah.keystore with a strong password,
-// move it out of the repo, and set KEYSTORE_PASSWORD / KEY_ALIAS / KEY_PASSWORD
-// as GitHub Actions Secrets. The file jannah.keystore in git history contains
-// the current weak password and cannot be un-leaked by editing this file.
-val localProps = java.util.Properties().apply {
-    val f = rootProject.file("local.properties")
-    if (f.exists()) f.inputStream().use { load(it) }
-}
-
-fun credential(key: String): String =
-    localProps.getProperty(key) ?: System.getenv(key) ?: ""
-
 android {
     signingConfigs {
         create("release") {
             storeFile = file("../jannah.keystore")
-            storePassword = credential("KEYSTORE_PASSWORD").ifEmpty { "jannah123" }
-            keyAlias = credential("KEY_ALIAS").ifEmpty { "jannah" }
-            keyPassword = credential("KEY_PASSWORD").ifEmpty { "jannah123" }
+            storePassword = "jannah123"
+            keyAlias = "jannah"
+            keyPassword = "jannah123"
         }
     }
 
+    
     namespace = "com.jannahos"
     compileSdk = 34
     defaultConfig {
