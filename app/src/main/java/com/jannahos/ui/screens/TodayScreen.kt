@@ -140,6 +140,13 @@ fun TodayScreen(onNavigate: (String) -> Unit = {}) {
                 }
             }
 
+            // Sanctuary Hook
+            Row(Modifier.fillMaxWidth().pressClickable { onNavigate("sanctuary") }.padding(vertical = 16.dp), verticalAlignment = Alignment.CenterVertically) {
+                Text("Enter Sanctuary", fontFamily = FontFamily.Serif, fontSize = 20.sp, fontWeight = FontWeight.Bold, color = JannahColors.Ink, modifier = Modifier.weight(1f))
+                Text("→", style = JannahType.title, color = JannahColors.Orange)
+            }
+            Box(Modifier.fillMaxWidth().height(1.dp).background(JannahColors.Divider))
+
             // Quran Continue
             Row(Modifier.fillMaxWidth().pressClickable { onNavigate("quran") }.padding(vertical = 16.dp), verticalAlignment = Alignment.CenterVertically) {
                 Text("Continue reading Quran", fontFamily = FontFamily.Serif, fontSize = 20.sp, fontWeight = FontWeight.Bold, color = JannahColors.OrangeDeep, modifier = Modifier.weight(1f))
