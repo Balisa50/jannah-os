@@ -4,13 +4,11 @@ import androidx.compose.foundation.background
 import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
@@ -70,7 +68,6 @@ fun RamadanScreen(onBack: () -> Unit) {
             Text("The last ten nights. Seek it in the odd nights: 21, 23, 25, 27, 29.", style = JannahType.body, color = JannahColors.Muted)
             Spacer(Modifier.height(16.dp))
 
-            // Clean typography for Dua
             Column(horizontalAlignment = Alignment.CenterHorizontally, modifier = Modifier.fillMaxWidth().padding(vertical = 16.dp)) {
                 Text(RamadanMode.laylatulQadrDua.first, style = JannahType.arabic, color = JannahColors.Ink, textAlign = TextAlign.Center)
                 Spacer(Modifier.height(12.dp))

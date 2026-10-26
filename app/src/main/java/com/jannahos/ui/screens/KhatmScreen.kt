@@ -104,7 +104,7 @@ fun KhatmScreen(onBack: () -> Unit, onOpenRange: (Int, Int) -> Unit) {
                         }
                         Box(
                             Modifier.size(32.dp).clip(CircleShape)
-                                .background(when { isCompleted -> JannahColors.Orange; isActive -> JannahColors.OrangeSoft; else -> Color.Transparent })
+                                .background(when { isCompleted -> JannahColors.Orange; isActive -> JannahColors.OrangeSoft; else -> androidx.compose.ui.graphics.Color.Transparent })
                                 .pressClickable(enabled = isActive) { KhatmStore.markDayCompleted(ctx); refresh++ },
                             contentAlignment = Alignment.Center
                         ) {
