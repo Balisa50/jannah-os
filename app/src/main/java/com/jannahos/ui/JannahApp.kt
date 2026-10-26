@@ -188,7 +188,11 @@ fun JannahApp() {
             composable("sound_profile") { ErrorBoundary("Sound") { SoundProfileScreen(onBack = { nav.popBackStack() }) } }
             composable("adhkar") { ErrorBoundary("Adhkar") { AdhkarScreen(onBack = { nav.popBackStack() }) } }
             composable("sound_profile") { ErrorBoundary("Sound") { SoundProfileScreen(onBack = { nav.popBackStack() }) } }
+            composable("adhkar") { ErrorBoundary("Adhkar") { AdhkarScreen(onBack = { nav.popBackStack() }) } }
+            composable("sound_profile") { ErrorBoundary("Sound") { SoundProfileScreen(onBack = { nav.popBackStack() }) } }
             composable("notes") { ErrorBoundary("Notes") { NotesScreen(onBack = { nav.popBackStack() }) } }
+            composable("adhkar") { ErrorBoundary("Adhkar") { AdhkarScreen(onBack = { nav.popBackStack() }) } }
+            composable("sound_profile") { ErrorBoundary("Sound") { SoundProfileScreen(onBack = { nav.popBackStack() }) } }
             composable("adhkar") { ErrorBoundary("Adhkar") { AdhkarScreen(onBack = { nav.popBackStack() }) } }
             composable("sound_profile") { ErrorBoundary("Sound") { SoundProfileScreen(onBack = { nav.popBackStack() }) } }
             composable("adhkar") { ErrorBoundary("Adhkar") { AdhkarScreen(onBack = { nav.popBackStack() }) } }

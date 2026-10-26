@@ -42,6 +42,8 @@ fun YouScreen(onNavigate: (String) -> Unit = {}) {
             ListRow("Morning & Evening Adhkar") { onNavigate("adhkar") }
             ListRow("Morning & Evening Adhkar") { onNavigate("adhkar") }
             ListRow("Sound Profiles") { onNavigate("sound_profile") }
+            ListRow("Morning & Evening Adhkar") { onNavigate("adhkar") }
+            ListRow("Sound Profiles") { onNavigate("sound_profile") }
             ListRow("Backup & restore") { onNavigate("backup") }
 
             Spacer(Modifier.height(JannahSpacing.xl))
