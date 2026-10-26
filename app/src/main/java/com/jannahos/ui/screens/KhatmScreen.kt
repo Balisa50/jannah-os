@@ -55,11 +55,9 @@ fun KhatmScreen(onBack: () -> Unit, onOpenRange: (Int, Int) -> Unit) {
                     Modifier.height(56.dp).width(100.dp).clip(RoundedCornerShape(50)).background(JannahColors.Orange).pressClickable {
                         val days = daysInput.toIntOrNull() ?: 30
                         if (days > 0 && days <= 604) {
-                            if (days == target) {
-                                refresh++
-                            } else if (completed > 0) {
-                                pendingReset = days
-                            } else {
+                            if (days == target) refresh++
+                            else if (completed > 0) pendingReset = days
+                            else {
                                 KhatmStore.setTarget(ctx, days)
                                 KhatmStore.reset(ctx)
                                 refresh++
@@ -74,17 +72,16 @@ fun KhatmScreen(onBack: () -> Unit, onOpenRange: (Int, Int) -> Unit) {
             Spacer(Modifier.height(8.dp))
             Text("Progress: $completed of $target days", style = JannahType.caption, color = JannahColors.Muted)
             Spacer(Modifier.height(4.dp))
-            Box(Modifier.fillMaxWidth().height(6.dp).clip(RoundedCornerShape(3.dp)).background(JannahColors.Border)) {
-                Box(Modifier.fillMaxWidth(if (target == 0) 0f else completed.toFloat() / target).height(6.dp).clip(RoundedCornerShape(3.dp)).background(JannahColors.Orange))
+            Box(Modifier.fillMaxWidth().height(4.dp).clip(RoundedCornerShape(2.dp)).background(JannahColors.Border)) {
+                Box(Modifier.fillMaxWidth(if (target == 0) 0f else completed.toFloat() / target).height(4.dp).clip(RoundedCornerShape(2.dp)).background(JannahColors.Orange))
             }
         }
 
-        Spacer(Modifier.height(16.dp))
+        Spacer(Modifier.height(24.dp))
 
         LazyColumn(
             Modifier.weight(1f).fillMaxWidth().padding(horizontal = JannahSpacing.gutter),
-            contentPadding = PaddingValues(bottom = JannahSpacing.xxl),
-            verticalArrangement = Arrangement.spacedBy(8.dp)
+            contentPadding = PaddingValues(bottom = JannahSpacing.xxl)
         ) {
             items(target) { index ->
                 val dayNumber = index + 1
@@ -93,42 +90,32 @@ fun KhatmScreen(onBack: () -> Unit, onOpenRange: (Int, Int) -> Unit) {
                 val isActive = index == completed
                 val isLocked = index > completed
 
-                Row(
-                    Modifier.fillMaxWidth().clip(RoundedCornerShape(12.dp))
-                        .background(JannahColors.Card)
-                        .pressClickable(enabled = !isLocked) { if (isActive || isCompleted) onOpenRange(start, end) }
-                        .padding(16.dp),
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Column(Modifier.weight(1f)) {
-                        Text("Day $dayNumber", style = JannahType.micro, color = JannahColors.OrangeDeep, fontWeight = FontWeight.Bold)
-                        Spacer(Modifier.height(4.dp))
-                        Text("Pages $start to $end", fontFamily = FontFamily.Serif, fontSize = 16.sp, fontWeight = FontWeight.Bold, color = if (isLocked) JannahColors.Muted else JannahColors.Ink)
-                        Spacer(Modifier.height(2.dp))
-                        Text("${end - start + 1} pages", style = JannahType.caption, color = JannahColors.Muted)
-                    }
-
-                    Box(
-                        Modifier.size(36.dp).clip(CircleShape)
-                            .background(
-                                when {
-                                    isCompleted -> JannahColors.Orange
-                                    isActive -> JannahColors.OrangeSoft
-                                    else -> JannahColors.Border
-                                }
-                            )
-                            .pressClickable(enabled = isActive) {
-                                KhatmStore.markDayCompleted(ctx)
-                                refresh++
-                            },
-                        contentAlignment = Alignment.Center
+                Column {
+                    Row(
+                        Modifier.fillMaxWidth().pressClickable(enabled = !isLocked) { if (isActive || isCompleted) onOpenRange(start, end) }.padding(vertical = 16.dp),
+                        verticalAlignment = Alignment.CenterVertically
                     ) {
-                        when {
-                            isCompleted -> Text("✓", color = JannahColors.OnOrange, fontWeight = FontWeight.Bold, fontSize = 18.sp)
-                            isActive -> Text("○", color = JannahColors.Orange, fontWeight = FontWeight.Bold, fontSize = 18.sp)
-                            else -> Text("·", color = JannahColors.Muted, fontWeight = FontWeight.Bold, fontSize = 20.sp)
+                        Column(Modifier.weight(1f)) {
+                            Text("Day $dayNumber", style = JannahType.eyebrow, color = JannahColors.OrangeDeep)
+                            Spacer(Modifier.height(4.dp))
+                            Text("Pages $start to $end", fontFamily = FontFamily.Serif, fontSize = 18.sp, fontWeight = if (isLocked) FontWeight.Normal else FontWeight.Bold, color = if (isLocked) JannahColors.Muted else JannahColors.Ink)
+                            Spacer(Modifier.height(2.dp))
+                            Text("${end - start + 1} pages", style = JannahType.caption, color = JannahColors.Muted)
+                        }
+                        Box(
+                            Modifier.size(32.dp).clip(CircleShape)
+                                .background(when { isCompleted -> JannahColors.Orange; isActive -> JannahColors.OrangeSoft; else -> Color.Transparent })
+                                .pressClickable(enabled = isActive) { KhatmStore.markDayCompleted(ctx); refresh++ },
+                            contentAlignment = Alignment.Center
+                        ) {
+                            when {
+                                isCompleted -> Text("✓", color = JannahColors.OnOrange, fontWeight = FontWeight.Bold, fontSize = 16.sp)
+                                isActive -> Text("○", color = JannahColors.Orange, fontWeight = FontWeight.Bold, fontSize = 16.sp)
+                                else -> Box(Modifier.size(6.dp).clip(CircleShape).background(JannahColors.Border))
+                            }
                         }
                     }
+                    Box(Modifier.fillMaxWidth().height(1.dp).background(JannahColors.Divider))
                 }
             }
         }
@@ -138,24 +125,10 @@ fun KhatmScreen(onBack: () -> Unit, onOpenRange: (Int, Int) -> Unit) {
         AlertDialog(
             onDismissRequest = { pendingReset = null },
             containerColor = JannahColors.Surface,
-            title = {
-                Text("Change pace?", fontFamily = FontFamily.Serif, fontWeight = FontWeight.Bold, color = JannahColors.Ink)
-            },
-            text = {
-                Text("You have completed $completed of $target days. Changing pace will reset this progress. Continue?",
-                    style = JannahType.bodySmall, color = JannahColors.Body, lineHeight = 20.sp)
-            },
-            confirmButton = {
-                TextButton(onClick = {
-                    KhatmStore.setTarget(ctx, newDays)
-                    KhatmStore.reset(ctx)
-                    pendingReset = null
-                    refresh++
-                }) { Text("Change anyway", color = JannahColors.Orange, fontWeight = FontWeight.Bold) }
-            },
-            dismissButton = {
-                TextButton(onClick = { pendingReset = null }) { Text("Cancel", color = JannahColors.Muted) }
-            }
+            title = { Text("Change pace?", fontFamily = FontFamily.Serif, fontWeight = FontWeight.Bold, color = JannahColors.Ink) },
+            text = { Text("You have completed $completed of $target days. Changing pace will reset this progress. Continue?", style = JannahType.bodySmall, color = JannahColors.Body, lineHeight = 20.sp) },
+            confirmButton = { TextButton(onClick = { KhatmStore.setTarget(ctx, newDays); KhatmStore.reset(ctx); pendingReset = null; refresh++ }) { Text("Change anyway", color = JannahColors.Orange, fontWeight = FontWeight.Bold) } },
+            dismissButton = { TextButton(onClick = { pendingReset = null }) { Text("Cancel", color = JannahColors.Muted) } }
         )
     }
 }
