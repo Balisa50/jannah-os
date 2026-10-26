@@ -76,7 +76,7 @@ fun PermissionSetupScreen(onAllSet: () -> Unit) {
 
         PermissionCard(
             title = "Background Alarms",
-            description = "Ensures the Adhan rings even when your phone is asleep.",
+            description = "Ensures the Adhan rings even when your phone is asleep. Find Jannah in the list and select 'Don't optimize' or 'Unrestricted'.",
             isGranted = batteryOn,
             actionText = if (batteryOn) "Allowed" else "Allow"
         ) {

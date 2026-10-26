@@ -3,27 +3,12 @@ package com.jannahos.ui.screens
 import androidx.compose.foundation.background
 import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableIntStateOf
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -33,239 +18,80 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.jannahos.KhatmStore
-import com.jannahos.LaylatulQadrStore
 import com.jannahos.RamadanMode
-import com.jannahos.ui.pressClickable
+import com.jannahos.SalahScheduler
+import com.jannahos.Settings
+import com.jannahos.ui.TopBar
 import com.jannahos.ui.theme.JannahColors
 import com.jannahos.ui.theme.JannahSpacing
 import com.jannahos.ui.theme.JannahType
+import java.text.SimpleDateFormat
+import java.util.Date
+import java.util.Locale
 
 @Composable
 fun RamadanScreen(onBack: () -> Unit) {
     BackHandler(onBack = onBack)
-
     val ctx = LocalContext.current
     val phase = RamadanMode.current()
-    var tick by remember { mutableIntStateOf(0) }
-    val ignore = tick
+    val times = SalahScheduler.todayTimes(Settings.lat(ctx), Settings.lon(ctx))
+    val hhmm = SimpleDateFormat("HH:mm", Locale.getDefault())
 
-    Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .verticalScroll(rememberScrollState())
-            .background(JannahColors.Cream)
-    ) {
-        Box(
-            Modifier
-                .fillMaxWidth()
-                .clip(RoundedCornerShape(bottomStart = 28.dp, bottomEnd = 28.dp))
-                .background(JannahColors.Orange)
-                .padding(horizontal = JannahSpacing.gutter)
-                .padding(top = JannahSpacing.xl, bottom = JannahSpacing.l)
-        ) {
-            Column {
-                Text("RAMADAN",
-                    style = JannahType.eyebrow,
-                    color = JannahColors.OnOrange.copy(alpha = 0.75f))
-                Spacer(Modifier.height(JannahSpacing.xs))
-                Text(when {
-                    phase.active -> "Day ${phase.dayOfRamadan} of Ramadan."
-                    phase.daysUntil > 0 -> "In ${phase.daysUntil} days."
-                    else -> "Preparing for Ramadan."
-                },
-                    fontFamily = FontFamily.Serif,
-                    fontSize = 26.sp,
-                    fontWeight = FontWeight.Bold,
-                    color = JannahColors.OnOrange,
-                    lineHeight = 32.sp
-                )
-                Spacer(Modifier.height(4.dp))
-                Text("The month of the Quran. The month of patience.",
-                    style = JannahType.caption,
-                    color = JannahColors.OnOrange.copy(alpha = 0.85f))
-            }
-        }
+    Column(Modifier.fillMaxSize().background(JannahColors.Cream)) {
+        TopBar("Ramadan", onBack = onBack)
 
-        Column(Modifier.padding(horizontal = JannahSpacing.gutter)) {
+        Column(Modifier.weight(1f).verticalScroll(rememberScrollState()).padding(horizontal = JannahSpacing.gutter)) {
             Spacer(Modifier.height(JannahSpacing.l))
 
-            Text("SUHOOR", style = JannahType.eyebrow, color = JannahColors.OrangeDeep)
-            Spacer(Modifier.height(JannahSpacing.s))
-            Box(
-                Modifier.fillMaxWidth().clip(RoundedCornerShape(JannahSpacing.cardRadius))
-                    .background(JannahColors.Card).padding(JannahSpacing.l)
-            ) {
-                Text(RamadanMode.dayGuidance.suhoorNote, style = JannahType.bodySmall, color = JannahColors.Body, lineHeight = 20.sp)
+            Box(Modifier.fillMaxWidth().clip(RoundedCornerShape(JannahSpacing.cardRadius)).background(JannahColors.Orange).padding(JannahSpacing.l)) {
+                Column {
+                    Text("RAMADAN", style = JannahType.eyebrow, color = JannahColors.OnOrange.copy(alpha = 0.75f))
+                    Spacer(Modifier.height(4.dp))
+                    Text(when {
+                        phase.active -> "Day ${phase.dayOfRamadan}"
+                        phase.daysUntil > 0 -> "In ${phase.daysUntil} days"
+                        else -> "Preparation"
+                    }, fontFamily = FontFamily.Serif, fontSize = 32.sp, fontWeight = FontWeight.Bold, color = JannahColors.OnOrange)
+                }
             }
 
-            Spacer(Modifier.height(JannahSpacing.m))
+            Spacer(Modifier.height(JannahSpacing.l))
 
-            Text("IFTAR DUA", style = JannahType.eyebrow, color = JannahColors.OrangeDeep)
+            Text("TODAY'S TIMES", style = JannahType.eyebrow, color = JannahColors.OrangeDeep)
             Spacer(Modifier.height(JannahSpacing.s))
-            Box(
-                Modifier.fillMaxWidth().clip(RoundedCornerShape(JannahSpacing.cardRadius))
-                    .background(JannahColors.Card).padding(JannahSpacing.l)
-            ) {
+            
+            Box(Modifier.fillMaxWidth().clip(RoundedCornerShape(JannahSpacing.cardRadius)).background(JannahColors.Card)) {
+                Column {
+                    val fajr = times["fajr"]?.let { hhmm.format(Date(it)) } ?: "—"
+                    val maghrib = times["maghrib"]?.let { hhmm.format(Date(it)) } ?: "—"
+                    
+                    Row(Modifier.fillMaxWidth().padding(JannahSpacing.l), horizontalArrangement = Arrangement.SpaceBetween) {
+                        Text("Suhoor ends (Fajr)", fontFamily = FontFamily.Serif, fontSize = 16.sp, color = JannahColors.Ink)
+                        Text(fajr, fontFamily = FontFamily.Serif, fontSize = 16.sp, fontWeight = FontWeight.Bold, color = JannahColors.OrangeDeep)
+                    }
+                    Box(Modifier.fillMaxWidth().height(1.dp).background(JannahColors.Border))
+                    Row(Modifier.fillMaxWidth().padding(JannahSpacing.l), horizontalArrangement = Arrangement.SpaceBetween) {
+                        Text("Iftar (Maghrib)", fontFamily = FontFamily.Serif, fontSize = 16.sp, color = JannahColors.Ink)
+                        Text(maghrib, fontFamily = FontFamily.Serif, fontSize = 16.sp, fontWeight = FontWeight.Bold, color = JannahColors.OrangeDeep)
+                    }
+                }
+            }
+
+            Spacer(Modifier.height(JannahSpacing.xl))
+
+            Text("LAY LAT AL-QADR", style = JannahType.eyebrow, color = JannahColors.OrangeDeep)
+            Spacer(Modifier.height(JannahSpacing.s))
+            Text("The last ten nights. Seek it in the odd nights: 21, 23, 25, 27, 29.", style = JannahType.caption, color = JannahColors.Muted)
+            Spacer(Modifier.height(JannahSpacing.s))
+
+            Box(Modifier.fillMaxWidth().clip(RoundedCornerShape(JannahSpacing.cardRadius)).background(JannahColors.OrangeSoft).padding(JannahSpacing.l)) {
                 Column(horizontalAlignment = Alignment.CenterHorizontally, modifier = Modifier.fillMaxWidth()) {
-                    Text(RamadanMode.dayGuidance.iftarDuaArabic, style = JannahType.arabic, color = JannahColors.Ink, textAlign = TextAlign.Center)
-                    Spacer(Modifier.height(JannahSpacing.s))
-                    Text(RamadanMode.dayGuidance.iftarDuaTranslation, style = JannahType.bodySmall, color = JannahColors.Body, textAlign = TextAlign.Center, lineHeight = 20.sp)
-                    Spacer(Modifier.height(JannahSpacing.s))
-                    Text(RamadanMode.dayGuidance.iftarSource, style = JannahType.micro, color = JannahColors.Faint)
-                }
-            }
-
-            if (phase.active) {
-                Spacer(Modifier.height(JannahSpacing.m))
-
-                val target = KhatmStore.getTarget(ctx)
-                val completedDays = KhatmStore.getCompleted(ctx)
-                val expected = (phase.dayOfRamadan - 1).coerceAtLeast(0)
-                val ahead = completedDays - expected
-
-                Box(
-                    Modifier.fillMaxWidth().clip(RoundedCornerShape(JannahSpacing.cardRadius))
-                        .background(JannahColors.Card).padding(JannahSpacing.l)
-                ) {
-                    Column {
-                        Text("RAMADAN KHATM", style = JannahType.eyebrow, color = JannahColors.OrangeDeep)
-                        Spacer(Modifier.height(JannahSpacing.s))
-                        Text("$completedDays of $target days completed",
-                            style = JannahType.bodySmall, color = JannahColors.Ink, fontWeight = FontWeight.Bold)
-                        Spacer(Modifier.height(4.dp))
-
-                        if (completedDays >= target) {
-                            Text("Khatm complete, alhamdulillah.",
-                                style = JannahType.body, color = JannahColors.OrangeDeep, fontWeight = FontWeight.Bold)
-                        } else {
-                            val statusText = when {
-                                completedDays == 0 -> "Start tonight."
-                                ahead > 0 -> "Ahead by $ahead ${if (ahead == 1) "day" else "days"}."
-                                ahead < 0 -> "Behind by ${-ahead} ${if (-ahead == 1) "day" else "days"}."
-                                else -> "On pace."
-                            }
-                            val paceColor = when {
-                                ahead > 0 -> JannahColors.OrangeDeep
-                                ahead < 0 -> JannahColors.Danger
-                                else -> JannahColors.Ink
-                            }
-                            Text(statusText, style = JannahType.body, color = paceColor, fontWeight = FontWeight.Bold)
-                            Spacer(Modifier.height(JannahSpacing.xs))
-                            val idx = completedDays.coerceIn(0, target - 1)
-                            val (startPage, endPage) = KhatmStore.getRangeForDay(ctx, idx)
-                            Text("Next: pages $startPage to $endPage",
-                                style = JannahType.caption, color = JannahColors.Muted)
-                            Spacer(Modifier.height(2.dp))
-                            Box(
-                                Modifier.fillMaxWidth().height(4.dp)
-                                    .clip(RoundedCornerShape(2.dp)).background(JannahColors.Border)
-                            ) {
-                                Box(
-                                    Modifier.fillMaxWidth(
-                                        if (target == 0) 0f else (completedDays.toFloat() / target).coerceIn(0f, 1f)
-                                    ).height(4.dp).clip(RoundedCornerShape(2.dp)).background(JannahColors.Orange)
-                                )
-                            }
-                        }
-                    }
-                }
-            }
-
-            Spacer(Modifier.height(JannahSpacing.l))
-
-            Text("THE LAST TEN NIGHTS", style = JannahType.eyebrow, color = JannahColors.OrangeDeep)
-            Spacer(Modifier.height(JannahSpacing.xs))
-            Text("Tap a night when you stand in prayer. Progress saves automatically.",
-                style = JannahType.caption, color = JannahColors.Muted, lineHeight = 18.sp)
-            Spacer(Modifier.height(JannahSpacing.s))
-
-            RamadanMode.lastTenFocus.forEachIndexed { i, nf ->
-                val prayed = LaylatulQadrStore.isPrayed(ctx, nf.night)
-                Row(
-                    Modifier
-                        .fillMaxWidth()
-                        .pressClickable {
-                            LaylatulQadrStore.setPrayed(ctx, nf.night, !prayed)
-                            tick++
-                        }
-                        .padding(vertical = 14.dp),
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Box(
-                        Modifier.size(28.dp).clip(CircleShape)
-                            .background(if (prayed) JannahColors.Orange else JannahColors.Card)
-                            .pressClickable {
-                                LaylatulQadrStore.setPrayed(ctx, nf.night, !prayed)
-                                tick++
-                            },
-                        contentAlignment = Alignment.Center
-                    ) {
-                        if (prayed) Text("✓", color = JannahColors.OnOrange, fontSize = 14.sp, fontWeight = FontWeight.Bold)
-                    }
-                    Spacer(Modifier.padding(horizontal = 6.dp))
-                    Column(Modifier.weight(1f)) {
-                        Text("Night ${nf.night}",
-                            style = JannahType.bodySmall,
-                            color = JannahColors.Ink,
-                            fontWeight = FontWeight.Bold)
-                        Spacer(Modifier.height(2.dp))
-                        Text(nf.note, style = JannahType.caption, color = JannahColors.Body, lineHeight = 18.sp)
-                    }
-                }
-                if (i < RamadanMode.lastTenFocus.size - 1) {
-                    Box(Modifier.fillMaxWidth().height(1.dp).background(JannahColors.Divider))
-                }
-            }
-
-            Spacer(Modifier.height(JannahSpacing.m))
-            val prayedCount = LaylatulQadrStore.prayedCount(ctx)
-            Text("$prayedCount of 10 nights marked.", style = JannahType.caption, color = JannahColors.Muted)
-
-            Spacer(Modifier.height(JannahSpacing.l))
-
-            Box(
-                Modifier.fillMaxWidth().clip(RoundedCornerShape(JannahSpacing.cardRadius))
-                    .background(JannahColors.OrangeSoft).padding(JannahSpacing.l)
-            ) {
-                Column(horizontalAlignment = Alignment.CenterHorizontally, modifier = Modifier.fillMaxWidth()) {
-                    Text("THE DUA FOR LAYLAT AL-QADR", style = JannahType.eyebrow, color = JannahColors.OrangeDeep)
-                    Spacer(Modifier.height(JannahSpacing.m))
                     Text(RamadanMode.laylatulQadrDua.first, style = JannahType.arabic, color = JannahColors.Ink, textAlign = TextAlign.Center)
                     Spacer(Modifier.height(JannahSpacing.s))
                     Text(RamadanMode.laylatulQadrDua.second, style = JannahType.bodySmall, color = JannahColors.Muted, textAlign = TextAlign.Center)
                     Spacer(Modifier.height(JannahSpacing.s))
                     Text(RamadanMode.laylatulQadrDua.third, style = JannahType.body, color = JannahColors.Body, textAlign = TextAlign.Center, lineHeight = 22.sp)
-                    Spacer(Modifier.height(JannahSpacing.s))
-                    Text(RamadanMode.laylatulQadrSource, style = JannahType.micro, color = JannahColors.Faint, textAlign = TextAlign.Center)
                 }
-            }
-
-            Spacer(Modifier.height(JannahSpacing.l))
-
-            Box(
-                Modifier.fillMaxWidth().clip(RoundedCornerShape(JannahSpacing.cardRadius))
-                    .background(JannahColors.Card).padding(JannahSpacing.l)
-            ) {
-                Column {
-                    Text("EVIDENCE", style = JannahType.eyebrow, color = JannahColors.OrangeDeep)
-                    Spacer(Modifier.height(JannahSpacing.s))
-                    Text("Aisha said: \"When the last ten nights began, the Prophet ﷺ would stay awake at night, wake his family, and exert himself in worship.\"",
-                        style = JannahType.bodySmall, color = JannahColors.Body, lineHeight = 20.sp)
-                    Spacer(Modifier.height(JannahSpacing.s))
-                    Text("Sahih al-Bukhari 2024, Sahih Muslim 1174", style = JannahType.micro, color = JannahColors.Faint)
-                }
-            }
-
-            Spacer(Modifier.height(JannahSpacing.l))
-
-            Box(
-                Modifier.clip(RoundedCornerShape(JannahSpacing.pillRadius))
-                    .background(JannahColors.Ink)
-                    .clickable(onClick = onBack)
-                    .padding(horizontal = 24.dp, vertical = 14.dp)
-            ) {
-                Text("← Back", style = JannahType.button, color = JannahColors.OnOrange)
             }
 
             Spacer(Modifier.height(JannahSpacing.xxl))

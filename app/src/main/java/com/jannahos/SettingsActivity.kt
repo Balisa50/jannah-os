@@ -1,6 +1,7 @@
 package com.jannahos
 
 import android.content.Context
+import android.content.Intent
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
@@ -23,7 +24,7 @@ import androidx.compose.ui.unit.sp
 import com.jannahos.ui.SwipeBackScreen
 import com.jannahos.ui.TopBar
 import com.jannahos.ui.screens.CityPickerScreen
-import com.jannahos.ui.screens.GuardianSetupScreen
+import com.jannahos.ui.screens.PermissionSetupScreen
 import com.jannahos.ui.theme.JannahColors
 import com.jannahos.ui.theme.JannahSpacing
 import com.jannahos.ui.theme.JannahType
@@ -43,14 +44,14 @@ class SettingsActivity : ComponentActivity() {
 private fun SettingsScreen(onBack: () -> Unit) {
     val ctx = LocalContext.current
     var showCityPicker by remember { mutableStateOf(false) }
-    var showGuardian by remember { mutableStateOf(false) }
+    var showPermissions by remember { mutableStateOf(false) }
 
     if (showCityPicker) {
         CityPickerScreen(onBack = { showCityPicker = false }, onPicked = { c, cn -> CityStore.set(ctx, c, cn); showCityPicker = false })
         return
     }
-    if (showGuardian) {
-        GuardianSetupScreen(onBack = { showGuardian = false })
+    if (showPermissions) {
+        PermissionSetupScreen(onAllSet = { showPermissions = false })
         return
     }
 
@@ -64,16 +65,17 @@ private fun SettingsScreen(onBack: () -> Unit) {
         TopBar("Settings", onBack = onBack)
 
         Spacer(Modifier.height(JannahSpacing.l))
-        SectionHeader("Prayer")
+        SectionHeader("System")
+        ListRow("Permissions & Alarms", "Fix battery, DND, or accessibility") { showPermissions = true }
+        Divider()
         ListRow("City", if (cityName.isBlank()) "Not set" else cityName) { showCityPicker = true }
         Divider()
 
         Spacer(Modifier.height(JannahSpacing.l))
         SectionHeader("Locks & Focus")
-        ListRow("Prayer Lock", if (prayerLockOn) "Locks ALL apps during Fard prayers" else "Off", prayerLockOn) {
+        ListRow("Prayer Lock", if (prayerLockOn) "Locks apps during Fard prayers" else "Off", prayerLockOn) {
             prayerLockOn = !prayerLockOn
             PrayerLock.setEnabled(ctx, prayerLockOn)
-            if (prayerLockOn && !isAccessibilityServiceEnabled(ctx)) showGuardian = true
         }
         Divider()
         ListRow("Quran reading lock", if (quranLockOn) "Random time before midnight" else "Off", quranLockOn) {
@@ -90,15 +92,9 @@ private fun SettingsScreen(onBack: () -> Unit) {
             silentTahajjud = !silentTahajjud
             Settings.setTahajjudSilent(ctx, silentTahajjud)
         }
-        
+
         Spacer(Modifier.height(JannahSpacing.xxl))
     }
-}
-
-private fun isAccessibilityServiceEnabled(context: Context): Boolean {
-    val service = "${context.packageName}/${FocusAccessibilityService::class.java.canonicalName}"
-    val enabledServices = android.provider.Settings.Secure.getString(context.contentResolver, android.provider.Settings.Secure.ENABLED_ACCESSIBILITY_SERVICES) ?: return false
-    return enabledServices.contains(service)
 }
 
 @Composable

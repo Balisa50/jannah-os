@@ -6,9 +6,9 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material3.Text
@@ -31,6 +31,8 @@ fun TopBar(
     Row(
         Modifier
             .fillMaxWidth()
+            .statusBarsPadding() // <--- FIXES THE GRAY BANNER BUG
+            .background(JannahColors.Cream)
             .padding(horizontal = JannahSpacing.m, vertical = JannahSpacing.s),
         verticalAlignment = Alignment.CenterVertically
     ) {
@@ -45,10 +47,12 @@ fun TopBar(
             ) {
                 Text("←", fontSize = 18.sp, color = JannahColors.Ink)
             }
+            Spacer(Modifier.width(JannahSpacing.s))
         } else {
             Spacer(Modifier.size(40.dp))
+            Spacer(Modifier.width(JannahSpacing.s))
         }
-        Spacer(Modifier.width(JannahSpacing.s))
+        
         Text(
             title,
             fontFamily = FontFamily.Serif,
