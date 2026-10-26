@@ -72,7 +72,7 @@ fun TodayScreen(onNavigate: (String) -> Unit = {}) {
             Spacer(Modifier.height(8.dp))
             val greg = SimpleDateFormat("EEEE, d MMMM", Locale.getDefault()).format(Date())
             val hijri = HijriDate.today()
-            Text(if (hijri.isNotEmpty()) "$greg · $hijri" else greg, style = JannahType.caption, color = JannahColors.Muted)
+            Text(if (hijri.isNotEmpty()) "$greg · $hijri" else greg, style = JannahType.eyebrow, color = JannahColors.Orange)
         }
 
         Column(Modifier.padding(horizontal = JannahSpacing.gutter)) {
@@ -80,7 +80,7 @@ fun TodayScreen(onNavigate: (String) -> Unit = {}) {
             Text("NEXT PRAYER", style = JannahType.eyebrow, color = JannahColors.OrangeDeep)
             Spacer(Modifier.height(8.dp))
             Row(verticalAlignment = Alignment.Bottom) {
-                Text(displayLabel, fontFamily = FontFamily.Serif, fontSize = 32.sp, fontWeight = FontWeight.Bold, color = JannahColors.Ink)
+                Text(displayLabel, fontFamily = FontFamily.Serif, fontSize = 32.sp, fontWeight = FontWeight.Bold, color = JannahColors.Orange)
                 Spacer(Modifier.width(8.dp))
                 Text("in", fontFamily = FontFamily.Serif, fontStyle = FontStyle.Italic, fontSize = 22.sp, color = JannahColors.Orange, modifier = Modifier.padding(bottom = 6.dp))
             }
@@ -110,11 +110,17 @@ fun TodayScreen(onNavigate: (String) -> Unit = {}) {
             }
 
             // Hadith
-            Text("HADITH", style = JannahType.eyebrow, color = JannahColors.OrangeDeep)
-            Spacer(Modifier.height(8.dp))
-            Text(hadith.english, fontFamily = FontFamily.Serif, fontStyle = FontStyle.Italic, fontSize = 18.sp, color = JannahColors.Body, lineHeight = 28.sp)
-            Spacer(Modifier.height(8.dp))
-            Text(hadith.source, style = JannahType.caption, color = JannahColors.Muted)
+            Row {
+                Box(Modifier.width(3.dp).height(80.dp).background(JannahColors.Orange))
+                Spacer(Modifier.width(16.dp))
+                Column {
+                    Text("HADITH", style = JannahType.eyebrow, color = JannahColors.OrangeDeep)
+                    Spacer(Modifier.height(8.dp))
+                    Text(hadith.english, fontFamily = FontFamily.Serif, fontStyle = FontStyle.Italic, fontSize = 18.sp, color = JannahColors.Body, lineHeight = 28.sp)
+                    Spacer(Modifier.height(8.dp))
+                    Text(hadith.source, style = JannahType.caption, color = JannahColors.Muted)
+                }
+            }
 
             Spacer(Modifier.height(32.dp))
             Box(Modifier.fillMaxWidth().height(1.dp).background(JannahColors.Divider))
@@ -136,7 +142,7 @@ fun TodayScreen(onNavigate: (String) -> Unit = {}) {
 
             // Quran Continue
             Row(Modifier.fillMaxWidth().pressClickable { onNavigate("quran") }.padding(vertical = 16.dp), verticalAlignment = Alignment.CenterVertically) {
-                Text("Continue reading Quran", fontFamily = FontFamily.Serif, fontSize = 20.sp, fontWeight = FontWeight.Bold, color = JannahColors.Ink, modifier = Modifier.weight(1f))
+                Text("Continue reading Quran", fontFamily = FontFamily.Serif, fontSize = 20.sp, fontWeight = FontWeight.Bold, color = JannahColors.OrangeDeep, modifier = Modifier.weight(1f))
                 Text("→", style = JannahType.title, color = JannahColors.Orange)
             }
             Box(Modifier.fillMaxWidth().height(1.dp).background(JannahColors.Divider))
