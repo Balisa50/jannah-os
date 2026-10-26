@@ -39,18 +39,19 @@ fun YouScreen(onNavigate: (String) -> Unit = {}) {
             ListRow("Private commitments") { onNavigate("struggle") }
             ListRow("Tonight's plan") { ctx.startActivity(Intent(ctx, BedtimeActivity::class.java)) }
             ListRow("Letters to future self") { onNavigate("letters") }
-            ListRow("Morning & Evening Adhkar") { onNavigate("adhkar") }
-            ListRow("Morning & Evening Adhkar") { onNavigate("adhkar") }
-            ListRow("Sound Profiles") { onNavigate("sound_profile") }
-            ListRow("Morning & Evening Adhkar") { onNavigate("adhkar") }
-            ListRow("Sound Profiles") { onNavigate("sound_profile") }
-            ListRow("Backup & restore") { onNavigate("backup") }
+            
+            Spacer(Modifier.height(JannahSpacing.xl))
 
+            SectionLabel("SPIRITUAL")
+            ListRow("Morning & Evening Adhkar") { onNavigate("adhkar") }
+            ListRow("Ramadan") { onNavigate("ramadan") }
+            
             Spacer(Modifier.height(JannahSpacing.xl))
 
             SectionLabel("SETTINGS")
             ListRow("App Settings") { ctx.startActivity(Intent(ctx, SettingsActivity::class.java)) }
-            ListRow("Ramadan") { onNavigate("ramadan") }
+            ListRow("Sound Profiles") { onNavigate("sound_profile") }
+            ListRow("Backup & restore") { onNavigate("backup") }
             ListRow("About Jannah") { onNavigate("about") }
             
             Spacer(Modifier.height(JannahSpacing.xxl))

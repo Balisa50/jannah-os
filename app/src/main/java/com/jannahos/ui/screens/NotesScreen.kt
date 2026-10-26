@@ -5,10 +5,14 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -17,19 +21,17 @@ import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.text.font.FontFamily
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.jannahos.DiaryStore
 import com.jannahos.IslamicContentApi
 import com.jannahos.SmartTextEngine
-import com.jannahos.TafsirApi
 import com.jannahos.ui.ScreenHeader
 import com.jannahos.ui.theme.JannahColors
 import com.jannahos.ui.theme.JannahSpacing
 import com.jannahos.ui.theme.JannahType
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
@@ -47,53 +49,44 @@ fun NotesScreen(onBack: () -> Unit) {
     
     var writing by remember { mutableStateOf(false) }
     var text by remember { mutableStateOf("") }
+    var isFetching by remember { mutableStateOf(false) }
+    var showHelp by remember { mutableStateOf(false) }
     
     val dayFmt = SimpleDateFormat("EEE d MMM · HH:mm", Locale.getDefault())
 
-    val processCommand: (String) -> Unit = { command ->
-        val parts = command.trim().split(" ")
-        if (parts.size >= 2) {
-            if (parts[0] == "/quran") {
-                val ref = parts[1].split(":")
-                if (ref.size == 2) {
-                    val surah = ref[0].toIntOrNull()
-                    val ayah = ref[1].toIntOrNull()
-                    if (surah != null && ayah != null) {
-                        scope.launch {
-                            val verse = IslamicContentApi.getVerse(surah, ayah)
-                            text = text.replace(command, "\n\n${verse ?: "[Verse not found]"}\n\n")
-                        }
-                    }
-                }
-            } else if (parts[0] == "/hadith" && parts.size >= 3) {
-                val book = parts[1]
-                val number = parts[2].toIntOrNull()
-                if (number != null) {
-                    scope.launch {
-                        val hadith = IslamicContentApi.getHadith(book, number)
-                        text = text.replace(command, "\n\n${hadith ?: "[Hadith not found]"}\n\n")
-                    }
-                }
-            } else if (parts[0] == "/tafsir" && parts.size >= 2) {
-                val ref = parts[1].split(":")
-                if (ref.size == 2) {
-                    val surah = ref[0].toIntOrNull()
-                    val ayah = ref[1].toIntOrNull()
-                    if (surah != null && ayah != null) {
-                        scope.launch {
-                            val tafsir = withContext(Dispatchers.IO) { TafsirApi.fetch(surah, ayah) }
-                            text = text.replace(command, "\n\n${tafsir ?: "[Tafsir offline or not found]"}\n\n")
-                        }
-                    }
-                }
-            } else if (parts[0] == "/dua") {
-                val duas = listOf(
-                    "اللَّهُمَّ إِنِّي أَسْأَلُكَ الْهُدَى وَالتُّقَى وَالْعَفَافَ وَالْغِنَى\nO Allah, I ask You for guidance, piety, chastity and contentment.",
-                    "رَبَّنَا آتِنَا فِي الدُّنْيَا حَسَنَةً وَفِي الآخِرَةِ حَسَنَةً وَقِنَا عَذَابَ النَّارِ\nOur Lord, give us good in this world and good in the Hereafter, and protect us from the punishment of the Fire."
-                )
-                text = text.replace(command, "\n\n${duas.random()}\n\n")
+    // Function to process the text field
+    val processText: (String) -> Unit = { newText ->
+        var processedText = SmartTextEngine.process(newText)
+        
+        // 1. Check for Quran
+        val quranRegex = Regex("/quran\\s+(\\d+):(\\d+)")
+        quranRegex.find(processedText)?.let { match ->
+            val (surah, ayah) = match.destructured
+            val command = match.value
+            isFetching = true
+            scope.launch {
+                val verse = IslamicContentApi.getVerse(surah.toInt(), ayah.toInt())
+                processedText = processedText.replace(command, "\n\n${verse ?: "[Verse not found]"}\n\n")
+                text = processedText
+                isFetching = false
             }
         }
+
+        // 2. Check for Hadith
+        val hadithRegex = Regex("/hadith\\s+(\\w+)\\s+(\\d+)")
+        hadithRegex.find(processedText)?.let { match ->
+            val (book, number) = match.destructured
+            val command = match.value
+            isFetching = true
+            scope.launch {
+                val hadith = IslamicContentApi.getHadith(book, number.toInt())
+                processedText = processedText.replace(command, "\n\n${hadith ?: "[Hadith not found]"}\n\n")
+                text = processedText
+                isFetching = false
+            }
+        }
+        
+        text = processedText
     }
 
     Column(modifier = Modifier.fillMaxSize().background(JannahColors.Cream)) {
@@ -109,33 +102,39 @@ fun NotesScreen(onBack: () -> Unit) {
                     }
                     Spacer(Modifier.height(JannahSpacing.l))
                 } else {
+                    Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.fillMaxWidth().padding(bottom = 8.dp)) {
+                        Text("TYPE / FOR SHORTCUTS", style = JannahType.caption, color = JannahColors.OrangeDeep, modifier = Modifier.weight(1f))
+                        Box(Modifier.size(24.dp).clip(CircleShape).background(JannahColors.OrangeSoft).clickable { showHelp = true }, contentAlignment = Alignment.Center) {
+                            Text("?", style = JannahType.body, color = JannahColors.OrangeDeep, fontWeight = FontWeight.Bold)
+                        }
+                    }
+
                     OutlinedTextField(
                         value = text,
-                        onValueChange = { 
-                            val smart = SmartTextEngine.process(it)
-                            text = smart
-                            if (smart.endsWith(" ") && (smart.contains("/quran ") || smart.contains("/hadith ") || smart.contains("/tafsir ") || smart.contains("/dua "))) {
-                                val lastLine = smart.lines().last { it.isNotBlank() }
-                                if (lastLine.startsWith("/quran") || lastLine.startsWith("/hadith") || lastLine.startsWith("/tafsir") || lastLine.startsWith("/dua")) {
-                                    processCommand(lastLine)
-                                }
-                            }
-                        },
+                        onValueChange = { processText(it) },
                         modifier = Modifier.fillMaxWidth().height(200.dp),
                         textStyle = androidx.compose.ui.text.TextStyle(fontFamily = FontFamily.Serif, fontSize = 18.sp, color = JannahColors.Ink, lineHeight = 28.sp),
-                        placeholder = { Text("Try /quran 2:255, /hadith bukhari 1, /tafsir 1:1, /dua, or 'sallahu alaihi wa salaam'", style = JannahType.bodySmall, color = JannahColors.Faint) }
+                        placeholder = { Text("Try /quran 2:23 or /hadith bukhari 1", style = JannahType.bodySmall, color = JannahColors.Faint) }
                     )
                     
+                    if (isFetching) {
+                        Row(Modifier.fillMaxWidth().padding(vertical = 8.dp), verticalAlignment = Alignment.CenterVertically) {
+                            CircularProgressIndicator(modifier = Modifier.size(16.dp), color = JannahColors.Orange, strokeWidth = 2.dp)
+                            Spacer(Modifier.width(8.dp))
+                            Text("Fetching...", style = JannahType.caption, color = JannahColors.Orange)
+                        }
+                    }
+
                     Spacer(Modifier.height(JannahSpacing.s))
                     Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(JannahSpacing.s)) {
                         Box(Modifier.weight(1f).height(52.dp).clip(RoundedCornerShape(JannahSpacing.pillRadius)).background(JannahColors.Card).clickable { writing = false; text = "" }, contentAlignment = Alignment.Center) { Text("Cancel", style = JannahType.button, color = JannahColors.Muted) }
-                        Box(Modifier.weight(1f).height(52.dp).clip(RoundedCornerShape(JannahSpacing.pillRadius)).background(if (text.isBlank()) JannahColors.Border else JannahColors.Orange).clickable {
-                            if (text.isNotBlank()) {
+                        Box(Modifier.weight(1f).height(52.dp).clip(RoundedCornerShape(JannahSpacing.pillRadius)).background(if (text.isBlank() || isFetching) JannahColors.Border else JannahColors.Orange).clickable {
+                            if (text.isNotBlank() && !isFetching) {
                                 store.add(text.trim(), "note", "")
                                 haptics.performHapticFeedback(HapticFeedbackType.LongPress)
                                 text = ""; writing = false; refresh++ 
                             }
-                        }, contentAlignment = Alignment.Center) { Text("Save", style = JannahType.button, color = if (text.isBlank()) JannahColors.Faint else JannahColors.OnOrange) }
+                        }, contentAlignment = Alignment.Center) { Text("Save", style = JannahType.button, color = if (text.isBlank() || isFetching) JannahColors.Faint else JannahColors.OnOrange) }
                     }
                     Spacer(Modifier.height(JannahSpacing.l))
                 }
@@ -145,7 +144,7 @@ fun NotesScreen(onBack: () -> Unit) {
                     Spacer(Modifier.height(JannahSpacing.s))
                     entries.forEachIndexed { i, e ->
                         Row(Modifier.fillMaxWidth().padding(vertical = 16.dp), verticalAlignment = Alignment.Top) {
-                            Box(Modifier.width(3.dp).height(40.dp).clip(RoundedCornerShape(2.dp)).background(when { e.tag.startsWith("milestone") -> JannahColors.Orange; e.tag.startsWith("struggle") -> JannahColors.Muted; else -> JannahColors.Border }))
+                            Box(Modifier.width(3.dp).height(40.dp).clip(RoundedCornerShape(2.dp)).background(JannahColors.Border))
                             Spacer(Modifier.width(16.dp))
                             Column(Modifier.weight(1f)) {
                                 Text(dayFmt.format(Date(e.ts)), style = JannahType.micro, color = JannahColors.Faint)
@@ -162,5 +161,33 @@ fun NotesScreen(onBack: () -> Unit) {
                 Spacer(Modifier.height(JannahSpacing.xxl))
             }
         }
+    }
+
+    // SOPHISTICATED SETTINGS / HELP DIALOG
+    if (showHelp) {
+        AlertDialog(
+            onDismissRequest = { showHelp = false },
+            containerColor = JannahColors.Surface,
+            title = { Text("Smart Shortcuts", fontFamily = FontFamily.Serif, fontWeight = FontWeight.Bold, color = JannahColors.Ink) },
+            text = {
+                Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                    HelpItem("/quran [surah]:[ayah]", "Inserts the verse with translation.\nExample: /quran 2:255")
+                    HelpItem("/hadith [book] [num]", "Inserts the hadith text.\nExample: /hadith bukhari 1")
+                    HelpItem("sallahu alaihi wa salaam", "Auto-converts to ﷺ")
+                    HelpItem("subhanahu wa taala", "Auto-converts to سبحانه وتعالى")
+                }
+            },
+            confirmButton = {
+                TextButton(onClick = { showHelp = false }) { Text("Got it", color = JannahColors.Orange, fontWeight = FontWeight.Bold) }
+            }
+        )
+    }
+}
+
+@Composable
+private fun HelpItem(command: String, desc: String) {
+    Column {
+        Text(command, fontFamily = FontFamily.Monospace, fontSize = 14.sp, color = JannahColors.OrangeDeep, fontWeight = FontWeight.Bold)
+        Text(desc, style = JannahType.caption, color = JannahColors.Muted)
     }
 }
