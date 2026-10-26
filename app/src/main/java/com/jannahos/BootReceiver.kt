@@ -6,6 +6,9 @@ import android.content.Intent
 
 class BootReceiver : BroadcastReceiver() {
     override fun onReceive(context: Context, intent: Intent) {
+        if (Settings.isTahajjudEnabled(context)) {
+            TahajjudScheduler.scheduleAlarm(context, Settings.getTahajjudOffset(context))
+        }
         if (intent.action == Intent.ACTION_BOOT_COMPLETED) {
             // Reschedule the adaptive prayer alarms
             try {

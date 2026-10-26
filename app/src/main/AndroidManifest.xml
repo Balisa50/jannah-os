@@ -51,6 +51,16 @@
             android:theme="@android:style/Theme.Material.Light.NoActionBar" />
 
         <activity
+            android:name=".TahajjudAlarmActivity"
+            android:exported="false"
+            android:showWhenLocked="true"
+            android:turnScreenOn="true"
+            android:excludeFromRecents="true"
+            android:taskAffinity=""
+            android:launchMode="singleInstance"
+            android:theme="@android:style/Theme.Material.NoActionBar" />
+
+        <activity
             android:name=".BedtimeLockActivity"
             android:exported="false"
             android:showWhenLocked="true"
@@ -75,6 +85,7 @@
         <receiver android:name=".SalahReceiver" android:exported="false" />
         <receiver android:name=".BedtimeReceiver" android:exported="false" />
         <receiver android:name=".QuranLockReceiver" android:exported="false" />
+        <receiver android:name=".TahajjudAlarmReceiver" android:exported="false" />
         <receiver android:name=".PrayerReminderReceiver" android:exported="false" />
         
         <receiver android:name=".BootReceiver" android:exported="true">
