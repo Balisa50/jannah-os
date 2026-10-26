@@ -11,6 +11,7 @@
     <uses-permission android:name="android.permission.USE_FULL_SCREEN_INTENT" />
     <uses-permission android:name="android.permission.SYSTEM_ALERT_WINDOW" />
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_SPECIAL_USE" />
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE_MEDIA_PLAYBACK" />
     <uses-permission android:name="android.permission.VIBRATE" />
     <uses-permission android:name="android.permission.ACCESS_NOTIFICATION_POLICY" />
@@ -71,6 +72,7 @@
             android:theme="@android:style/Theme.Material.Light.NoActionBar" />
 
         <service android:name=".AdhanService" android:foregroundServiceType="mediaPlayback" android:exported="false" />
+        <service android:name=".FaceDownService" android:foregroundServiceType="specialUse" android:exported="false" />
 
         <service android:name=".FocusAccessibilityService"
             android:exported="true"

@@ -23,6 +23,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.jannahos.ui.SwipeBackScreen
 import com.jannahos.ui.TopBar
+import com.jannahos.FaceDownService
 import com.jannahos.ui.screens.CityPickerScreen
 import com.jannahos.ui.screens.PermissionSetupScreen
 import com.jannahos.ui.theme.JannahColors
@@ -59,6 +60,7 @@ private fun SettingsScreen(onBack: () -> Unit) {
     var quranLockOn by remember { mutableStateOf(QuranReadingLock.enabled(ctx)) }
     var bedtimeLockOn by remember { mutableStateOf(Settings.isBedtimeLockEnabled(ctx)) }
     var silentTahajjud by remember { mutableStateOf(Settings.isTahajjudSilent(ctx)) }
+    var faceDownOn by remember { mutableStateOf(Settings.isFaceDownEnabled(ctx)) }
     var cityName by remember { mutableStateOf(CityStore.name(ctx)) }
 
     Column(Modifier.fillMaxSize().verticalScroll(rememberScrollState()).background(JannahColors.Cream)) {
@@ -91,6 +93,21 @@ private fun SettingsScreen(onBack: () -> Unit) {
         ListRow("Silent tahajjud", if (silentTahajjud) "Vibrate only" else "Sound", silentTahajjud) {
             silentTahajjud = !silentTahajjud
             Settings.setTahajjudSilent(ctx, silentTahajjud)
+        }
+        Divider()
+        ListRow("Face-down sleep trigger", if (faceDownOn) "Bedtime lock activates" else "Off", faceDownOn) {
+            faceDownOn = !faceDownOn
+            Settings.setFaceDownEnabled(ctx, faceDownOn)
+            if (faceDownOn) {
+                val intent = android.content.Intent(ctx, FaceDownService::class.java)
+                if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.O) {
+                    ctx.startForegroundService(intent)
+                } else {
+                    ctx.startService(intent)
+                }
+            } else {
+                ctx.stopService(android.content.Intent(ctx, FaceDownService::class.java))
+            }
         }
 
         Spacer(Modifier.height(JannahSpacing.xxl))

@@ -78,6 +78,13 @@ object Settings {
         ctx.getSharedPreferences("jannah_prefs", Context.MODE_PRIVATE).edit().putBoolean("tahajjud_silent", silent).apply()
     }
 
+    fun isFaceDownEnabled(ctx: Context): Boolean =
+        ctx.getSharedPreferences("jannah_prefs", Context.MODE_PRIVATE).getBoolean("face_down_enabled", false)
+
+    fun setFaceDownEnabled(ctx: Context, enabled: Boolean) {
+        ctx.getSharedPreferences("jannah_prefs", Context.MODE_PRIVATE).edit().putBoolean("face_down_enabled", enabled).apply()
+    }
+
     fun isBedtimeLockEnabled(ctx: Context): Boolean =
         ctx.getSharedPreferences("jannah_prefs", Context.MODE_PRIVATE).getBoolean("bedtime_lock_enabled", false)
 
