@@ -9,8 +9,10 @@ import java.net.URL
 object IslamicContentApi {
     suspend fun getVerse(surah: Int, ayah: Int): String? = withContext(Dispatchers.IO) {
         try {
-            val url = URL("https://api.quran.com/api/v4/quran/verses/uthmani?chapter_number=$surah&verse_number=$ayah")
-            val conn = URL(url).openConnection() as HttpURLConnection
+            val urlString = "https://api.quran.com/api/v4/quran/verses/uthmani?chapter_number=$surah&verse_number=$ayah"
+            val url = URL(urlString)
+            val conn = url.openConnection() as HttpURLConnection
+            conn.requestMethod = "GET"
             if (conn.responseCode == 200) {
                 val body = conn.inputStream.bufferedReader().use { it.readText() }
                 val verses = JSONObject(body).getJSONArray("verses")
@@ -24,8 +26,10 @@ object IslamicContentApi {
 
     suspend fun getHadith(book: String, number: Int): String? = withContext(Dispatchers.IO) {
         try {
-            val url = URL("https://cdn.jsdelivr.net/gh/fawazahmed0/hadith-api@1/editions/eng-$book/1.json")
-            val conn = URL(url).openConnection() as HttpURLConnection
+            val urlString = "https://cdn.jsdelivr.net/gh/fawazahmed0/hadith-api@1/editions/eng-$book/1.json"
+            val url = URL(urlString)
+            val conn = url.openConnection() as HttpURLConnection
+            conn.requestMethod = "GET"
             if (conn.responseCode == 200) {
                 val body = conn.inputStream.bufferedReader().use { it.readText() }
                 val hadiths = JSONObject(body).getJSONArray("hadiths")
