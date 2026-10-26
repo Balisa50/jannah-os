@@ -45,20 +45,19 @@ class SalahCommitmentActivity : ComponentActivity() {
         window.addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
         DndHelper.enableDnd(this)
 
-        // Calculate the ACTUAL current prayer based on the time
         val lat = Settings.lat(this)
         val lon = Settings.lon(this)
         val times = SalahScheduler.todayTimes(lat, lon)
         val now = System.currentTimeMillis()
         val ordered = listOf("fajr", "dhuhr", "asr", "maghrib", "isha")
         
-        // Find the most recent prayer that started
-        var currentPrayer = "fajr"
+        var current = "fajr"
         for (key in ordered) {
             if ((times[key] ?: 0L) <= now) {
-                currentPrayer = key
+                current = key
             }
         }
+        val currentPrayer = current // Fix scoping
 
         setContent {
             JannahTheme {
