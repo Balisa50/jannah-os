@@ -44,22 +44,32 @@ fun RamadanScreen(onBack: () -> Unit) {
         Column(Modifier.weight(1f).verticalScroll(rememberScrollState()).padding(horizontal = JannahSpacing.gutter)) {
             Spacer(Modifier.height(JannahSpacing.l))
 
-            Text("TODAY'S TIMES", style = JannahType.eyebrow, color = JannahColors.OrangeDeep)
-            Spacer(Modifier.height(8.dp))
-            
-            val fajr = times["fajr"]?.let { hhmm.format(Date(it)) } ?: "—"
-            val maghrib = times["maghrib"]?.let { hhmm.format(Date(it)) } ?: "—"
-            
-            Row(Modifier.fillMaxWidth().padding(vertical = 16.dp), horizontalArrangement = Arrangement.SpaceBetween) {
-                Text("Suhoor ends (Fajr)", fontFamily = FontFamily.Serif, fontSize = 18.sp, color = JannahColors.Ink)
-                Text(fajr, fontFamily = FontFamily.Serif, fontSize = 18.sp, fontWeight = FontWeight.Bold, color = JannahColors.OrangeDeep)
+            if (phase.active) {
+                Text("TODAY'S TIMES", style = JannahType.eyebrow, color = JannahColors.OrangeDeep)
+                Spacer(Modifier.height(8.dp))
+                
+                val fajr = times["fajr"]?.let { hhmm.format(Date(it)) } ?: "—"
+                val maghrib = times["maghrib"]?.let { hhmm.format(Date(it)) } ?: "—"
+                
+                Row(Modifier.fillMaxWidth().padding(vertical = 16.dp), horizontalArrangement = Arrangement.SpaceBetween) {
+                    Text("Suhoor ends (Fajr)", fontFamily = FontFamily.Serif, fontSize = 18.sp, color = JannahColors.Ink)
+                    Text(fajr, fontFamily = FontFamily.Serif, fontSize = 18.sp, fontWeight = FontWeight.Bold, color = JannahColors.OrangeDeep)
+                }
+                Box(Modifier.fillMaxWidth().height(1.dp).background(JannahColors.Divider))
+                Row(Modifier.fillMaxWidth().padding(vertical = 16.dp), horizontalArrangement = Arrangement.SpaceBetween) {
+                    Text("Iftar (Maghrib)", fontFamily = FontFamily.Serif, fontSize = 18.sp, color = JannahColors.Ink)
+                    Text(maghrib, fontFamily = FontFamily.Serif, fontSize = 18.sp, fontWeight = FontWeight.Bold, color = JannahColors.OrangeDeep)
+                }
+                Box(Modifier.fillMaxWidth().height(1.dp).background(JannahColors.Divider))
+            } else {
+                Text("PREPARATION", style = JannahType.eyebrow, color = JannahColors.OrangeDeep)
+                Spacer(Modifier.height(8.dp))
+                Text("Ramadan begins in ${phase.daysUntil} days.", fontFamily = FontFamily.Serif, fontSize = 32.sp, fontWeight = FontWeight.Bold, color = JannahColors.Orange)
+                Spacer(Modifier.height(8.dp))
+                Text("Use this time to prepare your heart, make up missed fasts, and build your Quran reading habit.", style = JannahType.body, color = JannahColors.Muted, lineHeight = 24.sp)
+                Spacer(Modifier.height(16.dp))
+                Box(Modifier.fillMaxWidth().height(1.dp).background(JannahColors.Divider))
             }
-            Box(Modifier.fillMaxWidth().height(1.dp).background(JannahColors.Divider))
-            Row(Modifier.fillMaxWidth().padding(vertical = 16.dp), horizontalArrangement = Arrangement.SpaceBetween) {
-                Text("Iftar (Maghrib)", fontFamily = FontFamily.Serif, fontSize = 18.sp, color = JannahColors.Ink)
-                Text(maghrib, fontFamily = FontFamily.Serif, fontSize = 18.sp, fontWeight = FontWeight.Bold, color = JannahColors.OrangeDeep)
-            }
-            Box(Modifier.fillMaxWidth().height(1.dp).background(JannahColors.Divider))
 
             Spacer(Modifier.height(JannahSpacing.xl))
 
