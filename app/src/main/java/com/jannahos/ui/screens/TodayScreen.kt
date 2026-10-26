@@ -3,7 +3,6 @@ package com.jannahos.ui.screens
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Text
 import androidx.compose.runtime.*
@@ -75,8 +74,8 @@ fun TodayScreen(onNavigate: (String) -> Unit = {}) {
             Text(if (hijri.isNotEmpty()) "$greg · $hijri" else greg, style = JannahType.caption, color = JannahColors.Muted)
         }
 
-        // Next Prayer Typography Block
         Column(Modifier.padding(horizontal = JannahSpacing.gutter)) {
+            // Next Prayer Block
             Text("NEXT PRAYER", style = JannahType.eyebrow, color = JannahColors.OrangeDeep)
             Spacer(Modifier.height(8.dp))
             Row(verticalAlignment = Alignment.Bottom) {
@@ -91,7 +90,7 @@ fun TodayScreen(onNavigate: (String) -> Unit = {}) {
             Box(Modifier.fillMaxWidth().height(1.dp).background(JannahColors.Divider))
             Spacer(Modifier.height(32.dp))
 
-            // Ramadan Section (Cleaned)
+            // Ramadan Section
             val ramadan = RamadanMode.current()
             if (ramadan.active) {
                 Text("RAMADAN · DAY ${ramadan.dayOfRamadan}", style = JannahType.eyebrow, color = JannahColors.OrangeDeep)
@@ -109,7 +108,7 @@ fun TodayScreen(onNavigate: (String) -> Unit = {}) {
                 Spacer(Modifier.height(32.dp))
             }
 
-            // Hadith (No card)
+            // Hadith
             Text("HADITH", style = JannahType.eyebrow, color = JannahColors.OrangeDeep)
             Spacer(Modifier.height(8.dp))
             Text(hadith.english, fontFamily = FontFamily.Serif, fontStyle = FontStyle.Italic, fontSize = 18.sp, color = JannahColors.Body, lineHeight = 28.sp)
@@ -134,11 +133,12 @@ fun TodayScreen(onNavigate: (String) -> Unit = {}) {
                 }
             }
 
-            // Quran continue
+            // Quran Continue
             Row(Modifier.fillMaxWidth().pressClickable { onNavigate("quran") }.padding(vertical = 16.dp), verticalAlignment = Alignment.CenterVertically) {
                 Text("Continue reading Quran", fontFamily = FontFamily.Serif, fontSize = 20.sp, fontWeight = FontWeight.Bold, color = JannahColors.Ink, modifier = Modifier.weight(1f))
                 Text("→", style = JannahType.title, color = JannahColors.Orange)
             }
+            Box(Modifier.fillMaxWidth().height(1.dp).background(JannahColors.Divider))
         }
         Spacer(Modifier.height(JannahSpacing.xxl))
     }
