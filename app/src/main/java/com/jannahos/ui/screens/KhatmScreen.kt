@@ -20,6 +20,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.jannahos.KhatmStore
+import com.jannahos.AdaptivePacing
 import com.jannahos.ui.TopBar
 import com.jannahos.ui.pressClickable
 import com.jannahos.ui.theme.JannahColors
@@ -41,6 +42,20 @@ fun KhatmScreen(onBack: () -> Unit, onOpenRange: (Int, Int) -> Unit) {
 
         Column(Modifier.padding(horizontal = JannahSpacing.gutter)) {
             Spacer(Modifier.height(16.dp))
+            
+            // ADAPTIVE PACING ALGORITHM
+            val daysElapsed = KhatmStore.getDaysElapsed(ctx)
+            val pacing = AdaptivePacing.calculatePacing(604, target, daysElapsed, completed * (604 / target))
+            
+            Box(Modifier.fillMaxWidth().clip(RoundedCornerShape(12.dp)).background(JannahColors.Card).padding(16.dp)) {
+                Column {
+                    Text("ADAPTIVE PACING", style = JannahType.eyebrow, color = JannahColors.OrangeDeep)
+                    Spacer(Modifier.height(8.dp))
+                    Text(pacing.message, fontFamily = FontFamily.Serif, fontSize = 16.sp, fontWeight = FontWeight.Bold, color = JannahColors.Ink, lineHeight = 22.sp)
+                }
+            }
+            
+            Spacer(Modifier.height(24.dp))
             Text("CHOOSE YOUR PACE", style = JannahType.eyebrow, color = JannahColors.OrangeDeep)
             Spacer(Modifier.height(8.dp))
             Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp), verticalAlignment = Alignment.CenterVertically) {
