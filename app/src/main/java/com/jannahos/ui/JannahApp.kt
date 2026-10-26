@@ -16,10 +16,12 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavBackStackEntry
+import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
+import androidx.navigation.navArgument
 import com.jannahos.*
 import com.jannahos.ui.screens.*
 import com.jannahos.ui.theme.JannahColors
@@ -132,7 +134,7 @@ fun JannahApp() {
             composable("quran") {
                 ErrorBoundary("Quran") {
                     QuranTabScreen(
-                        onNavigateToSurah = { surah -> nav.navigate("mushaf/${QuranStore.firstPageOfSurah(surah)}/604") },
+                        onNavigateToSurah = { surah -> nav.navigate("mushaf/${QuranStore.firstPageOfSurah(surah)}/604?isKhatm=false") },
                         onNavigateToSearch = { nav.navigate("search") },
                         onNavigateToPlan = { nav.navigate("plan") }
                     )
@@ -141,21 +143,33 @@ fun JannahApp() {
 
             composable("search") {
                 ErrorBoundary("Search") {
-                    QuranSearchScreen(onBack = { nav.popBackStack() }, onNavigateToPage = { page -> nav.navigate("mushaf/$page/604") })
+                    QuranSearchScreen(onBack = { nav.popBackStack() }, onNavigateToPage = { page -> nav.navigate("mushaf/$page/604?isKhatm=false") })
                 }
             }
 
             composable("plan") {
                 ErrorBoundary("Plan") {
-                    KhatmScreen(onBack = { nav.popBackStack() }, onOpenRange = { start, end -> nav.navigate("mushaf/$start/$end") })
+                    KhatmScreen(
+                        onBack = { nav.popBackStack() },
+                        onOpenRange = { start, end -> nav.navigate("mushaf/$start/$end?isKhatm=true") }
+                    )
                 }
             }
 
-            composable("mushaf/{startPage}/{endPage}") { backStackEntry ->
-                val startPage = backStackEntry.arguments?.getString("startPage")?.toIntOrNull() ?: 1
-                val endPage = backStackEntry.arguments?.getString("endPage")?.toIntOrNull() ?: 604
+            // Route updated to accept isKhatm boolean
+            composable(
+                route = "mushaf/{startPage}/{endPage}?isKhatm={isKhatm}",
+                arguments = listOf(
+                    navArgument("startPage") { type = NavType.IntType },
+                    navArgument("endPage") { type = NavType.IntType },
+                    navArgument("isKhatm") { type = NavType.BoolType; defaultValue = false }
+                )
+            ) { backStackEntry ->
+                val startPage = backStackEntry.arguments?.getInt("startPage") ?: 1
+                val endPage = backStackEntry.arguments?.getInt("endPage") ?: 604
+                val isKhatm = backStackEntry.arguments?.getBoolean("isKhatm") ?: false
                 ErrorBoundary("Quran Reader") {
-                    MushafPageScreen(startPage = startPage, endPage = endPage, onBack = { nav.popBackStack() })
+                    MushafPageScreen(startPage = startPage, endPage = endPage, isKhatm = isKhatm, onBack = { nav.popBackStack() })
                 }
             }
 
