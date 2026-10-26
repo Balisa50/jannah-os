@@ -183,6 +183,7 @@ fun JannahApp() {
             composable("weekly") { ErrorBoundary("Weekly") { WeeklyReviewScreen(onBack = { nav.popBackStack() }) } }
             composable("struggle") { ErrorBoundary("Struggle") { StruggleScreen(onBack = { nav.popBackStack() }) } }
             composable("letters") { ErrorBoundary("Letters") { LettersScreen(onBack = { nav.popBackStack() }) } }
+            composable("notes") { ErrorBoundary("Notes") { NotesScreen(onBack = { nav.popBackStack() }) } }
             composable("about") { ErrorBoundary("About") { AboutScreen(onBack = { nav.popBackStack() }) } }
             composable("ramadan") { ErrorBoundary("Ramadan") { RamadanScreen(onBack = { nav.popBackStack() }) } }
             composable("sanctuary") { ErrorBoundary("Sanctuary") { SanctuaryScreen(onExit = { nav.popBackStack() }) } }

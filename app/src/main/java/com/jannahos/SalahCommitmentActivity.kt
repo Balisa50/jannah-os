@@ -34,24 +34,35 @@ class SalahCommitmentActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
         overridePendingTransition(0, 0)
         LockState.restore(this)
-        
+
         if (!LockState.isEnforcing()) {
             finishAndRemoveTask()
-            overridePendingTransition(0, 0)
             return
         }
 
         setShowWhenLocked(true)
         setTurnScreenOn(true)
         window.addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
-        
         DndHelper.enableDnd(this)
 
-        val prayer = intent.getStringExtra("prayer") ?: "fajr"
+        // Calculate the ACTUAL current prayer based on the time
+        val lat = Settings.lat(this)
+        val lon = Settings.lon(this)
+        val times = SalahScheduler.todayTimes(lat, lon)
+        val now = System.currentTimeMillis()
+        val ordered = listOf("fajr", "dhuhr", "asr", "maghrib", "isha")
         
+        // Find the most recent prayer that started
+        var currentPrayer = "fajr"
+        for (key in ordered) {
+            if ((times[key] ?: 0L) <= now) {
+                currentPrayer = key
+            }
+        }
+
         setContent {
             JannahTheme {
-                LockScreen(prayer = prayer, onFinish = { completeLock() })
+                LockScreen(prayer = currentPrayer, onFinish = { completeLock() })
             }
         }
     }
@@ -76,7 +87,7 @@ private fun LockScreen(prayer: String, onFinish: () -> Unit) {
     var remaining by remember { mutableLongStateOf(LockState.remainingMs()) }
     var tapCount by remember { mutableIntStateOf(0) }
     val ctx = LocalContext.current
-    
+
     LaunchedEffect(Unit) {
         while (remaining > 0L) {
             delay(250)

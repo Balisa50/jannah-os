@@ -52,7 +52,13 @@ fun TodayScreen(onNavigate: (String) -> Unit = {}) {
     val ordered = listOf("fajr", "dhuhr", "asr", "maghrib", "isha")
     val nextKey = ordered.firstOrNull { (prayerTimes[it] ?: 0L) > now }
     val displayLabel = if (nextKey == null) "Fajr" else SalahTracker.label(nextKey)
-    val displayTime = if (nextKey == null) (prayerTimes["fajr"] ?: now) + 24L * 60 * 60 * 1000 else prayerTimes[nextKey] ?: now
+    // If next prayer is tomorrow (null), add 24 hours to today's Fajr time
+    val displayTime = if (nextKey == null) {
+        val todayFajr = prayerTimes["fajr"] ?: now
+        todayFajr + 24L * 60 * 60 * 1000L
+    } else {
+        prayerTimes[nextKey] ?: now
+    }
 
     val hour = Calendar.getInstance().get(Calendar.HOUR_OF_DAY)
     val greeting = when {
