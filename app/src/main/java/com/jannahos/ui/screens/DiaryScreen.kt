@@ -5,7 +5,6 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.OutlinedTextField
@@ -34,7 +33,7 @@ import java.util.Date
 import java.util.Locale
 
 @Composable
-fun DiaryScreen(onBack: () -> Unit, onReacted: (String) -> Unit = {}) {
+fun DiaryScreen(onBack: () -> Unit) {
     BackHandler(onBack = onBack)
     val ctx = LocalContext.current
     val haptics = LocalHapticFeedback.current
@@ -42,46 +41,19 @@ fun DiaryScreen(onBack: () -> Unit, onReacted: (String) -> Unit = {}) {
     var refresh by remember { mutableStateOf(0) }
     val ignore = refresh
     val entries = store.recent(30)
-
     var writing by remember { mutableStateOf(false) }
     var text by remember { mutableStateOf("") }
     var lastReaction by remember { mutableStateOf<DiaryClassifier.Result?>(null) }
-
     val dayFmt = SimpleDateFormat("EEE d MMM · HH:mm", Locale.getDefault())
 
-    Column(
-        modifier = Modifier.fillMaxSize().background(JannahColors.Cream)
-    ) {
-        // 1. SEAMLESS ORANGE TOP BAR
-        Row(
-            Modifier
-                .fillMaxWidth()
-                .background(JannahColors.Orange)
-                .windowInsetsPadding(WindowInsets.statusBars)
-                .padding(horizontal = JannahSpacing.gutter, vertical = 12.dp),
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            Box(
-                Modifier.size(40.dp).clip(CircleShape).background(JannahColors.OrangeDeep).clickable { onBack() },
-                contentAlignment = Alignment.Center
-            ) { Text("←", fontSize = 20.sp, color = JannahColors.OnOrange) }
-            Spacer(Modifier.width(16.dp))
-            Text("Diary", fontFamily = FontFamily.Serif, fontSize = 22.sp, fontWeight = FontWeight.Bold, color = JannahColors.OnOrange)
-        }
+    Column(modifier = Modifier.fillMaxSize().background(JannahColors.Cream)) {
+        TopBar("Diary", onBack = onBack)
 
-        Column(
-            modifier = Modifier.weight(1f).verticalScroll(rememberScrollState())
-        ) {
-            // 2. BANNER CONTINUES SEAMLESSLY
-            Box(
-                Modifier
-                    .fillMaxWidth()
-                    .background(JannahColors.Orange)
-                    .padding(horizontal = JannahSpacing.gutter)
-                    .padding(bottom = JannahSpacing.xl)
-            ) {
+        Column(modifier = Modifier.weight(1f).verticalScroll(rememberScrollState())) {
+            // Orange Banner Below TopBar
+            Box(Modifier.fillMaxWidth().background(JannahColors.Orange).padding(horizontal = JannahSpacing.gutter).padding(bottom = JannahSpacing.xl, top = JannahSpacing.m)) {
                 Column {
-                    Text("DIARY", style = JannahType.eyebrow, color = JannahColors.OnOrange.copy(alpha = 0.75f))
+                    Text("PRIVATE", style = JannahType.eyebrow, color = JannahColors.OnOrange.copy(alpha = 0.75f))
                     Spacer(Modifier.height(4.dp))
                     Text("Tell it anything.", fontFamily = FontFamily.Serif, fontSize = 28.sp, fontWeight = FontWeight.Bold, color = JannahColors.OnOrange)
                 }
@@ -89,26 +61,11 @@ fun DiaryScreen(onBack: () -> Unit, onReacted: (String) -> Unit = {}) {
 
             Column(Modifier.padding(horizontal = JannahSpacing.gutter)) {
                 Spacer(Modifier.height(JannahSpacing.l))
-
-                if (lastReaction != null && lastReaction!!.reactionTitle.isNotBlank()) {
-                    val r = lastReaction!!
-                    Box(
-                        Modifier.fillMaxWidth().clip(RoundedCornerShape(JannahSpacing.cardRadius)).background(if (r.tag.startsWith("milestone")) JannahColors.Orange else JannahColors.OrangeSoft).padding(JannahSpacing.l)
-                    ) {
-                        Column {
-                            Text(r.reactionTitle, fontFamily = FontFamily.Serif, fontSize = 20.sp, fontWeight = FontWeight.Bold, color = if (r.tag.startsWith("milestone")) JannahColors.OnOrange else JannahColors.Ink)
-                            Spacer(Modifier.height(JannahSpacing.s))
-                            Text(r.reactionBody, style = JannahType.bodySmall, color = if (r.tag.startsWith("milestone")) JannahColors.OnOrange.copy(alpha = 0.9f) else JannahColors.Body, lineHeight = 20.sp)
-                        }
-                    }
-                    Spacer(Modifier.height(JannahSpacing.l))
-                }
-
+                
                 if (!writing) {
-                    Box(
-                        Modifier.fillMaxWidth().height(56.dp).clip(RoundedCornerShape(JannahSpacing.pillRadius)).background(JannahColors.Ink).clickable { writing = true; lastReaction = null },
-                        contentAlignment = Alignment.Center
-                    ) { Text("Write today", style = JannahType.button, color = JannahColors.OnOrange) }
+                    Box(Modifier.fillMaxWidth().height(56.dp).clip(RoundedCornerShape(JannahSpacing.pillRadius)).background(JannahColors.Ink).clickable { writing = true; lastReaction = null }, contentAlignment = Alignment.Center) { 
+                        Text("Write today", style = JannahType.button, color = JannahColors.OnOrange) 
+                    }
                     Spacer(Modifier.height(JannahSpacing.l))
                 } else {
                     OutlinedTextField(
@@ -123,8 +80,8 @@ fun DiaryScreen(onBack: () -> Unit, onReacted: (String) -> Unit = {}) {
                             if (text.isNotBlank()) {
                                 val result = DiaryClassifier.classify(text)
                                 val id = store.add(text.trim(), result.tag, result.reactionTitle)
-                                if (result.tag.startsWith("milestone")) { store.markCelebrated(id); haptics.performHapticFeedback(HapticFeedbackType.LongPress) } else { haptics.performHapticFeedback(HapticFeedbackType.TextHandleMove) }
-                                lastReaction = result; text = ""; writing = false; refresh++; onReacted(result.tag)
+                                if (result.tag.startsWith("milestone")) { store.markCelebrated(id); haptics.performHapticFeedback(HapticFeedbackType.LongPress) } else { haptics.performHapticFeedback(HapticFeedbackType.TextHandleMove) } 
+                                lastReaction = result; text = ""; writing = false; refresh++ 
                             }
                         }, contentAlignment = Alignment.Center) { Text("Save", style = JannahType.button, color = if (text.isBlank()) JannahColors.Faint else JannahColors.OnOrange) }
                     }
@@ -142,7 +99,6 @@ fun DiaryScreen(onBack: () -> Unit, onReacted: (String) -> Unit = {}) {
                                 Text(dayFmt.format(Date(e.ts)), style = JannahType.micro, color = JannahColors.Faint)
                                 Spacer(Modifier.height(4.dp))
                                 Text(e.text, style = JannahType.bodySmall, color = JannahColors.Ink, lineHeight = 20.sp)
-                                if (!e.reaction.isNullOrBlank()) { Spacer(Modifier.height(4.dp)); Text("→ " + e.reaction, style = JannahType.caption, color = JannahColors.Muted, fontStyle = FontStyle.Italic) }
                             }
                             Box(Modifier.clip(RoundedCornerShape(JannahSpacing.pillRadius)).clickable { store.delete(e.id); refresh++ }.padding(6.dp)) { Text("×", style = JannahType.body, color = JannahColors.Muted) }
                         }

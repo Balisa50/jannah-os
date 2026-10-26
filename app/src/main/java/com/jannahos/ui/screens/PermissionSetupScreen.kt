@@ -4,6 +4,7 @@ import android.app.AlarmManager
 import android.app.NotificationManager
 import android.content.Context
 import android.content.Intent
+import android.net.Uri
 import android.os.Build
 import android.os.PowerManager
 import android.provider.Settings
@@ -59,7 +60,7 @@ fun PermissionSetupScreen(onAllSet: () -> Unit) {
 
         Text("System Setup.", fontFamily = FontFamily.Serif, fontSize = 32.sp, fontWeight = FontWeight.Bold, color = JannahColors.Ink)
         Spacer(Modifier.height(8.dp))
-        Text("Jannah works in the background. To protect your focus and ring the Adhan, it needs these permissions.", style = JannahType.body, color = JannahColors.Body, lineHeight = 24.sp)
+        Text("Jannah works silently in the background. It needs these permissions to lock apps and ring alarms.", style = JannahType.body, color = JannahColors.Body, lineHeight = 24.sp)
 
         Spacer(Modifier.height(JannahSpacing.xl))
 
@@ -76,13 +77,14 @@ fun PermissionSetupScreen(onAllSet: () -> Unit) {
 
         PermissionCard(
             title = "Background Alarms",
-            description = "Ensures the Adhan rings even when your phone is asleep. Find Jannah in the list and select 'Don't optimize' or 'Unrestricted'.",
+            description = "Ensures the Adhan rings. Open App Info, tap 'Battery', and select 'Unrestricted'.",
             isGranted = batteryOn,
             actionText = if (batteryOn) "Allowed" else "Allow"
         ) {
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-                ctx.startActivity(Intent(Settings.ACTION_IGNORE_BATTERY_OPTIMIZATION_SETTINGS))
+            val intent = Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS).apply {
+                data = Uri.parse("package:${ctx.packageName}")
             }
+            ctx.startActivity(intent)
         }
 
         Spacer(Modifier.height(JannahSpacing.m))
@@ -98,7 +100,7 @@ fun PermissionSetupScreen(onAllSet: () -> Unit) {
                     ctx.startActivity(Intent(Settings.ACTION_REQUEST_SCHEDULE_EXACT_ALARM))
                 } catch (_: Throwable) {
                     ctx.startActivity(Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS).apply {
-                        data = android.net.Uri.parse("package:${ctx.packageName}")
+                        data = Uri.parse("package:${ctx.packageName}")
                     })
                 }
             }
