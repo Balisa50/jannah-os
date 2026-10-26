@@ -7,7 +7,6 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
@@ -15,10 +14,9 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontFamily
+import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
@@ -40,12 +38,12 @@ fun OnboardingFlow(onDone: () -> Unit) {
         CityPickerScreen(onBack = { showCityPicker = false }, onPicked = { c, cn ->
             CityStore.set(ctx, c, cn)
             showCityPicker = false
-            step = 2
+            step = 4 // Move to permissions after city
         })
         return
     }
 
-    if (step == 3) {
+    if (step == 4) {
         PermissionSetupScreen(onAllSet = {
             Settings.setDisplayName(ctx, name)
             onDone()
@@ -60,9 +58,9 @@ fun OnboardingFlow(onDone: () -> Unit) {
         ) {
             Spacer(Modifier.height(JannahSpacing.xxl))
 
-            // Step Indicator (Dots)
+            // Step Indicator
             Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
-                repeat(3) { i ->
+                repeat(4) { i ->
                     Box(Modifier.size(if (i == step) 24.dp else 6.dp, 6.dp).clip(CircleShape).background(if (i <= step) JannahColors.Orange else JannahColors.Border))
                 }
             }
@@ -85,8 +83,9 @@ fun OnboardingFlow(onDone: () -> Unit) {
                 ) { currentStep ->
                     when (currentStep) {
                         0 -> Welcome()
-                        1 -> AskName(name) { name = it }
-                        2 -> AskLocation { showCityPicker = true }
+                        1 -> Philosophy()
+                        2 -> AskName(name) { name = it }
+                        3 -> AskLocation { showCityPicker = true }
                     }
                 }
             }
@@ -94,12 +93,12 @@ fun OnboardingFlow(onDone: () -> Unit) {
             Box(
                 modifier = Modifier.fillMaxWidth().height(56.dp).clip(RoundedCornerShape(JannahSpacing.pillRadius)).background(JannahColors.Ink)
                     .pressClickable {
-                        if (step == 2) step = 3
+                        if (step == 3) showCityPicker = true
                         else step++
                     },
                 contentAlignment = Alignment.Center
             ) {
-                Text(if (step == 2) "Continue" else "Next", style = JannahType.button, color = JannahColors.OnOrange)
+                Text(if (step == 3) "Select City" else "Continue", style = JannahType.button, color = JannahColors.OnOrange)
             }
             Spacer(Modifier.height(JannahSpacing.l))
         }
@@ -108,34 +107,60 @@ fun OnboardingFlow(onDone: () -> Unit) {
 
 @Composable
 private fun Welcome() {
-    Column(Modifier.fillMaxSize().verticalScroll(rememberScrollState()), horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.Center) {
+    Column(Modifier.fillMaxSize(), horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.Center) {
         Text("Jannah", fontFamily = FontFamily.Serif, fontSize = 56.sp, fontWeight = FontWeight.Bold, color = JannahColors.Ink)
         Spacer(Modifier.height(JannahSpacing.s))
-        Text("A quiet space for worship.\nBuilt to be used less.", fontFamily = FontFamily.Serif, fontStyle = androidx.compose.ui.text.font.FontStyle.Italic, fontSize = 20.sp, color = JannahColors.Orange, textAlign = TextAlign.Center, lineHeight = 28.sp)
+        Text("A quiet space for worship.\nBuilt to be used less.", fontFamily = FontFamily.Serif, fontStyle = FontStyle.Italic, fontSize = 20.sp, color = JannahColors.Orange, textAlign = TextAlign.Center, lineHeight = 28.sp)
+    }
+}
+
+@Composable
+private fun Philosophy() {
+    Column(Modifier.fillMaxSize().verticalScroll(rememberScrollState()), verticalArrangement = Arrangement.Center) {
+        Text("A shield, not a feed.", fontFamily = FontFamily.Serif, fontSize = 32.sp, fontWeight = FontWeight.Bold, color = JannahColors.Ink, lineHeight = 38.sp)
+        Spacer(Modifier.height(JannahSpacing.l))
+        
+        Text("This app is designed to pull you away from the screen, not keep you on it. It works silently in the background.", style = JannahType.body, color = JannahColors.Body, lineHeight = 24.sp)
+        Spacer(Modifier.height(JannahSpacing.m))
+        
+        Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
+            PhilosophyItem("Prayer Locks", "The screen locks during Fard prayers.")
+            PhilosophyItem("Adhan Alarms", "Escalating reminders before every prayer.")
+            PhilosophyItem("Quran Guide", "A fixed daily reading session before midnight.")
+        }
+    }
+}
+
+@Composable
+private fun PhilosophyItem(title: String, desc: String) {
+    Row {
+        Box(Modifier.padding(top = 6.dp).size(6.dp).clip(CircleShape).background(JannahColors.Orange))
+        Spacer(Modifier.width(12.dp))
+        Column {
+            Text(title, fontFamily = FontFamily.Serif, fontSize = 18.sp, fontWeight = FontWeight.Bold, color = JannahColors.Ink)
+            Text(desc, style = JannahType.caption, color = JannahColors.Muted)
+        }
     }
 }
 
 @Composable
 private fun AskName(current: String, onChange: (String) -> Unit) {
-    Column(Modifier.fillMaxSize().verticalScroll(rememberScrollState()), horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.Center) {
-        Text("What should we call you?", fontFamily = FontFamily.Serif, fontSize = 28.sp, fontWeight = FontWeight.Bold, color = JannahColors.Ink, textAlign = TextAlign.Center)
-        Spacer(Modifier.height(JannahSpacing.xl))
-        OutlinedTextField(value = current, onValueChange = onChange, label = { Text("Your Name") }, modifier = Modifier.fillMaxWidth(), singleLine = true)
+    Column(Modifier.fillMaxSize().verticalScroll(rememberScrollState()), verticalArrangement = Arrangement.Center) {
+        Text("What should we call you?", fontFamily = FontFamily.Serif, fontSize = 32.sp, fontWeight = FontWeight.Bold, color = JannahColors.Ink)
+        Spacer(Modifier.height(JannahSpacing.l))
+        OutlinedTextField(value = current, onValueChange = onChange, label = { Text("Name") }, modifier = Modifier.fillMaxWidth(), singleLine = true)
     }
 }
 
 @Composable
 private fun AskLocation(onPick: () -> Unit) {
-    Column(Modifier.fillMaxSize().verticalScroll(rememberScrollState()), horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.Center) {
-        Text("Where are you?", fontFamily = FontFamily.Serif, fontSize = 28.sp, fontWeight = FontWeight.Bold, color = JannahColors.Ink, textAlign = TextAlign.Center)
+    Column(Modifier.fillMaxSize(), verticalArrangement = Arrangement.Center) {
+        Text("Where are you?", fontFamily = FontFamily.Serif, fontSize = 32.sp, fontWeight = FontWeight.Bold, color = JannahColors.Ink)
         Spacer(Modifier.height(JannahSpacing.s))
-        Text("Used only to calculate accurate prayer times.", style = JannahType.body, color = JannahColors.Muted, textAlign = TextAlign.Center)
-        Spacer(Modifier.height(JannahSpacing.xl))
-        Box(
-            Modifier.fillMaxWidth().height(56.dp).clip(RoundedCornerShape(JannahSpacing.pillRadius)).background(JannahColors.OrangeSoft).pressClickable { onPick() },
-            contentAlignment = Alignment.Center
-        ) {
-            Text("Select City", style = JannahType.button, color = JannahColors.OrangeDeep)
+        Text("Used strictly for accurate prayer times. No location tracking.", style = JannahType.body, color = JannahColors.Body)
+        Spacer(Modifier.height(JannahSpacing.l))
+        Box(Modifier.fillMaxWidth().height(56.dp).clip(RoundedCornerShape(JannahSpacing.pillRadius)).background(JannahColors.Card).pressClickable { onPick() }, contentAlignment = Alignment.Center) {
+            Text("Open City Picker", style = JannahType.button, color = JannahColors.Ink)
         }
     }
 }

@@ -17,14 +17,13 @@ import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.text.font.FontFamily
-import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.jannahos.DiaryClassifier
 import com.jannahos.DiaryStore
-import com.jannahos.ui.TopBar
+import com.jannahos.ui.ScreenHeader
 import com.jannahos.ui.theme.JannahColors
 import com.jannahos.ui.theme.JannahSpacing
 import com.jannahos.ui.theme.JannahType
@@ -43,27 +42,17 @@ fun DiaryScreen(onBack: () -> Unit) {
     val entries = store.recent(30)
     var writing by remember { mutableStateOf(false) }
     var text by remember { mutableStateOf("") }
-    var lastReaction by remember { mutableStateOf<DiaryClassifier.Result?>(null) }
     val dayFmt = SimpleDateFormat("EEE d MMM · HH:mm", Locale.getDefault())
 
     Column(modifier = Modifier.fillMaxSize().background(JannahColors.Cream)) {
-        TopBar("Diary", onBack = onBack)
+        ScreenHeader(title = "Diary", eyebrow = "PRIVATE", subtitle = "Tell it anything.", onBack = onBack)
 
         Column(modifier = Modifier.weight(1f).verticalScroll(rememberScrollState())) {
-            // Orange Banner Below TopBar
-            Box(Modifier.fillMaxWidth().background(JannahColors.Orange).padding(horizontal = JannahSpacing.gutter).padding(bottom = JannahSpacing.xl, top = JannahSpacing.m)) {
-                Column {
-                    Text("PRIVATE", style = JannahType.eyebrow, color = JannahColors.OnOrange.copy(alpha = 0.75f))
-                    Spacer(Modifier.height(4.dp))
-                    Text("Tell it anything.", fontFamily = FontFamily.Serif, fontSize = 28.sp, fontWeight = FontWeight.Bold, color = JannahColors.OnOrange)
-                }
-            }
-
             Column(Modifier.padding(horizontal = JannahSpacing.gutter)) {
                 Spacer(Modifier.height(JannahSpacing.l))
                 
                 if (!writing) {
-                    Box(Modifier.fillMaxWidth().height(56.dp).clip(RoundedCornerShape(JannahSpacing.pillRadius)).background(JannahColors.Ink).clickable { writing = true; lastReaction = null }, contentAlignment = Alignment.Center) { 
+                    Box(Modifier.fillMaxWidth().height(56.dp).clip(RoundedCornerShape(JannahSpacing.pillRadius)).background(JannahColors.Ink).clickable { writing = true }, contentAlignment = Alignment.Center) { 
                         Text("Write today", style = JannahType.button, color = JannahColors.OnOrange) 
                     }
                     Spacer(Modifier.height(JannahSpacing.l))
@@ -79,9 +68,9 @@ fun DiaryScreen(onBack: () -> Unit) {
                         Box(Modifier.weight(1f).height(52.dp).clip(RoundedCornerShape(JannahSpacing.pillRadius)).background(if (text.isBlank()) JannahColors.Border else JannahColors.Orange).clickable {
                             if (text.isNotBlank()) {
                                 val result = DiaryClassifier.classify(text)
-                                val id = store.add(text.trim(), result.tag, result.reactionTitle)
-                                if (result.tag.startsWith("milestone")) { store.markCelebrated(id); haptics.performHapticFeedback(HapticFeedbackType.LongPress) } else { haptics.performHapticFeedback(HapticFeedbackType.TextHandleMove) } 
-                                lastReaction = result; text = ""; writing = false; refresh++ 
+                                store.add(text.trim(), result.tag, result.reactionTitle)
+                                haptics.performHapticFeedback(HapticFeedbackType.LongPress)
+                                text = ""; writing = false; refresh++ 
                             }
                         }, contentAlignment = Alignment.Center) { Text("Save", style = JannahType.button, color = if (text.isBlank()) JannahColors.Faint else JannahColors.OnOrange) }
                     }
@@ -92,17 +81,17 @@ fun DiaryScreen(onBack: () -> Unit) {
                     Text("RECENT", style = JannahType.eyebrow, color = JannahColors.OrangeDeep)
                     Spacer(Modifier.height(JannahSpacing.s))
                     entries.forEachIndexed { i, e ->
-                        Row(Modifier.fillMaxWidth().padding(vertical = 14.dp), verticalAlignment = Alignment.Top) {
-                            Box(Modifier.width(4.dp).height(38.dp).clip(RoundedCornerShape(2.dp)).background(when { e.tag.startsWith("milestone") -> JannahColors.Orange; e.tag.startsWith("struggle") -> JannahColors.Muted; e.tag.startsWith("good") -> JannahColors.OrangeDeep; else -> JannahColors.Border }))
-                            Spacer(Modifier.width(12.dp))
+                        Row(Modifier.fillMaxWidth().padding(vertical = 16.dp), verticalAlignment = Alignment.Top) {
+                            Box(Modifier.width(3.dp).height(40.dp).clip(RoundedCornerShape(2.dp)).background(when { e.tag.startsWith("milestone") -> JannahColors.Orange; e.tag.startsWith("struggle") -> JannahColors.Muted; else -> JannahColors.Border }))
+                            Spacer(Modifier.width(16.dp))
                             Column(Modifier.weight(1f)) {
                                 Text(dayFmt.format(Date(e.ts)), style = JannahType.micro, color = JannahColors.Faint)
                                 Spacer(Modifier.height(4.dp))
-                                Text(e.text, style = JannahType.bodySmall, color = JannahColors.Ink, lineHeight = 20.sp)
+                                Text(e.text, style = JannahType.body, color = JannahColors.Ink, lineHeight = 22.sp)
                             }
                             Box(Modifier.clip(RoundedCornerShape(JannahSpacing.pillRadius)).clickable { store.delete(e.id); refresh++ }.padding(6.dp)) { Text("×", style = JannahType.body, color = JannahColors.Muted) }
                         }
-                        if (i < entries.size - 1) Box(Modifier.fillMaxWidth().height(1.dp).background(JannahColors.Border))
+                        if (i < entries.size - 1) Box(Modifier.fillMaxWidth().height(1.dp).background(JannahColors.Divider))
                     }
                 } else {
                     Text("Nothing written yet.", style = JannahType.bodySmall, color = JannahColors.Muted, textAlign = TextAlign.Center, modifier = Modifier.fillMaxWidth().padding(vertical = JannahSpacing.xl))
