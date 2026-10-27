@@ -21,6 +21,7 @@ import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardCapitalization
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextDirection
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -30,7 +31,6 @@ import com.jannahos.SmartTextEngine
 import com.jannahos.ui.theme.JannahColors
 import com.jannahos.ui.theme.JannahSpacing
 import com.jannahos.ui.theme.JannahType
-import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
 sealed class NoteBlock {
@@ -57,7 +57,7 @@ fun NotesScreen(onBack: () -> Unit) {
             isFetching = true
             showSlashMenu = false
             scope.launch {
-                val res = IslamicContentApi.getVerse(2, 255)
+                val res = IslamicContentApi.getVerseRange(2, 255, 255)
                 if (res != null) {
                     val parts = res.split("\n\n")
                     blocks = blocks + NoteBlock.Quran(2, 255, parts.getOrElse(0) { "" }, parts.getOrElse(1) { "" })
@@ -80,7 +80,6 @@ fun NotesScreen(onBack: () -> Unit) {
     }
 
     Column(Modifier.fillMaxSize().background(JannahColors.Cream).imePadding()) {
-        // Header
         Row(Modifier.fillMaxWidth().padding(16.dp), verticalAlignment = Alignment.CenterVertically) {
             Text("Save", style = JannahType.button, color = JannahColors.Orange, fontWeight = FontWeight.Bold, modifier = Modifier.clickable {
                 if (blocks.isNotEmpty() || currentText.isNotBlank()) {
@@ -102,9 +101,19 @@ fun NotesScreen(onBack: () -> Unit) {
                 when (block) {
                     is NoteBlock.Text -> Text(block.content, fontFamily = FontFamily.SansSerif, fontSize = 18.sp, color = JannahColors.Ink, lineHeight = 28.sp, modifier = Modifier.padding(bottom = 16.dp))
                     is NoteBlock.Quran -> {
-                        // DISTINCT LAYER: Quran Block
                         Column(Modifier.fillMaxWidth().padding(vertical = 12.dp).clip(RoundedCornerShape(12.dp)).background(JannahColors.OrangeSoft).padding(16.dp)) {
-                            Text(block.arabic, fontFamily = FontFamily.Serif, fontSize = 26.sp, color = JannahColors.Ink, textAlign = androidx.compose.ui.text.style.TextAlign.Right, modifier = Modifier.fillMaxWidth(), textDirection = TextDirection.Rtl)
+                            Text(
+                                text = block.arabic,
+                                style = TextStyle(
+                                    fontFamily = FontFamily.Serif,
+                                    fontSize = 26.sp,
+                                    color = JannahColors.Ink,
+                                    textAlign = TextAlign.Right,
+                                    textDirection = TextDirection.Rtl,
+                                    lineHeight = 40.sp
+                                ),
+                                modifier = Modifier.fillMaxWidth()
+                            )
                             Spacer(Modifier.height(12.dp))
                             Text(block.english, fontFamily = FontFamily.Serif, fontSize = 16.sp, fontStyle = FontStyle.Italic, color = JannahColors.Body, lineHeight = 24.sp)
                             Spacer(Modifier.height(8.dp))
@@ -112,7 +121,6 @@ fun NotesScreen(onBack: () -> Unit) {
                         }
                     }
                     is NoteBlock.Hadith -> {
-                        // DISTINCT LAYER: Hadith Block
                         Column(Modifier.fillMaxWidth().padding(vertical = 12.dp).clip(RoundedCornerShape(12.dp)).background(JannahColors.Card).padding(16.dp)) {
                             Text(block.text, fontFamily = FontFamily.SansSerif, fontSize = 16.sp, color = JannahColors.Ink, lineHeight = 24.sp)
                             Spacer(Modifier.height(8.dp))
@@ -123,7 +131,6 @@ fun NotesScreen(onBack: () -> Unit) {
             }
             
             item {
-                // ACTIVE TYPING FIELD
                 BasicTextField(
                     value = currentText,
                     onValueChange = {
@@ -144,7 +151,6 @@ fun NotesScreen(onBack: () -> Unit) {
             }
         }
         
-        // Slash Menu
         if (showSlashMenu) {
             Row(Modifier.fillMaxWidth().background(JannahColors.Surface).padding(12.dp), horizontalArrangement = Arrangement.SpaceAround) {
                 Text("/quran 2:255", style = JannahType.caption, color = JannahColors.Orange, modifier = Modifier.clickable { 
