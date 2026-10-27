@@ -9,6 +9,25 @@ import java.net.URL
 object IslamicContentApi {
     suspend fun getVerseRange(surah: Int, startAyah: Int, endAyah: Int): String? = withContext(Dispatchers.IO) {
         try {
+            // If it's a single verse, use the precise ayah endpoint to prevent the 2-verse bug
+            if (startAyah == endAyah) {
+                val urlString = "https://api.alquran.cloud/v1/ayah/$surah:$startAyah/editions/quran-uthmani,en.sahih"
+                val conn = URL(urlString).openConnection() as HttpURLConnection
+                if (conn.responseCode == 200) {
+                    val body = conn.inputStream.bufferedReader().use { it.readText() }
+                    val data = org.json.JSONObject(body).getJSONArray("data")
+                    if (data.length() >= 2) {
+                        val arabic = data.getJSONObject(0).getString("text")
+                        val english = data.getJSONObject(1).getString("text")
+                        return@withContext "$arabic
+
+"$english"
+— [Surah $surah:$startAyah]"
+                    }
+                }
+                return@withContext null
+            }
+
             val urlString = "https://api.alquran.cloud/v1/surah/$surah/editions/quran-uthmani,en.sahih"
             val conn = URL(urlString).openConnection() as HttpURLConnection
             if (conn.responseCode == 200) {

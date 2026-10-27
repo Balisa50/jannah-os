@@ -4,10 +4,6 @@ import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
-import androidx.compose.foundation.lazy.itemsIndexed
-import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.BasicTextField
@@ -21,11 +17,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontFamily
-import androidx.compose.ui.text.font.FontStyle
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardCapitalization
-import androidx.compose.ui.text.style.TextAlign
-import androidx.compose.ui.text.style.TextDirection
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.jannahos.DiaryStore
@@ -39,12 +31,6 @@ import kotlinx.coroutines.launch
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
-
-sealed class NoteBlock {
-    data class Text(val content: String) : NoteBlock()
-    data class Quran(val surah: Int, val ayah: Int, val arabic: String, val english: String) : NoteBlock()
-    data class Hadith(val book: String, val number: Int, val text: String) : NoteBlock()
-}
 
 @Composable
 fun NotesScreen(onBack: () -> Unit) {
@@ -112,16 +98,14 @@ fun NotesScreen(onBack: () -> Unit) {
 
 @Composable
 fun NoteEditor(onCancel: () -> Unit, onSave: (String) -> Unit) {
-    var blocks by remember { mutableStateOf(listOf<NoteBlock>()) }
     var currentText by remember { mutableStateOf("") }
     var isFetching by remember { mutableStateOf(false) }
-    
     val scope = rememberCoroutineScope()
 
     val processText: (String) -> Unit = { newText ->
         var processed = SmartTextEngine.process(newText)
 
-        // 1. Quran Regex (Matches /quran 2:23 or /quran 2:23-25)
+        // 1. Quran Regex (Matches exactly 1 verse unless a range is specified)
         val quranRegex = Regex("/quran\\s+(\\d+):(\\d+)(?:-(\\d+))?")
         quranRegex.find(processed)?.let { match ->
             val surah = match.groupValues[1].toInt()
@@ -133,15 +117,14 @@ fun NoteEditor(onCancel: () -> Unit, onSave: (String) -> Unit) {
             scope.launch {
                 val res = IslamicContentApi.getVerseRange(surah, startAyah, endAyah)
                 if (res != null) {
-                    val parts = res.split("\n\n")
-                    blocks = blocks + NoteBlock.Quran(surah, startAyah, parts.getOrElse(0) { "" }, parts.getOrElse(1) { "" })
+                    processed = processed.replace(command, "\n\n$res\n\n")
                 }
-                currentText = processed.replace(command, "").trim()
+                currentText = processed
                 isFetching = false
             }
         }
 
-        // 2. Hadith Regex (Matches /hadith bukhari:1)
+        // 2. Hadith Regex
         val hadithRegex = Regex("/hadith\\s+(\\w+):(\\d+)")
         hadithRegex.find(processed)?.let { match ->
             val book = match.groupValues[1]
@@ -152,9 +135,9 @@ fun NoteEditor(onCancel: () -> Unit, onSave: (String) -> Unit) {
             scope.launch {
                 val res = IslamicContentApi.getHadith(book, number)
                 if (res != null) {
-                    blocks = blocks + NoteBlock.Hadith(book.replaceFirstChar { it.uppercase() }, number, res)
+                    processed = processed.replace(command, "\n\n$res\n\n")
                 }
-                currentText = processed.replace(command, "").trim()
+                currentText = processed
                 isFetching = false
             }
         }
@@ -169,67 +152,31 @@ fun NoteEditor(onCancel: () -> Unit, onSave: (String) -> Unit) {
             if (isFetching) {
                 Text("Fetching...", style = JannahType.caption, color = JannahColors.Orange, modifier = Modifier.padding(end = 12.dp))
             }
-            Text("Save", style = JannahType.button, color = JannahColors.Orange, fontWeight = FontWeight.Bold, modifier = Modifier.clickable {
-                val fullText = blocks.joinToString("\n\n") { 
-                    when(it) {
-                        is NoteBlock.Text -> it.content
-                        is NoteBlock.Quran -> "${it.arabic}\n\"${it.english}\"\n[Surah ${it.surah}:${it.ayah}]"
-                        is NoteBlock.Hadith -> "${it.text}\n[Sahih ${it.book}:${it.number}]"
-                    }
-                } + "\n\n" + currentText
-                onSave(fullText)
+            Text("Save", style = JannahType.button, color = JannahColors.Orange, fontWeight = androidx.compose.ui.text.font.FontWeight.Bold, modifier = Modifier.clickable {
+                onSave(currentText)
             })
         }
 
-        LazyColumn(Modifier.weight(1f).padding(horizontal = 20.dp)) {
-            itemsIndexed(blocks) { index, block ->
-                when (block) {
-                    is NoteBlock.Text -> Text(block.content, fontFamily = FontFamily.SansSerif, fontSize = 18.sp, color = JannahColors.Ink, lineHeight = 28.sp, modifier = Modifier.padding(bottom = 16.dp))
-                    is NoteBlock.Quran -> {
-                        Column(Modifier.fillMaxWidth().padding(vertical = 12.dp).clip(RoundedCornerShape(12.dp)).background(JannahColors.OrangeSoft).padding(16.dp)) {
-                            Text(
-                                text = block.arabic,
-                                style = TextStyle(
-                                    fontFamily = FontFamily.Serif,
-                                    fontSize = 26.sp,
-                                    color = JannahColors.Ink,
-                                    textAlign = TextAlign.Right,
-                                    textDirection = TextDirection.Rtl,
-                                    lineHeight = 40.sp
-                                ),
-                                modifier = Modifier.fillMaxWidth()
-                            )
-                            Spacer(Modifier.height(12.dp))
-                            Text(block.english, fontFamily = FontFamily.Serif, fontSize = 16.sp, fontStyle = FontStyle.Italic, color = JannahColors.Body, lineHeight = 24.sp)
-                            Spacer(Modifier.height(8.dp))
-                            Text("— Surah ${block.surah}:${block.ayah}", style = JannahType.micro, color = JannahColors.OrangeDeep)
-                        }
-                    }
-                    is NoteBlock.Hadith -> {
-                        Column(Modifier.fillMaxWidth().padding(vertical = 12.dp).clip(RoundedCornerShape(12.dp)).background(JannahColors.Card).padding(16.dp)) {
-                            Text(block.text, fontFamily = FontFamily.SansSerif, fontSize = 16.sp, color = JannahColors.Ink, lineHeight = 24.sp)
-                            Spacer(Modifier.height(8.dp))
-                            Text("— Sahih ${block.book}, Hadith ${block.number}", style = JannahType.micro, color = JannahColors.Muted)
-                        }
-                    }
-                }
-            }
-            
-            item {
-                BasicTextField(
-                    value = currentText,
-                    onValueChange = { processText(it) },
-                    textStyle = TextStyle(fontFamily = FontFamily.SansSerif, fontSize = 18.sp, color = JannahColors.Ink, lineHeight = 28.sp),
-                    keyboardOptions = KeyboardOptions(capitalization = KeyboardCapitalization.Sentences),
-                    modifier = Modifier.fillMaxWidth().padding(top = 8.dp).padding(bottom = 100.dp),
-                    decorationBox = { inner ->
-                        if (currentText.isEmpty()) {
-                            Text("Start typing... Try /quran 2:23 or /hadith bukhari:1", color = JannahColors.Faint, fontSize = 18.sp)
-                        }
-                        inner()
-                    }
-                )
-            }
+        // Formatting Toolbar (Simple placeholders for now)
+        Row(Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 8.dp), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            Text("**B**", style = JannahType.button, color = JannahColors.Ink, modifier = Modifier.background(JannahColors.Card).padding(8.dp))
+            Text("_I_", style = JannahType.button, color = JannahColors.Ink, modifier = Modifier.background(JannahColors.Card).padding(8.dp))
+            Text("Highlight", style = JannahType.caption, color = JannahColors.Ink, modifier = Modifier.background(JannahColors.OrangeSoft).padding(8.dp))
         }
+
+        // The Single Text Field
+        BasicTextField(
+            value = currentText,
+            onValueChange = { processText(it) },
+            textStyle = TextStyle(fontFamily = FontFamily.SansSerif, fontSize = 18.sp, color = JannahColors.Ink, lineHeight = 28.sp),
+            keyboardOptions = KeyboardOptions(capitalization = KeyboardCapitalization.Sentences),
+            modifier = Modifier.fillMaxWidth().weight(1f).padding(horizontal = 20.dp).padding(top = 8.dp),
+            decorationBox = { inner ->
+                if (currentText.isEmpty()) {
+                    Text("Start typing... Try /quran 2:45 or /hadith bukhari:1", color = JannahColors.Faint, fontSize = 18.sp)
+                }
+                inner()
+            }
+        )
     }
 }
