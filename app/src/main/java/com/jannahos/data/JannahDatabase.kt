@@ -5,7 +5,7 @@ import androidx.room.Database
 import androidx.room.Room
 import androidx.room.RoomDatabase
 
-@Database(entities = [Note::class], version = 1, exportSchema = true)
+@Database(entities = [Note::class], version = 2, exportSchema = false)
 abstract class JannahDatabase : RoomDatabase() {
     abstract fun noteDao(): NoteDao
 
@@ -17,7 +17,9 @@ abstract class JannahDatabase : RoomDatabase() {
                     context.applicationContext,
                     JannahDatabase::class.java,
                     "jannah_database"
-                ).build()
+                )
+                .fallbackToDestructiveMigration() // Wipes old data for this update
+                .build()
                 INSTANCE = instance
                 instance
             }
