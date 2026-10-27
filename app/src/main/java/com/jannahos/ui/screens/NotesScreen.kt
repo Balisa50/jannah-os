@@ -17,6 +17,8 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontFamily
+import androidx.compose.ui.text.font.FontStyle
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardCapitalization
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -40,16 +42,20 @@ fun NotesScreen(onBack: () -> Unit) {
     val scope = rememberCoroutineScope()
     
     var writing by remember { mutableStateOf(false) }
+    var editNoteId by remember { mutableStateOf<Long?>(null) }
+    var initialText by remember { mutableStateOf("") }
     var refresh by remember { mutableStateOf(0) }
     val ignore = refresh
     val entries = store.recent(50)
-    val dayFmt = SimpleDateFormat("EEE d MMM · HH:mm", Locale.getDefault())
+    val dayFmt = SimpleDateFormat("EEE d MMM", Locale.getDefault())
 
     if (writing) {
         NoteEditor(
+            initialText = initialText,
             onCancel = { writing = false },
             onSave = { fullText ->
                 if (fullText.isNotBlank()) {
+                    if (editNoteId != null) { store.delete(editNoteId!!) }
                     store.add(fullText.trim(), "note", "")
                     writing = false
                     refresh++
@@ -64,7 +70,11 @@ fun NotesScreen(onBack: () -> Unit) {
                 Column(Modifier.padding(horizontal = JannahSpacing.gutter)) {
                     Spacer(Modifier.height(JannahSpacing.l))
                     
-                    Box(Modifier.fillMaxWidth().height(56.dp).clip(RoundedCornerShape(JannahSpacing.pillRadius)).background(JannahColors.Ink).clickable { writing = true }, contentAlignment = Alignment.Center) { 
+                    Box(Modifier.fillMaxWidth().height(56.dp).clip(RoundedCornerShape(JannahSpacing.pillRadius)).background(JannahColors.Ink).clickable { 
+                        initialText = ""
+                        editNoteId = null
+                        writing = true 
+                    }, contentAlignment = Alignment.Center) { 
                         Text("New Note", style = JannahType.button, color = JannahColors.OnOrange) 
                     }
                     
@@ -74,15 +84,17 @@ fun NotesScreen(onBack: () -> Unit) {
                         Text("RECENT", style = JannahType.eyebrow, color = JannahColors.OrangeDeep)
                         Spacer(Modifier.height(JannahSpacing.s))
                         entries.forEachIndexed { i, e ->
-                            Row(Modifier.fillMaxWidth().padding(vertical = 16.dp), verticalAlignment = Alignment.Top) {
-                                Box(Modifier.width(3.dp).height(40.dp).clip(RoundedCornerShape(2.dp)).background(JannahColors.Border))
-                                Spacer(Modifier.width(16.dp))
-                                Column(Modifier.weight(1f)) {
-                                    Text(dayFmt.format(Date(e.ts)), style = JannahType.micro, color = JannahColors.Faint)
-                                    Spacer(Modifier.height(4.dp))
-                                    Text(e.text, style = JannahType.body, color = JannahColors.Ink, lineHeight = 22.sp)
+                            Column(Modifier.fillMaxWidth().clickable { 
+                                initialText = e.text
+                                editNoteId = e.id
+                                writing = true 
+                            }.padding(vertical = 12.dp)) {
+                                Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
+                                    Text(dayFmt.format(Date(e.ts)), style = JannahType.micro, color = JannahColors.Faint, modifier = Modifier.weight(1f))
+                                    Box(Modifier.clip(RoundedCornerShape(50)).clickable { store.delete(e.id); refresh++ }.padding(4.dp)) { Text("×", style = JannahType.body, color = JannahColors.Muted) }
                                 }
-                                Box(Modifier.clip(RoundedCornerShape(JannahSpacing.pillRadius)).clickable { store.delete(e.id); refresh++ }.padding(6.dp)) { Text("×", style = JannahType.body, color = JannahColors.Muted) }
+                                Spacer(Modifier.height(4.dp))
+                                Text(e.text.lines().take(2).joinToString("\n"), style = JannahType.body, color = JannahColors.Ink, lineHeight = 20.sp, maxLines = 2)
                             }
                             if (i < entries.size - 1) Box(Modifier.fillMaxWidth().height(1.dp).background(JannahColors.Divider))
                         }
@@ -97,15 +109,15 @@ fun NotesScreen(onBack: () -> Unit) {
 }
 
 @Composable
-fun NoteEditor(onCancel: () -> Unit, onSave: (String) -> Unit) {
-    var currentText by remember { mutableStateOf("") }
+fun NoteEditor(initialText: String, onCancel: () -> Unit, onSave: (String) -> Unit) {
+    var currentText by remember { mutableStateOf(initialText) }
     var isFetching by remember { mutableStateOf(false) }
     val scope = rememberCoroutineScope()
 
     val processText: (String) -> Unit = { newText ->
         var processed = SmartTextEngine.process(newText)
 
-        // 1. Quran Regex (Matches exactly 1 verse unless a range is specified)
+        // Quran Regex
         val quranRegex = Regex("/quran\\s+(\\d+):(\\d+)(?:-(\\d+))?")
         quranRegex.find(processed)?.let { match ->
             val surah = match.groupValues[1].toInt()
@@ -117,14 +129,16 @@ fun NoteEditor(onCancel: () -> Unit, onSave: (String) -> Unit) {
             scope.launch {
                 val res = IslamicContentApi.getVerseRange(surah, startAyah, endAyah)
                 if (res != null) {
-                    processed = processed.replace(command, "\n\n$res\n\n")
+                    // MAKTABOOK STYLE INLINE INSERTION
+                    val formatted = "▌ ${res.replace("\n", "\n▌ ")}\n\n"
+                    processed = processed.replace(command, formatted)
                 }
                 currentText = processed
                 isFetching = false
             }
         }
 
-        // 2. Hadith Regex
+        // Hadith Regex
         val hadithRegex = Regex("/hadith\\s+(\\w+):(\\d+)")
         hadithRegex.find(processed)?.let { match ->
             val book = match.groupValues[1]
@@ -135,7 +149,8 @@ fun NoteEditor(onCancel: () -> Unit, onSave: (String) -> Unit) {
             scope.launch {
                 val res = IslamicContentApi.getHadith(book, number)
                 if (res != null) {
-                    processed = processed.replace(command, "\n\n$res\n\n")
+                    val formatted = "▌ ${res.replace("\n", "\n▌ ")}\n\n"
+                    processed = processed.replace(command, formatted)
                 }
                 currentText = processed
                 isFetching = false
@@ -149,22 +164,10 @@ fun NoteEditor(onCancel: () -> Unit, onSave: (String) -> Unit) {
         Row(Modifier.fillMaxWidth().padding(16.dp), verticalAlignment = Alignment.CenterVertically) {
             Text("Cancel", style = JannahType.button, color = JannahColors.Muted, modifier = Modifier.clickable { onCancel() })
             Spacer(Modifier.weight(1f))
-            if (isFetching) {
-                Text("Fetching...", style = JannahType.caption, color = JannahColors.Orange, modifier = Modifier.padding(end = 12.dp))
-            }
-            Text("Save", style = JannahType.button, color = JannahColors.Orange, fontWeight = androidx.compose.ui.text.font.FontWeight.Bold, modifier = Modifier.clickable {
-                onSave(currentText)
-            })
+            if (isFetching) { Text("Fetching...", style = JannahType.caption, color = JannahColors.Orange, modifier = Modifier.padding(end = 12.dp)) }
+            Text("Save", style = JannahType.button, color = JannahColors.Orange, fontWeight = FontWeight.Bold, modifier = Modifier.clickable { onSave(currentText) })
         }
 
-        // Formatting Toolbar (Simple placeholders for now)
-        Row(Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 8.dp), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-            Text("**B**", style = JannahType.button, color = JannahColors.Ink, modifier = Modifier.background(JannahColors.Card).padding(8.dp))
-            Text("_I_", style = JannahType.button, color = JannahColors.Ink, modifier = Modifier.background(JannahColors.Card).padding(8.dp))
-            Text("Highlight", style = JannahType.caption, color = JannahColors.Ink, modifier = Modifier.background(JannahColors.OrangeSoft).padding(8.dp))
-        }
-
-        // The Single Text Field
         BasicTextField(
             value = currentText,
             onValueChange = { processText(it) },
