@@ -64,6 +64,11 @@ dependencies {
     implementation("androidx.sqlite:sqlite-ktx:2.4.0")
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.8.0")
     
+    // Room KSP configuration
+    ksp {
+        arg("room.schemaLocation", "$projectDir/schemas")
+    }
+
     // Architect's Requirements: Room & Retrofit
     implementation("androidx.room:room-runtime:2.6.1")
     implementation("androidx.room:room-ktx:2.6.1")

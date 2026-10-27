@@ -59,7 +59,7 @@ object AnnotatedStringSerializer {
                     val span = spans.getJSONObject(i)
                     val style = SpanStyle(
                         fontFamily = if (span.optString("fontFamily") == "Serif") FontFamily.Serif else FontFamily.Default,
-                        fontSize = span.optDouble("fontSize", 17.0).sp,
+                        fontSize = span.optDouble("fontSize", 17.0).toFloat().sp,
                         fontStyle = if (span.optString("fontStyle") == "Italic") FontStyle.Italic else FontStyle.Normal,
                         fontWeight = if (span.optString("fontWeight") == "Bold") FontWeight.Bold else FontWeight.Normal
                     )
