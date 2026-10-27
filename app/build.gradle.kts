@@ -15,6 +15,11 @@ val localProps = Properties().apply {
 fun credential(key: String): String =
     localProps.getProperty(key) ?: System.getenv(key) ?: ""
 
+// Room KSP configuration - MUST be at top level, not inside dependencies
+ksp {
+    arg("room.schemaLocation", "$projectDir/schemas")
+}
+
 android {
     signingConfigs {
         create("release") {
@@ -64,11 +69,6 @@ dependencies {
     implementation("androidx.sqlite:sqlite-ktx:2.4.0")
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.8.0")
     
-    // Room KSP configuration
-    ksp {
-        arg("room.schemaLocation", "$projectDir/schemas")
-    }
-
     // Architect's Requirements: Room & Retrofit
     implementation("androidx.room:room-runtime:2.6.1")
     implementation("androidx.room:room-ktx:2.6.1")
