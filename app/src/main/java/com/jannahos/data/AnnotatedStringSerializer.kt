@@ -22,13 +22,27 @@ object AnnotatedStringSerializer {
             val spanJson = JSONObject()
             spanJson.put("start", range.start)
             spanJson.put("end", range.end)
-            spanJson.put("fontFamily", range.item.fontFamily?.name ?: "Default")
+            // Fix: FontFamily doesn't have a .name property. Check equality instead.
+            spanJson.put("fontFamily", if (range.item.fontFamily == FontFamily.Serif) "Serif" else "Default")
             spanJson.put("fontSize", range.item.fontSize.value)
             spanJson.put("fontStyle", if (range.item.fontStyle == FontStyle.Italic) "Italic" else "Normal")
             spanJson.put("fontWeight", if (range.item.fontWeight == FontWeight.Bold) "Bold" else "Normal")
             spans.put(spanJson)
         }
         json.put("spans", spans)
+
+        // Save ParagraphStyles (for Arabic RTL alignment)
+        val paragraphs = JSONArray()
+        annotatedString.paragraphStyles.forEach { range ->
+            val pJson = JSONObject()
+            pJson.put("start", range.start)
+            pJson.put("end", range.end)
+            pJson.put("textAlign", if (range.item.textAlign == TextAlign.End) "End" else "Start")
+            pJson.put("textDirection", if (range.item.textDirection == TextDirection.Rtl) "Rtl" else "Ltr")
+            paragraphs.put(pJson)
+        }
+        json.put("paragraphs", paragraphs)
+
         return json.toString()
     }
 
@@ -38,17 +52,34 @@ object AnnotatedStringSerializer {
             val text = json.getString("text")
             val builder = AnnotatedString.Builder(text)
             
-            val spans = json.getJSONArray("spans")
-            for (i in 0 until spans.length()) {
-                val span = spans.getJSONObject(i)
-                val style = SpanStyle(
-                    fontFamily = if (span.optString("fontFamily") == "Serif") FontFamily.Serif else FontFamily.Default,
-                    fontSize = span.optDouble("fontSize", 17.0).sp,
-                    fontStyle = if (span.optString("fontStyle") == "Italic") FontStyle.Italic else FontStyle.Normal,
-                    fontWeight = if (span.optString("fontWeight") == "Bold") FontWeight.Bold else FontWeight.Normal
-                )
-                builder.addStyle(style, span.getInt("start"), span.getInt("end"))
+            // Restore Spans
+            val spans = json.optJSONArray("spans")
+            if (spans != null) {
+                for (i in 0 until spans.length()) {
+                    val span = spans.getJSONObject(i)
+                    val style = SpanStyle(
+                        fontFamily = if (span.optString("fontFamily") == "Serif") FontFamily.Serif else FontFamily.Default,
+                        fontSize = span.optDouble("fontSize", 17.0).sp,
+                        fontStyle = if (span.optString("fontStyle") == "Italic") FontStyle.Italic else FontStyle.Normal,
+                        fontWeight = if (span.optString("fontWeight") == "Bold") FontWeight.Bold else FontWeight.Normal
+                    )
+                    builder.addStyle(style, span.getInt("start"), span.getInt("end"))
+                }
             }
+
+            // Restore Paragraphs
+            val paragraphs = json.optJSONArray("paragraphs")
+            if (paragraphs != null) {
+                for (i in 0 until paragraphs.length()) {
+                    val p = paragraphs.getJSONObject(i)
+                    val style = ParagraphStyle(
+                        textAlign = if (p.optString("textAlign") == "End") TextAlign.End else TextAlign.Start,
+                        textDirection = if (p.optString("textDirection") == "Rtl") TextDirection.Rtl else TextDirection.Ltr
+                    )
+                    builder.addStyle(style, p.getInt("start"), p.getInt("end"))
+                }
+            }
+
             return builder.toAnnotatedString()
         } catch (e: Exception) {
             return AnnotatedString("")
