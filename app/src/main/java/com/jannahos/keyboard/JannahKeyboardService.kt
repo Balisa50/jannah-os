@@ -2,6 +2,7 @@ package com.jannahos.keyboard
 
 import android.inputmethodservice.InputMethodService
 import android.view.View
+import android.view.inputmethod.EditorInfo
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
@@ -13,29 +14,76 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.ComposeView
+import androidx.compose.ui.platform.ViewTreeLifecycleOwner
+import androidx.compose.ui.platform.ViewTreeSavedStateRegistryOwner
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.LifecycleOwner
+import androidx.lifecycle.LifecycleRegistry
+import androidx.lifecycle.ViewModelStore
+import androidx.lifecycle.ViewModelStoreOwner
+import androidx.lifecycle.setViewTreeLifecycleOwner
+import androidx.lifecycle.setViewTreeViewModelStoreOwner
+import androidx.savedstate.SavedStateRegistry
+import androidx.savedstate.SavedStateRegistryController
+import androidx.savedstate.SavedStateRegistryOwner
+import androidx.savedstate.setViewTreeSavedStateRegistryOwner
 import com.jannahos.ui.theme.JannahColors
 import com.jannahos.ui.theme.JannahType
 
-class JannahKeyboardService : InputMethodService() {
+class JannahKeyboardService : InputMethodService(), LifecycleOwner, ViewModelStoreOwner, SavedStateRegistryOwner {
+
+    private val lifecycleRegistry = LifecycleRegistry(this)
+    private val store = ViewModelStore()
+    private val savedStateRegistryController = SavedStateRegistryController.create(this)
+
+    override val lifecycle: Lifecycle get() = lifecycleRegistry
+    override val viewModelStore: ViewModelStore get() = store
+    override val savedStateRegistry: SavedStateRegistry get() = savedStateRegistryController.savedStateRegistry
+
+    override fun onCreate() {
+        super.onCreate()
+        savedStateRegistryController.performRestore(null)
+        lifecycleRegistry.currentState = Lifecycle.State.CREATED
+    }
+
+    override fun onStartInputView(info: EditorInfo?, restarting: Boolean) {
+        super.onStartInputView(info, restarting)
+        lifecycleRegistry.currentState = Lifecycle.State.RESUMED
+    }
+
+    override fun onFinishInputView(finishingInput: Boolean) {
+        super.onFinishInputView(finishingInput)
+        lifecycleRegistry.currentState = Lifecycle.State.CREATED
+    }
+
+    override fun onDestroy() {
+        lifecycleRegistry.currentState = Lifecycle.State.DESTROYED
+        store.clear()
+        super.onDestroy()
+    }
 
     override fun onCreateInputView(): View {
-        val view = ComposeView(this)
-        view.setContent {
-            JannahKeyboardUI(
-                onKeyPress = { char ->
-                    currentInputConnection?.commitText(char.toString(), 1)
-                },
-                onDelete = {
-                    currentInputConnection?.deleteSurroundingText(1, 0)
-                },
-                onInsertArabic = { text ->
-                    currentInputConnection?.commitText(text, 1)
-                }
-            )
+        val view = ComposeView(this).apply {
+            setViewTreeLifecycleOwner(this@JannahKeyboardService)
+            setViewTreeViewModelStoreOwner(this@JannahKeyboardService)
+            setViewTreeSavedStateRegistryOwner(this@JannahKeyboardService)
+            setContent {
+                JannahKeyboardUI(
+                    onKeyPress = { char ->
+                        currentInputConnection?.commitText(char.toString(), 1)
+                    },
+                    onDelete = {
+                        currentInputConnection?.deleteSurroundingText(1, 0)
+                    },
+                    onInsertArabic = { text ->
+                        currentInputConnection?.commitText(text, 1)
+                    }
+                )
+            }
         }
         return view
     }
@@ -47,14 +95,12 @@ fun JannahKeyboardUI(
     onDelete: () -> Unit,
     onInsertArabic: (String) -> Unit
 ) {
-    // Jannah Bar (Islamic Shortcuts)
     val jannahShortcuts = listOf(
         "ﷺ" to "ﷺ",
         "الله" to "الله",
         "SWT" to "سبحانه وتعالى"
     )
 
-    // QWERTY Layout
     val rows = listOf(
         listOf("q", "w", "e", "r", "t", "y", "u", "i", "o", "p"),
         listOf("a", "s", "d", "f", "g", "h", "j", "k", "l"),
@@ -67,8 +113,8 @@ fun JannahKeyboardUI(
             .fillMaxWidth()
             .background(JannahColors.Cream)
             .padding(8.dp)
+            .navigationBarsPadding() // Prevents it from overlapping the gesture bar
     ) {
-        // Jannah Bar
         Row(
             Modifier.fillMaxWidth().padding(bottom = 8.dp),
             horizontalArrangement = Arrangement.SpaceAround
@@ -87,7 +133,6 @@ fun JannahKeyboardUI(
             }
         }
 
-        // QWERTY Rows
         rows.forEach { row ->
             Row(
                 Modifier.fillMaxWidth().padding(vertical = 4.dp),
@@ -104,8 +149,8 @@ fun JannahKeyboardUI(
                                 when (key) {
                                     "⌫" -> onDelete()
                                     "⏎" -> onKeyPress('\n')
-                                    "⇧" -> {} // Shift logic for later
-                                    "123" -> {} // Number logic for later
+                                    "⇧" -> {} 
+                                    "123" -> {} 
                                     else -> onKeyPress(key.first())
                                 }
                             },
