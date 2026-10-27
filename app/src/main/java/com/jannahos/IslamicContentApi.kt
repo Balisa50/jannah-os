@@ -7,7 +7,6 @@ import java.net.HttpURLConnection
 import java.net.URL
 
 object IslamicContentApi {
-    // Uses alquran.cloud for both Arabic and English
     suspend fun getVerse(surah: Int, ayah: Int): String? = withContext(Dispatchers.IO) {
         try {
             val urlString = "https://api.alquran.cloud/v1/ayah/$surah:$ayah/editions/quran-uthmani,en.sahih"
@@ -27,18 +26,22 @@ object IslamicContentApi {
 
     suspend fun getHadith(book: String, number: Int): String? = withContext(Dispatchers.IO) {
         try {
-            // Standardizes book names
-            val safeBook = book.lowercase().replace("sahih", "").trim()
+            // Clean up the book name for the API (e.g., "Sahih Muslim" -> "muslim")
+            val safeBook = book.lowercase().replace("sahih", "").replace("al-", "").trim()
             val urlString = "https://cdn.jsdelivr.net/gh/fawazahmed0/hadith-api@1/editions/eng-$safeBook/$number.json"
             val conn = URL(urlString).openConnection() as HttpURLConnection
             if (conn.responseCode == 200) {
                 val body = conn.inputStream.bufferedReader().use { it.readText() }
-                val hadiths = JSONObject(body).getJSONArray("hadiths")
+                val root = JSONObject(body)
+                val hadiths = root.getJSONArray("hadiths")
                 if (hadiths.length() > 0) {
-                    return@withContext "${hadiths.getJSONObject(0).getString("text")}\n— [Sahih $book, Hadith $number]"
+                    val text = hadiths.getJSONObject(0).getString("text")
+                    return@withContext "${text.trim()}\n— [Sahih ${book.replaceFirstChar { it.uppercase() }}, Hadith $number]"
                 }
             }
-            null
-        } catch (e: Exception) { null }
+            "[Hadith not found. Check the spelling of the book (e.g., bukhari, muslim, abudawud).]"
+        } catch (e: Exception) { 
+            "[Hadith not found or network error.]" 
+        }
     }
 }

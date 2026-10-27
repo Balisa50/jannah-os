@@ -7,25 +7,18 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.foundation.text.BasicTextField
-import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material3.AlertDialog
-import androidx.compose.material3.CircularProgressIndicator
-import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
+import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalHapticFeedback
-import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.input.KeyboardCapitalization
-import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextDirection
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -62,6 +55,14 @@ fun NotesScreen(onBack: () -> Unit) {
     val processText: (String) -> Unit = { newText ->
         var processedText = SmartTextEngine.process(newText)
         
+        // Fast Shortcuts
+        if (processedText.endsWith("/ayatul kursi ")) {
+            processedText = processedText.replace("/ayatul kursi ", "").plus(" /quran 2:255 ")
+        } else if (processedText.endsWith("/fatihah ")) {
+            processedText = processedText.replace("/fatihah ", "").plus(" /quran 1:1 ")
+        }
+
+        // API Regex
         val quranRegex = Regex("/quran\\s+(\\d+):(\\d+)")
         quranRegex.find(processedText)?.let { match ->
             val (surah, ayah) = match.destructured
@@ -92,9 +93,7 @@ fun NotesScreen(onBack: () -> Unit) {
     }
 
     if (writing) {
-        // FULL SCREEN IMMERSIVE EDITOR
         Column(Modifier.fillMaxSize().background(JannahColors.Cream).imePadding()) {
-            // Minimal Top Bar
             Row(Modifier.fillMaxWidth().padding(16.dp), verticalAlignment = Alignment.CenterVertically) {
                 Text("Cancel", style = JannahType.button, color = JannahColors.Muted, modifier = Modifier.clickable { writing = false; text = "" })
                 Spacer(Modifier.weight(1f))
@@ -111,54 +110,42 @@ fun NotesScreen(onBack: () -> Unit) {
                 })
             }
 
-            // The Canvas
             Box(Modifier.weight(1f).fillMaxWidth().padding(horizontal = 20.dp)) {
-                BasicTextField(
+                // Using standard TextField to ensure proper scrolling when keyboard opens
+                TextField(
                     value = text,
                     onValueChange = { processText(it) },
-                    textStyle = TextStyle(
+                    modifier = Modifier.fillMaxSize(),
+                    textStyle = androidx.compose.ui.text.TextStyle(
                         fontFamily = FontFamily.Serif,
                         fontSize = 19.sp,
                         color = JannahColors.Ink,
                         lineHeight = 30.sp,
-                        textDirection = TextDirection.ContentOrLtr // Handles Arabic automatically
+                        textDirection = TextDirection.ContentOrLtr
                     ),
-                    keyboardOptions = KeyboardOptions(capitalization = KeyboardCapitalization.Sentences),
-                    modifier = Modifier.fillMaxSize()
+                    placeholder = { 
+                        Column {
+                            Text("Start writing...", fontFamily = FontFamily.Serif, fontSize = 24.sp, color = JannahColors.Faint, lineHeight = 30.sp)
+                            Spacer(Modifier.height(16.dp))
+                            Text("Use / to insert Quran, Hadith, or Dua.\nType 'sallahu alaihi wa salaam' for ﷺ.", style = JannahType.caption, color = JannahColors.Orange.copy(alpha = 0.6f), lineHeight = 20.sp)
+                        }
+                    },
+                    colors = TextFieldDefaults.colors(
+                        focusedContainerColor = Color.Transparent,
+                        unfocusedContainerColor = Color.Transparent,
+                        focusedIndicatorColor = Color.Transparent,
+                        unfocusedIndicatorColor = Color.Transparent
+                    )
                 )
-                
-                if (text.isEmpty()) {
-                    Column {
-                        Text(
-                            "Start writing...",
-                            fontFamily = FontFamily.Serif,
-                            fontSize = 24.sp,
-                            color = JannahColors.Faint,
-                            lineHeight = 30.sp
-                        )
-                        Spacer(Modifier.height(16.dp))
-                        Text(
-                            "Use / to insert Quran, Hadith, or Dua.\nType 'sallahu alaihi wa salaam' for ﷺ.",
-                            style = JannahType.caption,
-                            color = JannahColors.Orange.copy(alpha = 0.6f),
-                            lineHeight = 20.sp
-                        )
-                    }
-                }
             }
 
-            // Floating Help Button
             Row(Modifier.fillMaxWidth().padding(16.dp), horizontalArrangement = Arrangement.End) {
-                Box(
-                    Modifier.size(40.dp).clip(CircleShape).background(JannahColors.OrangeSoft).clickable { showHelp = true },
-                    contentAlignment = Alignment.Center
-                ) {
+                Box(Modifier.size(40.dp).clip(CircleShape).background(JannahColors.OrangeSoft).clickable { showHelp = true }, contentAlignment = Alignment.Center) {
                     Text("?", style = JannahType.body, color = JannahColors.OrangeDeep, fontWeight = FontWeight.Bold)
                 }
             }
         }
     } else {
-        // LIST VIEW
         Column(modifier = Modifier.fillMaxSize().background(JannahColors.Cream)) {
             ScreenHeader(title = "Notes", eyebrow = "PRIVATE", subtitle = "Write it down.", onBack = onBack)
 
@@ -197,21 +184,28 @@ fun NotesScreen(onBack: () -> Unit) {
         }
     }
 
+    // THE DICTIONARY DIALOG
     if (showHelp) {
         AlertDialog(
             onDismissRequest = { showHelp = false },
             containerColor = JannahColors.Surface,
-            title = { Text("Smart Shortcuts", fontFamily = FontFamily.Serif, fontWeight = FontWeight.Bold, color = JannahColors.Ink) },
+            title = { Text("Smart Dictionary", fontFamily = FontFamily.Serif, fontWeight = FontWeight.Bold, color = JannahColors.Ink) },
             text = {
-                Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                Column(
+                    verticalArrangement = Arrangement.spacedBy(16.dp),
+                    modifier = Modifier.verticalScroll(rememberScrollState())
+                ) {
                     HelpItem("/quran [surah]:[ayah]", "Inserts the verse with translation.\nExample: /quran 2:255")
-                    HelpItem("/hadith [book] [num]", "Inserts the hadith text.\nExample: /hadith bukhari 1")
-                    HelpItem("sallahu alaihi wa salaam", "Auto-converts to ﷺ")
-                    HelpItem("subhanahu wa taala", "Auto-converts to سبحانه وتعالى")
+                    HelpItem("/hadith [book] [num]", "Inserts the hadith text.\nExample: /hadith bukhari 1\nExample: /hadith muslim 5")
+                    HelpItem("/ayatul kursi", "Instantly fetches Ayat al-Kursi (2:255).")
+                    HelpItem("/fatihah", "Instantly fetches Surah Al-Fatihah (1:1).")
+                    Divider(color = JannahColors.Divider)
+                    HelpItem("sallahu alaihi wa salaam", "Auto-converts to ﷺ (also works with 'saw' or 'pbuh')")
+                    HelpItem("subhanahu wa taala", "Auto-converts to سبحانه وتعالى (also works with 'swt')")
                 }
             },
             confirmButton = {
-                TextButton(onClick = { showHelp = false }) { Text("Got it", color = JannahColors.Orange, fontWeight = FontWeight.Bold) }
+                TextButton(onClick = { showHelp = false }) { Text("Close", color = JannahColors.Orange, fontWeight = FontWeight.Bold) }
             }
         )
     }
@@ -221,6 +215,6 @@ fun NotesScreen(onBack: () -> Unit) {
 private fun HelpItem(command: String, desc: String) {
     Column {
         Text(command, fontFamily = FontFamily.Monospace, fontSize = 14.sp, color = JannahColors.OrangeDeep, fontWeight = FontWeight.Bold)
-        Text(desc, style = JannahType.caption, color = JannahColors.Muted)
+        Text(desc, style = JannahType.caption, color = JannahColors.Muted, lineHeight = 18.sp)
     }
 }

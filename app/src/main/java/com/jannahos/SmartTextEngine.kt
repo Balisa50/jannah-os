@@ -3,13 +3,30 @@ package com.jannahos
 object SmartTextEngine {
     fun process(input: String): String {
         var text = input
-        // Only trigger when followed by a space or at the end
-        if (text.endsWith("sallahu alaihi wa salaam ") || text == "sallahu alaihi wa salaam") {
-            text = text.replace("sallahu alaihi wa salaam", "ﷺ ")
+        
+        // 1. Auto-convert Salawat (catching all common spelling mistakes)
+        val salawatTriggers = listOf(
+            "salallahu alaihi wa salam",
+            "sallahu alaihi wa salaam",
+            "sallallahu alaihi wa sallam",
+            "sallahu alaihi wa salam",
+            "saw",
+            "pbuh"
+        )
+        for (trigger in salawatTriggers) {
+            if (text.endsWith("$trigger ") || text == trigger) {
+                text = text.replace(trigger, "ﷺ ")
+            }
         }
-        if (text.endsWith("subhanahu wa taala ") || text == "subhanahu wa taala") {
-            text = text.replace("subhanahu wa taala", "سبحانه وتعالى ")
+
+        // 2. Auto-convert Subhanahu wa Ta'ala
+        val swtTriggers = listOf("subhanahu wa taala", "swt")
+        for (trigger in swtTriggers) {
+            if (text.endsWith("$trigger ") || text == trigger) {
+                text = text.replace(trigger, "سبحانه وتعالى ")
+            }
         }
+        
         return text
     }
 }
