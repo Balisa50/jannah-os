@@ -6,8 +6,8 @@ import android.view.inputmethod.EditorInfo
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
@@ -31,7 +31,7 @@ import androidx.savedstate.SavedStateRegistryController
 import androidx.savedstate.SavedStateRegistryOwner
 import androidx.savedstate.setViewTreeSavedStateRegistryOwner
 import com.jannahos.ui.theme.JannahColors
-import com.jannahos.ui.theme.JannahType
+import com.jannahos.ui.theme.JannahTheme
 
 class JannahKeyboardService : InputMethodService(), LifecycleOwner, ViewModelStoreOwner, SavedStateRegistryOwner {
 
@@ -59,29 +59,29 @@ class JannahKeyboardService : InputMethodService(), LifecycleOwner, ViewModelSto
         lifecycleRegistry.currentState = Lifecycle.State.CREATED
     }
 
-    override fun onDestroy() {
-        lifecycleRegistry.currentState = Lifecycle.State.DESTROYED
-        store.clear()
-        super.onDestroy()
-    }
-
     override fun onCreateInputView(): View {
         val view = ComposeView(this).apply {
             setViewTreeLifecycleOwner(this@JannahKeyboardService)
             setViewTreeViewModelStoreOwner(this@JannahKeyboardService)
             setViewTreeSavedStateRegistryOwner(this@JannahKeyboardService)
+            
+            // THIS IS THE FIX: Wrap in JannahTheme and Surface
             setContent {
-                JannahKeyboardUI(
-                    onKeyPress = { char ->
-                        currentInputConnection?.commitText(char.toString(), 1)
-                    },
-                    onDelete = {
-                        currentInputConnection?.deleteSurroundingText(1, 0)
-                    },
-                    onInsertArabic = { text ->
-                        currentInputConnection?.commitText(text, 1)
+                JannahTheme {
+                    Surface(color = JannahColors.Cream) {
+                        JannahKeyboardUI(
+                            onKeyPress = { char ->
+                                currentInputConnection?.commitText(char.toString(), 1)
+                            },
+                            onDelete = {
+                                currentInputConnection?.deleteSurroundingText(1, 0)
+                            },
+                            onInsertArabic = { text ->
+                                currentInputConnection?.commitText(text, 1)
+                            }
+                        )
                     }
-                )
+                }
             }
         }
         return view
@@ -110,9 +110,10 @@ fun JannahKeyboardUI(
     Column(
         Modifier
             .fillMaxWidth()
+            .heightIn(min = 280.dp) // Force a minimum height
             .background(JannahColors.Cream)
             .padding(8.dp)
-            .navigationBarsPadding() // Prevents it from overlapping the gesture bar
+            .navigationBarsPadding()
     ) {
         Row(
             Modifier.fillMaxWidth().padding(bottom = 8.dp),
