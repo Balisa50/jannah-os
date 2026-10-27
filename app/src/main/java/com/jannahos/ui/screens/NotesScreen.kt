@@ -1,6 +1,8 @@
 package com.jannahos.ui.screens
 
 import androidx.activity.compose.BackHandler
+import androidx.compose.animation.*
+import androidx.compose.animation.core.*
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
@@ -152,7 +154,6 @@ fun NotesScreen(onBack: () -> Unit) {
                 visible = showSlashMenu,
                 enter = slideInVertically { it } + fadeIn(),
                 exit = slideOutVertically { it } + fadeOut(),
-                modifier = Modifier.align(Alignment.BottomCenter)
             ) {
                 Column(Modifier.fillMaxWidth().background(JannahColors.Surface).padding(8.dp)) {
                     Text("COMMANDS", style = JannahType.eyebrow, color = JannahColors.OrangeDeep, modifier = Modifier.padding(start = 12.dp, top = 8.dp, bottom = 8.dp))
