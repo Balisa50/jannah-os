@@ -7,17 +7,30 @@ import java.net.HttpURLConnection
 import java.net.URL
 
 object IslamicContentApi {
-    suspend fun getVerse(surah: Int, ayah: Int): String? = withContext(Dispatchers.IO) {
+    suspend fun getVerseRange(surah: Int, startAyah: Int, endAyah: Int): String? = withContext(Dispatchers.IO) {
         try {
-            val urlString = "https://api.alquran.cloud/v1/ayah/$surah:$ayah/editions/quran-uthmani,en.sahih"
+            val urlString = "https://api.alquran.cloud/v1/surah/$surah/editions/quran-uthmani,en.sahih"
             val conn = URL(urlString).openConnection() as HttpURLConnection
             if (conn.responseCode == 200) {
                 val body = conn.inputStream.bufferedReader().use { it.readText() }
                 val data = JSONObject(body).getJSONArray("data")
                 if (data.length() >= 2) {
-                    val arabic = data.getJSONObject(0).getString("text")
-                    val english = data.getJSONObject(1).getString("text")
-                    return@withContext "$arabic\n\n\"$english\"\n— [Surah $surah:$ayah]"
+                    val arabicAyahs = data.getJSONObject(0).getJSONArray("ayahs")
+                    val englishAyahs = data.getJSONObject(1).getJSONArray("ayahs")
+                    
+                    val arabicBuilder = StringBuilder()
+                    val englishBuilder = StringBuilder()
+                    
+                    val safeStart = (startAyah - 1).coerceAtLeast(0)
+                    val safeEnd = (endAyah - 1).coerceAtMost(arabicAyahs.length() - 1)
+
+                    for (i in safeStart..safeEnd) {
+                        arabicBuilder.append(arabicAyahs.getJSONObject(i).getString("text")).append(" ")
+                        englishBuilder.append(englishAyahs.getJSONObject(i).getString("text")).append(" ")
+                    }
+                    
+                    val ref = if (startAyah == endAyah) "$surah:$startAyah" else "$surah:$startAyah-$endAyah"
+                    return@withContext "${arabicBuilder.toString().trim()}\n\n\"${englishBuilder.toString().trim()}\"\n— [Surah $ref]"
                 }
             }
             null
@@ -26,22 +39,17 @@ object IslamicContentApi {
 
     suspend fun getHadith(book: String, number: Int): String? = withContext(Dispatchers.IO) {
         try {
-            // Clean up the book name for the API (e.g., "Sahih Muslim" -> "muslim")
             val safeBook = book.lowercase().replace("sahih", "").replace("al-", "").trim()
             val urlString = "https://cdn.jsdelivr.net/gh/fawazahmed0/hadith-api@1/editions/eng-$safeBook/$number.json"
             val conn = URL(urlString).openConnection() as HttpURLConnection
             if (conn.responseCode == 200) {
                 val body = conn.inputStream.bufferedReader().use { it.readText() }
-                val root = JSONObject(body)
-                val hadiths = root.getJSONArray("hadiths")
+                val hadiths = JSONObject(body).getJSONArray("hadiths")
                 if (hadiths.length() > 0) {
-                    val text = hadiths.getJSONObject(0).getString("text")
-                    return@withContext "${text.trim()}\n— [Sahih ${book.replaceFirstChar { it.uppercase() }}, Hadith $number]"
+                    return@withContext "${hadiths.getJSONObject(0).getString("text").trim()}\n— [Sahih ${book.replaceFirstChar { it.uppercase() }}, Hadith $number]"
                 }
             }
-            "[Hadith not found. Check the spelling of the book (e.g., bukhari, muslim, abudawud).]"
-        } catch (e: Exception) { 
-            "[Hadith not found or network error.]" 
-        }
+            "[Hadith not found. Check the spelling of the book.]"
+        } catch (e: Exception) { "[Hadith not found.]" }
     }
 }

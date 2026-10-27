@@ -49,44 +49,53 @@ fun NotesScreen(onBack: () -> Unit) {
     var text by remember { mutableStateOf("") }
     var isFetching by remember { mutableStateOf(false) }
     var showHelp by remember { mutableStateOf(false) }
+    var showSlashMenu by remember { mutableStateOf(false) }
     
     val dayFmt = SimpleDateFormat("EEE d MMM · HH:mm", Locale.getDefault())
 
     val processText: (String) -> Unit = { newText ->
         var processedText = SmartTextEngine.process(newText)
         
-        // Fast Shortcuts
-        if (processedText.endsWith("/ayatul kursi ")) {
-            processedText = processedText.replace("/ayatul kursi ", "").plus(" /quran 2:255 ")
-        } else if (processedText.endsWith("/fatihah ")) {
-            processedText = processedText.replace("/fatihah ", "").plus(" /quran 1:1 ")
-        }
+        // Show menu if user just typed "/" or a command starting with "/"
+        showSlashMenu = processedText.endsWith("/") || (processedText.contains("/") && processedText.lines().last().startsWith("/") && !processedText.lines().last().contains(" "))
 
-        // API Regex
-        val quranRegex = Regex("/quran\\s+(\\d+):(\\d+)")
+        // Parse /quran (supports 2:255 or 2:255-257)
+        val quranRegex = Regex("/quran\\s+(\\d+):(\\d+)(?:-(\\d+))?")
         quranRegex.find(processedText)?.let { match ->
-            val (surah, ayah) = match.destructured
+            val surah = match.groupValues[1].toInt()
+            val startAyah = match.groupValues[2].toInt()
+            val endAyah = if (match.groupValues[3].isNotEmpty()) match.groupValues[3].toInt() else startAyah
             val command = match.value
+            
             isFetching = true
             scope.launch {
-                val verse = IslamicContentApi.getVerse(surah.toInt(), ayah.toInt())
+                val verse = IslamicContentApi.getVerseRange(surah, startAyah, endAyah)
                 processedText = processedText.replace(command, "\n\n${verse ?: "[Verse not found]"}\n\n")
                 text = processedText
                 isFetching = false
             }
         }
 
-        val hadithRegex = Regex("/hadith\\s+(\\w+)\\s+(\\d+)")
+        // Parse /hadith
+        val hadithRegex = Regex("/hadith\\s+(\\w+):(\\d+)")
         hadithRegex.find(processedText)?.let { match ->
-            val (book, number) = match.destructured
+            val book = match.groupValues[1]
+            val number = match.groupValues[2].toInt()
             val command = match.value
+            
             isFetching = true
             scope.launch {
-                val hadith = IslamicContentApi.getHadith(book, number.toInt())
+                val hadith = IslamicContentApi.getHadith(book, number)
                 processedText = processedText.replace(command, "\n\n${hadith ?: "[Hadith not found]"}\n\n")
                 text = processedText
                 isFetching = false
             }
+        }
+
+        // Parse /arabic
+        val arabicRegex = Regex("/arabic\\s+")
+        if (processedText.contains(arabicRegex)) {
+            processedText = processedText.replace(arabicRegex, "\n\n") // Just clears the command, user types Arabic
         }
         
         text = processedText
@@ -111,7 +120,6 @@ fun NotesScreen(onBack: () -> Unit) {
             }
 
             Box(Modifier.weight(1f).fillMaxWidth().padding(horizontal = 20.dp)) {
-                // Using standard TextField to ensure proper scrolling when keyboard opens
                 TextField(
                     value = text,
                     onValueChange = { processText(it) },
@@ -127,7 +135,7 @@ fun NotesScreen(onBack: () -> Unit) {
                         Column {
                             Text("Start writing...", fontFamily = FontFamily.Serif, fontSize = 24.sp, color = JannahColors.Faint, lineHeight = 30.sp)
                             Spacer(Modifier.height(16.dp))
-                            Text("Use / to insert Quran, Hadith, or Dua.\nType 'sallahu alaihi wa salaam' for ﷺ.", style = JannahType.caption, color = JannahColors.Orange.copy(alpha = 0.6f), lineHeight = 20.sp)
+                            Text("Use / to insert Quran, Hadith, or Arabic.\nType 'pbuh' for ﷺ.", style = JannahType.caption, color = JannahColors.Orange.copy(alpha = 0.6f), lineHeight = 20.sp)
                         }
                     },
                     colors = TextFieldDefaults.colors(
@@ -137,6 +145,44 @@ fun NotesScreen(onBack: () -> Unit) {
                         unfocusedIndicatorColor = Color.Transparent
                     )
                 )
+            }
+
+            // SLASH MENU PALETTE
+            AnimatedVisibility(
+                visible = showSlashMenu,
+                enter = slideInVertically { it } + fadeIn(),
+                exit = slideOutVertically { it } + fadeOut(),
+                modifier = Modifier.align(Alignment.BottomCenter)
+            ) {
+                Column(Modifier.fillMaxWidth().background(JannahColors.Surface).padding(8.dp)) {
+                    Text("COMMANDS", style = JannahType.eyebrow, color = JannahColors.OrangeDeep, modifier = Modifier.padding(start = 12.dp, top = 8.dp, bottom = 8.dp))
+                    
+                    val commands = listOf(
+                        "/quran 2:255" to "Insert Verse",
+                        "/quran 2:255-257" to "Insert Verse Range",
+                        "/hadith bukhari:1" to "Insert Hadith",
+                        "/arabic " to "Start Arabic Block",
+                        "pbuh " to "Insert ﷺ"
+                    )
+                    
+                    commands.forEach { (cmd, label) ->
+                        Row(
+                            Modifier.fillMaxWidth().clickable {
+                                // Replace the currently typed "/..." with the selected command
+                                val currentLines = text.lines().toMutableList()
+                                if (currentLines.isNotEmpty() && currentLines.last().startsWith("/")) {
+                                    currentLines[currentLines.size - 1] = cmd
+                                    text = currentLines.joinToString("\n")
+                                }
+                                showSlashMenu = false
+                            }.padding(12.dp),
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Text(cmd.split(" ")[0], style = JannahType.micro, color = JannahColors.Orange, modifier = Modifier.width(80.dp))
+                            Text(label, style = JannahType.bodySmall, color = JannahColors.Ink)
+                        }
+                    }
+                }
             }
 
             Row(Modifier.fillMaxWidth().padding(16.dp), horizontalArrangement = Arrangement.End) {
@@ -184,7 +230,6 @@ fun NotesScreen(onBack: () -> Unit) {
         }
     }
 
-    // THE DICTIONARY DIALOG
     if (showHelp) {
         AlertDialog(
             onDismissRequest = { showHelp = false },
@@ -195,13 +240,15 @@ fun NotesScreen(onBack: () -> Unit) {
                     verticalArrangement = Arrangement.spacedBy(16.dp),
                     modifier = Modifier.verticalScroll(rememberScrollState())
                 ) {
-                    HelpItem("/quran [surah]:[ayah]", "Inserts the verse with translation.\nExample: /quran 2:255")
-                    HelpItem("/hadith [book] [num]", "Inserts the hadith text.\nExample: /hadith bukhari 1\nExample: /hadith muslim 5")
-                    HelpItem("/ayatul kursi", "Instantly fetches Ayat al-Kursi (2:255).")
-                    HelpItem("/fatihah", "Instantly fetches Surah Al-Fatihah (1:1).")
+                    HelpItem("/quran 2:255", "Inserts a single verse with translation.")
+                    HelpItem("/quran 2:255-257", "Inserts a range of verses.")
+                    HelpItem("/hadith bukhari:1", "Inserts a hadith (use : instead of space).")
+                    HelpItem("/arabic", "Starts an Arabic typing block.")
                     Divider(color = JannahColors.Divider)
-                    HelpItem("sallahu alaihi wa salaam", "Auto-converts to ﷺ (also works with 'saw' or 'pbuh')")
-                    HelpItem("subhanahu wa taala", "Auto-converts to سبحانه وتعالى (also works with 'swt')")
+                    HelpItem("pbuh / saw", "Auto-converts to صلى الله عليه وسلم")
+                    HelpItem("swt", "Auto-converts to سبحانه وتعالى")
+                    HelpItem("ra", "Auto-converts to رضي الله عنه")
+                    HelpItem("insh", "Auto-converts to إن شاء الله")
                 }
             },
             confirmButton = {
