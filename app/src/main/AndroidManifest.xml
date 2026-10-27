@@ -83,6 +83,19 @@
 
         <service android:name=".AdhanService" android:foregroundServiceType="mediaPlayback" android:exported="false" />
         <service android:name=".FaceDownService" android:foregroundServiceType="specialUse" android:exported="false" />
+        
+        <service
+            android:name=".keyboard.JannahKeyboardService"
+            android:label="Jannah Keyboard"
+            android:permission="android.permission.BIND_INPUT_METHOD"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.view.InputMethod" />
+            </intent-filter>
+            <meta-data
+                android:name="android.view.im"
+                android:resource="@xml/method" />
+        </service>
 
         <service android:name=".FocusAccessibilityService"
             android:exported="true"
