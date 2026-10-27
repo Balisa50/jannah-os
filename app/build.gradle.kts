@@ -1,5 +1,3 @@
-import java.util.Properties
-
 plugins {
     id("com.android.application")
     id("org.jetbrains.kotlin.android")
@@ -7,26 +5,13 @@ plugins {
     id("com.google.devtools.ksp")
 }
 
-val localProps = Properties().apply {
-    val f = rootProject.file("local.properties")
-    if (f.exists()) f.inputStream().use { load(it) }
-}
-
-fun credential(key: String): String =
-    localProps.getProperty(key) ?: System.getenv(key) ?: ""
-
-// Room KSP configuration - MUST be at top level, not inside dependencies
-ksp {
-    arg("room.schemaLocation", "$projectDir/schemas")
-}
-
 android {
     signingConfigs {
         create("release") {
             storeFile = file("../jannah.keystore")
-            storePassword = credential("KEYSTORE_PASSWORD").ifEmpty { "jannah123" }
-            keyAlias = credential("KEY_ALIAS").ifEmpty { "jannah" }
-            keyPassword = credential("KEY_PASSWORD").ifEmpty { "jannah123" }
+            storePassword = "jannah123"
+            keyAlias = "jannah"
+            keyPassword = "jannah123"
         }
     }
 
@@ -47,6 +32,7 @@ android {
             proguardFiles(getDefaultProguardFile("proguard-android-optimize.txt"), "proguard-rules.pro")
         }
     }
+
     buildFeatures { compose = true }
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_17
@@ -69,7 +55,7 @@ dependencies {
     implementation("androidx.sqlite:sqlite-ktx:2.4.0")
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.8.0")
     
-    // Architect's Requirements: Room & Retrofit
+    // Room & Retrofit
     implementation("androidx.room:room-runtime:2.6.1")
     implementation("androidx.room:room-ktx:2.6.1")
     ksp("androidx.room:room-compiler:2.6.1")
