@@ -183,14 +183,14 @@ fun JannahApp() {
             composable("weekly") { ErrorBoundary("Weekly") { WeeklyReviewScreen(onBack = { nav.popBackStack() }) } }
             composable("struggle") { ErrorBoundary("Struggle") { StruggleScreen(onBack = { nav.popBackStack() }) } }
             composable("letters") { ErrorBoundary("Letters") { LettersScreen(onBack = { nav.popBackStack() }) } }
-            composable("notes") { ErrorBoundary("Notes") { NotesScreen(onBack = { nav.popBackStack() }) } }
+            composable("notes") { ErrorBoundary("Notes") { NotesListScreen(onBack = { nav.popBackStack() }, onOpenNote = { id -> /* Will route to editor in Phase 3 */ }) } }
             composable("adhkar") { ErrorBoundary("Adhkar") { AdhkarScreen(onBack = { nav.popBackStack() }) } }
             composable("sound_profile") { ErrorBoundary("Sound") { SoundProfileScreen(onBack = { nav.popBackStack() }) } }
             composable("adhkar") { ErrorBoundary("Adhkar") { AdhkarScreen(onBack = { nav.popBackStack() }) } }
             composable("sound_profile") { ErrorBoundary("Sound") { SoundProfileScreen(onBack = { nav.popBackStack() }) } }
             composable("adhkar") { ErrorBoundary("Adhkar") { AdhkarScreen(onBack = { nav.popBackStack() }) } }
             composable("sound_profile") { ErrorBoundary("Sound") { SoundProfileScreen(onBack = { nav.popBackStack() }) } }
-            composable("notes") { ErrorBoundary("Notes") { NotesScreen(onBack = { nav.popBackStack() }) } }
+            composable("notes") { ErrorBoundary("Notes") { NotesListScreen(onBack = { nav.popBackStack() }, onOpenNote = { id -> /* Will route to editor in Phase 3 */ }) } }
             composable("adhkar") { ErrorBoundary("Adhkar") { AdhkarScreen(onBack = { nav.popBackStack() }) } }
             composable("sound_profile") { ErrorBoundary("Sound") { SoundProfileScreen(onBack = { nav.popBackStack() }) } }
             composable("adhkar") { ErrorBoundary("Adhkar") { AdhkarScreen(onBack = { nav.popBackStack() }) } }
