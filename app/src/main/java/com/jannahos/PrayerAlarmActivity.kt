@@ -18,6 +18,7 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.font.FontWeight
@@ -26,7 +27,6 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.jannahos.ui.pressClickable
 import com.jannahos.ui.theme.JannahColors
-import com.jannahos.ui.theme.JannahSpacing
 import com.jannahos.ui.theme.JannahTheme
 import com.jannahos.ui.theme.JannahType
 
@@ -37,7 +37,6 @@ class PrayerAlarmActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
         overridePendingTransition(0, 0)
         
-        // Wake up the screen and show over the lock screen
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O_MR1) {
             setShowWhenLocked(true)
             setTurnScreenOn(true)
@@ -53,58 +52,37 @@ class PrayerAlarmActivity : ComponentActivity() {
         window.addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
 
         val prayer = intent.getStringExtra("prayer") ?: "Fajr"
-        
         startVibration()
 
         setContent {
             JannahTheme {
                 var tapCount by remember { mutableIntStateOf(0) }
-                
                 Column(
-                    Modifier.fillMaxSize().background(JannahColors.Cream).padding(JannahSpacing.xl),
+                    Modifier.fillMaxSize().background(Color(0xFF141210)).padding(24.dp),
                     horizontalAlignment = Alignment.CenterHorizontally,
                     verticalArrangement = Arrangement.Center
                 ) {
-                    Text("PRAYER ALARM", style = JannahType.eyebrow, color = JannahColors.OrangeDeep)
+                    Text("PRAYER ALARM", style = JannahType.eyebrow, color = JannahColors.Orange)
                     Spacer(Modifier.height(16.dp))
-                    
-                    Text(prayer, fontFamily = FontFamily.Serif, fontSize = 56.sp, fontWeight = FontWeight.Bold, color = JannahColors.Ink)
-                    
+                    Text(prayer, fontFamily = FontFamily.Serif, fontSize = 56.sp, fontWeight = FontWeight.Bold, color = Color(0xFFF3EFE6))
                     Spacer(Modifier.height(24.dp))
-                    Text("“Verily, the prayer is enjoined on the believers at fixed hours.”", fontFamily = FontFamily.Serif, fontStyle = FontStyle.Italic, fontSize = 18.sp, color = JannahColors.Muted, textAlign = TextAlign.Center)
+                    Text("“Verily, the prayer is enjoined on the believers at fixed hours.”", fontFamily = FontFamily.Serif, fontStyle = FontStyle.Italic, fontSize = 18.sp, color = Color.White.copy(alpha = 0.7f), textAlign = TextAlign.Center)
                     Spacer(Modifier.height(8.dp))
-                    Text("Qur'an 4:103", style = JannahType.caption, color = JannahColors.Faint)
-                    
+                    Text("Qur'an 4:103", style = JannahType.caption, color = Color.White.copy(alpha = 0.4f))
                     Spacer(Modifier.height(64.dp))
-                    
-                    // The Stop Button
                     Box(
                         Modifier.fillMaxWidth().height(64.dp).clip(RoundedCornerShape(50))
                             .background(JannahColors.Orange)
-                            .pressClickable { 
-                                stopVibration()
-                                finishAndRemoveTask() 
-                            },
+                            .pressClickable { stopVibration(); finishAndRemoveTask() },
                         contentAlignment = Alignment.Center
                     ) {
                         Text("I am awake", style = JannahType.button, color = JannahColors.OnOrange, fontSize = 18.sp)
                     }
-                    
                     Spacer(Modifier.height(24.dp))
-                    
-                    // 5-tap escape hatch (just in case)
-                    Text(
-                        "Dismiss", 
-                        style = JannahType.caption, 
-                        color = JannahColors.Muted, 
-                        modifier = Modifier.pressClickable {
-                            tapCount++
-                            if (tapCount >= 5) {
-                                stopVibration()
-                                finishAndRemoveTask()
-                            }
-                        }.padding(16.dp)
-                    )
+                    Text("Dismiss", style = JannahType.caption, color = Color.White.copy(alpha = 0.5f), modifier = Modifier.pressClickable {
+                        tapCount++
+                        if (tapCount >= 5) { stopVibration(); finishAndRemoveTask() }
+                    }.padding(16.dp))
                 }
             }
         }
@@ -112,17 +90,15 @@ class PrayerAlarmActivity : ComponentActivity() {
 
     private fun startVibration() {
         vibrator = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
-            val vibratorManager = getSystemService(Context.VIBRATOR_MANAGER_SERVICE) as VibratorManager
-            vibratorManager.defaultVibrator
+            val vm = getSystemService(Context.VIBRATOR_MANAGER_SERVICE) as VibratorManager
+            vm.defaultVibrator
         } else {
             @Suppress("DEPRECATION")
             getSystemService(Context.VIBRATOR_SERVICE) as Vibrator
         }
-
-        // Creates a strong, looping vibration pattern
         val pattern = longArrayOf(0, 1000, 500, 1000, 500, 1000)
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            vibrator?.vibrate(VibrationEffect.createWaveform(pattern, 1)) // 1 means repeat
+            vibrator?.vibrate(VibrationEffect.createWaveform(pattern, 1))
         } else {
             @Suppress("DEPRECATION")
             vibrator?.vibrate(pattern, 1)

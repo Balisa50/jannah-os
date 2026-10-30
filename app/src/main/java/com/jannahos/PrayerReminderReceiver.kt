@@ -13,14 +13,16 @@ class PrayerReminderReceiver : BroadcastReceiver() {
     override fun onReceive(context: Context, intent: Intent) {
         val prayer = intent.getStringExtra("prayer") ?: "Fajr"
 
-        // 1. Start the Full-Screen Activity
-        val activityIntent = Intent(context, PrayerAlarmActivity::class.java).apply {
+        // 1. Create the Full-Screen Intent
+        val fullScreenIntent = Intent(context, PrayerAlarmActivity::class.java).apply {
             addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK)
             putExtra("prayer", prayer)
         }
-        context.startActivity(activityIntent)
+        val fullScreenPendingIntent = PendingIntent.getActivity(
+            context, 0, fullScreenIntent, PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+        )
 
-        // 2. Fire a high-priority notification (In case the activity is blocked by OEM)
+        // 2. Create the High-Priority Notification Channel
         val channelId = "prayer_alarm_channel"
         val nm = context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
         
@@ -34,20 +36,21 @@ class PrayerReminderReceiver : BroadcastReceiver() {
             nm.createNotificationChannel(channel)
         }
 
-        val fullScreenPendingIntent = PendingIntent.getActivity(
-            context, 0, activityIntent, PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
-        )
-
+        // 3. Build the Notification (Acts like a phone call)
         val notification = NotificationCompat.Builder(context, channelId)
             .setSmallIcon(android.R.drawable.ic_lock_idle_alarm)
             .setContentTitle("$prayer Time")
             .setContentText("It is time to pray.")
             .setPriority(NotificationCompat.PRIORITY_MAX)
             .setCategory(NotificationCompat.CATEGORY_ALARM)
-            .setFullScreenIntent(fullScreenPendingIntent, true)
-            .setOngoing(true) // Prevents swiping it away until handled
+            .setFullScreenIntent(fullScreenPendingIntent, true) // THIS FORCES THE SCREEN ON
+            .setOngoing(true)
             .build()
 
+        // 4. Fire it
         nm.notify(1001, notification)
+        
+        // 5. Also try to start the activity directly (fallback)
+        try { context.startActivity(fullScreenIntent) } catch (_: Exception) {}
     }
 }

@@ -22,7 +22,7 @@ class JannahInputMethodService : InputMethodService() {
 
         root.findViewById<TextView>(R.id.key_pbuh).setOnClickListener { commitText("ﷺ") }
         root.findViewById<TextView>(R.id.key_swt).setOnClickListener { commitText(" سبحانه وتعالى") }
-        root.findViewById<TextView>(R.id.key_quran).setOnClickListener { commitText("/quran ") }
+        root.findViewById<TextView>(R.id.key_quran).setOnClickListener { commitText("/quran 2:255") }
 
         buildKeyboard()
         return root
