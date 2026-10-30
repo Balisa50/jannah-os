@@ -16,12 +16,10 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavBackStackEntry
-import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
-import androidx.navigation.navArgument
 import com.jannahos.*
 import com.jannahos.ui.screens.*
 import com.jannahos.ui.theme.JannahColors
@@ -134,7 +132,7 @@ fun JannahApp() {
             composable("quran") {
                 ErrorBoundary("Quran") {
                     QuranTabScreen(
-                        onNavigateToSurah = { surah -> nav.navigate("mushaf/${QuranStore.firstPageOfSurah(surah)}/604?isKhatm=false") },
+                        onNavigateToSurah = { surah -> nav.navigate("mushaf/${QuranStore.firstPageOfSurah(surah)}/604") },
                         onNavigateToSearch = { nav.navigate("search") },
                         onNavigateToPlan = { nav.navigate("plan") }
                     )
@@ -143,33 +141,21 @@ fun JannahApp() {
 
             composable("search") {
                 ErrorBoundary("Search") {
-                    QuranSearchScreen(onBack = { nav.popBackStack() }, onNavigateToPage = { page -> nav.navigate("mushaf/$page/604?isKhatm=false") })
+                    QuranSearchScreen(onBack = { nav.popBackStack() }, onNavigateToPage = { page -> nav.navigate("mushaf/$page/604") })
                 }
             }
 
             composable("plan") {
                 ErrorBoundary("Plan") {
-                    KhatmScreen(
-                        onBack = { nav.popBackStack() },
-                        onOpenRange = { start, end -> nav.navigate("mushaf/$start/$end?isKhatm=true") }
-                    )
+                    KhatmScreen(onBack = { nav.popBackStack() }, onOpenRange = { start, end -> nav.navigate("mushaf/$start/$end") })
                 }
             }
 
-            // Route updated to accept isKhatm boolean
-            composable(
-                route = "mushaf/{startPage}/{endPage}?isKhatm={isKhatm}",
-                arguments = listOf(
-                    navArgument("startPage") { type = NavType.IntType },
-                    navArgument("endPage") { type = NavType.IntType },
-                    navArgument("isKhatm") { type = NavType.BoolType; defaultValue = false }
-                )
-            ) { backStackEntry ->
-                val startPage = backStackEntry.arguments?.getInt("startPage") ?: 1
-                val endPage = backStackEntry.arguments?.getInt("endPage") ?: 604
-                val isKhatm = backStackEntry.arguments?.getBoolean("isKhatm") ?: false
+            composable("mushaf/{startPage}/{endPage}") { backStackEntry ->
+                val startPage = backStackEntry.arguments?.getString("startPage")?.toIntOrNull() ?: 1
+                val endPage = backStackEntry.arguments?.getString("endPage")?.toIntOrNull() ?: 604
                 ErrorBoundary("Quran Reader") {
-                    MushafPageScreen(startPage = startPage, endPage = endPage, isKhatm = isKhatm, onBack = { nav.popBackStack() })
+                    MushafPageScreen(startPage = startPage, endPage = endPage, onBack = { nav.popBackStack() })
                 }
             }
 
@@ -178,28 +164,18 @@ fun JannahApp() {
                     YouScreen(onNavigate = { route -> nav.navigate(route) })
                 }
             }
+            composable("notes") { ErrorBoundary("Notes") { NotesScreen(onBack = { nav.popBackStack() }) } }
             composable("diary") { ErrorBoundary("Diary") { DiaryScreen(onBack = { nav.popBackStack() }) } }
             composable("backup") { ErrorBoundary("Backup") { BackupScreen(onBack = { nav.popBackStack() }) } }
             composable("weekly") { ErrorBoundary("Weekly") { WeeklyReviewScreen(onBack = { nav.popBackStack() }) } }
             composable("struggle") { ErrorBoundary("Struggle") { StruggleScreen(onBack = { nav.popBackStack() }) } }
             composable("letters") { ErrorBoundary("Letters") { LettersScreen(onBack = { nav.popBackStack() }) } }
-            composable("notes") { ErrorBoundary("Notes") { NotesListScreen(onBack = { nav.popBackStack() }, onOpenNote = { id -> /* Will route to editor in Phase 3 */ }) } }
-            composable("adhkar") { ErrorBoundary("Adhkar") { AdhkarScreen(onBack = { nav.popBackStack() }) } }
-            composable("sound_profile") { ErrorBoundary("Sound") { SoundProfileScreen(onBack = { nav.popBackStack() }) } }
-            composable("adhkar") { ErrorBoundary("Adhkar") { AdhkarScreen(onBack = { nav.popBackStack() }) } }
-            composable("sound_profile") { ErrorBoundary("Sound") { SoundProfileScreen(onBack = { nav.popBackStack() }) } }
-            composable("adhkar") { ErrorBoundary("Adhkar") { AdhkarScreen(onBack = { nav.popBackStack() }) } }
-            composable("sound_profile") { ErrorBoundary("Sound") { SoundProfileScreen(onBack = { nav.popBackStack() }) } }
-            composable("notes") { ErrorBoundary("Notes") { NotesListScreen(onBack = { nav.popBackStack() }, onOpenNote = { id -> /* Will route to editor in Phase 3 */ }) } }
-            composable("adhkar") { ErrorBoundary("Adhkar") { AdhkarScreen(onBack = { nav.popBackStack() }) } }
-            composable("sound_profile") { ErrorBoundary("Sound") { SoundProfileScreen(onBack = { nav.popBackStack() }) } }
-            composable("adhkar") { ErrorBoundary("Adhkar") { AdhkarScreen(onBack = { nav.popBackStack() }) } }
-            composable("sound_profile") { ErrorBoundary("Sound") { SoundProfileScreen(onBack = { nav.popBackStack() }) } }
-            composable("adhkar") { ErrorBoundary("Adhkar") { AdhkarScreen(onBack = { nav.popBackStack() }) } }
-            composable("sound_profile") { ErrorBoundary("Sound") { SoundProfileScreen(onBack = { nav.popBackStack() }) } }
             composable("about") { ErrorBoundary("About") { AboutScreen(onBack = { nav.popBackStack() }) } }
             composable("ramadan") { ErrorBoundary("Ramadan") { RamadanScreen(onBack = { nav.popBackStack() }) } }
             composable("sanctuary") { ErrorBoundary("Sanctuary") { SanctuaryScreen(onExit = { nav.popBackStack() }) } }
+            composable("adhkar") { ErrorBoundary("Adhkar") { AdhkarScreen(onBack = { nav.popBackStack() }) } }
+            composable("sound_profile") { ErrorBoundary("Sound") { SoundProfileScreen(onBack = { nav.popBackStack() }) } }
         }
     }
 }
+// Trigger rebuild Fri Oct 30 16:26:38 GMT 2026
