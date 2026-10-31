@@ -6,7 +6,6 @@ import android.content.Intent
 
 class BootReceiver : BroadcastReceiver() {
     override fun onReceive(context: Context, intent: Intent) {
-        // Reschedule all alarms on boot
         try {
             val lat = Settings.lat(context)
             val lon = Settings.lon(context)
@@ -18,20 +17,18 @@ class BootReceiver : BroadcastReceiver() {
                     PrayerReminderScheduler.scheduleReminders(context, SalahTracker.label(key), t)
                 }
             }
-        } catch (_: Throwable) {}
+        } catch (e: Exception) { e.printStackTrace() }
 
-        try { RamadanAlarmScheduler.scheduleAlarms(context) } catch (_: Throwable) {}
-
+        try { RamadanAlarmScheduler.scheduleAlarms(context) } catch (e: Exception) {}
         try {
             if (Settings.isTahajjudEnabled(context)) {
                 TahajjudScheduler.scheduleAlarm(context, Settings.getTahajjudOffset(context))
             }
-        } catch (_: Throwable) {}
-
+        } catch (e: Exception) {}
         try {
             if (QuranReadingLock.enabled(context)) {
                 QuranLockScheduler.scheduleRandomLock(context)
             }
-        } catch (_: Throwable) {}
+        } catch (e: Exception) {}
     }
 }
