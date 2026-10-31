@@ -23,6 +23,7 @@ class MainActivity : ComponentActivity() {
         
         LockState.isLockActive = false
         super.onCreate(savedInstanceState)
+        RamadanAlarmScheduler.scheduleAlarms(this)
         
         // Permissions are requested during onboarding, not here.
 

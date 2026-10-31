@@ -110,6 +110,7 @@
         <receiver android:name=".SalahReceiver" android:exported="false" />
         <receiver android:name=".BedtimeReceiver" android:exported="false" />
         <receiver android:name=".QuranLockReceiver" android:exported="false" />
+        <receiver android:name=".RamadanAlarmReceiver" android:exported="false" />
         <receiver android:name=".TahajjudAlarmReceiver" android:exported="false" />
         <receiver android:name=".PrayerReminderReceiver" android:exported="false" />
         
