@@ -6,6 +6,7 @@ import android.content.Context
 class App : Application() {
     override fun onCreate() {
         super.onCreate()
+        instance = this
         // Schedule alarms on app startup
         try {
             val lat = Settings.lat(this)
@@ -29,6 +30,10 @@ class App : Application() {
     }
 
     companion object {
+        @Volatile
+        var instance: App? = null
+            private set
+
         fun latestCrash(context: Context): String? {
             val f = java.io.File(context.filesDir, "last_crash.txt")
             return if (f.exists()) f.readText() else null
