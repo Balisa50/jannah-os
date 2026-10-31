@@ -2,7 +2,7 @@ package com.jannahos.ui.screens
 
 import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
+import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
@@ -13,6 +13,7 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
@@ -40,7 +41,6 @@ fun RamadanScreen(onBack: () -> Unit) {
     val times = SalahScheduler.todayTimes(Settings.lat(ctx), Settings.lon(ctx))
     val hhmm = SimpleDateFormat("HH:mm", Locale.getDefault())
     
-    // State for re-rendering
     var tick by remember { mutableIntStateOf(0) }
     val ignore = tick
 
@@ -59,7 +59,6 @@ fun RamadanScreen(onBack: () -> Unit) {
         Column(Modifier.weight(1f).verticalScroll(rememberScrollState()).padding(horizontal = JannahSpacing.gutter)) {
             Spacer(Modifier.height(JannahSpacing.l))
 
-            // 1. SUHOOR & IFTAR TIMES
             Text("TODAY'S TIMES", style = JannahType.eyebrow, color = JannahColors.OrangeDeep)
             Spacer(Modifier.height(8.dp))
             val fajr = times["fajr"]?.let { hhmm.format(Date(it)) } ?: "—"
@@ -78,13 +77,11 @@ fun RamadanScreen(onBack: () -> Unit) {
 
             Spacer(Modifier.height(JannahSpacing.xl))
 
-            // 2. LAYLATUL QADR TRACKER (Only shows in last 10 days or during prep)
             Text("LAY LAT AL-QADR", style = JannahType.eyebrow, color = JannahColors.OrangeDeep)
             Spacer(Modifier.height(8.dp))
             Text("The best of nights. Seek it in the odd nights of the last ten.", style = JannahType.caption, color = JannahColors.Muted)
             Spacer(Modifier.height(16.dp))
 
-            // Grid of the odd nights (21, 23, 25, 27, 29)
             Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
                 listOf(21, 23, 25, 27, 29).forEach { night ->
                     val isPrayed = RamadanTrackerStore.isNightPrayed(ctx, night)
@@ -101,7 +98,7 @@ fun RamadanScreen(onBack: () -> Unit) {
                     ) {
                         Box(
                             Modifier.size(24.dp).clip(CircleShape)
-                                .background(if (isPrayed) JannahColors.Orange else androidx.compose.ui.graphics.Color.Transparent)
+                                .background(if (isPrayed) JannahColors.Orange else Color.Transparent)
                                 .border(1.dp, if (isPrayed) JannahColors.Orange else JannahColors.Border, CircleShape),
                             contentAlignment = Alignment.Center
                         ) {
@@ -117,7 +114,6 @@ fun RamadanScreen(onBack: () -> Unit) {
 
             Spacer(Modifier.height(32.dp))
 
-            // 3. MISSED FASTS COUNTER
             Text("MAKE-UP FASTS", style = JannahType.eyebrow, color = JannahColors.OrangeDeep)
             Spacer(Modifier.height(8.dp))
             Text("Fasts you missed (travel, illness, etc.)", style = JannahType.caption, color = JannahColors.Muted)
@@ -143,7 +139,6 @@ fun RamadanScreen(onBack: () -> Unit) {
 
             Spacer(Modifier.height(32.dp))
 
-            // 4. THE DUA
             Box(Modifier.fillMaxWidth().clip(RoundedCornerShape(12.dp)).background(JannahColors.OrangeSoft).padding(20.dp)) {
                 Column(horizontalAlignment = Alignment.CenterHorizontally, modifier = Modifier.fillMaxWidth()) {
                     Text("THE DUA FOR LAYLAT AL-QADR", style = JannahType.eyebrow, color = JannahColors.OrangeDeep)
@@ -160,8 +155,3 @@ fun RamadanScreen(onBack: () -> Unit) {
         }
     }
 }
-
-// Helper for border modifier if not imported
-fun Modifier.border(width: androidx.compose.ui.unit.Dp, color: androidx.compose.ui.graphics.Color, shape: androidx.compose.ui.graphics.Shape) = this.then(
-    androidx.compose.foundation.border(width, color, shape)
-)
