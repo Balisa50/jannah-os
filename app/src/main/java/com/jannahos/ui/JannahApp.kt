@@ -29,9 +29,9 @@ import kotlinx.coroutines.delay
 
 private data class Tab(val route: String, val label: String, val icon: ImageVector)
 private val TABS = listOf(
-    Tab("today", "Today", Icons.Default.Home),
+    Tab("today", "Focus", Icons.Default.Home),
     Tab("pray",  "Pray",  Icons.Default.DateRange),
-    Tab("quran", "Quran", Icons.Default.Menu),
+    Tab("quran", "Guide", Icons.Default.Menu),
     Tab("you",   "You",   Icons.Default.Person)
 )
 private val TAB_ROUTES: Set<String> = TABS.map { it.route }.toSet()
@@ -181,3 +181,4 @@ fun JannahApp() {
 // Trigger rebuild Sat Oct 31 07:28:42 GMT 2026
 // Trigger rebuild Sat Oct 31 08:09:31 GMT 2026
 // Trigger rebuild Sat Oct 31 08:27:45 GMT 2026
+// Trigger rebuild Sat Oct 31 09:10:54 GMT 2026

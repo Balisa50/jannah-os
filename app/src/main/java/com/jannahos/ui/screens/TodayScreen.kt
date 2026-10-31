@@ -76,7 +76,11 @@ fun TodayScreen(onNavigate: (String) -> Unit = {}) {
     Column(modifier = Modifier.fillMaxSize().verticalScroll(rememberScrollState()).background(JannahColors.Cream)) {
         // Seamless Header
         Column(Modifier.fillMaxWidth().padding(horizontal = JannahSpacing.gutter).padding(top = 64.dp, bottom = 32.dp)) {
-            Text(if (userName.isBlank()) greeting else "$greeting, $userName.", fontFamily = FontFamily.Serif, fontSize = 36.sp, fontWeight = FontWeight.Bold, color = JannahColors.Ink, lineHeight = 42.sp)
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Text(if (userName.isBlank()) greeting else "$greeting, $userName.", fontFamily = FontFamily.Serif, fontSize = 36.sp, fontWeight = FontWeight.Bold, color = JannahColors.Ink, lineHeight = 42.sp, modifier = Modifier.weight(1f))
+                val score = com.jannahos.IntegrityStore.getFocusScore(ctx)
+                Text("$score%", style = JannahType.title, color = if (score > 80) JannahColors.Success else JannahColors.Danger)
+            }
             Spacer(Modifier.height(8.dp))
             val greg = SimpleDateFormat("EEEE, d MMMM", Locale.getDefault()).format(Date())
             val hijri = HijriDate.today()
