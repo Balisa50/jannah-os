@@ -44,11 +44,7 @@ object IslamicContentApi {
                         englishBuilder.append(englishAyahs.getJSONObject(i).getString("text")).append(" ")
                     }
                     
-                    val ref = if (startAyah == endAyah) {
-                        "" + surah + ":" + startAyah
-                    } else {
-                        "" + surah + ":" + startAyah + "-" + endAyah
-                    }
+                    val ref = "" + surah + ":" + startAyah + "-" + endAyah
                     return@withContext arabicBuilder.toString().trim() + "\n\n\"" + englishBuilder.toString().trim() + "\"\n[Surah " + ref + "]"
                 }
             }
