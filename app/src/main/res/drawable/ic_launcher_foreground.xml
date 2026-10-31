@@ -1,8 +1,14 @@
 <vector xmlns:android="http://schemas.android.com/apk/res/android"
-    android:width="108dp" android:height="108dp"
-    android:viewportWidth="108" android:viewportHeight="108">
-    <!-- Terracotta Arch -->
-    <path android:fillColor="#C2410C" android:pathData="M54,24 C38,24 28,38 28,54 L28,84 L40,84 L40,54 C40,42 46,36 54,36 C62,36 68,42 68,54 L68,84 L80,84 L80,54 C80,38 70,24 54,24 Z"/>
-    <!-- Base Line -->
-    <path android:fillColor="#C2410C" android:pathData="M20,84 L88,84 L88,90 L20,90 Z"/>
+    android:width="108dp"
+    android:height="108dp"
+    android:viewportWidth="108"
+    android:viewportHeight="108">
+    <!-- Cream Mihrab Arch -->
+    <path
+        android:fillColor="#FBF6EE"
+        android:pathData="M54,24 C38,24 28,36 28,52 L28,84 L38,84 L38,52 C38,42 44,34 54,34 C64,34 70,42 70,52 L70,84 L80,84 L80,52 C80,36 70,24 54,24 Z" />
+    <!-- Inner Orange Star -->
+    <path
+        android:fillColor="#C86B35"
+        android:pathData="M54,48 L57,56 L65,56 L59,61 L61,69 L54,64 L47,69 L49,61 L43,56 L51,56 Z" />
 </vector>

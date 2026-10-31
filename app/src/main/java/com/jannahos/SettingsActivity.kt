@@ -70,6 +70,13 @@ private fun SettingsScreen(onBack: () -> Unit) {
         SectionHeader("System")
         ListRow("Permissions & Alarms", "Fix battery, DND, or accessibility") { showPermissions = true }
         Divider()
+        ListRow("Test Prayer Alarm", "Trigger a full-screen alarm now") {
+            val intent = Intent(ctx, PrayerReminderReceiver::class.java).apply {
+                putExtra("prayer", "Fajr (Test)")
+            }
+            ctx.sendBroadcast(intent)
+        }
+        Divider()
         ListRow("City", if (cityName.isBlank()) "Not set" else cityName) { showCityPicker = true }
         Divider()
 
