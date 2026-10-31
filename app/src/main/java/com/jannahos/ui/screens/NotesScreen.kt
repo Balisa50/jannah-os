@@ -46,22 +46,28 @@ fun NotesScreen(onBack: () -> Unit) {
     
     val dayFmt = SimpleDateFormat("EEE d MMM · HH:mm", Locale.getDefault())
 
-    // The API Magic: Watches for /quran 2:255
     val processText: (String) -> Unit = { newText ->
         text = newText
-        val quranRegex = Regex("/quran\\s+(\\d+):(\\d+)")
+        
+        // Regex that supports single verses AND ranges (e.g., 2:255 or 2:255-257)
+        val quranRegex = Regex("/quran\\s+(\\d+):(\\d+)(?:-(\\d+))?")
         quranRegex.find(text)?.let { match ->
-            val surah = match.groupValues[1].toInt()
-            val ayah = match.groupValues[2].toInt()
-            val command = match.value
+            val surah = match.groupValues[1].toIntOrNull()
+            val startAyah = match.groupValues[2].toIntOrNull()
+            val endAyah = if (match.groupValues[3].isNotEmpty()) match.groupValues[3].toIntOrNull() else startAyah
             
-            isFetching = true
-            scope.launch {
-                val res = IslamicContentApi.getVerseRange(surah, ayah, ayah)
-                if (res != null) {
-                    text = text.replace(command, "\n\n$res\n\n")
+            if (surah != null && startAyah != null && endAyah != null) {
+                val command = match.value
+                isFetching = true
+                scope.launch {
+                    val res = IslamicContentApi.getVerseRange(surah, startAyah, endAyah)
+                    if (res != null) {
+                        text = text.replace(command, "\n\n$res\n\n")
+                    } else {
+                        text = text.replace(command, "\n\n[Verse not found]\n\n")
+                    }
+                    isFetching = false
                 }
-                isFetching = false
             }
         }
     }
@@ -88,7 +94,7 @@ fun NotesScreen(onBack: () -> Unit) {
                 onValueChange = { processText(it) },
                 modifier = Modifier.fillMaxWidth().weight(1f).padding(16.dp),
                 textStyle = androidx.compose.ui.text.TextStyle(fontFamily = FontFamily.SansSerif, fontSize = 18.sp, color = JannahColors.Ink, lineHeight = 28.sp),
-                placeholder = { Text("Type /quran 2:255 to insert a verse...", color = JannahColors.Faint, fontSize = 18.sp) }
+                placeholder = { Text("Type /quran 2:255 or /quran 2:255-257...", color = JannahColors.Faint, fontSize = 18.sp) }
             )
         }
     } else {
