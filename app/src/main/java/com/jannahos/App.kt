@@ -1,56 +1,37 @@
 package com.jannahos
 
 import android.app.Application
-import java.io.File
-import java.io.PrintWriter
-import java.io.StringWriter
-import java.text.SimpleDateFormat
-import java.util.Date
-import java.util.Locale
-import kotlin.concurrent.thread
 
 class App : Application() {
     override fun onCreate() {
         super.onCreate()
-        instance = this
-        
+        // Schedule all prayer reminders, Ramadan alarms, and Tahajjud on startup
         try {
-            SalahScheduler.schedule(this, Settings.lat(this), Settings.lon(this))
-            PrayerReminderScheduler.scheduleNext(this)
-        } catch (_: Exception) {}
+            val lat = Settings.lat(this)
+            val lon = Settings.lon(this)
+            val times = SalahScheduler.todayTimes(lat, lon)
+            val ordered = listOf("fajr", "dhuhr", "asr", "maghrib", "isha")
+            for (key in ordered) {
+                val t = times[key] ?: continue
+                if (t > System.currentTimeMillis()) {
+                    PrayerReminderScheduler.scheduleReminders(this, SalahTracker.label(key), t)
+                }
+            }
+        } catch (_: Throwable) {}
 
-        val prev = Thread.getDefaultUncaughtExceptionHandler()
-        Thread.setDefaultUncaughtExceptionHandler { t, throwable ->
-            try {
-                val sw = StringWriter()
-                throwable.printStackTrace(PrintWriter(sw))
-                val stamp = SimpleDateFormat("yyyy-MM-dd_HH-mm-ss", Locale.US).format(Date())
-                val dir = File(filesDir, "crashes")
-                if (!dir.exists()) dir.mkdirs()
-                File(dir, "crash_$stamp.txt").writeText(sw.toString())
-                dir.listFiles()?.sortedByDescending { it.name }?.drop(5)?.forEach { it.delete() }
-            } catch (_: Throwable) {}
-            prev?.uncaughtException(t, throwable)
-        }
+        try { RamadanAlarmScheduler.scheduleAlarms(this) } catch (_: Throwable) {}
 
-        thread(name = "sqlcipher-init") {
-            try { System.loadLibrary("sqlcipher") } catch (_: Throwable) {}
-        }
+        try {
+            if (Settings.isTahajjudEnabled(this)) {
+                TahajjudScheduler.scheduleAlarm(this, Settings.getTahajjudOffset(this))
+            }
+        } catch (_: Throwable) {}
     }
 
     companion object {
-        var instance: App? = null
-
-        fun latestCrash(application: Application): String? {
-            return try {
-                val dir = File(application.filesDir, "crashes")
-                if (!dir.exists()) return null
-                val files = dir.listFiles()?.sortedByDescending { it.name } ?: return null
-                val newest = files.firstOrNull() ?: return null
-                val text = newest.readText()
-                newest.delete()
-                text
-            } catch (_: Throwable) { null }
+        fun latestCrash(context: android.content.Context): String? {
+            val f = java.io.File(context.filesDir, "last_crash.txt")
+            return if (f.exists()) f.readText() else null
         }
     }
 }
