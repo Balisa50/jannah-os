@@ -10,14 +10,14 @@ class App : Application() {
             private set
 
         fun latestCrash(context: Context): String? {
-            val f = java.io.File(context.filesDir, "last_crash.txt")
-            return if (f.exists()) f.readText() else null
+            // Return null so the app doesn't try to open the crash screen
+            return null 
         }
     }
 
     override fun onCreate() {
         super.onCreate()
         instance = this
-        // DO NOT schedule alarms here. It crashes the app on startup on some devices.
+        // No custom crash handlers, no alarm scheduling. Just a clean start.
     }
 }
