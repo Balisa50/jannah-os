@@ -44,6 +44,18 @@ fun TodayScreen(onNavigate: (String) -> Unit = {}) {
     LaunchedEffect(todayKey) {
         kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.IO) {
             val fresh = SalahScheduler.todayTimes(Settings.lat(ctx), Settings.lon(ctx))
+            
+            // Schedule alarms safely on IO thread
+            try {
+                val ordered = listOf("fajr", "dhuhr", "asr", "maghrib", "isha")
+                for (key in ordered) {
+                    val t = fresh[key] ?: continue
+                    if (t > System.currentTimeMillis()) {
+                        PrayerReminderScheduler.scheduleReminders(ctx, SalahTracker.label(key), t)
+                    }
+                }
+            } catch (_: Throwable) {}
+
             kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.Main) {
                 prayerTimes = fresh
             }

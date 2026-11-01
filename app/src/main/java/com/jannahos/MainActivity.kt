@@ -23,19 +23,7 @@ class MainActivity : ComponentActivity() {
         
         LockState.isLockActive = false
         super.onCreate(savedInstanceState)
-        // Safely schedule alarms after the UI is ready
-        try {
-            val lat = Settings.lat(this)
-            val lon = Settings.lon(this)
-            val times = SalahScheduler.todayTimes(lat, lon)
-            val ordered = listOf("fajr", "dhuhr", "asr", "maghrib", "isha")
-            for (key in ordered) {
-                val t = times[key] ?: continue
-                if (t > System.currentTimeMillis()) {
-                    PrayerReminderScheduler.scheduleReminders(this, SalahTracker.label(key), t)
-                }
-            }
-        } catch (_: Throwable) {}
+        // Scheduling moved to TodayScreen background thread
         RamadanAlarmScheduler.scheduleAlarms(this)
         
         // Permissions are requested during onboarding, not here.
