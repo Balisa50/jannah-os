@@ -14,10 +14,10 @@ android {
         }
     }
 
-    namespace = "com.jannahos"
+    namespace = "com.jannah.os3"
     compileSdk = 34
     defaultConfig {
-        applicationId = "com.jannahos.app"
+        applicationId = "com.jannah.os3"
         minSdk = 26
         targetSdk = 34
         versionCode = 1
