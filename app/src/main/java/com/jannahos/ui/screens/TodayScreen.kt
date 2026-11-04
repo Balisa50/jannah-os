@@ -58,6 +58,11 @@ fun TodayScreen(onNavigate: (String) -> Unit = {}) {
     val ordered = listOf("fajr", "dhuhr", "asr", "maghrib", "isha")
     val nextKey = ordered.firstOrNull { (prayerTimes[it] ?: 0L) > now }
     val displayLabel = if (nextKey == null) "Fajr" else SalahTracker.label(nextKey)
+    
+    // Safety check: If user skipped onboarding, city is empty. Use default fallback.
+    if (Settings.lat(ctx) == 0.0 || Settings.lon(ctx) == 0.0) {
+        Settings.set(ctx, 13.4549, -16.5790, "MWL") // Default to Accra/Gambia region
+    }
     // If next prayer is tomorrow (null), add 24 hours to today's Fajr time
     val displayTime = if (nextKey == null) {
         val todayFajr = prayerTimes["fajr"] ?: now

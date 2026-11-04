@@ -1,6 +1,5 @@
 package com.jannahos
 
-import android.os.Build
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
@@ -9,6 +8,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
+import com.jannahos.ui.ErrorBoundary
 import com.jannahos.ui.JannahApp
 import com.jannahos.ui.OnboardingFlow
 import com.jannahos.ui.theme.JannahTheme
@@ -18,9 +18,8 @@ class MainActivity : ComponentActivity() {
         LockState.isLockActive = false
         super.onCreate(savedInstanceState)
 
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-            requestPermissions(arrayOf(android.Manifest.permission.POST_NOTIFICATIONS), 100)
-        }
+        // REMOVED the requestPermissions call from here. 
+        // It is handled inside the PermissionSetupScreen during onboarding.
 
         setContent {
             JannahTheme {
@@ -28,7 +27,10 @@ class MainActivity : ComponentActivity() {
                     var onboarded by remember { mutableStateOf(Settings.onboardingComplete(this)) }
                     
                     if (onboarded) {
-                        JannahApp()
+                        // Wrap the whole app in ErrorBoundary so it NEVER crashes silently
+                        ErrorBoundary("JannahApp") {
+                            JannahApp()
+                        }
                     } else {
                         OnboardingFlow(onDone = {
                             Settings.setOnboardingComplete(this)
