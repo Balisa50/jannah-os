@@ -80,7 +80,7 @@ fun TodayScreen(onNavigate: (String) -> Unit = {}) {
         else -> "Good night"
     }
     val userName = Settings.displayName(ctx)
-    val hadith = DailyHadith.today()
+    val hadith = try { DailyHadith.today() } catch (e: Exception) { null }
 
     Column(modifier = Modifier.fillMaxSize().verticalScroll(rememberScrollState()).background(JannahColors.Cream)) {
         // Seamless Header
@@ -171,7 +171,7 @@ fun TodayScreen(onNavigate: (String) -> Unit = {}) {
             Spacer(Modifier.height(32.dp))
 
             // Diary Integration
-            val latestEntry = remember { com.jannahos.DiaryStore(ctx).recent(1).firstOrNull() }
+            val latestEntry = try { com.jannahos.DiaryStore(ctx).recent(1).firstOrNull() } catch (e: Exception) { null }
             if (latestEntry != null && (System.currentTimeMillis() - latestEntry.ts) < 24 * 60 * 60 * 1000) {
                 val result = com.jannahos.DiaryClassifier.classify(latestEntry.text)
                 if (result.reactionBody.isNotBlank()) {
