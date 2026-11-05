@@ -160,9 +160,9 @@ fun TodayScreen(onNavigate: (String) -> Unit = {}) {
                 Column {
                     Text("HADITH", style = JannahType.eyebrow, color = JannahColors.OrangeDeep)
                     Spacer(Modifier.height(8.dp))
-                    Text(hadith.english, fontFamily = FontFamily.Serif, fontStyle = FontStyle.Italic, fontSize = 18.sp, color = JannahColors.Body, lineHeight = 28.sp)
+                    Text(hadith?.english ?: "", fontFamily = FontFamily.Serif, fontStyle = FontStyle.Italic, fontSize = 18.sp, color = JannahColors.Body, lineHeight = 28.sp)
                     Spacer(Modifier.height(8.dp))
-                    Text(hadith.source, style = JannahType.caption, color = JannahColors.Muted)
+                    Text(hadith?.source ?: "", style = JannahType.caption, color = JannahColors.Muted)
                 }
             }
 
