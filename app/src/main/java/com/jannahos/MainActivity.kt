@@ -3,41 +3,21 @@ package com.jannahos
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Surface
-import androidx.compose.runtime.*
+import androidx.compose.material3.Text
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import com.jannahos.ui.ErrorBoundary
-import com.jannahos.ui.JannahApp
-import com.jannahos.ui.OnboardingFlow
-import com.jannahos.ui.theme.JannahTheme
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.unit.sp
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
-        LockState.isLockActive = false
         super.onCreate(savedInstanceState)
-
+        
         setContent {
-            JannahTheme {
-                Surface(modifier = Modifier.fillMaxSize(), color = MaterialTheme.colorScheme.background) {
-                    var onboarded by remember { 
-                        mutableStateOf(
-                            Settings.onboardingComplete(this) && Settings.lat(this) != 0.0
-                        ) 
-                    }
-                    
-                    if (onboarded) {
-                        ErrorBoundary("JannahApp") {
-                            JannahApp()
-                        }
-                    } else {
-                        OnboardingFlow(onDone = {
-                            Settings.setOnboardingComplete(this)
-                            onboarded = true
-                        })
-                    }
-                }
+            Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                Text("Jannah is Working.", color = Color.Black, fontSize = 30.sp)
             }
         }
     }
