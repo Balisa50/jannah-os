@@ -21,10 +21,14 @@ class MainActivity : ComponentActivity() {
         setContent {
             JannahTheme {
                 Surface(modifier = Modifier.fillMaxSize(), color = MaterialTheme.colorScheme.background) {
-                    var onboarded by remember { mutableStateOf(Settings.onboardingComplete(this)) }
+                    // If location is 0.0, they skipped onboarding. Force them back in.
+                    var onboarded by remember { 
+                        mutableStateOf(
+                            Settings.onboardingComplete(this) && Settings.lat(this) != 0.0
+                        ) 
+                    }
                     
                     if (onboarded) {
-                        // ErrorBoundary catches any crash and shows a screen instead of closing
                         ErrorBoundary("JannahApp") {
                             JannahApp()
                         }

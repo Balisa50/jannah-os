@@ -56,12 +56,7 @@ fun OnboardingFlow(onDone: () -> Unit) {
             modifier = Modifier.fillMaxSize().padding(horizontal = JannahSpacing.gutter),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.End) {
-                Text("Skip", style = JannahType.button, color = JannahColors.Muted, modifier = Modifier.pressClickable { 
-                    Settings.setOnboardingComplete(ctx)
-                    onDone()
-                }.padding(16.dp))
-            }
+
 
             Spacer(Modifier.height(JannahSpacing.xxl))
 
