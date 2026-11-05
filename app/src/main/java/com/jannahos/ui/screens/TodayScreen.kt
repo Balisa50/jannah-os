@@ -30,7 +30,10 @@ import java.util.Locale
 @Composable
 fun TodayScreen(onNavigate: (String) -> Unit = {}) {
     val ctx = LocalContext.current
-    var prayerTimes by remember { mutableStateOf(SalahScheduler.localTimes(Settings.lat(ctx), Settings.lon(ctx))) }
+    // Calculate times immediately and locally. No network.
+    val lat = if (Settings.lat(ctx) == 0.0) 5.6037 else Settings.lat(ctx)
+    val lon = if (Settings.lon(ctx) == 0.0) -0.1870 else Settings.lon(ctx)
+    var prayerTimes by remember { mutableStateOf(SalahScheduler.todayTimes(lat, lon)) }
     
     var todayKey by remember { mutableStateOf(SimpleDateFormat("yyyy-MM-dd", Locale.US).format(Date())) }
     LaunchedEffect(Unit) {
@@ -41,18 +44,7 @@ fun TodayScreen(onNavigate: (String) -> Unit = {}) {
         }
     }
 
-    LaunchedEffect(todayKey) {
-        kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.IO) {
-            try {
-                val fresh = SalahScheduler.todayTimes(Settings.lat(ctx), Settings.lon(ctx))
-                kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.Main) {
-                    prayerTimes = fresh
-                }
-            } catch (e: Exception) {
-                // Ignore errors, keep default times
-            }
-        }
-    }
+    // No LaunchedEffect needed. Times are calculated synchronously and safely.
 
     val now = System.currentTimeMillis()
     val ordered = listOf("fajr", "dhuhr", "asr", "maghrib", "isha")
