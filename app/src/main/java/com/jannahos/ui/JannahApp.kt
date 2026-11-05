@@ -32,7 +32,7 @@ private val TABS = listOf(
     Tab("today", "Focus", Icons.Default.Home),
     Tab("pray",  "Pray",  Icons.Default.DateRange),
     Tab("quran", "Guide", Icons.Default.Menu),
-    Tab("you",   "You",   Icons.Default.Person)
+    Tab("you",   "System", Icons.Default.Person)
 )
 private val TAB_ROUTES: Set<String> = TABS.map { it.route }.toSet()
 
@@ -178,25 +178,4 @@ fun JannahApp() {
         }
     }
 }
-// Trigger rebuild Sat Oct 31 07:28:42 GMT 2026
-// Trigger rebuild Sat Oct 31 08:09:31 GMT 2026
-// Trigger rebuild Sat Oct 31 08:27:45 GMT 2026
-// Trigger rebuild Sat Oct 31 09:10:54 GMT 2026
-// Trigger rebuild Sat Oct 31 09:35:05 GMT 2026
-// Trigger rebuild Sat Oct 31 09:44:19 GMT 2026
-// Trigger rebuild Sat Oct 31 10:25:30 GMT 2026
-// Trigger rebuild Sun Nov  1 01:50:09 GMT 2026
-// Trigger rebuild Sun Nov  1 21:07:41 GMT 2026
-// Trigger rebuild Wed Nov  4 15:20:21 GMT 2026
-// Trigger rebuild Wed Nov  4 23:25:20 GMT 2026
-// Trigger fresh build Thu Nov  5 06:28:37 GMT 2026
-// Trigger rebuild Thu Nov  5 06:56:20 GMT 2026
-// Trigger rebuild Thu Nov  5 07:05:54 GMT 2026
-// Trigger rebuild Thu Nov  5 07:16:01 GMT 2026
-// Trigger rebuild Thu Nov  5 08:14:47 GMT 2026
-// Trigger rebuild Thu Nov  5 09:03:51 GMT 2026
-// Trigger rebuild Thu Nov  5 09:30:36 GMT 2026
-// Trigger rebuild Thu Nov  5 11:32:02 GMT 2026
-// Trigger rebuild Thu Nov  5 11:44:21 GMT 2026
-// Trigger rebuild Thu Nov  5 12:06:39 GMT 2026
-// Trigger rebuild Thu Nov  5 16:46:36 GMT 2026
+// Trigger rebuild Thu Nov  5 18:07:49 GMT 2026
