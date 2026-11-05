@@ -71,7 +71,7 @@ fun TodayScreen(onNavigate: (String) -> Unit = {}) {
         hour < 21 -> "Good evening"
         else -> "Good night"
     }
-    val userName = Settings.displayName(ctx)
+    val userName = try { Settings.displayName(ctx) } catch (e: Exception) { "" }
     val hadith = try { DailyHadith.today() } catch (e: Exception) { null }
 
     Column(modifier = Modifier.fillMaxSize().verticalScroll(rememberScrollState()).background(JannahColors.Cream)) {
@@ -84,7 +84,7 @@ fun TodayScreen(onNavigate: (String) -> Unit = {}) {
             }
             Spacer(Modifier.height(8.dp))
             val greg = SimpleDateFormat("EEEE, d MMMM", Locale.getDefault()).format(Date())
-            val hijri = HijriDate.today()
+            val hijri = try { HijriDate.today() } catch (e: Exception) { "" }
             Text(if (hijri.isNotEmpty()) "$greg · $hijri" else greg, style = JannahType.eyebrow, color = JannahColors.Orange)
         }
 
@@ -105,8 +105,8 @@ fun TodayScreen(onNavigate: (String) -> Unit = {}) {
             Spacer(Modifier.height(32.dp))
 
             // RAMADAN HERO SECTION
-            val ramadan = RamadanMode.current()
-            if (ramadan.active) {
+            val ramadan = try { RamadanMode.current() } catch (e: Exception) { null }
+            if (ramadan?.active == true) {
                 val maghribTime = prayerTimes["maghrib"] ?: now
                 val fajrTime = prayerTimes["fajr"] ?: now
                 
