@@ -34,7 +34,7 @@ fun PrayScreen() {
     val lat = Settings.lat(ctx)
     val lon = Settings.lon(ctx)
 
-    var times by remember { mutableStateOf(SalahScheduler.todayTimes(lat, lon)) }
+    var times by remember { mutableStateOf(SalahScheduler.todayTimes(ctx, lat, lon)) }
     var dateKey by remember { mutableStateOf(SimpleDateFormat("yyyy-MM-dd", Locale.US).format(Date())) }
     var now by remember { mutableLongStateOf(System.currentTimeMillis()) }
 
@@ -50,7 +50,7 @@ fun PrayScreen() {
             val freshKey = SimpleDateFormat("yyyy-MM-dd", Locale.US).format(Date(fresh))
             if (freshKey != dateKey) {
                 dateKey = freshKey
-                times = SalahScheduler.todayTimes(lat, lon)
+                times = SalahScheduler.todayTimes(ctx, lat, lon)
             }
         }
     }

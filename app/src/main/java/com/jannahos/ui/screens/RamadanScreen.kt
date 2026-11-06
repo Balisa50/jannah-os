@@ -38,7 +38,7 @@ fun RamadanScreen(onBack: () -> Unit) {
     BackHandler(onBack = onBack)
     val ctx = LocalContext.current
     val phase = RamadanMode.current()
-    val times = SalahScheduler.todayTimes(Settings.lat(ctx), Settings.lon(ctx))
+    val times = SalahScheduler.todayTimes(ctx, Settings.lat(ctx), Settings.lon(ctx))
     val hhmm = SimpleDateFormat("HH:mm", Locale.getDefault())
     
     var tick by remember { mutableIntStateOf(0) }

@@ -13,13 +13,13 @@ object TahajjudScheduler {
     fun scheduleAlarm(ctx: Context, minutesBeforeFajr: Int) {
         val lat = Settings.lat(ctx)
         val lon = Settings.lon(ctx)
-        val times = SalahScheduler.todayTimes(lat, lon)
+        val times = SalahScheduler.todayTimes(ctx, lat, lon)
         var fajrTime = times["fajr"] ?: return
 
         // If Fajr has already passed today, schedule for tomorrow's Fajr
         if (fajrTime < System.currentTimeMillis()) {
             val tomorrow = Calendar.getInstance().apply { add(Calendar.DAY_OF_YEAR, 1) }
-            val tomorrowTimes = SalahScheduler.todayTimes(lat, lon) // Assuming this gives today's times
+            val tomorrowTimes = SalahScheduler.todayTimes(ctx, lat, lon) // Assuming this gives today's times
             fajrTime = tomorrowTimes["fajr"]?.plus(24 * 60 * 60 * 1000L) ?: return
         }
 

@@ -59,7 +59,7 @@ class SalahCommitmentActivity : ComponentActivity() {
 
         val lat = Settings.lat(this)
         val lon = Settings.lon(this)
-        val times = SalahScheduler.todayTimes(lat, lon)
+        val times = SalahScheduler.todayTimes(this, lat, lon)
         val now = System.currentTimeMillis()
         val ordered = listOf("fajr", "dhuhr", "asr", "maghrib", "isha")
         
