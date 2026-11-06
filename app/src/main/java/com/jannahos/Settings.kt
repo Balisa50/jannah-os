@@ -93,6 +93,13 @@ object Settings {
     }
 
     // Tahajjud Logic
+    fun getIqamahGap(ctx: Context): Int =
+        ctx.getSharedPreferences("jannah_prefs", Context.MODE_PRIVATE).getInt("iqamah_gap", 15)
+
+    fun setIqamahGap(ctx: Context, minutes: Int) {
+        ctx.getSharedPreferences("jannah_prefs", Context.MODE_PRIVATE).edit().putInt("iqamah_gap", minutes).apply()
+    }
+
     fun isTahajjudEnabled(ctx: Context): Boolean =
         ctx.getSharedPreferences(PREFS, Context.MODE_PRIVATE).getBoolean("tahajjud_enabled", false)
 

@@ -50,7 +50,7 @@ fun TodayScreen(onNavigate: (String) -> Unit = {}) {
         } catch (e: Exception) { false }
     }
 
-    val prayerTimes = remember { runCatching { SalahScheduler.todayTimes(lat, lon) }.getOrDefault(emptyMap()) }
+    val prayerTimes = remember { runCatching { SalahScheduler.todayTimes(ctx, lat, lon) }.getOrDefault(emptyMap()) }
     val hadith = remember { runCatching { DailyHadith.today() }.getOrNull() }
     val hijri = remember { runCatching { HijriDate.today() }.getOrDefault("") }
     
