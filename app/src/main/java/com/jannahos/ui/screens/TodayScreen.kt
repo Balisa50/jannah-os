@@ -41,6 +41,17 @@ fun TodayScreen(onNavigate: (String) -> Unit = {}) {
     val hadith = remember { runCatching { DailyHadith.today() }.getOrNull() }
     val hijri = remember { runCatching { HijriDate.today() }.getOrDefault("") }
     
+    // Timezone Validation: Check if device timezone matches longitude roughly
+    val isTimezoneWrong = remember {
+        try {
+            val tz = java.util.TimeZone.getDefault()
+            val offsetHours = tz.getOffset(System.currentTimeMillis()) / 3600000
+            val expectedOffset = (lon / 15.0).toInt()
+            // Allow a 2-hour margin for political timezone boundaries
+            kotlin.math.abs(offsetHours - expectedOffset) > 2
+        } catch (e: Exception) { false }
+    }
+
     val now = System.currentTimeMillis()
     val ordered = listOf("fajr", "dhuhr", "asr", "maghrib", "isha")
     val nextKey = ordered.firstOrNull { (prayerTimes[it] ?: 0L) > now }
@@ -60,6 +71,17 @@ fun TodayScreen(onNavigate: (String) -> Unit = {}) {
     }
     
     Column(Modifier.fillMaxSize().background(JannahColors.Cream).verticalScroll(rememberScrollState())) {
+        // TIMEZONE WARNING BANNER
+        if (isTimezoneWrong) {
+            Box(Modifier.fillMaxWidth().background(JannahColors.Danger.copy(alpha = 0.1f)).padding(16.dp)) {
+                Column {
+                    Text("TIMEZONE MISMATCH DETECTED", style = JannahType.eyebrow, color = JannahColors.Danger)
+                    Spacer(Modifier.height(4.dp))
+                    Text("Your phone's timezone does not match your location. Please adjust your phone's clock settings for accurate prayer times.", style = JannahType.caption, color = JannahColors.Ink)
+                }
+            }
+        }
+
         // HEADER
         Column(Modifier.fillMaxWidth().padding(horizontal = 22.dp).padding(top = 64.dp, bottom = 32.dp)) {
             Text(
