@@ -21,7 +21,7 @@ class NextPrayerWidget : AppWidgetProvider() {
             val views = RemoteViews(context.packageName, com.jannahos.R.layout.widget_next_prayer)
             
             try {
-                val times = SalahScheduler.todayTimes(Settings.lat(context), Settings.lon(context))
+                val times = SalahScheduler.todayTimes(context, Settings.lat(context), Settings.lon(context))
                 val now = System.currentTimeMillis()
                 val ordered = listOf("fajr", "dhuhr", "asr", "maghrib", "isha")
                 
