@@ -17,7 +17,12 @@ object SalahScheduler {
             val safeLon = if (lon == 0.0) -0.1870 else lon
             
             val coordinates = Coordinates(safeLat, safeLon)
-            val dateComponents = DateComponents.from(Date())
+            
+            // Force the correct timezone for Ghana (Africa/Accra)
+            // This prevents the 1-hour offset if the phone's timezone is wrong.
+            val tz = java.util.TimeZone.getTimeZone("Africa/Accra")
+            val calendar = java.util.Calendar.getInstance(tz)
+            val dateComponents = DateComponents.from(calendar.time)
             
             // Use Muslim World League calculation method (Standard for West Africa)
             val params = CalculationMethod.MUSLIM_WORLD_LEAGUE.parameters

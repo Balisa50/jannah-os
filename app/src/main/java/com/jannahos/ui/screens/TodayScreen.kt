@@ -66,6 +66,7 @@ fun TodayScreen(onNavigate: (String) -> Unit = {}) {
                 if (userName.isBlank()) greeting else "$greeting, $userName.",
                 fontFamily = FontFamily.Serif,
                 fontSize = 36.sp,
+                lineHeight = 54.sp, // FIX: Increased to prevent overlap
                 fontWeight = FontWeight.Bold,
                 color = Ink
             )
