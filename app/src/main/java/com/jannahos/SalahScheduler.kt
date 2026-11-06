@@ -1,28 +1,23 @@
 package com.jannahos
 
-import android.content.Context
 import com.batoulapps.adhan.CalculationMethod
 import com.batoulapps.adhan.Coordinates
 import com.batoulapps.adhan.PrayerTimes
 import com.batoulapps.adhan.data.DateComponents
+import java.util.Calendar
 import java.util.Date
 
 object SalahScheduler {
     
-    // Safely calculates times locally. No internet required. Never crashes.
     fun todayTimes(lat: Double, lon: Double): Map<String, Long> {
         return try {
-            // Fallback to Accra, Ghana coordinates if lat/lon are 0.0 (which happens if user skipped)
-            val safeLat = if (lat == 0.0) 5.6037 else lat
-            val safeLon = if (lon == 0.0) -0.1870 else lon
+            val coordinates = Coordinates(lat, lon)
             
-            val coordinates = Coordinates(safeLat, safeLon)
-            
-            // Use the device's current timezone dynamically
-            val calendar = java.util.Calendar.getInstance()
+            // Dynamically use the device's current timezone
+            val calendar = Calendar.getInstance()
             val dateComponents = DateComponents.from(calendar.time)
             
-            // Use Muslim World League calculation method (Standard for West Africa)
+            // Use Muslim World League calculation method
             val params = CalculationMethod.MUSLIM_WORLD_LEAGUE.parameters
             val prayerTimes = PrayerTimes(coordinates, dateComponents, params)
 
@@ -34,7 +29,6 @@ object SalahScheduler {
                 "isha" to prayerTimes.isha.time
             )
         } catch (e: Exception) {
-            // If math fails (it won't), return fake times so UI doesn't crash
             val now = System.currentTimeMillis()
             mapOf(
                 "fajr" to (now - 3600000),

@@ -21,37 +21,39 @@ import com.jannahos.ui.theme.JannahColors.Ink
 import com.jannahos.ui.theme.JannahColors.Muted
 import com.jannahos.ui.theme.JannahColors.Orange
 import com.jannahos.ui.theme.JannahColors.OrangeDeep
-import com.jannahos.ui.theme.JannahSpacing
 import com.jannahos.ui.theme.JannahType
 import kotlinx.coroutines.delay
 import java.text.SimpleDateFormat
 import java.util.Calendar
 import java.util.Date
 import java.util.Locale
+import java.util.TimeZone
+import kotlin.math.abs
+import kotlin.math.roundToInt
 
 @Composable
 fun TodayScreen(onNavigate: (String) -> Unit = {}) {
     val ctx = LocalContext.current
     
-    // SAFE DATA: Every call is wrapped in runCatching so it can NEVER crash
     val userName = remember { runCatching { Settings.displayName(ctx) }.getOrDefault("") }
-    val lat = remember { runCatching { Settings.lat(ctx) }.getOrDefault(5.6037) }
-    val lon = remember { runCatching { Settings.lon(ctx) }.getOrDefault(-0.1870) }
+    val lat = remember { runCatching { Settings.lat(ctx) }.getOrDefault(0.0) }
+    val lon = remember { runCatching { Settings.lon(ctx) }.getOrDefault(0.0) }
+    
+    // Timezone Validation Logic
+    val isTimezoneWrong = remember {
+        try {
+            val tz = TimeZone.getDefault()
+            val offsetHours = tz.getOffset(System.currentTimeMillis()) / 3600000
+            val expectedOffset = (lon / 15.0).roundToInt()
+            // Allow a 2-hour margin for political boundaries
+            abs(offsetHours - expectedOffset) > 2
+        } catch (e: Exception) { false }
+    }
+
     val prayerTimes = remember { runCatching { SalahScheduler.todayTimes(lat, lon) }.getOrDefault(emptyMap()) }
     val hadith = remember { runCatching { DailyHadith.today() }.getOrNull() }
     val hijri = remember { runCatching { HijriDate.today() }.getOrDefault("") }
     
-    // Timezone Validation: Check if device timezone matches longitude roughly
-    val isTimezoneWrong = remember {
-        try {
-            val tz = java.util.TimeZone.getDefault()
-            val offsetHours = tz.getOffset(System.currentTimeMillis()) / 3600000
-            val expectedOffset = (lon / 15.0).toInt()
-            // Allow a 2-hour margin for political timezone boundaries
-            kotlin.math.abs(offsetHours - expectedOffset) > 2
-        } catch (e: Exception) { false }
-    }
-
     val now = System.currentTimeMillis()
     val ordered = listOf("fajr", "dhuhr", "asr", "maghrib", "isha")
     val nextKey = ordered.firstOrNull { (prayerTimes[it] ?: 0L) > now }
@@ -71,13 +73,14 @@ fun TodayScreen(onNavigate: (String) -> Unit = {}) {
     }
     
     Column(Modifier.fillMaxSize().background(JannahColors.Cream).verticalScroll(rememberScrollState())) {
+        
         // TIMEZONE WARNING BANNER
         if (isTimezoneWrong) {
             Box(Modifier.fillMaxWidth().background(JannahColors.Danger.copy(alpha = 0.1f)).padding(16.dp)) {
                 Column {
-                    Text("TIMEZONE MISMATCH DETECTED", style = JannahType.eyebrow, color = JannahColors.Danger)
+                    Text("TIMEZONE MISMATCH", style = JannahType.eyebrow, color = JannahColors.Danger)
                     Spacer(Modifier.height(4.dp))
-                    Text("Your phone's timezone does not match your location. Please adjust your phone's clock settings for accurate prayer times.", style = JannahType.caption, color = JannahColors.Ink)
+                    Text("Your phone's timezone does not match your location. Please correct your phone's clock settings for accurate prayer times.", style = JannahType.caption, color = Ink)
                 }
             }
         }
@@ -120,9 +123,9 @@ fun TodayScreen(onNavigate: (String) -> Unit = {}) {
                     Column {
                         Text("HADITH", style = JannahType.eyebrow, color = OrangeDeep)
                         Spacer(Modifier.height(8.dp))
-                        Text(hadith.english, fontFamily = FontFamily.Serif, fontStyle = FontStyle.Italic, fontSize = 18.sp, color = JannahColors.Body, lineHeight = 28.sp)
+                        Text(hadith?.english ?: "", fontFamily = FontFamily.Serif, fontStyle = FontStyle.Italic, fontSize = 18.sp, color = JannahColors.Body, lineHeight = 28.sp)
                         Spacer(Modifier.height(8.dp))
-                        Text(hadith.source, style = JannahType.caption, color = Muted)
+                        Text(hadith?.source ?: "", style = JannahType.caption, color = Muted)
                     }
                 }
                 Spacer(Modifier.height(32.dp))
