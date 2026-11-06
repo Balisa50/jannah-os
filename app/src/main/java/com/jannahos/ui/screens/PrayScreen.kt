@@ -1,4 +1,6 @@
-package com.jannahos.ui.screens
+package com.jannahos
+
+import android.content.Context.ui.screens
 
 import android.content.Intent
 import androidx.compose.foundation.background
