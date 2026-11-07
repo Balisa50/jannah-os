@@ -10,14 +10,12 @@ class App : Application() {
             private set
 
         fun latestCrash(context: Context): String? {
-            // Return null so the app doesn't try to open the crash screen
-            return null 
+            return null
         }
     }
 
     override fun onCreate() {
         super.onCreate()
         instance = this
-        // No custom crash handlers, no alarm scheduling. Just a clean start.
     }
 }
