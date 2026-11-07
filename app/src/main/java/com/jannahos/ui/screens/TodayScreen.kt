@@ -54,7 +54,7 @@ fun TodayScreen(onNavigate: (String) -> Unit = {}) {
 
     val prayerTimes = remember { 
         runCatching { 
-            if (lat != 0.0 && lon != 0.0) SalahScheduler.todayTimes(ctx, lat, lon) 
+            if (lat != 0.0 && lon != 0.0) SalahScheduler.todayTimes(lat, lon) 
             else emptyMap() 
         }.getOrDefault(emptyMap()) 
     }
