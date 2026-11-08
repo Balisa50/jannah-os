@@ -13,19 +13,15 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavBackStackEntry
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
-import com.jannahos.*
 import com.jannahos.ui.screens.*
 import com.jannahos.ui.theme.JannahColors
 import com.jannahos.ui.theme.JannahType
-import com.jannahos.ui.theme.ScreenScaffold
-import kotlinx.coroutines.delay
 
 private data class Tab(val route: String, val label: String, val icon: ImageVector)
 private val TABS = listOf(
@@ -43,14 +39,10 @@ private fun NavBackStackEntry.isTab(): Boolean {
 
 @Composable
 fun JannahApp() {
-    val ctx = LocalContext.current
     val nav = rememberNavController()
     val backStack by nav.currentBackStackEntryAsState()
     val currentRoute = backStack?.destination?.route ?: "today"
-
     val showBottomBar = currentRoute in TAB_ROUTES
-
-    // Safe Mode: Background checks disabled
 
     val goTo: (String) -> Unit = { route ->
         nav.navigate(route) {
@@ -59,8 +51,6 @@ fun JannahApp() {
             restoreState = true
         }
     }
-
-    // Safe Mode: Overlays disabled
 
     Scaffold(
         containerColor = JannahColors.Cream,
@@ -96,87 +86,41 @@ fun JannahApp() {
             navController = nav,
             startDestination = "today",
             modifier = Modifier.fillMaxSize().padding(padding),
-            enterTransition = {
-                if (initialState.isTab() && targetState.isTab()) fadeIn(tween(120))
-                else slideIntoContainer(AnimatedContentTransitionScope.SlideDirection.Start, tween(280)) + fadeIn(tween(200))
-            },
-            exitTransition = {
-                if (initialState.isTab() && targetState.isTab()) fadeOut(tween(120))
-                else slideOutOfContainer(AnimatedContentTransitionScope.SlideDirection.Start, tween(280)) + fadeOut(tween(200))
-            },
-            popEnterTransition = {
-                if (initialState.isTab() && targetState.isTab()) fadeIn(tween(120))
-                else slideIntoContainer(AnimatedContentTransitionScope.SlideDirection.End, tween(280)) + fadeIn(tween(200))
-            },
-            popExitTransition = {
-                if (initialState.isTab() && targetState.isTab()) fadeOut(tween(120))
-                else slideOutOfContainer(AnimatedContentTransitionScope.SlideDirection.End, tween(280)) + fadeOut(tween(200))
-            }
+            enterTransition = { fadeIn(tween(120)) },
+            exitTransition = { fadeOut(tween(120)) }
         ) {
-            composable("today") { ErrorBoundary("Today") { TodayScreen(onNavigate = goTo) } }
-            composable("pray") { ErrorBoundary("Pray") { PrayScreen() } }
-
+            composable("today") { TodayScreen(onNavigate = goTo) }
+            composable("pray") { PrayScreen() }
             composable("quran") {
-                ErrorBoundary("Quran") {
-                    QuranTabScreen(
-                        onNavigateToSurah = { surah -> nav.navigate("mushaf/${QuranStore.firstPageOfSurah(surah)}/604") },
-                        onNavigateToSearch = { nav.navigate("search") },
-                        onNavigateToPlan = { nav.navigate("plan") }
-                    )
-                }
+                QuranTabScreen(
+                    onNavigateToSurah = { surah -> nav.navigate("mushaf/${com.jannahos.QuranStore.firstPageOfSurah(surah)}/604") },
+                    onNavigateToSearch = { nav.navigate("search") },
+                    onNavigateToPlan = { nav.navigate("plan") }
+                )
             }
-
             composable("search") {
-                ErrorBoundary("Search") {
-                    QuranSearchScreen(onBack = { nav.popBackStack() }, onNavigateToPage = { page -> nav.navigate("mushaf/$page/604") })
-                }
+                QuranSearchScreen(onBack = { nav.popBackStack() }, onNavigateToPage = { page -> nav.navigate("mushaf/$page/604") })
             }
-
             composable("plan") {
-                ErrorBoundary("Plan") {
-                    KhatmScreen(onBack = { nav.popBackStack() }, onOpenRange = { start, end -> nav.navigate("mushaf/$start/$end") })
-                }
+                KhatmScreen(onBack = { nav.popBackStack() }, onOpenRange = { start, end -> nav.navigate("mushaf/$start/$end") })
             }
-
-            composable("mushaf/{startPage}/{endPage}") { backStackEntry ->
-                val startPage = backStackEntry.arguments?.getString("startPage")?.toIntOrNull() ?: 1
-                val endPage = backStackEntry.arguments?.getString("endPage")?.toIntOrNull() ?: 604
-                ErrorBoundary("Quran Reader") {
-                    MushafPageScreen(startPage = startPage, endPage = endPage, onBack = { nav.popBackStack() })
-                }
+            composable("mushaf/{startPage}/{endPage}") { entry ->
+                val startPage = entry.arguments?.getString("startPage")?.toIntOrNull() ?: 1
+                val endPage = entry.arguments?.getString("endPage")?.toIntOrNull() ?: 604
+                MushafPageScreen(startPage = startPage, endPage = endPage, onBack = { nav.popBackStack() })
             }
-
-            composable("you") {
-                ErrorBoundary("You") {
-                    YouScreen(onNavigate = { route -> nav.navigate(route) })
-                }
-            }
-            composable("notes") { ErrorBoundary("Notes") { NotesScreen(onBack = { nav.popBackStack() }) } }
-            composable("diary") { ErrorBoundary("Diary") { DiaryScreen(onBack = { nav.popBackStack() }) } }
-            composable("backup") { ErrorBoundary("Backup") { BackupScreen(onBack = { nav.popBackStack() }) } }
-            composable("weekly") { ErrorBoundary("Weekly") { WeeklyReviewScreen(onBack = { nav.popBackStack() }) } }
-            composable("struggle") { ErrorBoundary("Struggle") { StruggleScreen(onBack = { nav.popBackStack() }) } }
-            composable("letters") { ErrorBoundary("Letters") { LettersScreen(onBack = { nav.popBackStack() }) } }
-            composable("about") { ErrorBoundary("About") { AboutScreen(onBack = { nav.popBackStack() }) } }
-            composable("ramadan") { ErrorBoundary("Ramadan") { RamadanScreen(onBack = { nav.popBackStack() }) } }
-            composable("sanctuary") { ErrorBoundary("Sanctuary") { SanctuaryScreen(onExit = { nav.popBackStack() }) } }
-            composable("adhkar") { ErrorBoundary("Adhkar") { AdhkarScreen(onBack = { nav.popBackStack() }) } }
-            composable("sound_profile") { ErrorBoundary("Sound") { SoundProfileScreen(onBack = { nav.popBackStack() }) } }
+            composable("you") { YouScreen(onNavigate = goTo) }
+            composable("notes") { NotesScreen(onBack = { nav.popBackStack() }) }
+            composable("diary") { DiaryScreen(onBack = { nav.popBackStack() }) }
+            composable("backup") { BackupScreen(onBack = { nav.popBackStack() }) }
+            composable("weekly") { WeeklyReviewScreen(onBack = { nav.popBackStack() }) }
+            composable("struggle") { StruggleScreen(onBack = { nav.popBackStack() }) }
+            composable("letters") { LettersScreen(onBack = { nav.popBackStack() }) }
+            composable("about") { AboutScreen(onBack = { nav.popBackStack() }) }
+            composable("ramadan") { RamadanScreen(onBack = { nav.popBackStack() }) }
+            composable("sanctuary") { SanctuaryScreen(onExit = { nav.popBackStack() }) }
+            composable("adhkar") { AdhkarScreen(onBack = { nav.popBackStack() }) }
+            composable("sound_profile") { SoundProfileScreen(onBack = { nav.popBackStack() }) }
         }
     }
 }
-// Trigger rebuild Thu Nov  5 18:07:49 GMT 2026
-// Trigger rebuild Thu Nov  5 18:37:17 GMT 2026
-// Trigger rebuild Fri Nov  6 11:49:26 GMT 2026
-// Trigger rebuild Fri Nov  6 11:54:52 GMT 2026
-// Trigger rebuild Fri Nov  6 11:55:44 GMT 2026
-// Trigger rebuild Fri Nov  6 12:12:07 GMT 2026
-// Trigger rebuild Fri Nov  6 12:27:53 GMT 2026
-// Trigger rebuild Fri Nov  6 14:47:58 GMT 2026
-// Trigger rebuild Fri Nov  6 16:51:29 GMT 2026
-// Trigger rebuild Fri Nov  6 22:15:09 GMT 2026
-// Trigger rebuild Fri Nov  6 22:31:10 GMT 2026
-// Trigger rebuild Fri Nov  6 22:44:45 GMT 2026
-// Trigger rebuild Sat Nov  7 00:14:19 GMT 2026
-// Trigger rebuild Sat Nov  7 00:26:07 GMT 2026
-// Trigger rebuild Sun Nov  8 21:42:04 GMT 2026
