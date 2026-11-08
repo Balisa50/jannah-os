@@ -50,17 +50,7 @@ fun JannahApp() {
 
     val showBottomBar = currentRoute in TAB_ROUTES
 
-    var comebackState by remember { mutableStateOf<ComebackCheck.State?>(null) }
-    var showReflection by remember { mutableStateOf(false) }
-    var showEv by remember { mutableStateOf(false) }
-    var showComeback by remember { mutableStateOf(false) }
-
-    LaunchedEffect(Unit) {
-        delay(200)
-        try { val c = ComebackCheck.check(ctx); comebackState = c; showComeback = c.show } catch (_: Throwable) {}
-        try { showReflection = ReflectionPrompt.shouldPrompt(ctx) } catch (_: Throwable) {}
-        try { showEv = EveningReckoning.shouldShow(ctx) } catch (_: Throwable) {}
-    }
+    // Safe Mode: Background checks disabled
 
     val goTo: (String) -> Unit = { route ->
         nav.navigate(route) {
@@ -70,10 +60,7 @@ fun JannahApp() {
         }
     }
 
-    val cs = comebackState
-    if (showComeback && cs != null) { ScreenScaffold { ErrorBoundary("Comeback") { ComebackScreen(cs, onDismiss = { showComeback = false }) } }; return }
-    if (showReflection) { ScreenScaffold { ErrorBoundary("Morning reflection") { MorningReflectionScreen(onDismiss = { showReflection = false }) } }; return }
-    if (showEv) { ScreenScaffold { ErrorBoundary("Evening reckoning") { EveningScreen(onDismiss = { showEv = false }) } }; return }
+    // Safe Mode: Overlays disabled
 
     Scaffold(
         containerColor = JannahColors.Cream,
@@ -192,3 +179,4 @@ fun JannahApp() {
 // Trigger rebuild Fri Nov  6 22:44:45 GMT 2026
 // Trigger rebuild Sat Nov  7 00:14:19 GMT 2026
 // Trigger rebuild Sat Nov  7 00:26:07 GMT 2026
+// Trigger rebuild Sun Nov  8 21:42:04 GMT 2026
