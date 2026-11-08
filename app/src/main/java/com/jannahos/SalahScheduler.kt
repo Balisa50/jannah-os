@@ -1,5 +1,6 @@
 package com.jannahos
 
+import android.content.Context
 import com.batoulapps.adhan.CalculationMethod
 import com.batoulapps.adhan.Coordinates
 import com.batoulapps.adhan.PrayerTimes
@@ -8,7 +9,14 @@ import java.util.Calendar
 
 object SalahScheduler {
     
+    // Legacy fallback
     fun todayTimes(lat: Double, lon: Double): Map<String, Long> {
+        val ctx = App.instance ?: return emptyMap()
+        return todayTimes(ctx, lat, lon)
+    }
+
+    // The version that the other files are trying to call
+    fun todayTimes(ctx: Context, lat: Double, lon: Double): Map<String, Long> {
         return try {
             val coordinates = Coordinates(lat, lon)
             val calendar = Calendar.getInstance()

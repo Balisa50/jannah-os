@@ -10,6 +10,8 @@ object Settings {
     fun lat(context: Context): Double = context.getSharedPreferences(PREFS, Context.MODE_PRIVATE).getFloat(KEY_LAT, 0.0f).toDouble()
     fun lon(context: Context): Double = context.getSharedPreferences(PREFS, Context.MODE_PRIVATE).getFloat(KEY_LON, 0.0f).toDouble()
 
+    fun method(context: Context): String = context.getSharedPreferences(PREFS, Context.MODE_PRIVATE).getString("method", "MWL") ?: "MWL"
+
     fun set(context: Context, lat: Double, lon: Double, method: String) {
         context.getSharedPreferences(PREFS, Context.MODE_PRIVATE).edit().putFloat(KEY_LAT, lat.toFloat()).putFloat(KEY_LON, lon.toFloat()).apply()
     }
