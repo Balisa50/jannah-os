@@ -109,7 +109,7 @@ fun JannahApp() {
                 val endPage = entry.arguments?.getString("endPage")?.toIntOrNull() ?: 604
                 MushafPageScreen(startPage = startPage, endPage = endPage, onBack = { nav.popBackStack() })
             }
-            composable("you") { YouScreen(onNavigate = goTo) }
+            composable("you") { YouScreen(onNavigate = { route -> nav.navigate(route) }) }
             composable("notes") { ErrorBoundary("Notes") { NotesScreen(onBack = { nav.popBackStack() }) } }
             composable("diary") { ErrorBoundary("Diary") { DiaryScreen(onBack = { nav.popBackStack() }) } }
             composable("backup") { BackupScreen(onBack = { nav.popBackStack() }) }
