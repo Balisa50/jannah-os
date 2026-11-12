@@ -1,5 +1,7 @@
 package com.jannahos.ui.screens
 
+import androidx.compose.animation.animateColorAsState
+import androidx.compose.animation.core.*
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
@@ -8,6 +10,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontStyle
@@ -31,13 +34,13 @@ import java.util.Locale
 @Composable
 fun TodayScreen(onNavigate: (String) -> Unit = {}) {
     val ctx = LocalContext.current
-    
     val userName = remember { runCatching { Settings.displayName(ctx) }.getOrDefault("") }
     val lat = remember { runCatching { Settings.lat(ctx) }.getOrDefault(0.0) }
     val lon = remember { runCatching { Settings.lon(ctx) }.getOrDefault(0.0) }
-    val prayerTimes = remember { runCatching { SalahScheduler.todayTimes(lat, lon) }.getOrDefault(emptyMap()) }
     
-    // Hadith is safely wrapped
+    val prayerTimes = remember { runCatching { SalahScheduler.todayTimes(ctx, lat, lon) }.getOrDefault(emptyMap()) }
+    val isLocationSet = prayerTimes.isNotEmpty()
+    
     val hadith = remember { runCatching { DailyHadith.today() }.getOrNull() }
     val hijri = remember { runCatching { HijriDate.today() }.getOrDefault("") }
     
@@ -60,23 +63,22 @@ fun TodayScreen(onNavigate: (String) -> Unit = {}) {
     }
     
     Column(Modifier.fillMaxSize().background(JannahColors.Cream).verticalScroll(rememberScrollState())) {
+        
+        // LOCATION WARNING
+        if (!isLocationSet) {
+            Box(Modifier.fillMaxWidth().background(JannahColors.Danger.copy(alpha = 0.1f)).padding(16.dp)) {
+                Column {
+                    Text("LOCATION NOT SET", style = JannahType.eyebrow, color = JannahColors.Danger)
+                    Spacer(Modifier.height(4.dp))
+                    Text("Please set your city in Settings for accurate prayer times.", style = JannahType.caption, color = Ink)
+                }
+            }
+        }
+
         Column(Modifier.fillMaxWidth().padding(horizontal = 22.dp).padding(top = 64.dp, bottom = 32.dp)) {
-            // SPLIT TEXT: No overlap
-            Text(
-                if (userName.isBlank()) greeting else greeting,
-                fontFamily = FontFamily.Serif,
-                fontSize = 36.sp,
-                fontWeight = FontWeight.Bold,
-                color = Ink
-            )
+            Text(greeting, fontFamily = FontFamily.Serif, fontSize = 36.sp, fontWeight = FontWeight.Bold, color = Ink)
             if (userName.isNotBlank()) {
-                Text(
-                    "$userName.",
-                    fontFamily = FontFamily.Serif,
-                    fontSize = 36.sp,
-                    fontWeight = FontWeight.Bold,
-                    color = Ink
-                )
+                Text("$userName.", fontFamily = FontFamily.Serif, fontSize = 36.sp, fontWeight = FontWeight.Bold, color = Ink)
             }
             Spacer(Modifier.height(8.dp))
             val greg = SimpleDateFormat("EEEE, d MMMM", Locale.getDefault()).format(Date())
@@ -92,7 +94,8 @@ fun TodayScreen(onNavigate: (String) -> Unit = {}) {
                 Text("in", fontFamily = FontFamily.Serif, fontStyle = FontStyle.Italic, fontSize = 22.sp, color = Orange)
             }
             Spacer(Modifier.height(4.dp))
-            LiveCountdown(displayTime)
+            AnimatedCountdown(displayTime)
+            
             Spacer(Modifier.height(32.dp))
             Box(Modifier.fillMaxWidth().height(1.dp).background(JannahColors.Divider))
             Spacer(Modifier.height(32.dp))
@@ -131,8 +134,15 @@ fun TodayScreen(onNavigate: (String) -> Unit = {}) {
 }
 
 @Composable
-fun LiveCountdown(targetTimeMs: Long) {
+fun AnimatedCountdown(targetTimeMs: Long) {
     var timeLeft by remember { mutableLongStateOf((targetTimeMs - System.currentTimeMillis()).coerceAtLeast(0L)) }
+    // Subtle fade animation for the ticking effect
+    val alphaAnim by animateFloatAsState(
+        targetValue = if (timeLeft % 2000 < 1000) 1f else 0.7f,
+        animationSpec = tween(500),
+        label = "tick"
+    )
+    
     LaunchedEffect(targetTimeMs) {
         while (true) {
             timeLeft = (targetTimeMs - System.currentTimeMillis()).coerceAtLeast(0L)
@@ -148,6 +158,7 @@ fun LiveCountdown(targetTimeMs: Long) {
         fontSize = 48.sp,
         fontWeight = FontWeight.Bold,
         color = Ink,
-        letterSpacing = (-1).sp
+        letterSpacing = (-1).sp,
+        modifier = Modifier.alpha(alphaAnim)
     )
 }

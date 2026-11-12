@@ -4,6 +4,9 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.ArrowBack
+import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
@@ -34,11 +37,10 @@ fun TopBar(
                 Modifier
                     .size(40.dp)
                     .clip(CircleShape)
-                    .background(JannahColors.Card)
-                    .clickable(onClick = onBack),
+                    .clickable(onClick = onBack), // Removed the white background
                 contentAlignment = Alignment.Center
             ) {
-                Text("←", fontSize = 18.sp, color = JannahColors.Ink)
+                Icon(Icons.Default.ArrowBack, contentDescription = "Back", tint = JannahColors.Ink)
             }
             Spacer(Modifier.width(JannahSpacing.s))
         } else {
