@@ -5,11 +5,16 @@ import java.net.HttpURLConnection
 import java.net.URL
 import java.net.URLEncoder
 
-// Real city search using Open-Meteo's free geocoding API.
-// No key. Global coverage. Returns top 20 matches with country names.
 object CitySearchApi {
 
-    data class Result(val name: String, val country: String, val admin1: String)
+    // Result now includes latitude and longitude
+    data class Result(
+        val name: String,
+        val country: String,
+        val admin1: String,
+        val lat: Double,
+        val lon: Double
+    )
 
     fun search(query: String): List<Result> {
         if (query.isBlank() || query.length < 2) return emptyList()
@@ -34,8 +39,10 @@ object CitySearchApi {
                 val name = item.optString("name", "")
                 val country = item.optString("country", "")
                 val admin1 = item.optString("admin1", "")
-                if (name.isNotBlank() && country.isNotBlank()) {
-                    out.add(Result(name, country, admin1))
+                val lat = item.optDouble("latitude", 0.0)
+                val lon = item.optDouble("longitude", 0.0)
+                if (name.isNotBlank() && country.isNotBlank() && lat != 0.0 && lon != 0.0) {
+                    out.add(Result(name, country, admin1, lat, lon))
                 }
             }
             out
