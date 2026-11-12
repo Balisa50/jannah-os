@@ -35,17 +35,14 @@ fun YouScreen(onNavigate: (String) -> Unit = {}) {
         Column(Modifier.padding(horizontal = JannahSpacing.gutter)) {
             SectionLabel("YOUR PRACTICE")
             ListRow("Notes & Diary") { onNavigate("notes") }
-            ListRow("Weekly review") { onNavigate("weekly") }
-            ListRow("Private commitments") { onNavigate("struggle") }
             ListRow("Tonight's plan") { ctx.startActivity(Intent(ctx, BedtimeActivity::class.java)) }
             ListRow("Letters to future self") { onNavigate("letters") }
-            
+
             Spacer(Modifier.height(JannahSpacing.xl))
 
             SectionLabel("SPIRITUAL")
             ListRow("Morning & Evening Adhkar") { onNavigate("adhkar") }
-            ListRow("Ramadan") { onNavigate("ramadan") }
-            
+
             Spacer(Modifier.height(JannahSpacing.xl))
 
             SectionLabel("SETTINGS")
@@ -53,7 +50,7 @@ fun YouScreen(onNavigate: (String) -> Unit = {}) {
             ListRow("Sound Profiles") { onNavigate("sound_profile") }
             ListRow("Backup & restore") { onNavigate("backup") }
             ListRow("About Jannah") { onNavigate("about") }
-            
+
             Spacer(Modifier.height(JannahSpacing.xxl))
         }
     }

@@ -44,11 +44,11 @@ fun QuranTabScreen(
 
         item {
             Row(Modifier.fillMaxWidth().padding(horizontal = JannahSpacing.gutter), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-                Box(Modifier.weight(1f).clip(RoundedCornerShape(50)).background(JannahColors.Card).pressClickable { onNavigateToSearch() }.padding(vertical = 14.dp), contentAlignment = Alignment.Center) {
-                    Text("Search", style = JannahType.button, color = JannahColors.Ink)
+                Box(Modifier.weight(1f).clip(RoundedCornerShape(50)).background(JannahColors.Orange).pressClickable { onNavigateToSearch() }.padding(vertical = 14.dp), contentAlignment = Alignment.Center) {
+                    Text("Search", style = JannahType.button, color = JannahColors.OnOrange)
                 }
-                Box(Modifier.weight(1f).clip(RoundedCornerShape(50)).background(JannahColors.Card).pressClickable { onNavigateToPlan() }.padding(vertical = 14.dp), contentAlignment = Alignment.Center) {
-                    Text(if (completedDays == 0) "Start Plan" else "Plan: $completedDays", style = JannahType.button, color = JannahColors.Ink)
+                Box(Modifier.weight(1f).clip(RoundedCornerShape(50)).background(JannahColors.Orange).pressClickable { onNavigateToPlan() }.padding(vertical = 14.dp), contentAlignment = Alignment.Center) {
+                    Text(if (completedDays == 0) "Start Plan" else "Plan: $completedDays", style = JannahType.button, color = JannahColors.OnOrange)
                 }
             }
         }

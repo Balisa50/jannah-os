@@ -108,9 +108,6 @@ class SalahCommitmentActivity : ComponentActivity() {
     override fun onDestroy() { stopVibration(); DndHelper.disableDnd(this); super.onDestroy() }
 
     private fun completeLock(bypassed: Boolean = false) {
-        if (bypassed) {
-            IntegrityStore.deductFocus(this, 5) // Deduct 5% for emergency bypass
-        }
         LockState.release(this)
         finishAndRemoveTask()
         overridePendingTransition(0, 0)
