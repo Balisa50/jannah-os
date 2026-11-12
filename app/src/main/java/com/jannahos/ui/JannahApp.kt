@@ -110,8 +110,8 @@ fun JannahApp() {
                 MushafPageScreen(startPage = startPage, endPage = endPage, onBack = { nav.popBackStack() })
             }
             composable("you") { YouScreen(onNavigate = goTo) }
-            composable("notes") { NotesScreen(onBack = { nav.popBackStack() }) }
-            composable("diary") { DiaryScreen(onBack = { nav.popBackStack() }) }
+            composable("notes") { ErrorBoundary("Notes") { NotesScreen(onBack = { nav.popBackStack() }) } }
+            composable("diary") { ErrorBoundary("Diary") { DiaryScreen(onBack = { nav.popBackStack() }) } }
             composable("backup") { BackupScreen(onBack = { nav.popBackStack() }) }
             composable("weekly") { WeeklyReviewScreen(onBack = { nav.popBackStack() }) }
             composable("struggle") { StruggleScreen(onBack = { nav.popBackStack() }) }
