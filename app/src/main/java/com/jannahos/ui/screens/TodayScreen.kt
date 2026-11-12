@@ -35,10 +35,10 @@ import java.util.Locale
 fun TodayScreen(onNavigate: (String) -> Unit = {}) {
     val ctx = LocalContext.current
     val userName = remember { runCatching { Settings.displayName(ctx) }.getOrDefault("") }
-    val lat = remember { runCatching { Settings.lat(ctx) }.getOrDefault(0.0) }
-    val lon = remember { runCatching { Settings.lon(ctx) }.getOrDefault(0.0) }
+    val lat = runCatching { Settings.lat(ctx) }.getOrDefault(0.0)
+    val lon = runCatching { Settings.lon(ctx) }.getOrDefault(0.0)
     
-    val prayerTimes = remember { runCatching { SalahScheduler.todayTimes(ctx, lat, lon) }.getOrDefault(emptyMap()) }
+    val prayerTimes = runCatching { SalahScheduler.todayTimes(ctx, lat, lon) }.getOrDefault(emptyMap())
     val isLocationSet = prayerTimes.isNotEmpty()
     
     val hadith = remember { runCatching { DailyHadith.today() }.getOrNull() }
