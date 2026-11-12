@@ -1,19 +1,15 @@
-package com.jannahos
+package com.jannahos.ui.screens
 
-import android.content.Context.ui.screens
-
+import android.content.Context
 import android.content.Intent
 import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Text
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontStyle
@@ -39,10 +35,6 @@ fun PrayScreen() {
     var times by remember { mutableStateOf(SalahScheduler.todayTimes(ctx, lat, lon)) }
     var dateKey by remember { mutableStateOf(SimpleDateFormat("yyyy-MM-dd", Locale.US).format(Date())) }
     var now by remember { mutableLongStateOf(System.currentTimeMillis()) }
-
-    // Tahajjud State
-    var tahajjudOn by remember { mutableStateOf(Settings.isTahajjudEnabled(ctx)) }
-    var offset by remember { mutableStateOf(Settings.getTahajjudOffset(ctx)) }
 
     LaunchedEffect(Unit) {
         while (true) {
@@ -99,61 +91,7 @@ fun PrayScreen() {
             }
 
             Spacer(Modifier.height(32.dp))
-            Box(Modifier.fillMaxWidth().height(1.dp).background(JannahColors.Divider))
-            Spacer(Modifier.height(32.dp))
 
-            // TAHAJJUD SECTION
-            Text("NIGHT PRAYER", style = JannahType.eyebrow, color = JannahColors.OrangeDeep)
-            Spacer(Modifier.height(8.dp))
-            Row(Modifier.fillMaxWidth().padding(vertical = 8.dp), verticalAlignment = Alignment.CenterVertically) {
-                Column(Modifier.weight(1f)) {
-                    Text("Tahajjud Alarm", fontFamily = FontFamily.Serif, fontSize = 20.sp, fontWeight = FontWeight.Bold, color = JannahColors.Ink)
-                    Spacer(Modifier.height(2.dp))
-                    Text(if (tahajjudOn) "Wakes you $offset minutes before Fajr" else "Off", style = JannahType.caption, color = JannahColors.Muted)
-                }
-                Box(
-                    Modifier.clip(RoundedCornerShape(20.dp))
-                        .background(if (tahajjudOn) JannahColors.Orange else JannahColors.Border)
-                        .clickable {
-                            tahajjudOn = !tahajjudOn
-                            Settings.setTahajjudEnabled(ctx, tahajjudOn)
-                            if (tahajjudOn) {
-                                TahajjudScheduler.scheduleAlarm(ctx, offset)
-                            } else {
-                                TahajjudScheduler.cancel(ctx)
-                            }
-                        }
-                        .padding(horizontal = 16.dp, vertical = 8.dp)
-                ) {
-                    Text(if (tahajjudOn) "ON" else "OFF", style = JannahType.micro, color = if (tahajjudOn) JannahColors.OnOrange else JannahColors.Muted, fontWeight = FontWeight.Bold)
-                }
-            }
-
-            if (tahajjudOn) {
-                Spacer(Modifier.height(8.dp))
-                Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                    listOf(30, 60, 90).forEach { mins ->
-                        val selected = offset == mins
-                        Box(
-                            Modifier.weight(1f).clip(RoundedCornerShape(50))
-                                .background(if (selected) JannahColors.OrangeSoft else JannahColors.Card)
-                                .clickable {
-                                    offset = mins
-                                    Settings.setTahajjudOffset(ctx, mins)
-                                    TahajjudScheduler.scheduleAlarm(ctx, mins)
-                                }
-                                .padding(vertical = 10.dp),
-                            contentAlignment = Alignment.Center
-                        ) {
-                            Text("$mins m", style = JannahType.caption, color = if (selected) JannahColors.OrangeDeep else JannahColors.Muted, fontWeight = FontWeight.Bold)
-                        }
-                    }
-                }
-            }
-
-            Spacer(Modifier.height(32.dp))
-
-            // Qibla Link
             Row(Modifier.fillMaxWidth().pressClickable { ctx.startActivity(Intent(ctx, QiblaActivity::class.java)) }.padding(vertical = 16.dp), verticalAlignment = Alignment.CenterVertically) {
                 Text("Qibla direction", fontFamily = FontFamily.Serif, fontSize = 20.sp, fontWeight = FontWeight.Bold, color = JannahColors.Ink, modifier = Modifier.weight(1f))
                 Text("→", style = JannahType.title, color = JannahColors.Orange)

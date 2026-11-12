@@ -1,7 +1,6 @@
-package com.jannahos
+package com.jannahos.ui.screens
 
-import android.content.Context.ui.screens
-
+import android.content.Context
 import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
