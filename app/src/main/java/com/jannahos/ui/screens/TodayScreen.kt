@@ -18,6 +18,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.jannahos.*
+import com.jannahos.SettingsActivity
 import com.jannahos.ui.pressClickable
 import com.jannahos.ui.theme.JannahColors
 import com.jannahos.ui.theme.JannahColors.Ink
@@ -66,11 +67,18 @@ fun TodayScreen(onNavigate: (String) -> Unit = {}) {
         
         // LOCATION WARNING
         if (!isLocationSet) {
-            Box(Modifier.fillMaxWidth().background(JannahColors.Danger.copy(alpha = 0.1f)).padding(16.dp)) {
+            Box(
+                Modifier.fillMaxWidth()
+                    .background(JannahColors.Danger.copy(alpha = 0.1f))
+                    .pressClickable { 
+                        ctx.startActivity(android.content.Intent(ctx, SettingsActivity::class.java)) 
+                    }
+                    .padding(16.dp)
+            ) {
                 Column {
                     Text("LOCATION NOT SET", style = JannahType.eyebrow, color = JannahColors.Danger)
                     Spacer(Modifier.height(4.dp))
-                    Text("Please set your city in Settings for accurate prayer times.", style = JannahType.caption, color = Ink)
+                    Text("Tap here to set your city for accurate prayer times.", style = JannahType.caption, color = Ink)
                 }
             }
         }

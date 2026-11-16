@@ -7,8 +7,25 @@ import android.content.Intent
 import android.os.Build
 
 object PrayerReminderScheduler {
-    // Industrial standard intervals (in minutes before prayer)
     private val intervals = listOf(60, 30, 15, 10, 5)
+
+    // Call this every time the app opens OR a new city is picked
+    fun scheduleAllForToday(ctx: Context) {
+        val lat = Settings.lat(ctx)
+        val lon = Settings.lon(ctx)
+        if (lat == 0.0 || lon == 0.0) return
+
+        val times = SalahScheduler.todayTimes(ctx, lat, lon)
+        val ordered = listOf("fajr", "dhuhr", "asr", "maghrib", "isha")
+        val now = System.currentTimeMillis()
+
+        for (key in ordered) {
+            val t = times[key] ?: continue
+            if (t > now) {
+                scheduleReminders(ctx, SalahTracker.label(key), t)
+            }
+        }
+    }
 
     fun scheduleReminders(ctx: Context, prayerName: String, prayerTimeMs: Long) {
         val am = ctx.getSystemService(Context.ALARM_SERVICE) as AlarmManager
@@ -20,7 +37,6 @@ object PrayerReminderScheduler {
                     putExtra("prayer", prayerName)
                     putExtra("minutes", minutes)
                 }
-                // Use a unique request code for each interval
                 val pi = PendingIntent.getBroadcast(ctx, prayerName.hashCode() + index, intent, PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE)
 
                 if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {

@@ -21,6 +21,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.jannahos.CitySearchApi
 import com.jannahos.CityStore
+import com.jannahos.PrayerReminderScheduler
 import com.jannahos.Settings
 import com.jannahos.ui.TopBar
 import com.jannahos.ui.pressClickable
@@ -88,6 +89,7 @@ fun CityPickerScreen(onBack: () -> Unit, onPicked: (String, String) -> Unit) {
                                 // Save coordinates immediately
                                 Settings.set(ctx, city.lat, city.lon, "MWL")
                                 CityStore.set(ctx, city.name, city.country)
+                                PrayerReminderScheduler.scheduleAllForToday(ctx)
                                 onPicked(city.name, city.country)
                             }
                             .padding(horizontal = JannahSpacing.m, vertical = 16.dp),
@@ -111,6 +113,7 @@ fun CityPickerScreen(onBack: () -> Unit, onPicked: (String, String) -> Unit) {
                                 // Use lat/lon from API
                                 Settings.set(ctx, r.lat, r.lon, "MWL")
                                 CityStore.set(ctx, r.name, r.country)
+                                PrayerReminderScheduler.scheduleAllForToday(ctx)
                                 onPicked(r.name, r.country)
                             }
                             .padding(horizontal = JannahSpacing.m, vertical = 16.dp),
