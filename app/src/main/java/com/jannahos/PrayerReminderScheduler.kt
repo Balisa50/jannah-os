@@ -7,9 +7,6 @@ import android.content.Intent
 import android.os.Build
 
 object PrayerReminderScheduler {
-    private val intervals = listOf(60, 30, 15, 10, 5)
-
-    // Call this every time the app opens OR a new city is picked
     fun scheduleAllForToday(ctx: Context) {
         val lat = Settings.lat(ctx)
         val lon = Settings.lon(ctx)
@@ -20,35 +17,48 @@ object PrayerReminderScheduler {
         val now = System.currentTimeMillis()
 
         for (key in ordered) {
-            val t = times[key] ?: continue
-            if (t > now) {
-                scheduleReminders(ctx, SalahTracker.label(key), t)
+            val adhanTime = times[key] ?: continue
+            if (adhanTime > now) {
+                schedulePrayerSequence(ctx, SalahTracker.label(key), adhanTime, key == "dhuhr" && isFriday())
             }
         }
     }
 
-    fun scheduleReminders(ctx: Context, prayerName: String, prayerTimeMs: Long) {
+    private fun schedulePrayerSequence(ctx: Context, prayerName: String, adhanTime: Long, isJummah: Boolean) {
         val am = ctx.getSystemService(Context.ALARM_SERVICE) as AlarmManager
-        
-        intervals.forEachIndexed { index, minutes ->
-            val triggerTime = prayerTimeMs - (minutes * 60 * 1000L)
-            if (triggerTime > System.currentTimeMillis()) {
-                val intent = Intent(ctx, PrayerReminderReceiver::class.java).apply {
-                    putExtra("prayer", prayerName)
-                    putExtra("minutes", minutes)
-                }
-                val pi = PendingIntent.getBroadcast(ctx, prayerName.hashCode() + index, intent, PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE)
+        val iqamahGapMinutes = if (isJummah) 45 else Settings.getIqamahGap(ctx)
+        val iqamahTime = adhanTime + (iqamahGapMinutes * 60 * 1000L)
 
-                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
-                    if (am.canScheduleExactAlarms()) {
-                        am.setExactAndAllowWhileIdle(AlarmManager.RTC_WAKEUP, triggerTime, pi)
-                    } else {
-                        am.setAndAllowWhileIdle(AlarmManager.RTC_WAKEUP, triggerTime, pi)
-                    }
-                } else {
-                    am.setExactAndAllowWhileIdle(AlarmManager.RTC_WAKEUP, triggerTime, pi)
-                }
+        // 1. The Adhan Alarm
+        setAlarm(ctx, am, prayerName, adhanTime, "adhan", 1)
+
+        // 2. Reminder Vibrations (e.g., at 3, 6 minutes after Adhan)
+        val reminderIntervals = listOf(3, 6, iqamahGapMinutes - 2) // 2 mins before iqamah
+        reminderIntervals.forEachIndexed { index, mins ->
+            val triggerTime = adhanTime + (mins * 60 * 1000L)
+            if (triggerTime < iqamahTime) {
+                setAlarm(ctx, am, prayerName, triggerTime, "reminder", index + 2)
             }
         }
+
+        // 3. The Iqamah Lock
+        setAlarm(ctx, am, prayerName, iqamahTime, "iqamah", 99)
     }
+
+    private fun setAlarm(ctx: Context, am: AlarmManager, prayer: String, time: Long, type: String, code: Int) {
+        val intent = Intent(ctx, PrayerReminderReceiver::class.java).apply {
+            putExtra("prayer", prayer)
+            putExtra("type", type)
+        }
+        val pi = PendingIntent.getBroadcast(ctx, prayer.hashCode() + code, intent, PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE)
+
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+            if (am.canScheduleExactAlarms()) am.setExactAndAllowWhileIdle(AlarmManager.RTC_WAKEUP, time, pi)
+            else am.setAndAllowWhileIdle(AlarmManager.RTC_WAKEUP, time, pi)
+        } else {
+            am.setExactAndAllowWhileIdle(AlarmManager.RTC_WAKEUP, time, pi)
+        }
+    }
+
+    private fun isFriday(): Boolean = java.util.Calendar.getInstance().get(java.util.Calendar.DAY_OF_WEEK) == java.util.Calendar.FRIDAY
 }

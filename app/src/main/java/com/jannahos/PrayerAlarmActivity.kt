@@ -64,7 +64,7 @@ class PrayerAlarmActivity : ComponentActivity() {
                 ) {
                     Text("PRAYER ALARM", style = JannahType.eyebrow, color = JannahColors.Orange)
                     Spacer(Modifier.height(16.dp))
-                    Text(prayer, fontFamily = FontFamily.Serif, fontSize = 56.sp, fontWeight = FontWeight.Bold, color = Color(0xFFF3EFE6))
+                    Text("$prayer is Now", fontFamily = FontFamily.Serif, fontSize = 48.sp, fontWeight = FontWeight.Bold, color = Color(0xFFF3EFE6))
                     Spacer(Modifier.height(24.dp))
                     Text("“Verily, the prayer is enjoined on the believers at fixed hours.”", fontFamily = FontFamily.Serif, fontStyle = FontStyle.Italic, fontSize = 18.sp, color = Color.White.copy(alpha = 0.7f), textAlign = TextAlign.Center)
                     Spacer(Modifier.height(8.dp))
