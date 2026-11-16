@@ -107,6 +107,9 @@ class PrayerAlarmActivity : ComponentActivity() {
 
     private fun stopVibration() {
         vibrator?.cancel()
+        // Clear the notification when the alarm is dismissed
+        val nm = getSystemService(Context.NOTIFICATION_SERVICE) as android.app.NotificationManager
+        nm.cancelAll()
     }
 
     override fun onDestroy() {
