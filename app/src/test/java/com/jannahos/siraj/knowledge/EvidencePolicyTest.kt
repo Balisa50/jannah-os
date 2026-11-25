@@ -116,4 +116,34 @@ class EvidencePolicyTest {
         val result = EvidencePolicy.review(ClaimCategory.GENERAL_INFORMATION, listOf(source))
         assertEquals(EvidenceDecision.BLOCKED, result.decision)
     }
+
+    @Test
+    fun blocksAuthenticityClaimIfAnyCitedHadithLacksGrading() {
+        val graded = EvidenceExcerpt(
+            IslamicReference.Hadith(
+                sourceId = "record-a",
+                collection = "Collection",
+                referenceNumber = "1",
+                grade = "Grade",
+                gradingAuthority = "Authority"
+            ),
+            "First excerpt",
+            "en"
+        )
+        val ungraded = EvidenceExcerpt(
+            IslamicReference.Hadith(
+                sourceId = "record-b",
+                collection = "Collection",
+                referenceNumber = "2"
+            ),
+            "Second excerpt",
+            "en"
+        )
+
+        val result = EvidencePolicy.review(
+            ClaimCategory.HADITH_AUTHENTICITY,
+            listOf(graded, ungraded)
+        )
+        assertEquals(EvidenceDecision.BLOCKED, result.decision)
+    }
 }
