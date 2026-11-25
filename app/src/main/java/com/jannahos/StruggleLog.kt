@@ -31,8 +31,16 @@ class StruggleLog(context: Context) : SQLiteOpenHelper(
     }
 
     override fun onUpgrade(db: SQLiteDatabase, oldV: Int, newV: Int) {
-        db.execSQL("DROP TABLE IF EXISTS entries")
-        onCreate(db)
+        // Preserve existing records. This table has no schema changes in v2;
+        // IF NOT EXISTS also repairs a missing table without deleting history.
+        db.execSQL("""
+            CREATE TABLE IF NOT EXISTS entries (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                ts INTEGER NOT NULL,
+                kind TEXT NOT NULL,
+                note TEXT
+            )
+        """.trimIndent())
     }
 
     fun record(kind: String, note: String? = null) {
