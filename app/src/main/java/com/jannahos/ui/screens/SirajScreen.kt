@@ -211,9 +211,10 @@ fun SirajScreen(onNavigate: (String) -> Unit = {}) {
     ) { granted ->
         val action = pendingPermissionAction
         if (granted && action != null) {
+            val freshCapabilities = AndroidDeviceActionExecutor.readCapabilities(context)
             val decision = DeviceActionPolicy.evaluate(
                 action = action,
-                capabilities = AndroidDeviceActionExecutor.readCapabilities(context),
+                capabilities = freshCapabilities,
                 userConfirmed = false,
                 nowMillis = System.currentTimeMillis()
             )
@@ -221,7 +222,7 @@ fun SirajScreen(onNavigate: (String) -> Unit = {}) {
                 pendingDeviceAction = action
                 pendingActionPlan = SirajActionPlanner.prepare(
                     action, pendingActionPrompt.ifBlank { "Confirm this action?" },
-                    capabilities, System.currentTimeMillis()
+                    freshCapabilities, System.currentTimeMillis()
                 )
                 pendingPermissionAction = null
                 pendingPermissionReason = ""
@@ -257,6 +258,10 @@ fun SirajScreen(onNavigate: (String) -> Unit = {}) {
         )
         if (currentDecision == com.jannahos.siraj.actions.ActionDecision.NeedsConfirmation) {
             pendingDeviceAction = action
+            pendingActionPlan = SirajActionPlanner.prepare(
+                action, pendingActionPrompt.ifBlank { "Confirm this action?" },
+                capabilities, System.currentTimeMillis()
+            )
             pendingPermissionAction = null
             pendingPermissionReason = ""
             return
