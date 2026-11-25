@@ -68,6 +68,7 @@ class PrayerReminderReceiver : BroadcastReceiver() {
             .setPriority(NotificationCompat.PRIORITY_HIGH)
             .setAutoCancel(true)
             .setOngoing(false)
+            .setTimeoutAfter(5 * 60 * 1000L) // FIX: Auto-dismiss after 5 minutes
             .setContentIntent(pi)
             .build()
         nm.notify(id, notification)
