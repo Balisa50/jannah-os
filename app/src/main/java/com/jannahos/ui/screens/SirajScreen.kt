@@ -40,6 +40,10 @@ import com.jannahos.siraj.actions.ActionExecutionResult
 import com.jannahos.siraj.actions.AndroidDeviceActionExecutor
 import com.jannahos.siraj.actions.DeviceActionPolicy
 import com.jannahos.siraj.actions.SirajDeviceAction
+import com.jannahos.siraj.ai.OpenAiCompatibleProvider
+import com.jannahos.siraj.ai.SirajChatMessage
+import com.jannahos.siraj.ai.SirajInferenceResult
+import com.jannahos.siraj.ai.SirajConversationPolicy
 import com.jannahos.siraj.core.SirajAction
 import com.jannahos.siraj.core.SirajCommandParser
 import com.jannahos.siraj.knowledge.IslamicReference
@@ -108,7 +112,43 @@ fun SirajScreen(onNavigate: (String) -> Unit = {}) {
         }
 
         val result = SirajCommandParser.parse(request, QuranCache.SURAHS)
-        messages.add(SirajMessage(result.reply, false))
+        if (result.action == null && !request.equals("help", ignoreCase = true) &&
+            !request.equals("what can you do", ignoreCase = true) &&
+            !request.equals("what can siraj do", ignoreCase = true)
+        ) {
+            if (SirajConversationPolicy.isReligiousRequest(request)) {
+                messages.add(
+                    SirajMessage(
+                        "I won't generate a religious answer from a general-purpose model. SIRAJ's verified Islamic research workflow is not ready yet, so I won't guess or invent a source. I can still retrieve exact Arabic Quran references from the bundled text.",
+                        false
+                    )
+                )
+            } else {
+                messages.add(SirajMessage("Thinking…", false))
+                val responseIndex = messages.lastIndex
+                scope.launch {
+                    val response = OpenAiCompatibleProvider(context).complete(
+                        listOf(
+                            SirajChatMessage(
+                                role = "system",
+                                content = SirajConversationPolicy.GENERAL_ASSISTANT_SYSTEM_PROMPT
+                            ),
+                            SirajChatMessage(role = "user", content = request)
+                        )
+                    )
+                    val reply = when (response) {
+                        is SirajInferenceResult.Success -> response.text
+                        is SirajInferenceResult.Failure -> response.message
+                    }
+                    if (responseIndex in messages.indices) {
+                        messages[responseIndex] = SirajMessage(reply, false)
+                    }
+                    if (messages.isNotEmpty()) listState.animateScrollToItem(messages.lastIndex)
+                }
+            }
+        } else {
+            messages.add(SirajMessage(result.reply, false))
+        }
 
         when (val action = result.action) {
             is SirajAction.ShowAyah -> {
