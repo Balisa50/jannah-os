@@ -56,6 +56,17 @@ class DiaryStore(context: Context) : SQLiteOpenHelper(
         return writableDatabase.insert("entries", null, v)
     }
 
+    fun updateText(id: Long, text: String): Boolean {
+        if (text.isBlank()) return false
+        val values = ContentValues().apply { put("text", text.trim()) }
+        return writableDatabase.update(
+            "entries",
+            values,
+            "id = ?",
+            arrayOf(id.toString())
+        ) == 1
+    }
+
     fun markCelebrated(id: Long) {
         val v = ContentValues().apply { put("celebrated", 1) }
         writableDatabase.update("entries", v, "id = ?", arrayOf(id.toString()))
