@@ -165,6 +165,22 @@ fun SirajScreen(onNavigate: (String) -> Unit = {}) {
 
     fun openPermissionSettings(action: SirajDeviceAction) {
         val capabilities = AndroidDeviceActionExecutor.readCapabilities(context)
+        val currentDecision = DeviceActionPolicy.evaluate(
+            action = action,
+            capabilities = capabilities,
+            userConfirmed = false,
+            nowMillis = System.currentTimeMillis()
+        )
+        if (currentDecision == com.jannahos.siraj.actions.ActionDecision.NeedsConfirmation) {
+            pendingDeviceAction = action
+            pendingActionPrompt = "Confirm the requested SIRAJ action?"
+            pendingPermissionAction = null
+            pendingPermissionReason = ""
+            return
+        }
+        if (currentDecision is com.jannahos.siraj.actions.ActionDecision.Blocked) {
+            pendingPermissionReason = currentDecision.reason
+        }
         val needsNotificationPermission =
             !capabilities.notificationsAllowed &&
                 (action is SirajDeviceAction.ScheduleReminder || action is SirajDeviceAction.SetQuranLock)
