@@ -46,7 +46,6 @@ import com.jannahos.siraj.ai.SirajInferenceResult
 import com.jannahos.siraj.ai.SirajConversationPolicy
 import com.jannahos.siraj.ai.SirajConversationContext
 import com.jannahos.siraj.core.SirajAction
-import com.jannahos.siraj.core.SirajCommandParser
 import com.jannahos.siraj.knowledge.IslamicReference
 import com.jannahos.siraj.knowledge.QuranEvidenceRetriever
 import com.jannahos.ui.theme.JannahColors
@@ -112,19 +111,26 @@ fun SirajScreen(onNavigate: (String) -> Unit = {}) {
             return
         }
 
-        val result = SirajCommandParser.parse(request, QuranCache.SURAHS)
-        if (result.action == null &&
-            !result.reply.startsWith("I can open") &&
-            !result.reply.startsWith("I can navigate")
-        ) {
-            if (SirajConversationPolicy.isReligiousRequest(request)) {
+        val route = com.jannahos.siraj.core.SirajOrchestrator.route(
+            request,
+            QuranCache.SURAHS
+        )
+        when (route) {
+            is com.jannahos.siraj.core.SirajRoute.AppAction ->
+                messages.add(SirajMessage(route.userMessage, false))
+
+            is com.jannahos.siraj.core.SirajRoute.LocalReply ->
+                messages.add(SirajMessage(route.message, false))
+
+            is com.jannahos.siraj.core.SirajRoute.IslamicKnowledgeUnavailable ->
                 messages.add(
                     SirajMessage(
                         "I won't generate a religious answer from a general-purpose model. SIRAJ's verified Islamic research workflow is not ready yet, so I won't guess or invent a source. I can still retrieve exact Arabic Quran references from the bundled text.",
                         false
                     )
                 )
-            } else {
+
+            is com.jannahos.siraj.core.SirajRoute.GeneralConversation -> {
                 messages.add(SirajMessage("Thinking…", false))
                 val responseIndex = messages.lastIndex
                 scope.launch {
@@ -143,7 +149,7 @@ fun SirajScreen(onNavigate: (String) -> Unit = {}) {
                                 role = "system",
                                 content = SirajConversationPolicy.GENERAL_ASSISTANT_SYSTEM_PROMPT
                             )
-                        ) + SirajConversationContext.build(conversation, request)
+                        ) + SirajConversationContext.build(conversation, route.prompt)
                     )
                     val reply = when (response) {
                         is SirajInferenceResult.Success ->
@@ -158,11 +164,9 @@ fun SirajScreen(onNavigate: (String) -> Unit = {}) {
                     if (messages.isNotEmpty()) listState.animateScrollToItem(messages.lastIndex)
                 }
             }
-        } else {
-            messages.add(SirajMessage(result.reply, false))
         }
 
-        when (val action = result.action) {
+        when (val action = (route as? com.jannahos.siraj.core.SirajRoute.AppAction)?.action) {
             is SirajAction.ShowAyah -> {
                 scope.launch {
                     val evidence = withContext(Dispatchers.IO) {
