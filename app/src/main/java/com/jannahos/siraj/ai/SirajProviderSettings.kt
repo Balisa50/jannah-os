@@ -26,7 +26,7 @@ object SirajProviderSettings {
         val safeEndpoint = endpoint.trim().trimEnd('/')
         val safeModel = model.trim()
         require(SirajProviderEndpointPolicy.isAllowed(safeEndpoint)) {
-            "Use HTTPS. HTTP is allowed only for localhost."
+            "Use a valid HTTPS endpoint without embedded credentials, query parameters or fragments."
         }
         require(safeModel.isNotBlank() && safeModel.length <= 160) {
             "Enter a valid model identifier."
