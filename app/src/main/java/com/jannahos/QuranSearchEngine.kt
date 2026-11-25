@@ -17,18 +17,23 @@ object QuranSearchEngine {
     fun searchQuran(ctx: Context, query: String): List<AyahResult> {
         val q = query.lowercase().trim()
         if (q.isEmpty()) return emptyList()
-        val tokens = q.split(" ").filter { it.isNotBlank() }
+        val arabicQuery = ArabicTextNormalizer.normalize(query)
+        val tokens = q.split(Regex("\\s+")).filter { it.isNotBlank() }
+        val arabicTokens = arabicQuery.split(Regex("\\s+")).filter { it.isNotBlank() }
         val results = mutableListOf<AyahResult>()
         val allAyahs = QuranTextStore.load(ctx)
 
         for (ayah in allAyahs) {
             var score = 0
             val engLower = ayah.english.lowercase()
-            val araText = ayah.arabic
+            val araText = ArabicTextNormalizer.normalize(ayah.arabic)
 
             // 1. Exact Matches (Fast)
             for (token in tokens) {
-                if (engLower.contains(token) || araText.contains(token)) score += 10
+                if (engLower.contains(token)) score += 10
+            }
+            for (token in arabicTokens) {
+                if (token.isNotBlank() && araText.contains(token)) score += 10
             }
 
             // 2. Synonym Matches
@@ -60,18 +65,23 @@ object QuranSearchEngine {
     fun searchHadith(ctx: Context, query: String): List<HadithResult> {
         val q = query.lowercase().trim()
         if (q.isEmpty()) return emptyList()
-        val tokens = q.split(" ").filter { it.isNotBlank() }
+        val arabicQuery = ArabicTextNormalizer.normalize(query)
+        val tokens = q.split(Regex("\\s+")).filter { it.isNotBlank() }
+        val arabicTokens = arabicQuery.split(Regex("\\s+")).filter { it.isNotBlank() }
         val results = mutableListOf<HadithResult>()
         val allHadiths = HadithStore.load(ctx)
 
         for (h in allHadiths) {
             var score = 0
             val engLower = h.english.lowercase()
-            val araText = h.arabic
+            val araText = ArabicTextNormalizer.normalize(h.arabic)
 
             // 1. Exact Matches (Fast)
             for (token in tokens) {
-                if (engLower.contains(token) || araText.contains(token)) score += 10
+                if (engLower.contains(token)) score += 10
+            }
+            for (token in arabicTokens) {
+                if (token.isNotBlank() && araText.contains(token)) score += 10
             }
 
             // 2. Synonym Matches
