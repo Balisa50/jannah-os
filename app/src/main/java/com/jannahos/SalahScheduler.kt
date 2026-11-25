@@ -1,7 +1,6 @@
 package com.jannahos
 
 import android.content.Context
-import com.batoulapps.adhan.CalculationMethod
 import com.batoulapps.adhan.Coordinates
 import com.batoulapps.adhan.PrayerTimes
 import com.batoulapps.adhan.data.DateComponents
@@ -17,14 +16,18 @@ object SalahScheduler {
         lon: Double,
         date: Calendar
     ): Map<String, Long> {
-        if (lat == 0.0 && lon == 0.0) return emptyMap()
+        if (!lat.isFinite() || !lon.isFinite() ||
+            lat !in -90.0..90.0 || lon !in -180.0..180.0 ||
+            (lat == 0.0 && lon == 0.0)
+        ) return emptyMap()
 
         return try {
             val coordinates = Coordinates(lat, lon)
-            // Use the device's actual civil timezone. Longitude/15 is only a
-            // rough solar offset and fails around DST and timezone boundaries.
+            // DateComponents.from(Date) uses the device's current civil timezone.
+            // The user's saved calculation method is applied consistently to
+            // today's screen and every scheduled reminder.
             val dateComponents = DateComponents.from(date.time)
-            val params = CalculationMethod.MUSLIM_WORLD_LEAGUE.parameters
+            val params = PrayerCalculationMethods.fromPreference(Settings.method(ctx)).parameters
             val prayerTimes = PrayerTimes(coordinates, dateComponents, params)
 
             mapOf(

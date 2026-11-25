@@ -21,8 +21,11 @@ class QuranCache(context: Context) : SQLiteOpenHelper(context, DB, null, 2) {
     }
 
     override fun onUpgrade(db: SQLiteDatabase, oldV: Int, newV: Int) {
-        db.execSQL("DROP TABLE IF EXISTS ayahs")
-        onCreate(db)
+        // Version 2 adds global_num. Preserve the cached Quran text and
+        // backfill the new column with the safe legacy default.
+        if (oldV < 2) {
+            db.execSQL("ALTER TABLE ayahs ADD COLUMN global_num INTEGER NOT NULL DEFAULT 0")
+        }
     }
 
     fun isCached(surah: Int): Boolean {

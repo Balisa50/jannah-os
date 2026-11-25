@@ -12,6 +12,8 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Text
+import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -65,6 +67,49 @@ private fun SettingsScreen(onBack: () -> Unit) {
     var silentTahajjud by remember { mutableStateOf(Settings.isTahajjudSilent(ctx)) }
     var faceDownOn by remember { mutableStateOf(Settings.isFaceDownEnabled(ctx)) }
     var cityName by remember { mutableStateOf(CityStore.name(ctx)) }
+    var calculationMethod by remember { mutableStateOf(Settings.method(ctx)) }
+    var showCalculationMethods by remember { mutableStateOf(false) }
+
+    if (showCalculationMethods) {
+        val methods = listOf(
+            "MWL" to "Muslim World League",
+            "EGYPT" to "Egyptian General Authority",
+            "KARACHI" to "University of Islamic Sciences, Karachi",
+            "UMM_AL_QURA" to "Umm al-Qura (Makkah)",
+            "NORTH_AMERICA" to "ISNA / North America",
+            "SINGAPORE" to "Singapore",
+            "DUBAI" to "Dubai",
+            "KUWAIT" to "Kuwait",
+            "QATAR" to "Qatar",
+        )
+        AlertDialog(
+            onDismissRequest = { showCalculationMethods = false },
+            title = { Text("Prayer calculation method") },
+            text = {
+                Column(Modifier.heightIn(max = 420.dp).verticalScroll(rememberScrollState())) {
+                    methods.forEach { (value, label) ->
+                        TextButton(
+                            onClick = {
+                                calculationMethod = value
+                                Settings.setMethod(ctx, value)
+                                PrayerReminderScheduler.scheduleAllForToday(ctx)
+                                if (Settings.isTahajjudEnabled(ctx)) {
+                                    TahajjudScheduler.scheduleAlarm(ctx, Settings.getTahajjudOffset(ctx))
+                                }
+                                showCalculationMethods = false
+                            },
+                            modifier = Modifier.fillMaxWidth()
+                        ) {
+                            Text(if (calculationMethod == value) "✓  $label" else label)
+                        }
+                    }
+                }
+            },
+            confirmButton = {
+                TextButton(onClick = { showCalculationMethods = false }) { Text("Close") }
+            }
+        )
+    }
 
     Column(Modifier.fillMaxSize().verticalScroll(rememberScrollState()).background(JannahColors.Cream)) {
         TopBar("Settings", onBack = onBack)
@@ -76,11 +121,14 @@ private fun SettingsScreen(onBack: () -> Unit) {
         ListRow("Test Prayer Alarm", "Trigger a full-screen alarm now") {
             val intent = Intent(ctx, PrayerReminderReceiver::class.java).apply {
                 putExtra("prayer", "Fajr (Test)")
+                putExtra("type", "test")
             }
             ctx.sendBroadcast(intent)
         }
         Divider()
         ListRow("City", if (cityName.isBlank()) "Not set" else cityName) { showCityPicker = true }
+        Divider()
+        ListRow("Prayer calculation method", calculationMethodLabel(calculationMethod)) { showCalculationMethods = true }
         Divider()
 
         Spacer(Modifier.height(JannahSpacing.l))
@@ -150,4 +198,18 @@ private fun ListRow(title: String, subtitle: String, toggle: Boolean? = null, on
 @Composable
 private fun Divider() {
     Box(Modifier.fillMaxWidth().padding(horizontal = JannahSpacing.gutter).height(1.dp).background(JannahColors.Border))
+}
+
+
+private fun calculationMethodLabel(value: String): String = when (value) {
+    "MWL" -> "Muslim World League"
+    "EGYPT" -> "Egyptian General Authority"
+    "KARACHI" -> "Karachi"
+    "UMM_AL_QURA" -> "Umm al-Qura"
+    "NORTH_AMERICA" -> "ISNA / North America"
+    "SINGAPORE" -> "Singapore"
+    "DUBAI" -> "Dubai"
+    "KUWAIT" -> "Kuwait"
+    "QATAR" -> "Qatar"
+    else -> "Muslim World League"
 }

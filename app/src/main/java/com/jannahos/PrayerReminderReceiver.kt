@@ -22,6 +22,18 @@ class PrayerReminderReceiver : BroadcastReceiver() {
         runCatching { PrayerReminderScheduler.scheduleNextDay(context) }
 
         when (type) {
+            "test" -> {
+                vibrate(context, 1_000)
+                showNotification(
+                    context,
+                    "SIRAJ alarm test",
+                    "Notifications and vibration are working.",
+                    notificationId + 9,
+                    MainActivity::class.java,
+                    notificationId + 9
+                )
+            }
+
             "adhan" -> {
                 if (PrayerLock.enabled(context)) {
                     // The commitment lock is explicitly opt-in. Route through the
