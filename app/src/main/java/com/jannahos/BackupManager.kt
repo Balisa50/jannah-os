@@ -10,6 +10,8 @@ import java.io.FileOutputStream
 // Backs up all user data to a single JSON file the user chooses.
 // On import, all local tables and preferences are restored.
 object BackupManager {
+    private const val MAX_BACKUP_BYTES = 25L * 1024L * 1024L
+    private const val MAX_RECORDS_PER_TABLE = 20_000
 
     data class Result(val ok: Boolean, val message: String)
 
@@ -107,10 +109,93 @@ object BackupManager {
         }
     }
 
+    /**
+     * Validate the complete payload before the importer deletes or replaces
+     * any local records. This is not a substitute for encrypted backups, but
+     * it prevents malformed/oversized files from causing partial restores.
+     */
+    private fun validateBackup(root: JSONObject): String? {
+        if (root.optInt("schema", -1) != 1) return "Unsupported backup version."
+        val arrays = listOf("wake_events", "struggle", "fasts", "sleeps", "bookmarks")
+        val records = mutableMapOf<String, JSONArray>()
+        for (name in arrays) {
+            val array = root.optJSONArray(name) ?: return "Backup is incomplete: missing $name."
+            if (array.length() > MAX_RECORDS_PER_TABLE) return "Backup contains too many $name records."
+            records[name] = array
+        }
+        val prefs = root.optJSONObject("prefs")
+        if (prefs != null) {
+            val lat = prefs.optDouble("lat", 13.4549)
+            val lon = prefs.optDouble("lon", -16.5790)
+            if (!lat.isFinite() || lat !in -90.0..90.0 ||
+                !lon.isFinite() || lon !in -180.0..180.0
+            ) return "Backup contains invalid location preferences."
+        }
+        return try {
+            records.getValue("wake_events").let { a ->
+                for (i in 0 until a.length()) {
+                    val o = a.getJSONObject(i)
+                    o.getLong("ts")
+                    require(o.getString("outcome").isNotBlank())
+                }
+            }
+            records.getValue("struggle").let { a ->
+                for (i in 0 until a.length()) {
+                    val o = a.getJSONObject(i)
+                    o.getLong("ts")
+                    require(o.getString("kind").isNotBlank())
+                }
+            }
+            records.getValue("fasts").let { a ->
+                for (i in 0 until a.length()) {
+                    val o = a.getJSONObject(i)
+                    require(o.getString("day").isNotBlank())
+                    require(o.getString("kind").isNotBlank())
+                    o.getLong("created")
+                }
+            }
+            records.getValue("sleeps").let { a ->
+                for (i in 0 until a.length()) {
+                    val o = a.getJSONObject(i)
+                    require(o.getString("day").isNotBlank())
+                    o.getLong("bedtime")
+                    o.getLong("waketime")
+                    require(o.getInt("quality") in 0..5)
+                }
+            }
+            records.getValue("bookmarks").let { a ->
+                for (i in 0 until a.length()) {
+                    val o = a.getJSONObject(i)
+                    require(o.getInt("surah") in 1..114)
+                    require(o.getInt("ayah") > 0)
+                }
+            }
+            null
+        } catch (_: Exception) {
+            "Backup data is malformed. No records were changed."
+        }
+    }
+
     fun import(context: Context, inputFile: File): Result {
         return try {
-            val text = FileInputStream(inputFile).use { it.readBytes().toString(Charsets.UTF_8) }
+            if (!inputFile.isFile || inputFile.length() !in 1..MAX_BACKUP_BYTES) {
+                return Result(false, "Backup file is missing, empty or larger than 25 MB.")
+            }
+            val text = FileInputStream(inputFile).use { stream ->
+                val output = java.io.ByteArrayOutputStream()
+                val buffer = ByteArray(8192)
+                var total = 0L
+                while (true) {
+                    val count = stream.read(buffer)
+                    if (count < 0) break
+                    total += count
+                    if (total > MAX_BACKUP_BYTES) error("Backup exceeds the 25 MB limit.")
+                    output.write(buffer, 0, count)
+                }
+                output.toByteArray().toString(Charsets.UTF_8)
+            }
             val root = JSONObject(text)
+            validateBackup(root)?.let { reason -> return Result(false, reason) }
 
             // Preferences
             val prefs = root.optJSONObject("prefs")
