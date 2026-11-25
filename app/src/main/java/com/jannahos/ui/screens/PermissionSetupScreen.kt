@@ -70,7 +70,7 @@ fun PermissionSetupScreen(onAllSet: () -> Unit) {
 
         Text("Final steps.", fontFamily = FontFamily.Serif, fontSize = 32.sp, fontWeight = FontWeight.Bold, color = JannahColors.Ink)
         Spacer(Modifier.height(8.dp))
-        Text("Jannah works silently in the background. It needs these permissions to lock apps and ring alarms.", style = JannahType.body, color = JannahColors.Body, lineHeight = 24.sp)
+        Text("Notifications are needed for reminders. App protection, exact timing and quiet-mode controls are optional capabilities you can enable when you want them.", style = JannahType.body, color = JannahColors.Body, lineHeight = 24.sp)
 
         Spacer(Modifier.height(JannahSpacing.xl))
 
@@ -93,7 +93,7 @@ fun PermissionSetupScreen(onAllSet: () -> Unit) {
         // 2. Accessibility
         PermissionCard(
             title = "App Protection",
-            description = "Blocks distracting apps during prayer and Quran time.",
+            description = "Optional: blocks distracting apps during prayer and Quran time.",
             isGranted = accessibilityOn,
             actionText = if (accessibilityOn) "Enabled" else "Enable"
         ) {
@@ -105,7 +105,7 @@ fun PermissionSetupScreen(onAllSet: () -> Unit) {
         // 3. Battery
         PermissionCard(
             title = "Background Alarms",
-            description = "Ensures the Adhan rings. Open App Info, tap 'Battery', and select 'Unrestricted'.",
+            description = "Optional: may improve delivery on devices with aggressive battery management.",
             isGranted = batteryOn,
             actionText = if (batteryOn) "Allowed" else "Allow"
         ) {
@@ -120,7 +120,7 @@ fun PermissionSetupScreen(onAllSet: () -> Unit) {
         // 4. Exact Alarms
         PermissionCard(
             title = "Exact Timings",
-            description = "Schedules the Adhan at the exact minute.",
+            description = "Optional: requests exact alarm access. Without it, Android may delay reminders.",
             isGranted = alarmsOn,
             actionText = if (alarmsOn) "Allowed" else "Allow"
         ) {
@@ -140,7 +140,7 @@ fun PermissionSetupScreen(onAllSet: () -> Unit) {
         // 5. DND
         PermissionCard(
             title = "Digital Sanctuary",
-            description = "Silences all notifications while you pray or read Quran.",
+            description = "Optional: lets you enable Do Not Disturb during supported sessions.",
             isGranted = dndOn,
             actionText = if (dndOn) "Allowed" else "Allow"
         ) {
@@ -149,14 +149,14 @@ fun PermissionSetupScreen(onAllSet: () -> Unit) {
 
         Spacer(Modifier.height(JannahSpacing.xxl))
 
-        val allRequiredGranted = notificationsOn && accessibilityOn
+        val allRequiredGranted = notificationsOn
         Box(
             Modifier.fillMaxWidth().height(56.dp).clip(RoundedCornerShape(JannahSpacing.pillRadius))
                 .background(if (allRequiredGranted) JannahColors.Ink else JannahColors.Border)
                 .pressClickable(enabled = allRequiredGranted) { onAllSet() },
             contentAlignment = Alignment.Center
         ) {
-            Text(if (allRequiredGranted) "Finish Setup" else "Enable required permissions to continue", style = JannahType.button, color = JannahColors.OnOrange, fontSize = 15.sp, textAlign = androidx.compose.ui.text.style.TextAlign.Center)
+            Text(if (allRequiredGranted) "Finish Setup" else "Enable notifications to continue", style = JannahType.button, color = JannahColors.OnOrange, fontSize = 15.sp, textAlign = androidx.compose.ui.text.style.TextAlign.Center)
         }
     }
 }
