@@ -25,7 +25,7 @@ object SirajProviderSettings {
     fun save(context: Context, endpoint: String, model: String, apiKey: String?) {
         val safeEndpoint = endpoint.trim().trimEnd('/')
         val safeModel = model.trim()
-        require(isAllowedEndpoint(safeEndpoint)) {
+        require(SirajProviderEndpointPolicy.isAllowed(safeEndpoint)) {
             "Use HTTPS. HTTP is allowed only for localhost."
         }
         require(safeModel.isNotBlank() && safeModel.length <= 160) {
@@ -47,7 +47,7 @@ object SirajProviderSettings {
         val prefs = context.getSharedPreferences(PREFS, Context.MODE_PRIVATE)
         val endpoint = prefs.getString(KEY_ENDPOINT, null) ?: return null
         val model = prefs.getString(KEY_MODEL, null) ?: return null
-        if (!isAllowedEndpoint(endpoint) || model.isBlank()) return null
+        if (!SirajProviderEndpointPolicy.isAllowed(endpoint) || model.isBlank()) return null
         val encrypted = prefs.getString(KEY_CREDENTIAL, null)
         val key = encrypted?.let { runCatching { decrypt(it) }.getOrNull() }
         return Config(endpoint, model, key)
@@ -60,13 +60,6 @@ object SirajProviderSettings {
         }
     }
 
-    private fun isAllowedEndpoint(value: String): Boolean = runCatching {
-        val uri = java.net.URI(value)
-        val host = uri.host ?: return@runCatching false
-        uri.scheme.equals("https", ignoreCase = true) &&
-            host.isNotBlank() &&
-            uri.userInfo == null && uri.query == null && uri.fragment == null
-    }.getOrDefault(false)
 
     private fun encrypt(value: String): String {
         val cipher = Cipher.getInstance(TRANSFORMATION)
