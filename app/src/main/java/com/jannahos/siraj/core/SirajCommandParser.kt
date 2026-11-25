@@ -1,5 +1,7 @@
 package com.jannahos.siraj.core
 
+import com.jannahos.siraj.actions.SirajDeviceAction
+
 /**
  * A deliberately small, deterministic command parser.
  *
@@ -26,6 +28,78 @@ object SirajCommandParser {
         }
 
         return when {
+            containsAny(input, "enable prayer lock", "turn on prayer lock") ->
+                SirajCommandResult(
+                    "I can enable Prayer Lock. Confirm before I change this setting.",
+                    SirajAction.RequestDeviceAction(
+                        SirajDeviceAction.SetPrayerLock(true),
+                        "Enable Prayer Lock on this device?"
+                    )
+                )
+
+            containsAny(input, "disable prayer lock", "turn off prayer lock") ->
+                SirajCommandResult(
+                    "I can disable Prayer Lock. Confirm before I change this setting.",
+                    SirajAction.RequestDeviceAction(
+                        SirajDeviceAction.SetPrayerLock(false),
+                        "Disable Prayer Lock on this device?"
+                    )
+                )
+
+            containsAny(input, "enable quran lock", "turn on quran lock", "enable quran reading lock") ->
+                SirajCommandResult(
+                    "I can enable the Quran reading reminder. Confirm before I change this setting.",
+                    SirajAction.RequestDeviceAction(
+                        SirajDeviceAction.SetQuranLock(true),
+                        "Enable the Quran reading reminder?"
+                    )
+                )
+
+            containsAny(input, "disable quran lock", "turn off quran lock", "disable quran reading lock") ->
+                SirajCommandResult(
+                    "I can disable the Quran reading reminder. Confirm before I change this setting.",
+                    SirajAction.RequestDeviceAction(
+                        SirajDeviceAction.SetQuranLock(false),
+                        "Disable the Quran reading reminder?"
+                    )
+                )
+
+            containsAny(input, "enable bedtime lock", "turn on bedtime lock") ->
+                SirajCommandResult(
+                    "I can enable the bedtime lock. Confirm before I change this setting.",
+                    SirajAction.RequestDeviceAction(
+                        SirajDeviceAction.SetBedtimeLock(true),
+                        "Enable the bedtime lock?"
+                    )
+                )
+
+            containsAny(input, "disable bedtime lock", "turn off bedtime lock") ->
+                SirajCommandResult(
+                    "I can disable the bedtime lock. Confirm before I change this setting.",
+                    SirajAction.RequestDeviceAction(
+                        SirajDeviceAction.SetBedtimeLock(false),
+                        "Disable the bedtime lock?"
+                    )
+                )
+
+            containsAny(input, "enable do not disturb", "turn on do not disturb") ->
+                SirajCommandResult(
+                    "I can turn on Do Not Disturb. Confirm before I change this setting.",
+                    SirajAction.RequestDeviceAction(
+                        SirajDeviceAction.SetDoNotDisturb(true),
+                        "Turn on Do Not Disturb?"
+                    )
+                )
+
+            containsAny(input, "disable do not disturb", "turn off do not disturb") ->
+                SirajCommandResult(
+                    "I can turn off Do Not Disturb. Confirm before I change this setting.",
+                    SirajAction.RequestDeviceAction(
+                        SirajDeviceAction.SetDoNotDisturb(false),
+                        "Turn off Do Not Disturb?"
+                    )
+                )
+
             containsAny(input, "open quran", "read quran", "show quran") ->
                 SirajCommandResult("Opening the Quran.", SirajAction.OpenQuran)
 
