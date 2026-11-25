@@ -33,9 +33,9 @@ class BedtimeLockActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         overridePendingTransition(0, 0)
-        LockState.restore(this)
+
         
-        if (!LockState.isEnforcing()) {
+        if (!BedtimeStore.isLockActive(this)) {
             finishAndRemoveTask()
             overridePendingTransition(0, 0)
             return
@@ -49,8 +49,7 @@ class BedtimeLockActivity : ComponentActivity() {
         setContent {
             JannahTheme {
                 BedtimeLockContent(onDone = { 
-                    LockState.release(this)
-                    BedtimeStore.setLockActive(this, false)
+                    BedtimeStore.release(this)
                     finishAndRemoveTask() 
                     overridePendingTransition(0, 0)
                 })
@@ -58,8 +57,6 @@ class BedtimeLockActivity : ComponentActivity() {
         }
     }
 
-    override fun onStart() { super.onStart(); LockState.isLockActive = true }
-    override fun onStop() { LockState.isLockActive = false; super.onStop() }
     override fun onDestroy() { DndHelper.disableDnd(this); super.onDestroy() }
 
     companion object {
@@ -69,14 +66,14 @@ class BedtimeLockActivity : ComponentActivity() {
 
 @Composable
 fun BedtimeLockContent(onDone: () -> Unit) {
-    var remaining by remember { mutableLongStateOf(LockState.remainingMs()) }
+    var remaining by remember { mutableLongStateOf(BedtimeStore.remainingMs(ctx)) }
     var tapCount by remember { mutableIntStateOf(0) }
     val ctx = LocalContext.current
     
     LaunchedEffect(Unit) {
         while (remaining > 0L) {
             delay(250)
-            remaining = LockState.remainingMs()
+            remaining = BedtimeStore.remainingMs(ctx)
         }
     }
 
@@ -98,7 +95,7 @@ fun BedtimeLockContent(onDone: () -> Unit) {
             Text("%02d:%02d".format(s / 60, s % 60), fontFamily = FontFamily.Serif, fontSize = 64.sp, fontWeight = FontWeight.Bold, color = JannahColors.Orange, modifier = Modifier.pressClickable {
                 tapCount++
                 if (tapCount >= 5) {
-                    LockState.release(ctx)
+                    BedtimeStore.release(ctx)
                     onDone()
                 }
             })
