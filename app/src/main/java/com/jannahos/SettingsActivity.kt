@@ -124,6 +124,7 @@ private fun SettingsScreen(onBack: () -> Unit) {
         ListRow("Test Prayer Alarm", "Trigger a full-screen alarm now") {
             val intent = Intent(ctx, PrayerReminderReceiver::class.java).apply {
                 putExtra("prayer", "Fajr (Test)")
+                putExtra("type", "test")
             }
             ctx.sendBroadcast(intent)
         }
