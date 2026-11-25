@@ -62,11 +62,10 @@ object SirajProviderSettings {
 
     private fun isAllowedEndpoint(value: String): Boolean = runCatching {
         val uri = java.net.URI(value)
-        val scheme = uri.scheme?.lowercase()
-        val host = uri.host?.lowercase() ?: return@runCatching false
-        val local = host == "localhost" || host == "127.0.0.1" || host == "::1"
-        uri.userInfo == null && uri.query == null && uri.fragment == null &&
-            (scheme == "https" || (scheme == "http" && local))
+        val host = uri.host ?: return@runCatching false
+        uri.scheme.equals("https", ignoreCase = true) &&
+            host.isNotBlank() &&
+            uri.userInfo == null && uri.query == null && uri.fragment == null
     }.getOrDefault(false)
 
     private fun encrypt(value: String): String {
