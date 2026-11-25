@@ -99,13 +99,18 @@ class DeviceActionPolicyTest {
     }
 
     @Test
-    fun bedtimeLockDoesNotRequireNotificationPermission() {
+    fun bedtimeLockRequiresNotificationPermissionToOpenItsLockScreen() {
         val result = DeviceActionPolicy.evaluate(
             SirajDeviceAction.SetBedtimeLock(true),
             DeviceCapabilities(exactAlarmsAllowed = true),
             userConfirmed = true,
             nowMillis = now
         )
-        assertEquals(ActionDecision.Allowed, result)
+        assertEquals(
+            ActionDecision.Blocked(
+                "Notification permission is required to open the bedtime lock when its alarm fires."
+            ),
+            result
+        )
     }
 }
