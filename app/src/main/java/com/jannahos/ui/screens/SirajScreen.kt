@@ -70,6 +70,7 @@ fun SirajScreen(onNavigate: (String) -> Unit = {}) {
         when (val action = result.action) {
             is SirajAction.OpenSurah ->
                 onNavigate("mushaf/${QuranStore.firstPageOfSurah(action.number)}/604")
+            SirajAction.OpenQuran -> onNavigate("quran")
             SirajAction.OpenPrayerTimes -> onNavigate("pray")
             SirajAction.OpenQibla ->
                 context.startActivity(Intent(context, QiblaActivity::class.java))
