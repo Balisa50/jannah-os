@@ -22,6 +22,7 @@ class BootReceiver : BroadcastReceiver() {
         // Isolate schedules so a missing optional permission cannot block
         // restoration of unrelated reminders.
         runCatching { PrayerReminderScheduler.scheduleAllForToday(context) }
+        runCatching { com.jannahos.siraj.actions.SirajReminderScheduler.restore(context) }
 
         if (Settings.isBedtimeLockEnabled(context)) {
             runCatching { BedtimeScheduler.schedule(context) }
