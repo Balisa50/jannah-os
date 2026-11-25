@@ -77,10 +77,12 @@ object EvidencePolicy {
                 if (hadithSources.isEmpty()) {
                     reasons += "An authenticity claim needs a specific hadith collection and reference."
                 } else if (hadithSources.any {
-                        it.grade.isNullOrBlank() || it.gradingAuthority.isNullOrBlank()
+                        it.edition.isNullOrBlank() ||
+                            it.grade.isNullOrBlank() ||
+                            it.gradingAuthority.isNullOrBlank()
                     }
                 ) {
-                    reasons += "Every cited hadith needs both a grading and the authority that assigned it."
+                    reasons += "Every cited hadith needs an identified edition, grading and the authority that assigned it."
                 }
             }
 
