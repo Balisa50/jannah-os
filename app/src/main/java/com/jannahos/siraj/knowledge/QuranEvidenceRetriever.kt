@@ -42,7 +42,7 @@ object QuranEvidenceRetriever {
 
         return EvidenceExcerpt(
             reference = IslamicReference.Quran(
-                sourceId = "quran-uthmani",
+                sourceId = "bundled-quran-arabic-unattributed",
                 surah = surah,
                 ayah = ayah
             ),
