@@ -15,6 +15,7 @@ import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
@@ -32,6 +33,10 @@ import com.jannahos.QiblaActivity
 import com.jannahos.QuranCache
 import com.jannahos.QuranStore
 import com.jannahos.SettingsActivity
+import com.jannahos.siraj.actions.ActionExecutionResult
+import com.jannahos.siraj.actions.AndroidDeviceActionExecutor
+import com.jannahos.siraj.actions.DeviceActionPolicy
+import com.jannahos.siraj.actions.SirajDeviceAction
 import com.jannahos.siraj.core.SirajAction
 import com.jannahos.siraj.core.SirajCommandParser
 import com.jannahos.ui.theme.JannahColors
@@ -49,6 +54,8 @@ fun SirajScreen(onNavigate: (String) -> Unit = {}) {
     val listState = rememberLazyListState()
     val scope = rememberCoroutineScope()
     var input by remember { mutableStateOf("") }
+    var pendingDeviceAction by remember { mutableStateOf<SirajDeviceAction?>(null) }
+    var pendingActionPrompt by remember { mutableStateOf("") }
     val messages = remember {
         mutableStateListOf(
             SirajMessage(
@@ -63,6 +70,31 @@ fun SirajScreen(onNavigate: (String) -> Unit = {}) {
         if (request.isBlank()) return
         messages.add(SirajMessage(request, true))
         input = ""
+
+        val requestedDeviceAction = parseDeviceAction(request)
+        if (requestedDeviceAction != null) {
+            val (deviceAction, prompt) = requestedDeviceAction
+            val decision = DeviceActionPolicy.evaluate(
+                action = deviceAction,
+                capabilities = AndroidDeviceActionExecutor.readCapabilities(context),
+                userConfirmed = false,
+                nowMillis = System.currentTimeMillis()
+            )
+            when (decision) {
+                is com.jannahos.siraj.actions.ActionDecision.Blocked -> {
+                    messages.add(SirajMessage(decision.reason, false))
+                }
+                com.jannahos.siraj.actions.ActionDecision.NeedsConfirmation -> {
+                    pendingDeviceAction = deviceAction
+                    pendingActionPrompt = prompt
+                }
+                com.jannahos.siraj.actions.ActionDecision.Allowed -> Unit
+            }
+            scope.launch {
+                if (messages.isNotEmpty()) listState.animateScrollToItem(messages.lastIndex)
+            }
+            return
+        }
 
         val result = SirajCommandParser.parse(request, QuranCache.SURAHS)
         messages.add(SirajMessage(result.reply, false))
@@ -116,6 +148,67 @@ fun SirajScreen(onNavigate: (String) -> Unit = {}) {
                     )
                 )
             }
+    }
+
+    val actionToConfirm = pendingDeviceAction
+    if (actionToConfirm != null) {
+        AlertDialog(
+            onDismissRequest = {
+                pendingDeviceAction = null
+                pendingActionPrompt = ""
+            },
+            title = {
+                Text(
+                    "Confirm action",
+                    fontFamily = FontFamily.Serif,
+                    fontWeight = FontWeight.Bold,
+                    color = JannahColors.Ink
+                )
+            },
+            text = {
+                Text(
+                    "$pendingActionPrompt\n\nSIRAJ will only perform this action after your confirmation.",
+                    color = JannahColors.Body
+                )
+            },
+            confirmButton = {
+                TextButton(
+                    onClick = {
+                        val result = AndroidDeviceActionExecutor.execute(
+                            context = context,
+                            action = actionToConfirm,
+                            userConfirmed = true
+                        )
+                        val response = when (result) {
+                            ActionExecutionResult.Completed -> "Done. The action was sent to Android."
+                            ActionExecutionResult.NeedsConfirmation -> "This action still needs confirmation."
+                            is ActionExecutionResult.Blocked -> result.reason
+                            is ActionExecutionResult.Failed -> "Android could not complete it: ${result.reason}"
+                        }
+                        messages.add(SirajMessage(response, false))
+                        pendingDeviceAction = null
+                        pendingActionPrompt = ""
+                        scope.launch {
+                            if (messages.isNotEmpty()) listState.animateScrollToItem(messages.lastIndex)
+                        }
+                    }
+                ) {
+                    Text("Confirm", color = JannahColors.OrangeDeep)
+                }
+            },
+            dismissButton = {
+                TextButton(
+                    onClick = {
+                        messages.add(SirajMessage("No action was taken.", false))
+                        pendingDeviceAction = null
+                        pendingActionPrompt = ""
+                    }
+                ) {
+                    Text("Cancel", color = JannahColors.Muted)
+                }
+            },
+            containerColor = JannahColors.Surface
+        )
     }
 
     Column(
@@ -281,4 +374,52 @@ private fun Suggestion(label: String, onClick: () -> Unit) {
         style = JannahType.caption,
         color = JannahColors.Ink
     )
+
+private fun parseDeviceAction(request: String): Pair<SirajDeviceAction, String>? {
+    val normalized = request.trim().lowercase().replace(Regex("\\s+"), " ")
+
+    fun matches(vararg phrases: String) = phrases.any { normalized == it }
+
+    return when {
+        matches("enable prayer lock", "turn on prayer lock", "activate prayer lock") ->
+            SirajDeviceAction.SetPrayerLock(true) to "Enable Prayer Lock?"
+
+        matches("disable prayer lock", "turn off prayer lock", "stop prayer lock") ->
+            SirajDeviceAction.SetPrayerLock(false) to "Disable Prayer Lock?"
+
+        matches("enable quran lock", "enable quran reading lock", "turn on quran lock") ->
+            SirajDeviceAction.SetQuranLock(true) to "Enable the Quran reading lock?"
+
+        matches("disable quran lock", "disable quran reading lock", "turn off quran lock") ->
+            SirajDeviceAction.SetQuranLock(false) to "Disable the Quran reading lock?"
+
+        matches("enable bedtime lock", "turn on bedtime lock", "activate bedtime lock") ->
+            SirajDeviceAction.SetBedtimeLock(true) to "Enable the bedtime lock?"
+
+        matches("disable bedtime lock", "turn off bedtime lock", "stop bedtime lock") ->
+            SirajDeviceAction.SetBedtimeLock(false) to "Disable the bedtime lock?"
+
+        matches("enable do not disturb", "turn on do not disturb", "activate do not disturb") ->
+            SirajDeviceAction.SetDoNotDisturb(true) to "Turn on Do Not Disturb?"
+
+        matches("disable do not disturb", "turn off do not disturb", "turn off dnd") ->
+            SirajDeviceAction.SetDoNotDisturb(false) to "Turn off Do Not Disturb and restore the previous interruption setting?"
+
+        else -> {
+            val reminder = Regex("""remind me in (\\d{1,4}) minutes? to (.+)""")
+                .matchEntire(normalized)
+            if (reminder != null) {
+                val minutes = reminder.groupValues[1].toIntOrNull()
+                val title = reminder.groupValues[2].trim()
+                if (minutes != null && minutes in 1..10080 && title.isNotBlank()) {
+                    SirajDeviceAction.ScheduleReminder(
+                        title = title,
+                        triggerAtMillis = System.currentTimeMillis() + minutes * 60_000L
+                    ) to "Schedule a reminder in $minutes minute(s): $title?"
+                } else null
+            } else null
+        }
+    }
+}
+
 }
