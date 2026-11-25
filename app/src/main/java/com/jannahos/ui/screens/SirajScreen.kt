@@ -42,9 +42,13 @@ import com.jannahos.siraj.actions.DeviceActionPolicy
 import com.jannahos.siraj.actions.SirajDeviceAction
 import com.jannahos.siraj.core.SirajAction
 import com.jannahos.siraj.core.SirajCommandParser
+import com.jannahos.siraj.knowledge.IslamicReference
+import com.jannahos.siraj.knowledge.QuranEvidenceRetriever
 import com.jannahos.ui.theme.JannahColors
 import com.jannahos.ui.theme.JannahType
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 
 private data class SirajMessage(
     val text: String,
@@ -106,6 +110,21 @@ fun SirajScreen(onNavigate: (String) -> Unit = {}) {
         messages.add(SirajMessage(result.reply, false))
 
         when (val action = result.action) {
+            is SirajAction.ShowAyah -> {
+                scope.launch {
+                    val evidence = withContext(Dispatchers.IO) {
+                        QuranEvidenceRetriever.getAyah(context, action.surah, action.ayah)
+                    }
+                    val reference = evidence?.reference as? IslamicReference.Quran
+                    val response = if (evidence != null && reference != null) {
+                        "${evidence.text}\n\nSurah ${action.surahName} · Ayah ${reference.ayah}\nArabic text from the bundled Quran source. No translation is shown because this dataset does not identify its translator and edition."
+                    } else {
+                        "I couldn't verify that ayah in the bundled Quran text. Check the Surah and ayah number; I haven't substituted a nearby verse."
+                    }
+                    messages.add(SirajMessage(response, false))
+                    if (messages.isNotEmpty()) listState.animateScrollToItem(messages.lastIndex)
+                }
+            }
             is SirajAction.OpenSurah ->
                 onNavigate("mushaf/${QuranStore.firstPageOfSurah(action.number)}/604")
             SirajAction.OpenQuran -> onNavigate("quran")
