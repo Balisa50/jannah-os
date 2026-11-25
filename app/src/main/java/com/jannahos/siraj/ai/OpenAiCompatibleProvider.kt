@@ -14,6 +14,17 @@ data class SirajChatMessage(val role: String, val content: String)
 sealed interface SirajInferenceResult {
     data class Success(val text: String) : SirajInferenceResult
     data class Failure(val message: String) : SirajInferenceResult
+    private fun readBounded(reader: java.io.Reader, maxChars: Int): String {
+        val output = StringBuilder()
+        val buffer = CharArray(8192)
+        while (output.length <= maxChars) {
+            val count = reader.read(buffer, 0, minOf(buffer.size, maxChars + 1 - output.length))
+            if (count < 0) break
+            output.append(buffer, 0, count)
+        }
+        return output.toString()
+    }
+
 }
 
 /** Optional OpenAI-compatible transport. Offline features do not depend on it. */
@@ -52,6 +63,7 @@ class OpenAiCompatibleProvider(private val context: Context) {
                 "$base/v1/chat/completions"
             }
             connection = (URL(requestUrl).openConnection() as HttpURLConnection).apply {
+                instanceFollowRedirects = false
                 requestMethod = "POST"
                 connectTimeout = 15_000
                 readTimeout = 45_000
@@ -77,7 +89,10 @@ class OpenAiCompatibleProvider(private val context: Context) {
             val status = connection.responseCode
             val responseStream = if (status in 200..299) connection.inputStream
             else connection.errorStream
-            val body = responseStream?.bufferedReader()?.use { it.readText() }.orEmpty()
+            val body = responseStream?.bufferedReader()?.use { readBounded(it, 1_000_000) }.orEmpty()
+            if (body.length >= 1_000_000) {
+                return@withContext SirajInferenceResult.Failure("The AI provider response was too large.")
+            }
 
             if (status !in 200..299) {
                 return@withContext SirajInferenceResult.Failure(
