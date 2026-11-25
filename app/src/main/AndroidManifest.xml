@@ -7,9 +7,6 @@
     <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
     <uses-permission android:name="android.permission.SCHEDULE_EXACT_ALARM" />
-    <uses-permission android:name="android.permission.USE_EXACT_ALARM" />
-    <uses-permission android:name="android.permission.USE_FULL_SCREEN_INTENT" />
-    <uses-permission android:name="android.permission.SYSTEM_ALERT_WINDOW" />
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE_SPECIAL_USE" />
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE_MEDIA_PLAYBACK" />
@@ -26,12 +23,12 @@
     <application
         
         android:name=".App"
-        android:label="Jannah"
+        android:label="SIRAJ"
         android:icon="@mipmap/ic_launcher"
         android:roundIcon="@mipmap/ic_launcher_round"
         android:theme="@android:style/Theme.Material.Light.NoActionBar">
 
-        <activity android:name=".MainActivity" android:exported="true">
+        <activity android:name=".MainActivity" android:exported="true" android:launchMode="singleTop">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.LAUNCHER" />
@@ -82,12 +79,36 @@
             android:launchMode="singleInstance"
             android:theme="@android:style/Theme.Material.Light.NoActionBar" />
 
-        <service android:name=".AdhanService" android:foregroundServiceType="mediaPlayback" android:exported="false" />
-        <service android:name=".FaceDownService" android:foregroundServiceType="specialUse" android:exported="false" />
+        <service android:name=".AdhanService" android:foregroundServiceType="mediaPlayback|shortService" android:exported="false" />
+
+        <service
+            android:name=".FaceDownService"
+            android:foregroundServiceType="specialUse"
+            android:exported="false">
+            <property
+                android:name="android.app.PROPERTY_SPECIAL_USE_FGS_SUBTYPE"
+                android:value="Face-down posture detection for the user-enabled bedtime feature" />
+        </service>
+
+        <service
+            android:name=".audio.QuranPlaybackService"
+            android:exported="false"
+            android:foregroundServiceType="mediaPlayback" />
+
+        <service
+            android:name=".FocusTileService"
+            android:label="SIRAJ Focus"
+            android:icon="@drawable/ic_launcher_foreground"
+            android:permission="android.permission.BIND_QUICK_SETTINGS_TILE"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.service.quicksettings.action.QS_TILE" />
+            </intent-filter>
+        </service>
         
         <service
             android:name=".keyboard.JannahInputMethodService"
-            android:label="Jannah Keyboard"
+            android:label="SIRAJ Keyboard"
             android:permission="android.permission.BIND_INPUT_METHOD"
             android:exported="true">
             <intent-filter>
@@ -100,7 +121,7 @@
 
         <service android:name=".FocusAccessibilityService"
             android:exported="true"
-            android:label="Jannah Focus"
+            android:label="SIRAJ Focus"
             android:permission="android.permission.BIND_ACCESSIBILITY_SERVICE">
             <intent-filter>
                 <action android:name="android.accessibilityservice.AccessibilityService" />
@@ -113,11 +134,13 @@
         <receiver android:name=".QuranLockReceiver" android:exported="false" />
         <receiver android:name=".RamadanAlarmReceiver" android:exported="false" />
         <receiver android:name=".TahajjudAlarmReceiver" android:exported="false" />
+        <receiver android:name=".FridayKahfReceiver" android:exported="false" />
         <receiver android:name=".PrayerReminderReceiver" android:exported="false" />
         
         <receiver android:name=".BootReceiver" android:exported="true">
             <intent-filter>
                 <action android:name="android.intent.action.BOOT_COMPLETED" />
+                <action android:name="android.intent.action.MY_PACKAGE_REPLACED" />
             </intent-filter>
         </receiver>
     </application>

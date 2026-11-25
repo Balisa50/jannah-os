@@ -13,6 +13,8 @@ class FridayKahfReceiver : BroadcastReceiver() {
     override fun onReceive(ctx: Context, intent: Intent) {
         val index = intent.getIntExtra("reminder_index", 0)
         showNotification(ctx, index)
+        // Re-arm next Friday's reminders after this week's sequence begins.
+        runCatching { FridayKahfScheduler.scheduleAll(ctx) }
     }
 
     private fun showNotification(ctx: Context, index: Int) {

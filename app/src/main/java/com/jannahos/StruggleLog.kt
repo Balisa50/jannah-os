@@ -31,8 +31,24 @@ class StruggleLog(context: Context) : SQLiteOpenHelper(
     }
 
     override fun onUpgrade(db: SQLiteDatabase, oldV: Int, newV: Int) {
-        db.execSQL("DROP TABLE IF EXISTS entries")
-        onCreate(db)
+        db.execSQL("""
+            CREATE TABLE IF NOT EXISTS entries (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                ts INTEGER NOT NULL,
+                kind TEXT NOT NULL,
+                note TEXT
+            )
+        """.trimIndent())
+        var hasNote = false
+        db.rawQuery("PRAGMA table_info(entries)", null).use { cursor ->
+            while (cursor.moveToNext()) {
+                if (cursor.getString(1) == "note") {
+                    hasNote = true
+                    break
+                }
+            }
+        }
+        if (!hasNote) db.execSQL("ALTER TABLE entries ADD COLUMN note TEXT")
     }
 
     fun record(kind: String, note: String? = null) {

@@ -73,7 +73,7 @@ class FaceDownService : Service(), SensorEventListener {
             stillnessJob?.cancel()
             stillnessJob = scope.launch {
                 delay(5000)
-                if (isFaceDown && isCovered && Settings.isBedtimeLockEnabled(this@FaceDownService)) {
+                if (isFaceDown && isCovered && Settings.isFaceDownEnabled(this@FaceDownService)) {
                     triggerBedtimeLock()
                 }
             }
@@ -86,11 +86,10 @@ class FaceDownService : Service(), SensorEventListener {
         // Stop listening to prevent double triggers
         sensorManager.unregisterListener(this)
         
-        LockState.arm(this, 15 * 60 * 1000L) // 15 min lock
-        val intent = Intent(this, BedtimeLockActivity::class.java).apply {
-            addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK)
-        }
-        startActivity(intent)
+        // A foreground service still cannot assume it may launch an Activity.
+        // Activate the independent bedtime timer and let the user open it from
+        // the notification.
+        BedtimeReceiver.activate(this, 15 * 60 * 1000L)
         
         // Re-register after a delay
         scope.launch {

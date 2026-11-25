@@ -10,12 +10,15 @@ class App : Application() {
             private set
 
         fun latestCrash(context: Context): String? {
-            return null
+            return CrashLogger.latest(context)
         }
     }
 
     override fun onCreate() {
         super.onCreate()
         instance = this
+        // Restore persisted prayer-lock timing before any Activity reads it.
+        LockState.restore(this)
+        CrashLogger.install(this)
     }
 }

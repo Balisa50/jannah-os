@@ -34,6 +34,7 @@ fun NotesScreen(onBack: () -> Unit) {
     val store = remember { runCatching { DiaryStore(ctx) }.getOrNull() }
     
     var writing by remember { mutableStateOf(false) }
+    var editingId by remember { mutableStateOf<Long?>(null) }
     var text by remember { mutableStateOf("") }
     var refresh by remember { mutableStateOf(0) }
     val ignore = refresh
@@ -44,12 +45,16 @@ fun NotesScreen(onBack: () -> Unit) {
     if (writing) {
         Column(Modifier.fillMaxSize().background(JannahColors.Cream).imePadding()) {
             Row(Modifier.fillMaxWidth().padding(16.dp), verticalAlignment = Alignment.CenterVertically) {
-                Text("Cancel", style = JannahType.button, color = JannahColors.Muted, modifier = Modifier.clickable { writing = false; text = "" })
+                Text("Cancel", style = JannahType.button, color = JannahColors.Muted, modifier = Modifier.clickable { writing = false; editingId = null; text = "" })
                 Spacer(Modifier.weight(1f))
                 Text("Save", style = JannahType.button, color = JannahColors.Orange, fontWeight = FontWeight.Bold, modifier = Modifier.clickable {
                     if (text.isNotBlank() && store != null) {
-                        runCatching { store.add(text.trim(), "note", "") }
-                        text = ""; writing = false; refresh++ 
+                        runCatching {
+                            val id = editingId
+                            if (id == null) store.add(text.trim(), "note", "")
+                            else store.updateText(id, text.trim())
+                        }
+                        editingId = null; text = ""; writing = false; refresh++ 
                     }
                 })
             }
@@ -68,7 +73,7 @@ fun NotesScreen(onBack: () -> Unit) {
             Column(modifier = Modifier.weight(1f).verticalScroll(rememberScrollState())) {
                 Column(Modifier.padding(horizontal = JannahSpacing.gutter)) {
                     Spacer(Modifier.height(JannahSpacing.l))
-                    Box(Modifier.fillMaxWidth().height(56.dp).clip(RoundedCornerShape(JannahSpacing.pillRadius)).background(JannahColors.Ink).clickable { writing = true }, contentAlignment = Alignment.Center) { 
+                    Box(Modifier.fillMaxWidth().height(56.dp).clip(RoundedCornerShape(JannahSpacing.pillRadius)).background(JannahColors.Ink).clickable { editingId = null; text = ""; writing = true }, contentAlignment = Alignment.Center) { 
                         Text("New Note", style = JannahType.button, color = JannahColors.OnOrange) 
                     }
                     Spacer(Modifier.height(JannahSpacing.l))
@@ -79,6 +84,7 @@ fun NotesScreen(onBack: () -> Unit) {
                         entries.forEachIndexed { i, e ->
                             Column(Modifier.fillMaxWidth().clickable { 
                                 text = e.text
+                                editingId = e.id
                                 writing = true 
                             }.padding(vertical = 12.dp)) {
                                 Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {

@@ -8,7 +8,7 @@ import android.content.Context
 object SafeStore {
 
     fun <T> read(default: T, block: () -> T): T =
-        try { block() } catch (t: Throwable) { default }
+        try { block() } catch (e: Exception) { default }
 
     fun stats30(context: Context): WakeLog.FormationStats =
         read(WakeLog.FormationStats(0, 0, 0, 0, 0f)) {

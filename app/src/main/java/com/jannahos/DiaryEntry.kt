@@ -32,8 +32,17 @@ class DiaryStore(context: Context) : SQLiteOpenHelper(
     }
 
     override fun onUpgrade(db: SQLiteDatabase, oldV: Int, newV: Int) {
-        db.execSQL("DROP TABLE IF EXISTS entries")
-        onCreate(db)
+        // Diary content is sensitive and user-authored; migrations must preserve it.
+        db.execSQL("""
+            CREATE TABLE IF NOT EXISTS entries (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                ts INTEGER NOT NULL,
+                text TEXT NOT NULL,
+                tag TEXT NOT NULL,
+                reaction TEXT,
+                celebrated INTEGER NOT NULL DEFAULT 0
+            )
+        """.trimIndent())
     }
 
     data class Entry(
@@ -54,6 +63,17 @@ class DiaryStore(context: Context) : SQLiteOpenHelper(
             put("celebrated", 0)
         }
         return writableDatabase.insert("entries", null, v)
+    }
+
+    fun updateText(id: Long, text: String): Boolean {
+        if (text.isBlank()) return false
+        val values = ContentValues().apply { put("text", text.trim()) }
+        return writableDatabase.update(
+            "entries",
+            values,
+            "id = ?",
+            arrayOf(id.toString())
+        ) == 1
     }
 
     fun markCelebrated(id: Long) {

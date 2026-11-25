@@ -38,7 +38,7 @@ private fun NavBackStackEntry.isTab(): Boolean {
 }
 
 @Composable
-fun JannahApp() {
+fun JannahApp(startDestination: String = "today") {
     val nav = rememberNavController()
     val backStack by nav.currentBackStackEntryAsState()
     val currentRoute = backStack?.destination?.route ?: "today"
@@ -84,13 +84,21 @@ fun JannahApp() {
     ) { padding ->
         NavHost(
             navController = nav,
-            startDestination = "today",
+            startDestination = startDestination,
             modifier = Modifier.fillMaxSize().padding(padding),
             enterTransition = { fadeIn(tween(120)) },
             exitTransition = { fadeOut(tween(120)) }
         ) {
             composable("today") { TodayScreen(onNavigate = goTo) }
             composable("pray") { PrayScreen() }
+            composable("quran_lock") {
+                QuranLockScreen(onRelease = {
+                    nav.navigate("today") {
+                        popUpTo("quran_lock") { inclusive = true }
+                        launchSingleTop = true
+                    }
+                })
+            }
             composable("quran") {
                 QuranTabScreen(
                     onNavigateToSurah = { surah -> nav.navigate("mushaf/${com.jannahos.QuranStore.firstPageOfSurah(surah)}/604") },
