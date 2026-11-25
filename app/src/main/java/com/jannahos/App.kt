@@ -17,5 +17,7 @@ class App : Application() {
     override fun onCreate() {
         super.onCreate()
         instance = this
+        // Restore persisted prayer-lock timing before any Activity reads it.
+        LockState.restore(this)
     }
 }
