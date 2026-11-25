@@ -97,4 +97,15 @@ class DeviceActionPolicyTest {
             result
         )
     }
+
+    @Test
+    fun bedtimeLockDoesNotRequireNotificationPermission() {
+        val result = DeviceActionPolicy.evaluate(
+            SirajDeviceAction.SetBedtimeLock(true),
+            DeviceCapabilities(exactAlarmsAllowed = true),
+            userConfirmed = true,
+            nowMillis = now
+        )
+        assertEquals(ActionDecision.Allowed, result)
+    }
 }
