@@ -28,8 +28,17 @@ class SleepLog(context: Context) : SQLiteOpenHelper(
     }
 
     override fun onUpgrade(db: SQLiteDatabase, oldV: Int, newV: Int) {
-        db.execSQL("DROP TABLE IF EXISTS sleeps")
-        onCreate(db)
+        // Keep existing sleep records intact. Future schema changes must use
+        // explicit ALTER TABLE migrations rather than drop-and-recreate.
+        db.execSQL("""
+            CREATE TABLE IF NOT EXISTS sleeps (
+                day TEXT PRIMARY KEY,
+                bedtime INTEGER NOT NULL,
+                waketime INTEGER NOT NULL,
+                quality INTEGER NOT NULL,
+                created INTEGER NOT NULL
+            )
+        """.trimIndent())
     }
 
     data class Entry(val day: String, val bedtime: Long, val waketime: Long, val quality: Int)
