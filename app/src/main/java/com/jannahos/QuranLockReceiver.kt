@@ -11,7 +11,13 @@ import androidx.core.app.NotificationCompat
 
 class QuranLockReceiver : BroadcastReceiver() {
     override fun onReceive(ctx: Context, intent: Intent) {
-        if (!QuranReadingLock.enabled(ctx) || QuranReadingLock.isDoneToday(ctx)) return
+        if (!QuranReadingLock.enabled(ctx)) return
+        if (QuranReadingLock.isDoneToday(ctx)) {
+            // Completing today's reading before the random alarm must not
+            // silently disable the feature for every future day.
+            runCatching { QuranLockScheduler.scheduleNextDay(ctx) }
+            return
+        }
         QuranReadingLock.setActiveToday(ctx, true)
         
         val channelId = "quran_lock_full"
