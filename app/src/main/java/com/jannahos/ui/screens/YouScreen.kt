@@ -49,7 +49,7 @@ fun YouScreen(onNavigate: (String) -> Unit = {}) {
             ListRow("App Settings") { ctx.startActivity(Intent(ctx, SettingsActivity::class.java)) }
             ListRow("Sound Profiles") { onNavigate("sound_profile") }
             ListRow("Backup & restore") { onNavigate("backup") }
-            ListRow("About Jannah") { onNavigate("about") }
+            ListRow("About SIRAJ") { onNavigate("about") }
 
             Spacer(Modifier.height(JannahSpacing.xxl))
         }
