@@ -137,7 +137,10 @@ fun SirajScreen(onNavigate: (String) -> Unit = {}) {
                         )
                     )
                     val reply = when (response) {
-                        is SirajInferenceResult.Success -> response.text
+                        is SirajInferenceResult.Success ->
+                            if (SirajConversationPolicy.isReligiousRequest(response.text)) {
+                                "I blocked that response because it appears to make a religious claim. SIRAJ's verified Islamic research workflow is not ready yet, so I won't present it as guidance."
+                            } else response.text
                         is SirajInferenceResult.Failure -> response.message
                     }
                     if (responseIndex in messages.indices) {
