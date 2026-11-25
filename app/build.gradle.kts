@@ -5,17 +5,9 @@ plugins {
 }
 
 android {
-    signingConfigs {
-        create("release") {
-            storeFile = file("../jannah.keystore")
-            storePassword = "jannah123"
-            keyAlias = "jannah"
-            keyPassword = "jannah123"
-        }
-    }
-
     namespace = "com.jannahos"
     compileSdk = 34
+
     defaultConfig {
         applicationId = "com.jannah.ramadan"
         minSdk = 26
@@ -23,22 +15,36 @@ android {
         versionCode = 2
         versionName = "1.0.1"
     }
+
     buildTypes {
         release {
-            signingConfig = signingConfigs.getByName("release")
+            // Release signing is intentionally not configured in source control.
+            // Configure it locally or through protected CI secrets before distribution.
             isMinifyEnabled = false
             isShrinkResources = false
-            proguardFiles(getDefaultProguardFile("proguard-android-optimize.txt"), "proguard-rules.pro")
+            proguardFiles(
+                getDefaultProguardFile("proguard-android-optimize.txt"),
+                "proguard-rules.pro"
+            )
         }
     }
 
-    buildFeatures { compose = true }
-    lint { abortOnError = false }
+    buildFeatures {
+        compose = true
+    }
+
+    lint {
+        abortOnError = false
+    }
+
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_17
         targetCompatibility = JavaVersion.VERSION_17
     }
-    kotlinOptions { jvmTarget = "17" }
+
+    kotlinOptions {
+        jvmTarget = "17"
+    }
 }
 
 dependencies {
