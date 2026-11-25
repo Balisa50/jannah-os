@@ -40,6 +40,9 @@ import com.jannahos.siraj.actions.ActionExecutionResult
 import com.jannahos.siraj.actions.AndroidDeviceActionExecutor
 import com.jannahos.siraj.actions.DeviceActionPolicy
 import com.jannahos.siraj.actions.SirajDeviceAction
+import com.jannahos.siraj.actions.SirajActionPlan
+import com.jannahos.siraj.actions.SirajActionPlanner
+import com.jannahos.siraj.actions.ActionApproval
 import com.jannahos.siraj.ai.OpenAiCompatibleProvider
 import com.jannahos.siraj.ai.SirajChatMessage
 import com.jannahos.siraj.ai.SirajInferenceResult
@@ -66,6 +69,7 @@ fun SirajScreen(onNavigate: (String) -> Unit = {}) {
     val scope = rememberCoroutineScope()
     var input by remember { mutableStateOf("") }
     var pendingDeviceAction by remember { mutableStateOf<SirajDeviceAction?>(null) }
+    var pendingActionPlan by remember { mutableStateOf<SirajActionPlan?>(null) }
     var pendingActionPrompt by remember { mutableStateOf("") }
     var pendingPermissionAction by remember { mutableStateOf<SirajDeviceAction?>(null) }
     var pendingPermissionReason by remember { mutableStateOf("") }
@@ -87,23 +91,24 @@ fun SirajScreen(onNavigate: (String) -> Unit = {}) {
         val requestedDeviceAction = parseDeviceAction(request)
         if (requestedDeviceAction != null) {
             val (deviceAction, prompt) = requestedDeviceAction
-            val decision = DeviceActionPolicy.evaluate(
+            val plan = SirajActionPlanner.prepare(
                 action = deviceAction,
+                summary = prompt,
                 capabilities = AndroidDeviceActionExecutor.readCapabilities(context),
-                userConfirmed = false,
                 nowMillis = System.currentTimeMillis()
             )
-            when (decision) {
-                is com.jannahos.siraj.actions.ActionDecision.Blocked -> {
+            when (plan.state) {
+                SirajActionPlan.State.BLOCKED -> {
                     pendingPermissionAction = deviceAction
                     pendingActionPrompt = prompt
-                    pendingPermissionReason = decision.reason
+                    pendingPermissionReason = plan.blockedReason.orEmpty()
                 }
-                com.jannahos.siraj.actions.ActionDecision.NeedsConfirmation -> {
+                SirajActionPlan.State.AWAITING_CONFIRMATION -> {
+                    pendingActionPlan = plan
                     pendingDeviceAction = deviceAction
                     pendingActionPrompt = prompt
                 }
-                com.jannahos.siraj.actions.ActionDecision.Allowed -> Unit
+                else -> Unit
             }
             scope.launch {
                 if (messages.isNotEmpty()) listState.animateScrollToItem(messages.lastIndex)
@@ -314,6 +319,7 @@ fun SirajScreen(onNavigate: (String) -> Unit = {}) {
         AlertDialog(
             onDismissRequest = {
                 pendingDeviceAction = null
+                pendingActionPlan = null
                 pendingActionPrompt = ""
             },
             title = {
@@ -333,19 +339,39 @@ fun SirajScreen(onNavigate: (String) -> Unit = {}) {
             confirmButton = {
                 TextButton(
                     onClick = {
-                        val result = AndroidDeviceActionExecutor.execute(
-                            context = context,
-                            action = actionToConfirm,
-                            userConfirmed = true
-                        )
+                        val plan = pendingActionPlan
+                        val approval = plan?.let {
+                            SirajActionPlanner.approve(
+                                plan = it,
+                                confirmed = true,
+                                freshCapabilities = AndroidDeviceActionExecutor.readCapabilities(context),
+                                nowMillis = System.currentTimeMillis()
+                            )
+                        }
+                        val result = when (approval) {
+                            is ActionApproval.Approved -> AndroidDeviceActionExecutor.execute(
+                                context = context,
+                                action = actionToConfirm,
+                                userConfirmed = true
+                            ).also { execution ->
+                                pendingActionPlan = SirajActionPlanner.finish(approval.plan, execution)
+                            }
+                            is ActionApproval.Blocked -> {
+                                pendingActionPlan = approval.plan
+                                ActionExecutionResult.Blocked(approval.reason)
+                            }
+                            is ActionApproval.Cancelled, null ->
+                                ActionExecutionResult.Blocked("This action was not approved.")
+                        }
                         val response = when (result) {
-                            ActionExecutionResult.Completed -> "Done. The action was sent to Android."
+                            ActionExecutionResult.Completed -> "Done. Android accepted the action."
                             ActionExecutionResult.NeedsConfirmation -> "This action still needs confirmation."
                             is ActionExecutionResult.Blocked -> result.reason
                             is ActionExecutionResult.Failed -> "Android could not complete it: ${result.reason}"
                         }
                         messages.add(SirajMessage(response, false))
                         pendingDeviceAction = null
+                        pendingActionPlan = null
                         pendingActionPrompt = ""
                         scope.launch {
                             if (messages.isNotEmpty()) listState.animateScrollToItem(messages.lastIndex)
