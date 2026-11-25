@@ -34,4 +34,17 @@ object BedtimeScheduler {
             am.setAlarmClock(AlarmManager.AlarmClockInfo(cal.timeInMillis, pi), pi)
         }
     }
+
+    fun cancel(ctx: Context) {
+        val intent = Intent(ctx, BedtimeReceiver::class.java)
+        val pendingIntent = PendingIntent.getBroadcast(
+            ctx,
+            7777,
+            intent,
+            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+        )
+        val alarmManager = ctx.getSystemService(Context.ALARM_SERVICE) as AlarmManager
+        alarmManager.cancel(pendingIntent)
+        pendingIntent.cancel()
+    }
 }
