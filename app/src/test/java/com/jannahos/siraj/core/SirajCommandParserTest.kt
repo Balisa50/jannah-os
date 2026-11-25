@@ -67,8 +67,8 @@ class SirajCommandParserTest {
     }
 
     @Test
-    fun doesNotTreatAnUnlabelledPageNumberAsASurahNumber() {
+    fun pageNumberIsNotMisreadAsASurahNumber() {
         val result = SirajCommandParser.parse("open Quran page 18", surahs)
-        assertEquals(null, result.action)
+        assertEquals(SirajAction.OpenQuran, result.action)
     }
 }
