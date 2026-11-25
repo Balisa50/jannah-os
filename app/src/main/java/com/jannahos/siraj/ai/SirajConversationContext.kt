@@ -17,13 +17,14 @@ object SirajConversationContext {
         val latest = latestUserMessage.trim().take(MAX_MESSAGE_CHARS)
         if (latest.isBlank()) return emptyList()
 
-        val prior = history.asSequence()
+        val prior = history
+            .asSequence()
             .filter { it.role == "user" || it.role == "assistant" }
             .filter { it.content.isNotBlank() }
             .filterNot { it.content == "Thinking…" }
+            .toList()
             .takeLast(MAX_TURNS - 1)
             .map { SirajChatMessage(it.role, it.content.take(MAX_MESSAGE_CHARS)) }
-            .toList()
 
         val bounded = mutableListOf<SirajChatMessage>()
         var chars = latest.length
