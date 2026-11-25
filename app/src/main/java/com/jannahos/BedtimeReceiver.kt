@@ -60,7 +60,8 @@ class BedtimeReceiver : BroadcastReceiver() {
                 .setContentIntent(pendingIntent)
                 .build()
 
-            manager.notify(NOTIFICATION_ID, notification)
+            runCatching { manager.notify(NOTIFICATION_ID, notification) }
+                .onFailure { BedtimeStore.release(context) }
         }
     }
 }
