@@ -12,6 +12,10 @@ import androidx.core.app.NotificationCompat
 class QuranLockReceiver : BroadcastReceiver() {
     override fun onReceive(ctx: Context, intent: Intent) {
         if (!QuranReadingLock.enabled(ctx)) return
+        if (!NotificationAccess.canPost(ctx)) {
+            runCatching { QuranLockScheduler.scheduleNextDay(ctx) }
+            return
+        }
         if (QuranReadingLock.isDoneToday(ctx)) {
             // Completing today's reading before the random alarm must not
             // silently disable the feature for every future day.
@@ -48,7 +52,8 @@ class QuranLockReceiver : BroadcastReceiver() {
             .setAutoCancel(true)
             .build()
 
-        nm.notify(777, notif)
+        runCatching { nm.notify(777, notif) }
+            .onFailure { QuranReadingLock.setActiveToday(ctx, false) }
         runCatching { QuranLockScheduler.scheduleNextDay(ctx) }
     }
 }
