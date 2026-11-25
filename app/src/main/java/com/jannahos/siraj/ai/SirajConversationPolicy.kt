@@ -12,7 +12,9 @@ object SirajConversationPolicy {
         "is this permissible", "is this allowed in islam", "prayer time", "prayer times",
         "salah", "salat", "wudu", "wudhu", "ghusl", "zakat", "ramadan", "fasting",
         "is it sinful", "is this a sin", "prophet muhammad", "the prophet", "allah",
-        "dua", "du'a", "adhkar", "islam"
+        "according to islam", "in islam", "islamic guidance", "islamic perspective",
+        "islamic teaching", "what is islam", "explain islam",
+        "dua", "du'a", "adhkar"
     )
 
     fun isReligiousRequest(input: String): Boolean {
