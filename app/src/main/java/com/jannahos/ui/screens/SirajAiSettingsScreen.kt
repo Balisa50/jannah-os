@@ -28,6 +28,7 @@ fun SirajAiSettingsScreen(onBack: () -> Unit = {}) {
     var endpoint by remember { mutableStateOf(saved?.endpoint ?: "https://openrouter.ai/api/v1") }
     var model by remember { mutableStateOf(saved?.model ?: "qwen/qwen3-4b:free") }
     var apiKey by remember { mutableStateOf("") }
+    var storedKey by remember { mutableStateOf(saved?.apiKey) }
     var message by remember { mutableStateOf("") }
     var hasSavedKey by remember { mutableStateOf(!saved?.apiKey.isNullOrBlank()) }
 
@@ -88,8 +89,9 @@ fun SirajAiSettingsScreen(onBack: () -> Unit = {}) {
         Button(
             onClick = {
                 runCatching {
-                    val keyToSave = apiKey.takeIf { it.isNotBlank() } ?: saved?.apiKey
+                    val keyToSave = apiKey.takeIf { it.isNotBlank() } ?: storedKey
                     SirajProviderSettings.save(context, endpoint, model, keyToSave)
+                    storedKey = keyToSave
                     hasSavedKey = !keyToSave.isNullOrBlank()
                     apiKey = ""
                     message = "Provider settings saved on this device."
@@ -107,6 +109,7 @@ fun SirajAiSettingsScreen(onBack: () -> Unit = {}) {
                 endpoint = "https://openrouter.ai/api/v1"
                 model = "qwen/qwen3-4b:free"
                 apiKey = ""
+                storedKey = null
                 hasSavedKey = false
                 message = "Provider credentials and settings cleared."
             }
