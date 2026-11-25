@@ -34,8 +34,36 @@ class WakeLog(context: Context) : SQLiteOpenHelper(
     }
 
     override fun onUpgrade(db: SQLiteDatabase, oldV: Int, newV: Int) {
-        db.execSQL("DROP TABLE IF EXISTS events")
-        onCreate(db)
+        // Never discard a user's history during an app update. Older versions
+        // already have the core events table; add only columns introduced later.
+        db.execSQL("""
+            CREATE TABLE IF NOT EXISTS events (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                ts INTEGER NOT NULL,
+                outcome TEXT NOT NULL,
+                reason TEXT,
+                voice_path TEXT,
+                verified INTEGER NOT NULL DEFAULT 0,
+                transcript TEXT
+            )
+        """.trimIndent())
+        ensureColumn(db, "reason", "TEXT")
+        ensureColumn(db, "voice_path", "TEXT")
+        ensureColumn(db, "verified", "INTEGER NOT NULL DEFAULT 0")
+        ensureColumn(db, "transcript", "TEXT")
+    }
+
+    private fun ensureColumn(db: SQLiteDatabase, name: String, definition: String) {
+        var exists = false
+        db.rawQuery("PRAGMA table_info(events)", null).use { cursor ->
+            while (cursor.moveToNext()) {
+                if (cursor.getString(1) == name) {
+                    exists = true
+                    break
+                }
+            }
+        }
+        if (!exists) db.execSQL("ALTER TABLE events ADD COLUMN $name $definition")
     }
 
     fun record(outcome: String, reason: String? = null, voicePath: String? = null) {
