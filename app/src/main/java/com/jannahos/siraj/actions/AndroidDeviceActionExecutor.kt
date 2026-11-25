@@ -3,12 +3,9 @@ package com.jannahos.siraj.actions
 import android.Manifest
 import android.app.AlarmManager
 import android.app.NotificationManager
-import android.app.PendingIntent
 import android.content.ComponentName
 import android.content.Context
-import android.content.Intent
 import android.content.pm.PackageManager
-import android.net.Uri
 import android.os.Build
 import android.provider.Settings
 import com.jannahos.BedtimeScheduler
@@ -17,7 +14,6 @@ import com.jannahos.FocusAccessibilityService
 import com.jannahos.PrayerLock
 import com.jannahos.QuranReadingLock
 import com.jannahos.Settings as AppSettings
-import java.util.Locale
 
 sealed interface ActionExecutionResult {
     data object Completed : ActionExecutionResult
@@ -112,27 +108,11 @@ object AndroidDeviceActionExecutor {
         context: Context,
         action: SirajDeviceAction.ScheduleReminder
     ) {
-        val alarmManager = context.getSystemService(AlarmManager::class.java)
-            ?: error("Alarm service is unavailable.")
-
-        val uniqueData = Uri.parse(
-            "siraj-reminder://local/${action.triggerAtMillis}/${action.title.lowercase(Locale.ROOT).hashCode()}"
-        )
-        val reminderIntent = Intent(context, SirajReminderReceiver::class.java).apply {
-            data = uniqueData
-            putExtra(SirajReminderReceiver.EXTRA_TITLE, action.title.trim())
-        }
-        val pendingIntent = PendingIntent.getBroadcast(
-            context,
-            0,
-            reminderIntent,
-            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
-        )
-
-        alarmManager.setExactAndAllowWhileIdle(
-            AlarmManager.RTC_WAKEUP,
-            action.triggerAtMillis,
-            pendingIntent
+        SirajReminderScheduler.schedule(
+            context = context,
+            title = action.title,
+            triggerAtMillis = action.triggerAtMillis
         )
     }
+
 }
