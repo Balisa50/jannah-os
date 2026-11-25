@@ -45,6 +45,20 @@ object QuranLockScheduler {
         scheduleAlarm(ctx, alarmManager, triggerTime)
     }
 
+    fun scheduleNextDay(ctx: Context) {
+        val date = Calendar.getInstance().apply { add(Calendar.DAY_OF_YEAR, 1) }
+        val window = safeWindows.random()
+        val targetMinute = Random.nextInt(window.first, window.second)
+        val triggerTime = date.apply {
+            set(Calendar.HOUR_OF_DAY, targetMinute / 60)
+            set(Calendar.MINUTE, targetMinute % 60)
+            set(Calendar.SECOND, 0)
+            set(Calendar.MILLISECOND, 0)
+        }.timeInMillis
+        val alarmManager = ctx.getSystemService(Context.ALARM_SERVICE) as AlarmManager
+        scheduleAlarm(ctx, alarmManager, triggerTime)
+    }
+
     fun scheduleSnooze(ctx: Context, minutes: Int) {
         if (minutes <= 0) return
         val alarmManager = ctx.getSystemService(Context.ALARM_SERVICE) as AlarmManager
