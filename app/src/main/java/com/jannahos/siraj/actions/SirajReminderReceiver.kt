@@ -1,6 +1,5 @@
 package com.jannahos.siraj.actions
 
-import android.Manifest
 import android.app.Notification
 import android.app.NotificationChannel
 import android.app.NotificationManager
@@ -8,9 +7,9 @@ import android.app.PendingIntent
 import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
-import android.content.pm.PackageManager
 import android.os.Build
 import com.jannahos.MainActivity
+import com.jannahos.NotificationAccess
 import com.jannahos.R
 
 class SirajReminderReceiver : BroadcastReceiver() {
@@ -20,9 +19,7 @@ class SirajReminderReceiver : BroadcastReceiver() {
 
         intent.getStringExtra(EXTRA_ID)?.let { SirajReminderScheduler.remove(context, it) }
 
-        if (Build.VERSION.SDK_INT >= 33 &&
-            context.checkSelfPermission(Manifest.permission.POST_NOTIFICATIONS) != PackageManager.PERMISSION_GRANTED
-        ) return
+        if (!NotificationAccess.canPost(context)) return
 
         val manager = context.getSystemService(NotificationManager::class.java) ?: return
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
