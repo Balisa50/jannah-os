@@ -79,7 +79,7 @@
             android:launchMode="singleInstance"
             android:theme="@android:style/Theme.Material.Light.NoActionBar" />
 
-        <service android:name=".AdhanService" android:foregroundServiceType="shortService" android:exported="false" />
+        <service android:name=".AdhanService" android:foregroundServiceType="mediaPlayback|shortService" android:exported="false" />
 
         <service
             android:name=".FaceDownService"
