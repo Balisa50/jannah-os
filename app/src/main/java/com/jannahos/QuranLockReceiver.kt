@@ -43,5 +43,6 @@ class QuranLockReceiver : BroadcastReceiver() {
             .build()
 
         nm.notify(777, notif)
+        runCatching { QuranLockScheduler.scheduleNextDay(ctx) }
     }
 }
