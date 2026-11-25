@@ -29,13 +29,13 @@ fun AboutScreen(onBack: () -> Unit) {
         Column(Modifier.weight(1f).verticalScroll(rememberScrollState()).padding(horizontal = JannahSpacing.gutter)) {
             Spacer(Modifier.height(JannahSpacing.l))
 
-            Text("Jannah OS", fontFamily = FontFamily.Serif, fontSize = 28.sp, fontWeight = FontWeight.Bold, color = JannahColors.Ink)
+            Text("SIRAJ", fontFamily = FontFamily.Serif, fontSize = 28.sp, fontWeight = FontWeight.Bold, color = JannahColors.Ink)
             Spacer(Modifier.height(JannahSpacing.xl))
 
             Text("PURPOSE", style = JannahType.eyebrow, color = JannahColors.OrangeDeep)
             Spacer(Modifier.height(JannahSpacing.s))
             Text(
-                "A utility for prayer focus and Quran reading. It uses locks, alarms, and a fixed reading plan to build habits. It is not a social network, a tracker, or a dashboard.",
+                "An Android-first Islamic digital companion. SIRAJ is being rebuilt around trusted Islamic resources, personal tools and permissioned actions. Its first command interface can navigate the Quran, prayer times, Qibla, adhkar, notes and settings. Source-backed research and advanced AI assistance are still in development; until then, SIRAJ will not fabricate religious answers.",
                 style = JannahType.bodySmall, color = JannahColors.Body, lineHeight = 22.sp
             )
 
@@ -44,7 +44,7 @@ fun AboutScreen(onBack: () -> Unit) {
             Text("PRIVACY & DATA", style = JannahType.eyebrow, color = JannahColors.OrangeDeep)
             Spacer(Modifier.height(JannahSpacing.s))
             Text(
-                "All personal data (diary, khatm progress, bookmarks, settings) is stored locally on this device using SQLite and SharedPreferences. No accounts are required. No analytics are collected. Quran pages and tafsir are fetched from alquran.cloud via HTTPS based on page/surah numbers only.",
+                "SIRAJ does not require an account. Personal tools are designed to store their data on this device. Some Quran text and search features may contact their configured content provider. Voice input is handled by the Android speech-recognition service selected on your device; its network and privacy behaviour depends on that provider.",
                 style = JannahType.bodySmall, color = JannahColors.Body, lineHeight = 22.sp
             )
 
@@ -53,7 +53,7 @@ fun AboutScreen(onBack: () -> Unit) {
             Text("SOURCES", style = JannahType.eyebrow, color = JannahColors.OrangeDeep)
             Spacer(Modifier.height(JannahSpacing.s))
             Text(
-                "Quran text: Uthmani Madani Mushaf. Hadith: Sahih al-Bukhari, Sahih Muslim, and others as cited. Calculation methods follow standard scholarly consensus (MWL, ISNA, etc.).",
+                "SIRAJ is strengthening source attribution for Quran translations, hadith collections, grading and scholarly references. The current legacy hadith dataset does not yet provide complete provenance and grading metadata, so it is not used as evidence for generated religious rulings.",
                 style = JannahType.bodySmall, color = JannahColors.Body, lineHeight = 22.sp
             )
 
