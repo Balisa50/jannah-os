@@ -31,8 +31,16 @@ class QuranBookmarkStore(context: Context) : SQLiteOpenHelper(
     }
 
     override fun onUpgrade(db: SQLiteDatabase, oldV: Int, newV: Int) {
-        db.execSQL("DROP TABLE IF EXISTS bookmarks")
-        onCreate(db)
+        // Bookmarks are user-authored references; never drop them on upgrade.
+        db.execSQL("""
+            CREATE TABLE IF NOT EXISTS bookmarks (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                surah INTEGER NOT NULL,
+                ayah INTEGER NOT NULL,
+                note TEXT,
+                created INTEGER NOT NULL
+            )
+        """.trimIndent())
     }
 
     data class Bookmark(val id: Long, val surah: Int, val ayah: Int, val note: String?, val created: Long)
