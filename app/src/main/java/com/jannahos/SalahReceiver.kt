@@ -26,8 +26,6 @@ class SalahReceiver : BroadcastReceiver() {
         val svc = FocusAccessibilityService.instance
         if (svc != null) {
             svc.launchLock()
-        } else {
-            runCatching { context.startActivity(SalahCommitmentActivity.intent(context).putExtra("prayer", prayer)) }
         }
     }
 }
