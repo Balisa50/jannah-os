@@ -18,6 +18,9 @@ class PrayerReminderReceiver : BroadcastReceiver() {
         val type = intent.getStringExtra("type") ?: "adhan"
         val notificationId = 10_000 + (prayer.lowercase().hashCode() and 0x7fff)
 
+        // Keep the next day's alarms armed as today's alarms are delivered.
+        runCatching { PrayerReminderScheduler.scheduleNextDay(context) }
+
         when (type) {
             "adhan" -> {
                 vibrate(context, 10_000)
