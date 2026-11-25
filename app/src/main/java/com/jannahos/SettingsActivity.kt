@@ -81,7 +81,6 @@ private fun SettingsScreen(onBack: () -> Unit) {
             "DUBAI" to "Dubai",
             "KUWAIT" to "Kuwait",
             "QATAR" to "Qatar",
-            "MOON_SIGHTING_COMMITTEE" to "Moon Sighting Committee"
         )
         AlertDialog(
             onDismissRequest = { showCalculationMethods = false },
@@ -212,6 +211,5 @@ private fun calculationMethodLabel(value: String): String = when (value) {
     "DUBAI" -> "Dubai"
     "KUWAIT" -> "Kuwait"
     "QATAR" -> "Qatar"
-    "MOON_SIGHTING_COMMITTEE" -> "Moon Sighting Committee"
     else -> "Muslim World League"
 }
