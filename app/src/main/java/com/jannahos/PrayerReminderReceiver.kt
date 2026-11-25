@@ -148,6 +148,6 @@ class PrayerReminderReceiver : BroadcastReceiver() {
             .setContentIntent(pendingIntent)
             .build()
 
-        nm.notify(notificationId, notification)
+        runCatching { nm.notify(notificationId, notification) }
     }
 }
