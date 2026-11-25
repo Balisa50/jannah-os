@@ -36,8 +36,6 @@ object DeviceActionPolicy {
             is SirajDeviceAction.SetBedtimeLock ->
                 if (action.enabled && !capabilities.exactAlarmsAllowed) {
                     "Exact-alarm access is required for the bedtime lock."
-                } else if (action.enabled && !capabilities.notificationsAllowed) {
-                    "Notification permission is required for bedtime reminders."
                 } else null
 
             is SirajDeviceAction.SetDoNotDisturb ->
