@@ -66,7 +66,7 @@ class TahajjudAlarmReceiver : BroadcastReceiver() {
             .setAutoCancel(true)
             .setContentIntent(pendingIntent)
             .build()
-        manager.notify(999, notification)
+        runCatching { manager.notify(999, notification) }
 
         // Keep tomorrow's reminder armed using the next civil day's calculated Fajr.
         runCatching {
