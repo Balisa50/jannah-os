@@ -12,8 +12,9 @@ import androidx.core.app.NotificationCompat
 class BedtimeReceiver : BroadcastReceiver() {
     override fun onReceive(context: Context, intent: Intent) {
         if (!Settings.isBedtimeLockEnabled(context)) return
-        // The next scheduled bedtime is armed even if notification permission
-        // was revoked and this night's lock cannot be opened from a notification.
+        // A lock is armed only when its notification can be posted, because
+        // the notification is the supported entry point into the lock screen.
+        // The recurring bedtime alarm is re-armed independently below.
         runCatching { activate(context, 8 * 60 * 60 * 1000L) }
         runCatching { BedtimeScheduler.schedule(context) }
     }
