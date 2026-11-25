@@ -1,5 +1,6 @@
 package com.jannahos.siraj.actions
 
+import android.Manifest
 import android.app.Notification
 import android.app.NotificationChannel
 import android.app.NotificationManager
@@ -7,6 +8,7 @@ import android.app.PendingIntent
 import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
+import android.content.pm.PackageManager
 import android.os.Build
 import com.jannahos.MainActivity
 import com.jannahos.R
@@ -15,6 +17,12 @@ class SirajReminderReceiver : BroadcastReceiver() {
     override fun onReceive(context: Context, intent: Intent) {
         val title = intent.getStringExtra(EXTRA_TITLE)?.trim().orEmpty()
         if (title.isBlank()) return
+
+        intent.getStringExtra(EXTRA_ID)?.let { SirajReminderScheduler.remove(context, it) }
+
+        if (Build.VERSION.SDK_INT >= 33 &&
+            context.checkSelfPermission(Manifest.permission.POST_NOTIFICATIONS) != PackageManager.PERMISSION_GRANTED
+        ) return
 
         val manager = context.getSystemService(NotificationManager::class.java) ?: return
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
@@ -49,6 +57,7 @@ class SirajReminderReceiver : BroadcastReceiver() {
 
     companion object {
         const val EXTRA_TITLE = "siraj_reminder_title"
+        const val EXTRA_ID = "siraj_reminder_id"
         private const val CHANNEL_ID = "siraj_user_reminders"
     }
 }
