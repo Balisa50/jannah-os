@@ -201,7 +201,7 @@ fun SirajScreen(onNavigate: (String) -> Unit = {}) {
         }
         val needsNotificationPermission =
             !capabilities.notificationsAllowed &&
-                (action is SirajDeviceAction.ScheduleReminder || action is SirajDeviceAction.SetQuranLock)
+                (action is SirajDeviceAction.ScheduleReminder || action is SirajDeviceAction.SetQuranLock || action is SirajDeviceAction.SetBedtimeLock)
 
         if (needsNotificationPermission) {
             notificationPermissionLauncher.launch(Manifest.permission.POST_NOTIFICATIONS)
