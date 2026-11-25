@@ -28,6 +28,10 @@ class SirajCommandParserTest {
     @Test
     fun routesOnlyExplicitSupportedCommands() {
         assertEquals(
+            SirajAction.OpenQuran,
+            SirajCommandParser.parse("open Quran", surahs).action
+        )
+        assertEquals(
             SirajAction.OpenPrayerTimes,
             SirajCommandParser.parse("show prayer times", surahs).action
         )
