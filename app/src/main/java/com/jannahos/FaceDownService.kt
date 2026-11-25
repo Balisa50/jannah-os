@@ -73,7 +73,7 @@ class FaceDownService : Service(), SensorEventListener {
             stillnessJob?.cancel()
             stillnessJob = scope.launch {
                 delay(5000)
-                if (isFaceDown && isCovered && Settings.isBedtimeLockEnabled(this@FaceDownService)) {
+                if (isFaceDown && isCovered && Settings.isFaceDownEnabled(this@FaceDownService)) {
                     triggerBedtimeLock()
                 }
             }
