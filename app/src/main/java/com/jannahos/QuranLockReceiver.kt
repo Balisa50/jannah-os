@@ -11,6 +11,7 @@ import androidx.core.app.NotificationCompat
 
 class QuranLockReceiver : BroadcastReceiver() {
     override fun onReceive(ctx: Context, intent: Intent) {
+        if (!QuranReadingLock.enabled(ctx) || QuranReadingLock.isDoneToday(ctx)) return
         QuranReadingLock.setActiveToday(ctx, true)
         
         val channelId = "quran_lock_full"
@@ -25,7 +26,7 @@ class QuranLockReceiver : BroadcastReceiver() {
         }
 
         val launchIntent = Intent(ctx, MainActivity::class.java).apply {
-            putExtra("show_quran_lock", true)
+            putExtra("open_quran_lock", true)
             addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP)
         }
         val pendingIntent = PendingIntent.getActivity(ctx, 0, launchIntent, PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT)
@@ -38,7 +39,6 @@ class QuranLockReceiver : BroadcastReceiver() {
             .setPriority(NotificationCompat.PRIORITY_MAX)
             .setCategory(NotificationCompat.CATEGORY_ALARM)
             .setContentIntent(pendingIntent)
-            .setFullScreenIntent(pendingIntent, true) // THIS FORCES THE SCREEN
             .setAutoCancel(true)
             .build()
 
