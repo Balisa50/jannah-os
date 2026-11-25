@@ -39,9 +39,25 @@ class FinanceStore(context: Context) : SQLiteOpenHelper(
     }
 
     override fun onUpgrade(db: SQLiteDatabase, oldV: Int, newV: Int) {
-        db.execSQL("DROP TABLE IF EXISTS months")
-        db.execSQL("DROP TABLE IF EXISTS expenses")
-        onCreate(db)
+        // Financial records must survive version upgrades.
+        db.execSQL("""
+            CREATE TABLE IF NOT EXISTS months (
+                month TEXT PRIMARY KEY,
+                salary REAL NOT NULL,
+                currency TEXT NOT NULL,
+                updated INTEGER NOT NULL
+            )
+        """.trimIndent())
+        db.execSQL("""
+            CREATE TABLE IF NOT EXISTS expenses (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                month TEXT NOT NULL,
+                category TEXT NOT NULL,
+                amount REAL NOT NULL,
+                note TEXT,
+                ts INTEGER NOT NULL
+            )
+        """.trimIndent())
     }
 
     data class Expense(
