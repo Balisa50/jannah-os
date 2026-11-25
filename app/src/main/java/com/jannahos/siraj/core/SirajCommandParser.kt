@@ -109,8 +109,8 @@ object SirajCommandParser {
         input: String,
         surahs: List<Pair<Int, String>>
     ): Triple<Int, Int, String>? {
-        val numeric = Regex("""(?:surah\s+)?(\d{1,3})[:/](\d{1,3})""")
-            .find(input)
+        val numeric = Regex("""(?:(?:open|read|show)\s+)?(?:surah\s+)?(\d{1,3})[:/](\d{1,3})""")
+            .matchEntire(input)
         if (numeric != null) {
             val surahNumber = numeric.groupValues[1].toIntOrNull() ?: return null
             val ayahNumber = numeric.groupValues[2].toIntOrNull() ?: return null
