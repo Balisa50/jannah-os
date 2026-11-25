@@ -112,9 +112,9 @@ fun SirajScreen(onNavigate: (String) -> Unit = {}) {
         }
 
         val result = SirajCommandParser.parse(request, QuranCache.SURAHS)
-        if (result.action == null && !request.equals("help", ignoreCase = true) &&
-            !request.equals("what can you do", ignoreCase = true) &&
-            !request.equals("what can siraj do", ignoreCase = true)
+        if (result.action == null &&
+            !result.reply.startsWith("I can open") &&
+            !result.reply.startsWith("I can navigate")
         ) {
             if (SirajConversationPolicy.isReligiousRequest(request)) {
                 messages.add(
