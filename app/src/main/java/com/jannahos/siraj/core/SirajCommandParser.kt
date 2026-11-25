@@ -26,6 +26,9 @@ object SirajCommandParser {
         }
 
         return when {
+            containsAny(input, "open quran", "read quran", "show quran") ->
+                SirajCommandResult("Opening the Quran.", SirajAction.OpenQuran)
+
             containsAny(input, "prayer times", "prayer time", "salah times", "show prayers", "open prayer") ->
                 SirajCommandResult("Here are the prayer times for your saved location.", SirajAction.OpenPrayerTimes)
 
