@@ -96,4 +96,16 @@ class SirajCommandParserTest {
             if (it is SirajAction.ShowAyah) it else null
         })
     }
+
+    @Test
+    fun acceptsExplicitReadPrefixForNumericAyahReference() {
+        val result = SirajCommandParser.parse("read 18:10", surahs)
+        assertEquals(SirajAction.ShowAyah(18, 10, "Al-Kahf"), result.action)
+    }
+
+    @Test
+    fun doesNotExtractAyahReferenceFromAnUnrelatedSentence() {
+        val result = SirajCommandParser.parse("I have a question about 18:10", surahs)
+        assertEquals(null, result.action)
+    }
 }
