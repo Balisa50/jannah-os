@@ -407,7 +407,7 @@ internal fun parseDeviceAction(request: String): Pair<SirajDeviceAction, String>
             SirajDeviceAction.SetDoNotDisturb(false) to "Turn off Do Not Disturb and restore the previous interruption setting?"
 
         else -> {
-            val reminder = Regex("""remind me in (\\d{1,4}) minutes? to (.+)""")
+            val reminder = Regex("""remind me in (\d{1,4}) minutes? to (.+)""")
                 .matchEntire(normalized)
             if (reminder != null) {
                 val minutes = reminder.groupValues[1].toIntOrNull()
