@@ -6,27 +6,27 @@ import com.batoulapps.adhan.Coordinates
 import com.batoulapps.adhan.PrayerTimes
 import com.batoulapps.adhan.data.DateComponents
 import java.util.Calendar
-import java.util.TimeZone
-import kotlin.math.roundToInt
 
 object SalahScheduler {
-    fun todayTimes(ctx: Context, lat: Double, lon: Double): Map<String, Long> {
+    fun todayTimes(ctx: Context, lat: Double, lon: Double): Map<String, Long> =
+        timesForDate(ctx, lat, lon, Calendar.getInstance())
+
+    fun timesForDate(
+        ctx: Context,
+        lat: Double,
+        lon: Double,
+        date: Calendar
+    ): Map<String, Long> {
         if (lat == 0.0 && lon == 0.0) return emptyMap()
 
         return try {
             val coordinates = Coordinates(lat, lon)
-            val calendar = Calendar.getInstance()
-            
-            // Dynamic Timezone Calculation based on longitude
-            val timezoneOffset = (lon / 15.0).roundToInt()
-            val tz = TimeZone.getTimeZone(if (timezoneOffset >= 0) "GMT+$timezoneOffset" else "GMT$timezoneOffset")
-            calendar.timeZone = tz
-            
-            val dateComponents = DateComponents.from(calendar.time)
+            // Use the device's actual civil timezone. Longitude/15 is only a
+            // rough solar offset and fails around DST and timezone boundaries.
+            val dateComponents = DateComponents.from(date.time)
             val params = CalculationMethod.MUSLIM_WORLD_LEAGUE.parameters
             val prayerTimes = PrayerTimes(coordinates, dateComponents, params)
 
-            // Return pure Adhan times
             mapOf(
                 "fajr" to prayerTimes.fajr.time,
                 "dhuhr" to prayerTimes.dhuhr.time,
@@ -34,9 +34,11 @@ object SalahScheduler {
                 "maghrib" to prayerTimes.maghrib.time,
                 "isha" to prayerTimes.isha.time
             )
-        } catch (e: Exception) { emptyMap() }
+        } catch (_: Exception) {
+            emptyMap()
+        }
     }
-    
+
     fun todayTimes(lat: Double, lon: Double): Map<String, Long> {
         val ctx = App.instance ?: return emptyMap()
         return todayTimes(ctx, lat, lon)
