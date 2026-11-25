@@ -11,10 +11,11 @@ class QuranEvidenceRetrieverTest {
             surah = 18,
             ayah = 10,
             arabicText = "رَبَّنَا آتِنَا مِن لَّدُنكَ رَحْمَةً"
-        )
+        )!!
 
-        assertEquals(18, (evidence?.reference as IslamicReference.Quran).surah)
-        assertEquals(10, (evidence.reference as IslamicReference.Quran).ayah)
+        val reference = evidence.reference as IslamicReference.Quran
+        assertEquals(18, reference.surah)
+        assertEquals(10, reference.ayah)
         assertEquals("ar", evidence.language)
     }
 
