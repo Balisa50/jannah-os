@@ -1,6 +1,10 @@
 package com.jannahos.ui.screens
 
+import android.app.Activity
 import android.content.Intent
+import android.speech.RecognizerIntent
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -80,6 +84,37 @@ fun SirajScreen(onNavigate: (String) -> Unit = {}) {
         scope.launch {
             if (messages.isNotEmpty()) listState.animateScrollToItem(messages.lastIndex)
         }
+    }
+
+    val speechLauncher = rememberLauncherForActivityResult(
+        ActivityResultContracts.StartActivityForResult()
+    ) { result ->
+        val spokenRequest = if (result.resultCode == Activity.RESULT_OK) {
+            result.data
+                ?.getStringArrayListExtra(RecognizerIntent.EXTRA_RESULTS)
+                ?.firstOrNull()
+        } else null
+
+        if (!spokenRequest.isNullOrBlank()) {
+            submit(spokenRequest)
+        }
+    }
+
+    fun startVoiceInput() {
+        val speechIntent = Intent(RecognizerIntent.ACTION_RECOGNIZE_SPEECH).apply {
+            putExtra(RecognizerIntent.EXTRA_LANGUAGE_MODEL, RecognizerIntent.LANGUAGE_MODEL_FREE_FORM)
+            putExtra(RecognizerIntent.EXTRA_PROMPT, "Speak a request for SIRAJ")
+            putExtra(RecognizerIntent.EXTRA_MAX_RESULTS, 1)
+        }
+        runCatching { speechLauncher.launch(speechIntent) }
+            .onFailure {
+                messages.add(
+                    SirajMessage(
+                        "Voice input isn't available through the speech service on this device. You can still type a request.",
+                        false
+                    )
+                )
+            }
     }
 
     Column(
@@ -205,6 +240,14 @@ fun SirajScreen(onNavigate: (String) -> Unit = {}) {
                 keyboardOptions = KeyboardOptions(imeAction = ImeAction.Send),
                 keyboardActions = KeyboardActions(onSend = { submit(input) })
             )
+            TextButton(
+                onClick = { startVoiceInput() },
+                modifier = Modifier
+                    .clip(RoundedCornerShape(16.dp))
+                    .border(1.dp, JannahColors.Border, RoundedCornerShape(16.dp))
+            ) {
+                Text("Speak", color = JannahColors.Ink, fontWeight = FontWeight.Medium)
+            }
             TextButton(
                 onClick = { submit(input) },
                 enabled = input.isNotBlank(),
