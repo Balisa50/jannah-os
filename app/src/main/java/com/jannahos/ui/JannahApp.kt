@@ -25,10 +25,10 @@ import com.jannahos.ui.theme.JannahType
 
 private data class Tab(val route: String, val label: String, val icon: ImageVector)
 private val TABS = listOf(
-    Tab("today", "Focus", Icons.Default.Home),
-    Tab("pray",  "Pray",  Icons.Default.DateRange),
-    Tab("quran", "Guide", Icons.Default.Menu),
-    Tab("you",   "System", Icons.Default.Person)
+    Tab("today", "SIRAJ", Icons.Default.Home),
+    Tab("pray",  "Prayer", Icons.Default.DateRange),
+    Tab("quran", "Quran", Icons.Default.Menu),
+    Tab("you",   "You",   Icons.Default.Person)
 )
 private val TAB_ROUTES: Set<String> = TABS.map { it.route }.toSet()
 
@@ -89,7 +89,7 @@ fun JannahApp(startDestination: String = "today") {
             enterTransition = { fadeIn(tween(120)) },
             exitTransition = { fadeOut(tween(120)) }
         ) {
-            composable("today") { TodayScreen(onNavigate = goTo) }
+            composable("today") { SirajScreen(onNavigate = goTo) }
             composable("pray") { PrayScreen() }
             composable("quran_lock") {
                 QuranLockScreen(onRelease = {
