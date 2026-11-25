@@ -23,15 +23,24 @@ class PrayerReminderReceiver : BroadcastReceiver() {
 
         when (type) {
             "adhan" -> {
-                vibrate(context, 10_000)
-                showNotification(
-                    context,
-                    "$prayer time",
-                    "It is time for prayer.",
-                    notificationId,
-                    MainActivity::class.java,
-                    notificationId
-                )
+                if (PrayerLock.enabled(context)) {
+                    // The commitment lock is explicitly opt-in. Route through the
+                    // dedicated receiver so the persisted timer and service start
+                    // remain in one place.
+                    context.sendBroadcast(
+                        Intent(context, SalahReceiver::class.java).putExtra("prayer", prayer)
+                    )
+                } else {
+                    vibrate(context, 10_000)
+                    showNotification(
+                        context,
+                        "$prayer time",
+                        "It is time for prayer.",
+                        notificationId,
+                        MainActivity::class.java,
+                        notificationId
+                    )
+                }
             }
 
             "reminder" -> {
