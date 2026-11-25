@@ -90,6 +90,7 @@ fun JannahApp(startDestination: String = "today") {
             exitTransition = { fadeOut(tween(120)) }
         ) {
             composable("today") { SirajScreen(onNavigate = goTo) }
+            composable("siraj_ai") { SirajAiSettingsScreen(onBack = { nav.popBackStack() }) }
             composable("pray") { PrayScreen() }
             composable("quran_lock") {
                 QuranLockScreen(onRelease = {
