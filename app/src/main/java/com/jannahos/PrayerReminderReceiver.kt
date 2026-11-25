@@ -101,6 +101,7 @@ class PrayerReminderReceiver : BroadcastReceiver() {
             flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP
             if (destination == PrayerAlarmActivity::class.java) {
                 putExtra("prayer", title.substringBefore(" —"))
+                putExtra("notification_id", notificationId)
             }
         }
         val pendingIntent = PendingIntent.getActivity(
