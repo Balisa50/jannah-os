@@ -87,7 +87,7 @@ fun CityPickerScreen(onBack: () -> Unit, onPicked: (String, String) -> Unit) {
                         Modifier.fillMaxWidth().clip(RoundedCornerShape(12.dp)).background(JannahColors.Card)
                             .pressClickable {
                                 // Save coordinates immediately
-                                Settings.set(ctx, city.lat, city.lon, "MWL")
+                                Settings.set(ctx, city.lat, city.lon, Settings.method(ctx))
                                 CityStore.set(ctx, city.name, city.country)
                                 PrayerReminderScheduler.scheduleAllForToday(ctx)
                                 onPicked(city.name, city.country)
@@ -111,7 +111,7 @@ fun CityPickerScreen(onBack: () -> Unit, onPicked: (String, String) -> Unit) {
                         Modifier.fillMaxWidth().clip(RoundedCornerShape(12.dp)).background(JannahColors.Card)
                             .pressClickable {
                                 // Use lat/lon from API
-                                Settings.set(ctx, r.lat, r.lon, "MWL")
+                                Settings.set(ctx, r.lat, r.lon, Settings.method(ctx))
                                 CityStore.set(ctx, r.name, r.country)
                                 PrayerReminderScheduler.scheduleAllForToday(ctx)
                                 onPicked(r.name, r.country)
