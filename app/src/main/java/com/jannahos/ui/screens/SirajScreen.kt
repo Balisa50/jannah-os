@@ -219,6 +219,10 @@ fun SirajScreen(onNavigate: (String) -> Unit = {}) {
             )
             if (decision == com.jannahos.siraj.actions.ActionDecision.NeedsConfirmation) {
                 pendingDeviceAction = action
+                pendingActionPlan = SirajActionPlanner.prepare(
+                    action, pendingActionPrompt.ifBlank { "Confirm this action?" },
+                    capabilities, System.currentTimeMillis()
+                )
                 pendingPermissionAction = null
                 pendingPermissionReason = ""
             } else if (decision is com.jannahos.siraj.actions.ActionDecision.Blocked) {
