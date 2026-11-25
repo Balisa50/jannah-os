@@ -1,8 +1,11 @@
 package com.jannahos.ui.screens
 
+import android.Manifest
 import android.app.Activity
 import android.content.Intent
 import android.speech.RecognizerIntent
+import android.provider.Settings
+import android.net.Uri
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.background
@@ -15,6 +18,7 @@ import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
@@ -32,6 +36,10 @@ import com.jannahos.QiblaActivity
 import com.jannahos.QuranCache
 import com.jannahos.QuranStore
 import com.jannahos.SettingsActivity
+import com.jannahos.siraj.actions.ActionExecutionResult
+import com.jannahos.siraj.actions.AndroidDeviceActionExecutor
+import com.jannahos.siraj.actions.DeviceActionPolicy
+import com.jannahos.siraj.actions.SirajDeviceAction
 import com.jannahos.siraj.core.SirajAction
 import com.jannahos.siraj.core.SirajCommandParser
 import com.jannahos.ui.theme.JannahColors
@@ -49,6 +57,10 @@ fun SirajScreen(onNavigate: (String) -> Unit = {}) {
     val listState = rememberLazyListState()
     val scope = rememberCoroutineScope()
     var input by remember { mutableStateOf("") }
+    var pendingDeviceAction by remember { mutableStateOf<SirajDeviceAction?>(null) }
+    var pendingActionPrompt by remember { mutableStateOf("") }
+    var pendingPermissionAction by remember { mutableStateOf<SirajDeviceAction?>(null) }
+    var pendingPermissionReason by remember { mutableStateOf("") }
     val messages = remember {
         mutableStateListOf(
             SirajMessage(
@@ -63,6 +75,32 @@ fun SirajScreen(onNavigate: (String) -> Unit = {}) {
         if (request.isBlank()) return
         messages.add(SirajMessage(request, true))
         input = ""
+
+        val requestedDeviceAction = parseDeviceAction(request)
+        if (requestedDeviceAction != null) {
+            val (deviceAction, prompt) = requestedDeviceAction
+            val decision = DeviceActionPolicy.evaluate(
+                action = deviceAction,
+                capabilities = AndroidDeviceActionExecutor.readCapabilities(context),
+                userConfirmed = false,
+                nowMillis = System.currentTimeMillis()
+            )
+            when (decision) {
+                is com.jannahos.siraj.actions.ActionDecision.Blocked -> {
+                    pendingPermissionAction = deviceAction
+                    pendingPermissionReason = decision.reason
+                }
+                com.jannahos.siraj.actions.ActionDecision.NeedsConfirmation -> {
+                    pendingDeviceAction = deviceAction
+                    pendingActionPrompt = prompt
+                }
+                com.jannahos.siraj.actions.ActionDecision.Allowed -> Unit
+            }
+            scope.launch {
+                if (messages.isNotEmpty()) listState.animateScrollToItem(messages.lastIndex)
+            }
+            return
+        }
 
         val result = SirajCommandParser.parse(request, QuranCache.SURAHS)
         messages.add(SirajMessage(result.reply, false))
@@ -87,6 +125,30 @@ fun SirajScreen(onNavigate: (String) -> Unit = {}) {
         }
     }
 
+    val notificationPermissionLauncher = rememberLauncherForActivityResult(
+        ActivityResultContracts.RequestPermission()
+    ) { granted ->
+        val action = pendingPermissionAction
+        if (granted && action != null) {
+            val decision = DeviceActionPolicy.evaluate(
+                action = action,
+                capabilities = AndroidDeviceActionExecutor.readCapabilities(context),
+                userConfirmed = false,
+                nowMillis = System.currentTimeMillis()
+            )
+            if (decision == com.jannahos.siraj.actions.ActionDecision.NeedsConfirmation) {
+                pendingDeviceAction = action
+                pendingActionPrompt = "Confirm the requested SIRAJ action?"
+                pendingPermissionAction = null
+                pendingPermissionReason = ""
+            } else if (decision is com.jannahos.siraj.actions.ActionDecision.Blocked) {
+                pendingPermissionReason = decision.reason
+            }
+        } else if (!granted) {
+            pendingPermissionReason = "Notification permission was not granted. No action was taken."
+        }
+    }
+
     val speechLauncher = rememberLauncherForActivityResult(
         ActivityResultContracts.StartActivityForResult()
     ) { result ->
@@ -99,6 +161,61 @@ fun SirajScreen(onNavigate: (String) -> Unit = {}) {
         if (!spokenRequest.isNullOrBlank()) {
             submit(spokenRequest)
         }
+    }
+
+    fun openPermissionSettings(action: SirajDeviceAction) {
+        val capabilities = AndroidDeviceActionExecutor.readCapabilities(context)
+        val currentDecision = DeviceActionPolicy.evaluate(
+            action = action,
+            capabilities = capabilities,
+            userConfirmed = false,
+            nowMillis = System.currentTimeMillis()
+        )
+        if (currentDecision == com.jannahos.siraj.actions.ActionDecision.NeedsConfirmation) {
+            pendingDeviceAction = action
+            pendingActionPrompt = "Confirm the requested SIRAJ action?"
+            pendingPermissionAction = null
+            pendingPermissionReason = ""
+            return
+        }
+        if (currentDecision is com.jannahos.siraj.actions.ActionDecision.Blocked) {
+            pendingPermissionReason = currentDecision.reason
+        }
+        val needsNotificationPermission =
+            !capabilities.notificationsAllowed &&
+                (action is SirajDeviceAction.ScheduleReminder || action is SirajDeviceAction.SetQuranLock)
+
+        if (needsNotificationPermission) {
+            notificationPermissionLauncher.launch(Manifest.permission.POST_NOTIFICATIONS)
+            return
+        }
+
+        val settingsIntent = when {
+            action is SirajDeviceAction.SetPrayerLock &&
+                !capabilities.accessibilityServiceEnabled ->
+                Intent(Settings.ACTION_ACCESSIBILITY_SETTINGS)
+
+            action is SirajDeviceAction.SetDoNotDisturb &&
+                !capabilities.notificationPolicyAccess ->
+                Intent(Settings.ACTION_NOTIFICATION_POLICY_ACCESS_SETTINGS)
+
+            (action is SirajDeviceAction.ScheduleReminder ||
+                action is SirajDeviceAction.SetQuranLock ||
+                action is SirajDeviceAction.SetBedtimeLock) &&
+                !capabilities.exactAlarmsAllowed ->
+                Intent(Settings.ACTION_REQUEST_SCHEDULE_EXACT_ALARM).apply {
+                    data = Uri.parse("package:${context.packageName}")
+                }
+
+            else -> Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS).apply {
+                data = Uri.parse("package:${context.packageName}")
+            }
+        }
+
+        runCatching { context.startActivity(settingsIntent) }
+            .onFailure {
+                messages.add(SirajMessage("Android settings could not be opened. Open this app's settings manually and grant the required access.", false))
+            }
     }
 
     fun startVoiceInput() {
@@ -116,6 +233,93 @@ fun SirajScreen(onNavigate: (String) -> Unit = {}) {
                     )
                 )
             }
+    }
+
+    val actionToConfirm = pendingDeviceAction
+    if (actionToConfirm != null) {
+        AlertDialog(
+            onDismissRequest = {
+                pendingDeviceAction = null
+                pendingActionPrompt = ""
+            },
+            title = {
+                Text(
+                    "Confirm action",
+                    fontFamily = FontFamily.Serif,
+                    fontWeight = FontWeight.Bold,
+                    color = JannahColors.Ink
+                )
+            },
+            text = {
+                Text(
+                    "$pendingActionPrompt\n\nSIRAJ will only perform this action after your confirmation.",
+                    color = JannahColors.Body
+                )
+            },
+            confirmButton = {
+                TextButton(
+                    onClick = {
+                        val result = AndroidDeviceActionExecutor.execute(
+                            context = context,
+                            action = actionToConfirm,
+                            userConfirmed = true
+                        )
+                        val response = when (result) {
+                            ActionExecutionResult.Completed -> "Done. The action was sent to Android."
+                            ActionExecutionResult.NeedsConfirmation -> "This action still needs confirmation."
+                            is ActionExecutionResult.Blocked -> result.reason
+                            is ActionExecutionResult.Failed -> "Android could not complete it: ${result.reason}"
+                        }
+                        messages.add(SirajMessage(response, false))
+                        pendingDeviceAction = null
+                        pendingActionPrompt = ""
+                        scope.launch {
+                            if (messages.isNotEmpty()) listState.animateScrollToItem(messages.lastIndex)
+                        }
+                    }
+                ) {
+                    Text("Confirm", color = JannahColors.OrangeDeep)
+                }
+            },
+            dismissButton = {
+                TextButton(
+                    onClick = {
+                        messages.add(SirajMessage("No action was taken.", false))
+                        pendingDeviceAction = null
+                        pendingActionPrompt = ""
+                    }
+                ) {
+                    Text("Cancel", color = JannahColors.Muted)
+                }
+            },
+            containerColor = JannahColors.Surface
+        )
+    }
+
+    val actionNeedingPermission = pendingPermissionAction
+    if (actionNeedingPermission != null) {
+        AlertDialog(
+            onDismissRequest = {
+                pendingPermissionAction = null
+                pendingPermissionReason = ""
+            },
+            title = { Text("Permission needed", fontFamily = FontFamily.Serif, fontWeight = FontWeight.Bold) },
+            text = { Text(pendingPermissionReason, color = JannahColors.Body) },
+            confirmButton = {
+                TextButton(onClick = { openPermissionSettings(actionNeedingPermission) }) {
+                    Text("Open settings", color = JannahColors.OrangeDeep)
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = {
+                    pendingPermissionAction = null
+                    pendingPermissionReason = ""
+                }) {
+                    Text("Not now", color = JannahColors.Muted)
+                }
+            },
+            containerColor = JannahColors.Surface
+        )
     }
 
     Column(
@@ -281,4 +485,51 @@ private fun Suggestion(label: String, onClick: () -> Unit) {
         style = JannahType.caption,
         color = JannahColors.Ink
     )
+}
+
+internal fun parseDeviceAction(request: String): Pair<SirajDeviceAction, String>? {
+    val normalized = request.trim().lowercase().replace(Regex("\\s+"), " ")
+
+    fun matches(vararg phrases: String) = phrases.any { normalized == it }
+
+    return when {
+        matches("enable prayer lock", "turn on prayer lock", "activate prayer lock") ->
+            SirajDeviceAction.SetPrayerLock(true) to "Enable Prayer Lock?"
+
+        matches("disable prayer lock", "turn off prayer lock", "stop prayer lock") ->
+            SirajDeviceAction.SetPrayerLock(false) to "Disable Prayer Lock?"
+
+        matches("enable quran lock", "enable quran reading lock", "turn on quran lock") ->
+            SirajDeviceAction.SetQuranLock(true) to "Enable the Quran reading lock?"
+
+        matches("disable quran lock", "disable quran reading lock", "turn off quran lock") ->
+            SirajDeviceAction.SetQuranLock(false) to "Disable the Quran reading lock?"
+
+        matches("enable bedtime lock", "turn on bedtime lock", "activate bedtime lock") ->
+            SirajDeviceAction.SetBedtimeLock(true) to "Enable the bedtime lock?"
+
+        matches("disable bedtime lock", "turn off bedtime lock", "stop bedtime lock") ->
+            SirajDeviceAction.SetBedtimeLock(false) to "Disable the bedtime lock?"
+
+        matches("enable do not disturb", "turn on do not disturb", "activate do not disturb") ->
+            SirajDeviceAction.SetDoNotDisturb(true) to "Turn on Do Not Disturb?"
+
+        matches("disable do not disturb", "turn off do not disturb", "turn off dnd") ->
+            SirajDeviceAction.SetDoNotDisturb(false) to "Turn off Do Not Disturb and restore the previous interruption setting?"
+
+        else -> {
+            val reminder = Regex("""remind me in (\d{1,4}) minutes? to (.+)""")
+                .matchEntire(normalized)
+            if (reminder != null) {
+                val minutes = reminder.groupValues[1].toIntOrNull()
+                val title = reminder.groupValues[2].trim()
+                if (minutes != null && minutes in 1..10080 && title.isNotBlank()) {
+                    SirajDeviceAction.ScheduleReminder(
+                        title = title,
+                        triggerAtMillis = System.currentTimeMillis() + minutes * 60_000L
+                    ) to "Schedule a reminder in $minutes minute(s): $title?"
+                } else null
+            } else null
+        }
+    }
 }
