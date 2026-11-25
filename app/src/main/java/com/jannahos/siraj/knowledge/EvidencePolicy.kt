@@ -99,10 +99,12 @@ object EvidencePolicy {
 
                 val hadithSources = evidence.mapNotNull { it.reference as? IslamicReference.Hadith }
                 if (hadithSources.any {
-                        it.grade.isNullOrBlank() || it.gradingAuthority.isNullOrBlank()
+                        it.edition.isNullOrBlank() ||
+                            it.grade.isNullOrBlank() ||
+                            it.gradingAuthority.isNullOrBlank()
                     }
                 ) {
-                    reasons += "A hadith used in a ruling has no complete grading provenance."
+                    reasons += "A hadith used in a ruling has no complete edition and grading provenance."
                 }
             }
         }
