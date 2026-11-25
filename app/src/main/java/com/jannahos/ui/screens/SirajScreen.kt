@@ -374,8 +374,9 @@ private fun Suggestion(label: String, onClick: () -> Unit) {
         style = JannahType.caption,
         color = JannahColors.Ink
     )
+}
 
-private fun parseDeviceAction(request: String): Pair<SirajDeviceAction, String>? {
+internal fun parseDeviceAction(request: String): Pair<SirajDeviceAction, String>? {
     val normalized = request.trim().lowercase().replace(Regex("\\s+"), " ")
 
     fun matches(vararg phrases: String) = phrases.any { normalized == it }
