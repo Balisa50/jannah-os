@@ -10,7 +10,7 @@ class App : Application() {
             private set
 
         fun latestCrash(context: Context): String? {
-            return null
+            return CrashLogger.latest(context)
         }
     }
 
@@ -19,5 +19,6 @@ class App : Application() {
         instance = this
         // Restore persisted prayer-lock timing before any Activity reads it.
         LockState.restore(this)
+        CrashLogger.install(this)
     }
 }
