@@ -25,13 +25,11 @@ class PrayerCalculationMethodsTest {
             "KARACHI" to CalculationMethod.KARACHI,
             "UMM_AL_QURA" to CalculationMethod.UMM_AL_QURA,
             "DUBAI" to CalculationMethod.DUBAI,
-            "MOON_SIGHTING_COMMITTEE" to CalculationMethod.MOON_SIGHTING_COMMITTEE,
+            "MOON_SIGHTING_COMMITTEE" to CalculationMethod.MOONSIGHTING_COMMITTEE,
             "NORTH_AMERICA" to CalculationMethod.NORTH_AMERICA,
             "KUWAIT" to CalculationMethod.KUWAIT,
             "QATAR" to CalculationMethod.QATAR,
             "SINGAPORE" to CalculationMethod.SINGAPORE,
-            "TURKEY" to CalculationMethod.TURKEY,
-            "TEHRAN" to CalculationMethod.TEHRAN,
             "OTHER" to CalculationMethod.OTHER
         )
 
