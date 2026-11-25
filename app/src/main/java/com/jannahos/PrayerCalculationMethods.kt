@@ -15,13 +15,11 @@ object PrayerCalculationMethods {
             "KARACHI", "UNIVERSITY_OF_ISLAMIC_SCIENCES_KARACHI" -> CalculationMethod.KARACHI
             "UMM_AL_QURA", "MAKKAH" -> CalculationMethod.UMM_AL_QURA
             "DUBAI" -> CalculationMethod.DUBAI
-            "MOON_SIGHTING_COMMITTEE", "MSC" -> CalculationMethod.MOON_SIGHTING_COMMITTEE
+            "MOON_SIGHTING_COMMITTEE", "MOONSIGHTING_COMMITTEE", "MSC" -> CalculationMethod.MOONSIGHTING_COMMITTEE
             "NORTH_AMERICA", "ISNA" -> CalculationMethod.NORTH_AMERICA
             "KUWAIT" -> CalculationMethod.KUWAIT
             "QATAR" -> CalculationMethod.QATAR
             "SINGAPORE", "JAKIM" -> CalculationMethod.SINGAPORE
-            "TURKEY", "DIYANET" -> CalculationMethod.TURKEY
-            "TEHRAN" -> CalculationMethod.TEHRAN
             "OTHER" -> CalculationMethod.OTHER
             else -> CalculationMethod.MUSLIM_WORLD_LEAGUE
         }
