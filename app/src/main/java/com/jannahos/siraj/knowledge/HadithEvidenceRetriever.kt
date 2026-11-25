@@ -1,7 +1,6 @@
 package com.jannahos.siraj.knowledge
 
 import android.content.Context
-import com.jannahos.HadithStore
 import com.jannahos.QuranSearchEngine
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
