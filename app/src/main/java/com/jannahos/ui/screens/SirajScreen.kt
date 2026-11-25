@@ -44,6 +44,7 @@ import com.jannahos.siraj.ai.OpenAiCompatibleProvider
 import com.jannahos.siraj.ai.SirajChatMessage
 import com.jannahos.siraj.ai.SirajInferenceResult
 import com.jannahos.siraj.ai.SirajConversationPolicy
+import com.jannahos.siraj.ai.SirajConversationContext
 import com.jannahos.siraj.core.SirajAction
 import com.jannahos.siraj.core.SirajCommandParser
 import com.jannahos.siraj.knowledge.IslamicReference
@@ -127,14 +128,21 @@ fun SirajScreen(onNavigate: (String) -> Unit = {}) {
                 messages.add(SirajMessage("Thinking…", false))
                 val responseIndex = messages.lastIndex
                 scope.launch {
+                    val conversation = messages
+                        .filterNot { it.text == "Thinking…" }
+                        .map { message ->
+                            SirajChatMessage(
+                                role = if (message.fromUser) "user" else "assistant",
+                                content = message.text
+                            )
+                        }
                     val response = OpenAiCompatibleProvider(context).complete(
                         listOf(
                             SirajChatMessage(
                                 role = "system",
                                 content = SirajConversationPolicy.GENERAL_ASSISTANT_SYSTEM_PROMPT
-                            ),
-                            SirajChatMessage(role = "user", content = request)
-                        )
+                            )
+                        ) + SirajConversationContext.build(conversation, request)
                     )
                     val reply = when (response) {
                         is SirajInferenceResult.Success ->
