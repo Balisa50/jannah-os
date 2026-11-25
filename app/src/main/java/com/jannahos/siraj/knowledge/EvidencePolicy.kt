@@ -22,7 +22,7 @@ object EvidencePolicy {
         }
 
         evidence.forEachIndexed { index, excerpt ->
-            val label = "Evidence \${index + 1}"
+            val label = "Evidence ${index + 1}"
             if (excerpt.text.isBlank()) reasons += "$label has no quoted or extracted text."
             if (excerpt.language.isBlank()) reasons += "$label has no language identifier."
 
