@@ -45,6 +45,11 @@ fun YouScreen(onNavigate: (String) -> Unit = {}) {
 
             Spacer(Modifier.height(JannahSpacing.xl))
 
+            SectionLabel("INTELLIGENCE")
+            ListRow("AI provider") { onNavigate("siraj_ai") }
+
+            Spacer(Modifier.height(JannahSpacing.xl))
+
             SectionLabel("SETTINGS")
             ListRow("App Settings") { ctx.startActivity(Intent(ctx, SettingsActivity::class.java)) }
             ListRow("Sound Profiles") { onNavigate("sound_profile") }
