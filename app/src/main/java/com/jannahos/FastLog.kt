@@ -26,8 +26,15 @@ class FastLog(context: Context) : SQLiteOpenHelper(
     }
 
     override fun onUpgrade(db: SQLiteDatabase, oldV: Int, newV: Int) {
-        db.execSQL("DROP TABLE IF EXISTS fasts")
-        onCreate(db)
+        // The v1 schema remains compatible. Never erase a user's fast history
+        // simply because a future app version increments the database version.
+        db.execSQL("""
+            CREATE TABLE IF NOT EXISTS fasts (
+                day TEXT PRIMARY KEY,
+                kind TEXT NOT NULL,
+                created INTEGER NOT NULL
+            )
+        """.trimIndent())
     }
 
     fun markToday(kind: String) {
