@@ -68,6 +68,7 @@ class PrayerReminderReceiver : BroadcastReceiver() {
             }
 
             "iqamah" -> {
+                vibrate(context, 1_500)
                 // Background receivers cannot reliably launch activities. Deliver a
                 // high-priority notification; the user opens the alarm screen explicitly.
                 showNotification(
@@ -109,6 +110,7 @@ class PrayerReminderReceiver : BroadcastReceiver() {
         destination: Class<*>,
         requestCode: Int
     ) {
+        if (!NotificationAccess.canPost(context)) return
         val channelId = "prayer_alerts"
         val nm = context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
 
