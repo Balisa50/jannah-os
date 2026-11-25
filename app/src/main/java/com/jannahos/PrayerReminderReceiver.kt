@@ -16,23 +16,44 @@ class PrayerReminderReceiver : BroadcastReceiver() {
     override fun onReceive(context: Context, intent: Intent) {
         val prayer = intent.getStringExtra("prayer") ?: "Fajr"
         val type = intent.getStringExtra("type") ?: "adhan"
+        val notificationId = 10_000 + (prayer.lowercase().hashCode() and 0x7fff)
 
         when (type) {
             "adhan" -> {
-                vibrate(context, 10000)
-                showNotification(context, "Adhan: $prayer", "It is time for prayer.", 1)
+                vibrate(context, 10_000)
+                showNotification(
+                    context,
+                    "$prayer time",
+                    "It is time for prayer.",
+                    notificationId,
+                    MainActivity::class.java,
+                    notificationId
+                )
             }
+
             "reminder" -> {
-                vibrate(context, 3000)
-                showNotification(context, "$prayer Reminder", "Prepare for prayer. Iqamah is soon.", 2)
+                vibrate(context, 3_000)
+                showNotification(
+                    context,
+                    "$prayer reminder",
+                    "Prepare for prayer. Iqamah is approaching.",
+                    notificationId + 1,
+                    MainActivity::class.java,
+                    notificationId + 1
+                )
             }
+
             "iqamah" -> {
-                // Launch the full-screen lock
-                val fullScreenIntent = Intent(context, PrayerAlarmActivity::class.java).apply {
-                    addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK)
-                    putExtra("prayer", prayer)
-                }
-                context.startActivity(fullScreenIntent)
+                // Background receivers cannot reliably launch activities. Deliver a
+                // high-priority notification; the user opens the alarm screen explicitly.
+                showNotification(
+                    context,
+                    "$prayer — Iqamah",
+                    "Your planned prayer time has arrived. Tap to open the prayer screen.",
+                    notificationId + 2,
+                    PrayerAlarmActivity::class.java,
+                    notificationId + 2
+                )
             }
         }
     }
@@ -45,32 +66,61 @@ class PrayerReminderReceiver : BroadcastReceiver() {
             @Suppress("DEPRECATION")
             context.getSystemService(Context.VIBRATOR_SERVICE) as Vibrator
         }
+
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            vibrator.vibrate(VibrationEffect.createOneShot(durationMs, VibrationEffect.DEFAULT_AMPLITUDE))
+            vibrator.vibrate(
+                VibrationEffect.createOneShot(durationMs, VibrationEffect.DEFAULT_AMPLITUDE)
+            )
         } else {
             @Suppress("DEPRECATION")
             vibrator.vibrate(durationMs)
         }
     }
 
-    private fun showNotification(context: Context, title: String, body: String, id: Int) {
+    private fun showNotification(
+        context: Context,
+        title: String,
+        body: String,
+        notificationId: Int,
+        destination: Class<*>,
+        requestCode: Int
+    ) {
         val channelId = "prayer_alerts"
         val nm = context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
+
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            val channel = NotificationChannel(channelId, "Prayer Alerts", NotificationManager.IMPORTANCE_HIGH)
+            val channel = NotificationChannel(
+                channelId,
+                "Prayer Alerts",
+                NotificationManager.IMPORTANCE_HIGH
+            )
             nm.createNotificationChannel(channel)
         }
-        val pi = PendingIntent.getActivity(context, 0, Intent(context, MainActivity::class.java), PendingIntent.FLAG_IMMUTABLE)
+
+        val openIntent = Intent(context, destination).apply {
+            flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP
+            if (destination == PrayerAlarmActivity::class.java) {
+                putExtra("prayer", title.substringBefore(" —"))
+            }
+        }
+        val pendingIntent = PendingIntent.getActivity(
+            context,
+            requestCode,
+            openIntent,
+            PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT
+        )
+
         val notification = NotificationCompat.Builder(context, channelId)
             .setSmallIcon(android.R.drawable.ic_lock_idle_alarm)
             .setContentTitle(title)
             .setContentText(body)
             .setPriority(NotificationCompat.PRIORITY_HIGH)
+            .setCategory(NotificationCompat.CATEGORY_ALARM)
             .setAutoCancel(true)
-            .setOngoing(false)
-            .setTimeoutAfter(5 * 60 * 1000L) // FIX: Auto-dismiss after 5 minutes
-            .setContentIntent(pi)
+            .setTimeoutAfter(5 * 60 * 1000L)
+            .setContentIntent(pendingIntent)
             .build()
-        nm.notify(id, notification)
+
+        nm.notify(notificationId, notification)
     }
 }
