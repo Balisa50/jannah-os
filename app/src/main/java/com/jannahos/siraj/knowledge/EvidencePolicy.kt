@@ -76,11 +76,11 @@ object EvidencePolicy {
                 val hadithSources = evidence.mapNotNull { it.reference as? IslamicReference.Hadith }
                 if (hadithSources.isEmpty()) {
                     reasons += "An authenticity claim needs a specific hadith collection and reference."
-                } else if (hadithSources.none {
-                        !it.grade.isNullOrBlank() && !it.gradingAuthority.isNullOrBlank()
+                } else if (hadithSources.any {
+                        it.grade.isNullOrBlank() || it.gradingAuthority.isNullOrBlank()
                     }
                 ) {
-                    reasons += "No cited hadith includes both a grading and the authority that assigned it."
+                    reasons += "Every cited hadith needs both a grading and the authority that assigned it."
                 }
             }
 
