@@ -33,9 +33,9 @@ class BootReceiver : BroadcastReceiver() {
             }
         }
 
-        if (QuranReadingLock.enabled(context) && !QuranReadingLock.isDoneToday(context)) {
+        if (QuranReadingLock.enabled(context)) {
             runCatching {
-                if (QuranReadingLock.isActiveToday(context)) {
+                if (QuranReadingLock.isDoneToday(context) || QuranReadingLock.isActiveToday(context)) {
                     QuranLockScheduler.scheduleNextDay(context)
                 } else {
                     QuranLockScheduler.scheduleRandomLock(context)
