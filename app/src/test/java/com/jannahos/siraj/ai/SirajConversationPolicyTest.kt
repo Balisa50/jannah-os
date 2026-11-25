@@ -17,5 +17,6 @@ class SirajConversationPolicyTest {
     fun allowsOrdinaryGeneralQuestions() {
         assertFalse(SirajConversationPolicy.isReligiousRequest("Explain gradient descent"))
         assertFalse(SirajConversationPolicy.isReligiousRequest("Help me write a Python script"))
+        assertFalse(SirajConversationPolicy.isReligiousRequest("I'm building an Islamic app with Kotlin"))
     }
 }
