@@ -5,24 +5,24 @@ import androidx.compose.ui.graphics.Color
 object JannahColors {
 
     // Sand/cream canvas, deep warm ink, UniDash palette
-    val Cream     = Color(0xFFEFE6D6)
-    val Card      = Color(0xFFF8F2E8)
-    val Surface   = Color(0xFFFBF7EF)
-    val SurfaceAlt = Color(0xFFF2E8D6)
+    val Cream     = Color(0xFFFFFFFF)
+    val Card      = Color(0xFFF8F7F5)
+    val Surface   = Color(0xFFFFFFFF)
+    val SurfaceAlt = Color(0xFFF3F0ED)
 
     // Burnt orange accent (UniDash)
-    val Orange = Color(0xFFC2410C)
-    val OrangeSoft = Color(0xFFFFF3E0)
-    val OrangeDeep = Color(0xFF9A3412)
+    val Orange = Color(0xFFC65A24)
+    val OrangeSoft = Color(0xFFFFF1E8)
+    val OrangeDeep = Color(0xFF9A3F1C)
 
     // Warm deep brown ink (not cold navy)
-    val Ink    = Color(0xFF2B1410)
-    val Body   = Color(0xFF3D2A20)
-    val Muted  = Color(0xFF7A6656)
-    val Faint  = Color(0xFFA89885)
+    val Ink    = Color(0xFF25211F)
+    val Body   = Color(0xFF3B3531)
+    val Muted  = Color(0xFF79716C)
+    val Faint  = Color(0xFFAAA19A)
 
-    val Border  = Color(0xFFDDD0BA)
-    val Divider = Color(0xFFE6DBC5)
+    val Border  = Color(0xFFE5DFD9)
+    val Divider = Color(0xFFEEE9E5)
 
     val Success = Color(0xFF3E6B47)
     val Danger  = Color(0xFFA83A2E)
