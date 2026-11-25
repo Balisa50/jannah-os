@@ -422,5 +422,3 @@ internal fun parseDeviceAction(request: String): Pair<SirajDeviceAction, String>
         }
     }
 }
-
-}
