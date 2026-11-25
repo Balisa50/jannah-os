@@ -31,8 +31,15 @@ class InterventionLog(context: Context) : SQLiteOpenHelper(
     }
 
     override fun onUpgrade(db: SQLiteDatabase, oldV: Int, newV: Int) {
-        db.execSQL("DROP TABLE IF EXISTS interventions")
-        onCreate(db)
+        // Preserve local intervention history; never drop user history on upgrade.
+        db.execSQL("""
+            CREATE TABLE IF NOT EXISTS interventions (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                ts INTEGER NOT NULL,
+                kind TEXT NOT NULL,
+                acted INTEGER NOT NULL DEFAULT 0
+            )
+        """.trimIndent())
     }
 
     fun logShown(kind: String): Long {
