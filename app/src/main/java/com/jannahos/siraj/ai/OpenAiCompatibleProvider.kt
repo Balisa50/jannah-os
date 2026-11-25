@@ -14,17 +14,6 @@ data class SirajChatMessage(val role: String, val content: String)
 sealed interface SirajInferenceResult {
     data class Success(val text: String) : SirajInferenceResult
     data class Failure(val message: String) : SirajInferenceResult
-    private fun readBounded(reader: java.io.Reader, maxChars: Int): String {
-        val output = StringBuilder()
-        val buffer = CharArray(8192)
-        while (output.length <= maxChars) {
-            val count = reader.read(buffer, 0, minOf(buffer.size, maxChars + 1 - output.length))
-            if (count < 0) break
-            output.append(buffer, 0, count)
-        }
-        return output.toString()
-    }
-
 }
 
 /** Optional OpenAI-compatible transport. Offline features do not depend on it. */
@@ -129,4 +118,15 @@ class OpenAiCompatibleProvider(private val context: Context) {
             connection?.disconnect()
         }
     }
+    private fun readBounded(reader: java.io.Reader, maxChars: Int): String {
+        val output = StringBuilder()
+        val buffer = CharArray(8192)
+        while (output.length <= maxChars) {
+            val count = reader.read(buffer, 0, minOf(buffer.size, maxChars + 1 - output.length))
+            if (count < 0) break
+            output.append(buffer, 0, count)
+        }
+        return output.toString()
+    }
+
 }
