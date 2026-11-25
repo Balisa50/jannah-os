@@ -66,7 +66,7 @@ object SirajCommandParser {
 
         if (!asksForSurah) return null
 
-        val number = Regex("""(?:surah|chapter)\\s+(\\d{1,3})""")
+        val number = Regex("""(?:surah|chapter)\s+(\d{1,3})""")
             .find(input)?.groupValues?.getOrNull(1)?.toIntOrNull()
         if (number != null) return surahs.firstOrNull { it.first == number }
 
