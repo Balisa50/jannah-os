@@ -92,6 +92,7 @@ fun SirajScreen(onNavigate: (String) -> Unit = {}) {
             when (decision) {
                 is com.jannahos.siraj.actions.ActionDecision.Blocked -> {
                     pendingPermissionAction = deviceAction
+                    pendingActionPrompt = prompt
                     pendingPermissionReason = decision.reason
                 }
                 com.jannahos.siraj.actions.ActionDecision.NeedsConfirmation -> {
@@ -157,7 +158,6 @@ fun SirajScreen(onNavigate: (String) -> Unit = {}) {
             )
             if (decision == com.jannahos.siraj.actions.ActionDecision.NeedsConfirmation) {
                 pendingDeviceAction = action
-                pendingActionPrompt = "Confirm the requested SIRAJ action?"
                 pendingPermissionAction = null
                 pendingPermissionReason = ""
             } else if (decision is com.jannahos.siraj.actions.ActionDecision.Blocked) {
@@ -192,7 +192,6 @@ fun SirajScreen(onNavigate: (String) -> Unit = {}) {
         )
         if (currentDecision == com.jannahos.siraj.actions.ActionDecision.NeedsConfirmation) {
             pendingDeviceAction = action
-            pendingActionPrompt = "Confirm the requested SIRAJ action?"
             pendingPermissionAction = null
             pendingPermissionReason = ""
             return
@@ -321,6 +320,7 @@ fun SirajScreen(onNavigate: (String) -> Unit = {}) {
             onDismissRequest = {
                 pendingPermissionAction = null
                 pendingPermissionReason = ""
+                pendingActionPrompt = ""
             },
             title = { Text("Permission needed", fontFamily = FontFamily.Serif, fontWeight = FontWeight.Bold) },
             text = { Text(pendingPermissionReason, color = JannahColors.Body) },
@@ -333,6 +333,7 @@ fun SirajScreen(onNavigate: (String) -> Unit = {}) {
                 TextButton(onClick = {
                     pendingPermissionAction = null
                     pendingPermissionReason = ""
+                    pendingActionPrompt = ""
                 }) {
                     Text("Not now", color = JannahColors.Muted)
                 }
