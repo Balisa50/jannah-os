@@ -78,11 +78,9 @@ private fun SettingsScreen(onBack: () -> Unit) {
             "UMM_AL_QURA" to "Umm al-Qura (Makkah)",
             "NORTH_AMERICA" to "ISNA / North America",
             "SINGAPORE" to "Singapore",
-            "TURKEY" to "Türkiye (Diyanet)",
             "DUBAI" to "Dubai",
             "KUWAIT" to "Kuwait",
             "QATAR" to "Qatar",
-            "TEHRAN" to "Tehran",
             "MOON_SIGHTING_COMMITTEE" to "Moon Sighting Committee"
         )
         AlertDialog(
@@ -211,11 +209,9 @@ private fun calculationMethodLabel(value: String): String = when (value) {
     "UMM_AL_QURA" -> "Umm al-Qura"
     "NORTH_AMERICA" -> "ISNA / North America"
     "SINGAPORE" -> "Singapore"
-    "TURKEY" -> "Türkiye (Diyanet)"
     "DUBAI" -> "Dubai"
     "KUWAIT" -> "Kuwait"
     "QATAR" -> "Qatar"
-    "TEHRAN" -> "Tehran"
     "MOON_SIGHTING_COMMITTEE" -> "Moon Sighting Committee"
     else -> "Muslim World League"
 }
