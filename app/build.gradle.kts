@@ -4,13 +4,27 @@ plugins {
     id("org.jetbrains.kotlin.plugin.compose")
 }
 
+val releaseStoreFile = providers.gradleProperty("SIRAJ_RELEASE_STORE_FILE")
+    .orElse(providers.environmentVariable("SIRAJ_RELEASE_STORE_FILE")).orNull
+val releaseStorePassword = providers.gradleProperty("SIRAJ_RELEASE_STORE_PASSWORD")
+    .orElse(providers.environmentVariable("SIRAJ_RELEASE_STORE_PASSWORD")).orNull
+val releaseKeyAlias = providers.gradleProperty("SIRAJ_RELEASE_KEY_ALIAS")
+    .orElse(providers.environmentVariable("SIRAJ_RELEASE_KEY_ALIAS")).orNull
+val releaseKeyPassword = providers.gradleProperty("SIRAJ_RELEASE_KEY_PASSWORD")
+    .orElse(providers.environmentVariable("SIRAJ_RELEASE_KEY_PASSWORD")).orNull
+val hasReleaseSigning = listOf(
+    releaseStoreFile, releaseStorePassword, releaseKeyAlias, releaseKeyPassword
+).all { !it.isNullOrBlank() }
+
 android {
-    signingConfigs {
-        create("release") {
-            storeFile = file("../jannah.keystore")
-            storePassword = "jannah123"
-            keyAlias = "jannah"
-            keyPassword = "jannah123"
+    if (hasReleaseSigning) {
+        signingConfigs {
+            create("release") {
+                storeFile = file(releaseStoreFile!!)
+                storePassword = releaseStorePassword!!
+                keyAlias = releaseKeyAlias!!
+                keyPassword = releaseKeyPassword!!
+            }
         }
     }
 
@@ -25,7 +39,9 @@ android {
     }
     buildTypes {
         release {
-            signingConfig = signingConfigs.getByName("release")
+            if (hasReleaseSigning) {
+                signingConfig = signingConfigs.getByName("release")
+            }
             isMinifyEnabled = false
             isShrinkResources = false
             proguardFiles(getDefaultProguardFile("proguard-android-optimize.txt"), "proguard-rules.pro")
