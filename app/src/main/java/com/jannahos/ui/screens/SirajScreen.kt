@@ -146,7 +146,7 @@ fun SirajScreen(onNavigate: (String) -> Unit = {}) {
                 )
             }
             Text(
-                "ON-DEVICE ACTIONS",
+                "LOCAL COMMANDS",
                 style = JannahType.micro,
                 color = JannahColors.OrangeDeep,
                 modifier = Modifier
@@ -223,6 +223,12 @@ fun SirajScreen(onNavigate: (String) -> Unit = {}) {
             }
         }
 
+        Text(
+            "Voice recognition is provided by your Android speech service.",
+            style = JannahType.micro,
+            color = JannahColors.Muted,
+            modifier = Modifier.padding(bottom = 7.dp)
+        )
         Row(
             modifier = Modifier
                 .fillMaxWidth()
