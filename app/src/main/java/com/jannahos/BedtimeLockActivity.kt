@@ -66,9 +66,9 @@ class BedtimeLockActivity : ComponentActivity() {
 
 @Composable
 fun BedtimeLockContent(onDone: () -> Unit) {
+    val ctx = LocalContext.current
     var remaining by remember { mutableLongStateOf(BedtimeStore.remainingMs(ctx)) }
     var tapCount by remember { mutableIntStateOf(0) }
-    val ctx = LocalContext.current
     
     LaunchedEffect(Unit) {
         while (remaining > 0L) {
