@@ -108,6 +108,13 @@ fun QuranSearchScreen(onBack: () -> Unit, onNavigateToPage: (Int) -> Unit) {
                             Text(stripAllArabicMarks(h.arabic), fontFamily = UthmanicHafs, fontSize = 22.sp, color = JannahColors.Ink, textAlign = TextAlign.End, lineHeight = 36.sp, modifier = Modifier.fillMaxWidth())
                             Spacer(Modifier.height(8.dp))
                         }
+                        Text(
+                            "BUNDLED HADITH EXCERPT · EDITION AND GRADING NOT VERIFIED",
+                            style = JannahType.micro,
+                            color = JannahColors.OrangeDeep,
+                            fontWeight = FontWeight.Bold
+                        )
+                        Spacer(Modifier.height(4.dp))
                         Text(h.english, style = JannahType.bodySmall, color = JannahColors.Body, lineHeight = 22.sp)
                     }
                     Box(Modifier.fillMaxWidth().padding(horizontal = JannahSpacing.gutter).height(1.dp).background(JannahColors.Border))
@@ -120,6 +127,13 @@ fun QuranSearchScreen(onBack: () -> Unit, onNavigateToPage: (Int) -> Unit) {
                         Spacer(Modifier.height(8.dp))
                         Text(stripAllArabicMarks(a.arabic), fontFamily = UthmanicHafs, fontSize = 24.sp, color = JannahColors.Ink, textAlign = TextAlign.End, lineHeight = 40.sp, modifier = Modifier.fillMaxWidth())
                         Spacer(Modifier.height(8.dp))
+                        Text(
+                            "BUNDLED ENGLISH TRANSLATION · TRANSLATOR AND EDITION NOT IDENTIFIED",
+                            style = JannahType.micro,
+                            color = JannahColors.OrangeDeep,
+                            fontWeight = FontWeight.Bold
+                        )
+                        Spacer(Modifier.height(4.dp))
                         Text(a.english, style = JannahType.bodySmall, color = JannahColors.Body, lineHeight = 22.sp)
                     }
                     Box(Modifier.fillMaxWidth().padding(horizontal = JannahSpacing.gutter).height(1.dp).background(JannahColors.Border))
