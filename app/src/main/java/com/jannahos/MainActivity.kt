@@ -13,9 +13,22 @@ import com.jannahos.ui.OnboardingFlow
 import com.jannahos.ui.theme.JannahTheme
 
 class MainActivity : ComponentActivity() {
+    private var requestedStartDestination by mutableStateOf("today")
+
+    override fun onNewIntent(intent: android.content.Intent) {
+        super.onNewIntent(intent)
+        setIntent(intent)
+        if (intent.getBooleanExtra("open_quran_lock", false)) {
+            requestedStartDestination = "quran_lock"
+        }
+    }
+
     override fun onCreate(savedInstanceState: Bundle?) {
-        LockState.isLockActive = false
         super.onCreate(savedInstanceState)
+        LockState.restore(this)
+        if (intent.getBooleanExtra("open_quran_lock", false)) {
+            requestedStartDestination = "quran_lock"
+        }
         
         // Schedule alarms every time the app opens
         PrayerReminderScheduler.scheduleAllForToday(this)
@@ -26,7 +39,7 @@ class MainActivity : ComponentActivity() {
                     var onboarded by remember { mutableStateOf(Settings.onboardingComplete(this)) }
                     
                     if (onboarded) {
-                        JannahApp()
+                        JannahApp(startDestination = requestedStartDestination)
                     } else {
                         OnboardingFlow(onDone = {
                             Settings.setOnboardingComplete(this)
