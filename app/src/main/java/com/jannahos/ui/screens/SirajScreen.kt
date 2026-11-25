@@ -117,7 +117,7 @@ fun SirajScreen(onNavigate: (String) -> Unit = {}) {
                     }
                     val reference = evidence?.reference as? IslamicReference.Quran
                     val response = if (evidence != null && reference != null) {
-                        "${evidence.text}\n\nSurah ${action.surahName} · Ayah ${reference.ayah}\nArabic text from the bundled Quran source. No translation is shown because this dataset does not identify its translator and edition."
+                        "${evidence.text}\n\nSurah ${action.surahName} · Ayah ${reference.ayah}\nArabic text from the bundled Quran asset. Its edition/provenance is not yet recorded, and no English translation is shown because its translator and edition are unidentified."
                     } else {
                         "I couldn't verify that ayah in the bundled Quran text. Check the Surah and ayah number; I haven't substituted a nearby verse."
                     }
