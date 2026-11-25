@@ -85,6 +85,29 @@ class EvidencePolicyTest {
     }
 
     @Test
+    fun blocksHadithAuthenticityWhenEditionIsMissingEvenIfGradeIsPresent() {
+        val hadith = EvidenceExcerpt(
+            reference = IslamicReference.Hadith(
+                sourceId = "record-with-grade",
+                collection = "Collection",
+                referenceNumber = "123",
+                edition = null,
+                grade = "Sahih",
+                gradingAuthority = "Named authority"
+            ),
+            text = "Hadith excerpt",
+            language = "en"
+        )
+
+        val result = EvidencePolicy.review(
+            ClaimCategory.HADITH_AUTHENTICITY,
+            listOf(hadith)
+        )
+        assertEquals(EvidenceDecision.BLOCKED, result.decision)
+        assertTrue(result.reasons.any { it.contains("edition") })
+    }
+
+    @Test
     fun blocksFiqhRulingWithoutTraceableScholarlyPageReference() {
         val source = EvidenceExcerpt(
             reference = IslamicReference.ScholarlyWork(
