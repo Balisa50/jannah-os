@@ -130,6 +130,7 @@ fun SirajScreen(onNavigate: (String) -> Unit = {}) {
                 scope.launch {
                     val conversation = messages
                         .filterNot { it.text == "Thinking…" }
+                        .dropLast(1)
                         .map { message ->
                             SirajChatMessage(
                                 role = if (message.fromUser) "user" else "assistant",
