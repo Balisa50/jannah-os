@@ -31,8 +31,8 @@ class MainActivity : ComponentActivity() {
             requestedStartDestination = "quran_lock"
         }
         
-        // Schedule alarms every time the app opens
-        PrayerReminderScheduler.scheduleAllForToday(this)
+        // Rebuild enabled schedules when the app is opened again after a force-stop.
+        ScheduleRestorer.restore(this)
 
         setContent {
             JannahTheme {
