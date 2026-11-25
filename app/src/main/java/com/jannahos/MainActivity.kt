@@ -7,6 +7,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.runtime.*
+import androidx.compose.runtime.key
 import androidx.compose.ui.Modifier
 import com.jannahos.ui.JannahApp
 import com.jannahos.ui.OnboardingFlow
@@ -39,7 +40,9 @@ class MainActivity : ComponentActivity() {
                     var onboarded by remember { mutableStateOf(Settings.onboardingComplete(this)) }
                     
                     if (onboarded) {
-                        JannahApp(startDestination = requestedStartDestination)
+                        key(requestedStartDestination) {
+                            JannahApp(startDestination = requestedStartDestination)
+                        }
                     } else {
                         OnboardingFlow(onDone = {
                             Settings.setOnboardingComplete(this)
