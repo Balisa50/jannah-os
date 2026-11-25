@@ -1,8 +1,11 @@
 package com.jannahos.ui.screens
 
+import android.Manifest
 import android.app.Activity
 import android.content.Intent
 import android.speech.RecognizerIntent
+import android.provider.Settings
+import android.net.Uri
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.background
@@ -56,6 +59,8 @@ fun SirajScreen(onNavigate: (String) -> Unit = {}) {
     var input by remember { mutableStateOf("") }
     var pendingDeviceAction by remember { mutableStateOf<SirajDeviceAction?>(null) }
     var pendingActionPrompt by remember { mutableStateOf("") }
+    var pendingPermissionAction by remember { mutableStateOf<SirajDeviceAction?>(null) }
+    var pendingPermissionReason by remember { mutableStateOf("") }
     val messages = remember {
         mutableStateListOf(
             SirajMessage(
@@ -82,7 +87,8 @@ fun SirajScreen(onNavigate: (String) -> Unit = {}) {
             )
             when (decision) {
                 is com.jannahos.siraj.actions.ActionDecision.Blocked -> {
-                    messages.add(SirajMessage(decision.reason, false))
+                    pendingPermissionAction = deviceAction
+                    pendingPermissionReason = decision.reason
                 }
                 com.jannahos.siraj.actions.ActionDecision.NeedsConfirmation -> {
                     pendingDeviceAction = deviceAction
@@ -119,6 +125,30 @@ fun SirajScreen(onNavigate: (String) -> Unit = {}) {
         }
     }
 
+    val notificationPermissionLauncher = rememberLauncherForActivityResult(
+        ActivityResultContracts.RequestPermission()
+    ) { granted ->
+        val action = pendingPermissionAction
+        if (granted && action != null) {
+            val decision = DeviceActionPolicy.evaluate(
+                action = action,
+                capabilities = AndroidDeviceActionExecutor.readCapabilities(context),
+                userConfirmed = false,
+                nowMillis = System.currentTimeMillis()
+            )
+            if (decision == com.jannahos.siraj.actions.ActionDecision.NeedsConfirmation) {
+                pendingDeviceAction = action
+                pendingActionPrompt = "Confirm the requested SIRAJ action?"
+                pendingPermissionAction = null
+                pendingPermissionReason = ""
+            } else if (decision is com.jannahos.siraj.actions.ActionDecision.Blocked) {
+                pendingPermissionReason = decision.reason
+            }
+        } else if (!granted) {
+            pendingPermissionReason = "Notification permission was not granted. No action was taken."
+        }
+    }
+
     val speechLauncher = rememberLauncherForActivityResult(
         ActivityResultContracts.StartActivityForResult()
     ) { result ->
@@ -131,6 +161,45 @@ fun SirajScreen(onNavigate: (String) -> Unit = {}) {
         if (!spokenRequest.isNullOrBlank()) {
             submit(spokenRequest)
         }
+    }
+
+    fun openPermissionSettings(action: SirajDeviceAction) {
+        val capabilities = AndroidDeviceActionExecutor.readCapabilities(context)
+        val needsNotificationPermission =
+            !capabilities.notificationsAllowed &&
+                (action is SirajDeviceAction.ScheduleReminder || action is SirajDeviceAction.SetQuranLock)
+
+        if (needsNotificationPermission) {
+            notificationPermissionLauncher.launch(Manifest.permission.POST_NOTIFICATIONS)
+            return
+        }
+
+        val settingsIntent = when {
+            action is SirajDeviceAction.SetPrayerLock &&
+                !capabilities.accessibilityServiceEnabled ->
+                Intent(Settings.ACTION_ACCESSIBILITY_SETTINGS)
+
+            action is SirajDeviceAction.SetDoNotDisturb &&
+                !capabilities.notificationPolicyAccess ->
+                Intent(Settings.ACTION_NOTIFICATION_POLICY_ACCESS_SETTINGS)
+
+            (action is SirajDeviceAction.ScheduleReminder ||
+                action is SirajDeviceAction.SetQuranLock ||
+                action is SirajDeviceAction.SetBedtimeLock) &&
+                !capabilities.exactAlarmsAllowed ->
+                Intent(Settings.ACTION_REQUEST_SCHEDULE_EXACT_ALARM).apply {
+                    data = Uri.parse("package:${context.packageName}")
+                }
+
+            else -> Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS).apply {
+                data = Uri.parse("package:${context.packageName}")
+            }
+        }
+
+        runCatching { context.startActivity(settingsIntent) }
+            .onFailure {
+                messages.add(SirajMessage("Android settings could not be opened. Open this app's settings manually and grant the required access.", false))
+            }
     }
 
     fun startVoiceInput() {
@@ -205,6 +274,32 @@ fun SirajScreen(onNavigate: (String) -> Unit = {}) {
                     }
                 ) {
                     Text("Cancel", color = JannahColors.Muted)
+                }
+            },
+            containerColor = JannahColors.Surface
+        )
+    }
+
+    val actionNeedingPermission = pendingPermissionAction
+    if (actionNeedingPermission != null) {
+        AlertDialog(
+            onDismissRequest = {
+                pendingPermissionAction = null
+                pendingPermissionReason = ""
+            },
+            title = { Text("Permission needed", fontFamily = FontFamily.Serif, fontWeight = FontWeight.Bold) },
+            text = { Text(pendingPermissionReason, color = JannahColors.Body) },
+            confirmButton = {
+                TextButton(onClick = { openPermissionSettings(actionNeedingPermission) }) {
+                    Text("Open settings", color = JannahColors.OrangeDeep)
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = {
+                    pendingPermissionAction = null
+                    pendingPermissionReason = ""
+                }) {
+                    Text("Not now", color = JannahColors.Muted)
                 }
             },
             containerColor = JannahColors.Surface
