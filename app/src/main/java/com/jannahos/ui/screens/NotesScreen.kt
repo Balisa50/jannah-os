@@ -38,7 +38,7 @@ fun NotesScreen(onBack: () -> Unit) {
     var text by remember { mutableStateOf("") }
     var refresh by remember { mutableStateOf(0) }
     val ignore = refresh
-    val entries = remember(refresh) { runCatching { store?.recent(50) ?: emptyList() }.getOrDefault(emptyList()) }
+    val entries = remember(refresh) { runCatching { store?.recent(50, tag = "note") ?: emptyList() }.getOrDefault(emptyList()) }
     
     val dayFmt = SimpleDateFormat("EEE d MMM · HH:mm", Locale.getDefault())
 
