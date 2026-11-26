@@ -40,13 +40,24 @@ jobs:
       - name: Assemble debug APK
         run: ./gradlew assembleDebug
 
-      - name: Report APK contents and size
+      - name: Verify packaged assets and report APK size
         shell: bash
         run: |
+          APK="$(find app/build/outputs/apk/debug -maxdepth 1 -name '*.apk' -print -quit)"
+          test -n "$APK"
+          ASSETS="$(unzip -Z1 "$APK")"
+          echo "$ASSETS" | grep -Fxq "assets/hadiths_merged.bin" || {
+            echo "ERROR: compressed Hadith asset is missing from the APK"
+            exit 1
+          }
+          if echo "$ASSETS" | grep -Fxq "assets/hadiths_merged.json"; then
+            echo "ERROR: raw Hadith JSON must not be packaged"
+            exit 1
+          fi
           echo "=== APK file size ==="
-          du -h app/build/outputs/apk/debug/*.apk
+          du -h "$APK"
           echo "=== Largest packaged files ==="
-          unzip -l app/build/outputs/apk/debug/*.apk | sort -nr | head -20
+          unzip -l "$APK" | sort -nr | head -20
 
       - name: Build optimized release bundle
         run: ./gradlew bundleRelease
