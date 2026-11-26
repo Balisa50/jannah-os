@@ -8,6 +8,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.DateRange
 import androidx.compose.material.icons.filled.Home
 import androidx.compose.material.icons.filled.Menu
+import androidx.compose.material.icons.filled.Notifications
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -25,10 +26,11 @@ import com.jannahos.ui.theme.JannahType
 
 private data class Tab(val route: String, val label: String, val icon: ImageVector)
 private val TABS = listOf(
-    Tab("today", "SIRAJ", Icons.Default.Home),
-    Tab("pray",  "Prayer", Icons.Default.DateRange),
+    Tab("siraj", "SIRAJ", Icons.Default.Home),
+    Tab("today", "Today", Icons.Default.DateRange),
+    Tab("pray", "Prayer", Icons.Default.Notifications),
     Tab("quran", "Quran", Icons.Default.Menu),
-    Tab("you",   "You",   Icons.Default.Person)
+    Tab("you", "You", Icons.Default.Person)
 )
 private val TAB_ROUTES: Set<String> = TABS.map { it.route }.toSet()
 
@@ -38,10 +40,10 @@ private fun NavBackStackEntry.isTab(): Boolean {
 }
 
 @Composable
-fun JannahApp(startDestination: String = "today") {
+fun JannahApp(startDestination: String = "siraj") {
     val nav = rememberNavController()
     val backStack by nav.currentBackStackEntryAsState()
-    val currentRoute = backStack?.destination?.route ?: "today"
+    val currentRoute = backStack?.destination?.route ?: "siraj"
     val showBottomBar = currentRoute in TAB_ROUTES
 
     val goTo: (String) -> Unit = { route ->
@@ -89,12 +91,13 @@ fun JannahApp(startDestination: String = "today") {
             enterTransition = { fadeIn(tween(120)) },
             exitTransition = { fadeOut(tween(120)) }
         ) {
-            composable("today") { SirajScreen(onNavigate = goTo) }
+            composable("siraj") { SirajScreen(onNavigate = goTo) }
+            composable("today") { TodayScreen(onNavigate = goTo) }
             composable("siraj_ai") { SirajAiSettingsScreen(onBack = { nav.popBackStack() }) }
             composable("pray") { PrayScreen() }
             composable("quran_lock") {
                 QuranLockScreen(onRelease = {
-                    nav.navigate("today") {
+                    nav.navigate("siraj") {
                         popUpTo("quran_lock") { inclusive = true }
                         launchSingleTop = true
                     }

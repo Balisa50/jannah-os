@@ -83,7 +83,9 @@ fun TodayScreen(onNavigate: (String) -> Unit = {}) {
             }
         }
 
-        Column(Modifier.fillMaxWidth().padding(horizontal = 22.dp).padding(top = 64.dp, bottom = 32.dp)) {
+        Column(Modifier.fillMaxWidth().padding(horizontal = 22.dp).padding(top = 40.dp, bottom = 28.dp)) {
+            Text("YOUR DAY", style = JannahType.eyebrow, color = OrangeDeep)
+            Spacer(Modifier.height(8.dp))
             Text(greeting, fontFamily = FontFamily.Serif, fontSize = 36.sp, fontWeight = FontWeight.Bold, color = Ink)
             if (userName.isNotBlank()) {
                 Text("$userName.", fontFamily = FontFamily.Serif, fontSize = 36.sp, fontWeight = FontWeight.Bold, color = Ink)

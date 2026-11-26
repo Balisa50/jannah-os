@@ -57,24 +57,24 @@ fun MushafPageScreen(startPage: Int, endPage: Int = 604, isKhatm: Boolean = fals
                 Row(
                     Modifier
                         .fillMaxWidth()
-                        .background(JannahColors.Orange)
+                        .background(JannahColors.Surface)
                         .windowInsetsPadding(WindowInsets.statusBars)
                         .padding(horizontal = 12.dp, vertical = 6.dp),
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     Box(
-                        Modifier.size(32.dp).clip(CircleShape).background(JannahColors.OrangeDeep).pressClickable { onBack() },
+                        Modifier.size(32.dp).clip(CircleShape).background(JannahColors.OrangeSoft).pressClickable { onBack() },
                         contentAlignment = Alignment.Center
                     ) {
-                        Text("←", fontSize = 16.sp, color = JannahColors.OnOrange, fontWeight = FontWeight.Bold)
+                        Text("←", fontSize = 16.sp, color = JannahColors.OrangeDeep, fontWeight = FontWeight.Bold)
                     }
                     Spacer(Modifier.width(12.dp))
-                    Text("Quran", fontFamily = FontFamily.Serif, fontSize = 18.sp, fontWeight = FontWeight.Bold, color = JannahColors.OnOrange)
+                    Text("Quran", fontFamily = FontFamily.Serif, fontSize = 18.sp, fontWeight = FontWeight.Bold, color = JannahColors.Ink)
                     
                     Spacer(Modifier.weight(1f))
                     
                     if (isKhatm) {
-                        Text("Today's Portion", style = JannahType.micro, color = JannahColors.OnOrange, fontWeight = FontWeight.Bold)
+                        Text("TODAY'S PORTION", style = JannahType.micro, color = JannahColors.OrangeDeep, fontWeight = FontWeight.Bold)
                     }
                 }
 
@@ -108,14 +108,14 @@ fun MushafPageScreen(startPage: Int, endPage: Int = 604, isKhatm: Boolean = fals
                 Box(
                     Modifier
                         .fillMaxWidth()
-                        .background(JannahColors.Orange)
+                        .background(JannahColors.Surface)
                         .windowInsetsPadding(WindowInsets.navigationBars)
                         .padding(vertical = 8.dp),
                     contentAlignment = Alignment.Center
                 ) {
                     Text(
                         if (isKhatm) "Page $currentRealPage of $endPage" else "Page $currentRealPage of $endPage (${pagerState.currentPage + 1} / $pageCount)",
-                        style = JannahType.micro, color = JannahColors.OnOrange, fontWeight = FontWeight.Bold
+                        style = JannahType.micro, color = JannahColors.Muted, fontWeight = FontWeight.Bold
                     )
                 }
             }

@@ -59,7 +59,9 @@ fun PrayScreen() {
     val countdown = String.format(Locale.US, "%02d:%02d:%02d", diffMs / 3600000, (diffMs / 60000) % 60, (diffMs / 1000) % 60)
 
     Column(modifier = Modifier.fillMaxSize().verticalScroll(rememberScrollState()).background(JannahColors.Cream)) {
-        Column(Modifier.padding(horizontal = JannahSpacing.gutter).padding(top = 64.dp, bottom = 32.dp)) {
+        Column(Modifier.padding(horizontal = JannahSpacing.gutter).padding(top = 40.dp, bottom = 28.dp)) {
+            Text("PRAYER TIMES", style = JannahType.eyebrow, color = JannahColors.OrangeDeep)
+            Spacer(Modifier.height(8.dp))
             Text("Prayer", fontFamily = FontFamily.Serif, fontSize = 36.sp, fontWeight = FontWeight.Bold, color = JannahColors.Ink)
             Spacer(Modifier.height(4.dp))
             Text("Today for your location", style = JannahType.caption, color = JannahColors.Muted)

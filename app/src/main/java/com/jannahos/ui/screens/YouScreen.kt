@@ -28,8 +28,12 @@ fun YouScreen(onNavigate: (String) -> Unit = {}) {
     val name = Settings.displayName(ctx)
 
     Column(modifier = Modifier.fillMaxSize().verticalScroll(rememberScrollState()).background(JannahColors.Cream)) {
-        Column(Modifier.padding(horizontal = JannahSpacing.gutter).padding(top = 64.dp, bottom = 32.dp)) {
+        Column(Modifier.padding(horizontal = JannahSpacing.gutter).padding(top = 40.dp, bottom = 24.dp)) {
+            Text("YOUR SPACE", style = JannahType.eyebrow, color = JannahColors.OrangeDeep)
+            Spacer(Modifier.height(8.dp))
             Text(if (name.isBlank()) "You" else name, fontFamily = FontFamily.Serif, fontSize = 36.sp, fontWeight = FontWeight.Bold, color = JannahColors.Ink)
+            Spacer(Modifier.height(6.dp))
+            Text("Your private space for routines, reflection and settings.", style = JannahType.bodySmall, color = JannahColors.Muted, lineHeight = 20.sp)
         }
 
         Column(Modifier.padding(horizontal = JannahSpacing.gutter)) {

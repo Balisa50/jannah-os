@@ -61,9 +61,11 @@ fun SanctuaryScreen(onExit: () -> Unit) {
                 horizontalAlignment = Alignment.CenterHorizontally,
                 verticalArrangement = Arrangement.Center
             ) {
-                Text("Sanctuary", fontFamily = FontFamily.Serif, fontSize = 48.sp, fontWeight = FontWeight.Bold, color = JannahColors.Ink)
+                Text("SIRAJ · FOCUS", style = JannahType.eyebrow, color = JannahColors.OrangeDeep)
+                Spacer(Modifier.height(10.dp))
+                Text("Sanctuary", fontFamily = FontFamily.Serif, fontSize = 42.sp, fontWeight = FontWeight.Bold, color = JannahColors.Ink)
                 Spacer(Modifier.height(8.dp))
-                Text("Silence the noise. DND will activate.", fontFamily = FontFamily.Serif, fontStyle = FontStyle.Italic, fontSize = 18.sp, color = JannahColors.Orange, textAlign = TextAlign.Center)
+                Text("Make room for what matters. Do Not Disturb activates when you begin.", fontFamily = FontFamily.Serif, fontStyle = FontStyle.Italic, fontSize = 17.sp, color = JannahColors.OrangeDeep, textAlign = TextAlign.Center, lineHeight = 25.sp)
                 
                 Spacer(Modifier.height(48.dp))
                 
@@ -105,7 +107,7 @@ fun SanctuaryScreen(onExit: () -> Unit) {
                 horizontalAlignment = Alignment.CenterHorizontally,
                 verticalArrangement = Arrangement.Center
             ) {
-                Text("DO NOT DISTURB ACTIVE", style = JannahType.eyebrow, color = JannahColors.OrangeDeep)
+                Text("SIRAJ · SANCTUARY ACTIVE", style = JannahType.eyebrow, color = JannahColors.OrangeDeep)
                 Spacer(Modifier.height(24.dp))
                 
                 val mm = remainingSeconds / 60

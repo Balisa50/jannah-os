@@ -20,7 +20,7 @@ import com.jannahos.ui.OnboardingFlow
 import com.jannahos.ui.theme.JannahTheme
 
 class MainActivity : ComponentActivity() {
-    private var requestedStartDestination by mutableStateOf("today")
+    private var requestedStartDestination by mutableStateOf("siraj")
 
     override fun onNewIntent(intent: android.content.Intent) {
         super.onNewIntent(intent)
