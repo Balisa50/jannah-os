@@ -6,29 +6,17 @@ plugins {
     id("org.jetbrains.kotlin.plugin.compose")
 }
 
-val sourceAssets = layout.projectDirectory.dir("src/main/assets")
-val compressedHadithAssets = layout.buildDirectory.dir("generated/siraj-assets")
+val hadithSource = layout.projectDirectory.file("src/main/hadiths/hadiths_merged.json")
+val compressedHadithAssets = layout.buildDirectory.dir("generated/hadith-assets")
 val compressHadithAsset by tasks.registering {
-    inputs.dir(sourceAssets)
-    outputs.dir(compressedHadithAssets)
+    val compressedOutput = compressedHadithAssets.map { it.file("hadiths_merged.json.gz") }
+    inputs.file(hadithSource)
+    outputs.file(compressedOutput)
     doLast {
-        val sourceDirectory = sourceAssets.asFile
-        val outputDirectory = compressedHadithAssets.get().asFile
-        outputDirectory.deleteRecursively()
-        outputDirectory.mkdirs()
-
-        sourceDirectory.walkTopDown()
-            .filter { it.isFile && it.name != "hadiths_merged.json" }
-            .forEach { sourceFile ->
-                val target = outputDirectory.resolve(sourceFile.relativeTo(sourceDirectory).path)
-                target.parentFile.mkdirs()
-                sourceFile.copyTo(target, overwrite = true)
-            }
-
-        val sourceHadith = sourceDirectory.resolve("hadiths_merged.json")
-        val compressedHadith = outputDirectory.resolve("hadiths_merged.json.gz")
-        sourceHadith.inputStream().use { input ->
-            GZIPOutputStream(compressedHadith.outputStream().buffered()).use { gzip ->
+        val output = compressedOutput.get().asFile
+        output.parentFile.mkdirs()
+        hadithSource.asFile.inputStream().use { input ->
+            GZIPOutputStream(output.outputStream().buffered()).use { gzip ->
                 input.copyTo(gzip)
             }
         }
@@ -49,7 +37,7 @@ android {
 
     sourceSets {
         getByName("main") {
-            assets.setSrcDirs(listOf(compressedHadithAssets))
+            assets.srcDir(compressedHadithAssets)
         }
     }
 
