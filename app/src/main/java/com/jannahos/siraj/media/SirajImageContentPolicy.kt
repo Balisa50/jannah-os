@@ -5,7 +5,9 @@ object SirajImageContentPolicy {
     private val restrictedTerms = listOf(
         "quran", "qur'an", "hadith", "allah", "prophet muhammad",
         "salah", "surah", "ayah", "fiqh", "fatwa", "dua", "adhkar",
-        "bismillah", "alhamdulillah", "islamic"
+        "bismillah", "alhamdulillah", "islamic", "islam", "muslim",
+        "muhammad", "prayer", "mosque", "ramadan", "fasting",
+        "verse", "scripture", "quranic"
     )
 
     fun requiresIslamicReview(text: String): Boolean {

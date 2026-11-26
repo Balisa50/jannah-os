@@ -330,7 +330,11 @@ fun SirajScreen(onNavigate: (String) -> Unit = {}) {
 
             is com.jannahos.siraj.core.SirajRoute.GeneralConversation -> {
                 val imageText = pendingImageText.takeIf { imageTextConsentGranted }
-                if (imageText != null && SirajImageContentPolicy.requiresIslamicReview(imageText)) {
+                if (
+                    imageText != null &&
+                    (SirajImageContentPolicy.requiresIslamicReview(imageText) ||
+                        SirajConversationPolicy.isReligiousRequest("${route.prompt} ${imageText}"))
+                ) {
                     messages.add(
                         SirajMessage(
                             "This image text contains Arabic or Islamic references. I won't send it to a general-purpose AI. SIRAJ's verified Islamic research workflow is not ready yet.",
@@ -474,14 +478,14 @@ fun SirajScreen(onNavigate: (String) -> Unit = {}) {
                     val text = extracted.getOrDefault("").trim()
                     if (text.isBlank()) {
                         messages.add(
-                            SirajMessage("I couldn't find readable text in that image.", false, localOnly = true)
+                            SirajMessage("I couldn't find readable Latin-script text. Arabic-script OCR is not supported yet.", false, localOnly = true)
                         )
                     } else {
                         pendingImageText = text
                         val restricted = SirajImageContentPolicy.requiresIslamicReview(text)
                         messages.add(
                             SirajMessage(
-                                "Text extracted on-device (the image was not uploaded):\n${text.take(1400)}${if (text.length > 1400) "…" else ""}",
+                                "Latin-script text extracted on-device (the image was not uploaded):\n${text.take(1400)}${if (text.length > 1400) "…" else ""}",
                                 false,
                                 localOnly = true
                             )
@@ -603,7 +607,7 @@ fun SirajScreen(onNavigate: (String) -> Unit = {}) {
             title = { Text("Use extracted text with AI?") },
             text = {
                 Text(
-                    "Only the text extracted on this device will be sent to your configured AI provider when you ask a question. The original image stays on this device. Continue only if the text is safe to share.",
+                    "This recognizer reads Latin-script text; Arabic-script OCR is not supported yet. Only extracted text will be sent to your configured AI provider when you ask a question. The original image stays on this device. Continue only if the text is safe to share.",
                     color = JannahColors.Body
                 )
             },
