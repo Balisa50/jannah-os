@@ -26,6 +26,13 @@ import kotlinx.coroutines.delay
 @Composable
 fun SanctuaryScreen(onExit: () -> Unit) {
     val ctx = LocalContext.current
+
+    // Always restore the user's previous notification filter if this screen is
+    // removed unexpectedly (for example, navigation or activity teardown).
+    DisposableEffect(ctx) {
+        onDispose { DndHelper.disableDnd(ctx) }
+    }
+
     var selectedMinutes by remember { mutableStateOf<Int?>(null) }
     var remainingSeconds by remember { mutableLongStateOf(0L) }
     var tapCount by remember { mutableIntStateOf(0) }
