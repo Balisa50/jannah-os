@@ -181,14 +181,17 @@ object BackupManager {
         database: android.database.sqlite.SQLiteDatabase,
         table: String,
         rows: JSONArray,
-        valuesFor: (JSONObject) -> android.content.ContentValues
+        valuesFor: (JSONObject) -> android.content.ContentValues,
+        conflictAlgorithm: Int = android.database.sqlite.SQLiteDatabase.CONFLICT_ABORT
     ) {
         database.beginTransaction()
         try {
             database.delete(table, null, null)
             for (index in 0 until rows.length()) {
                 val values = valuesFor(rows.getJSONObject(index))
-                database.insertOrThrow(table, null, values)
+                database.insertWithOnConflict(table, null, values, conflictAlgorithm).also { rowId ->
+                    check(rowId != -1L) { "Could not restore $table record." }
+                }
             }
             database.setTransactionSuccessful()
         } finally {
@@ -246,7 +249,7 @@ object BackupManager {
                     put("kind", o.getString("kind"))
                     put("created", o.getLong("created"))
                 }
-            }
+            }, android.database.sqlite.SQLiteDatabase.CONFLICT_REPLACE)
 
             val slDb = SleepLog(context).writableDatabase
             restoreTable(slDb, "sleeps", root.getJSONArray("sleeps")) { o ->
@@ -257,7 +260,7 @@ object BackupManager {
                     put("quality", o.getInt("quality"))
                     put("created", System.currentTimeMillis())
                 }
-            }
+            }, android.database.sqlite.SQLiteDatabase.CONFLICT_REPLACE)
 
             val bmDb = QuranBookmarkStore(context).writableDatabase
             restoreTable(bmDb, "bookmarks", root.getJSONArray("bookmarks")) { o ->
