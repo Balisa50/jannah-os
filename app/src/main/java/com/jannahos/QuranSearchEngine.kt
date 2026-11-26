@@ -101,7 +101,7 @@ object QuranSearchEngine {
                         val hit = HadithResult(collection, number, arabic, english, score)
                         if (best.size < 50) {
                             best.add(hit)
-                        } else if (score > best.peek().score) {
+                        } else if (score > (best.peek()?.score ?: Int.MIN_VALUE)) {
                             best.poll()
                             best.add(hit)
                         }

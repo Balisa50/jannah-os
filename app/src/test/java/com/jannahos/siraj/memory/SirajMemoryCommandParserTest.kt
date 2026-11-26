@@ -14,7 +14,7 @@ class SirajMemoryCommandParserTest {
     }
 
     @Test fun parsesRememberThatPhrase() {
-        assertEquals("My project is called SIRAJ", SirajMemoryCommandParser.rememberContent(
+        assertEquals("my project is called SIRAJ", SirajMemoryCommandParser.rememberContent(
             "Remember that my project is called SIRAJ"
         ))
     }
