@@ -1,6 +1,2 @@
-# Keep Adhan library intact
--keep class com.batoulapps.adhan.** { *; }
--dontwarn com.batoulapps.adhan.**
-
-# Keep Kotlin coroutines
--keepnames class kotlinx.coroutines.** { *; }
+# Keep only narrowly scoped compatibility rules here.
+# R8 can otherwise shrink and optimise application and dependency code.

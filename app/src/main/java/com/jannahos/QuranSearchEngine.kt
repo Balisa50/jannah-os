@@ -4,6 +4,7 @@ import android.content.Context
 import android.util.JsonReader
 import android.util.JsonToken
 import java.io.InputStreamReader
+import java.util.zip.GZIPInputStream
 import java.util.PriorityQueue
 
 object QuranSearchEngine {
@@ -75,7 +76,8 @@ object QuranSearchEngine {
         val best = PriorityQueue<HadithResult>(50, compareBy { it.score })
 
         return try {
-            ctx.applicationContext.assets.open("hadiths_merged.json").use { input ->
+            ctx.applicationContext.assets.open("hadiths_merged.json.gz").use { compressed ->
+                GZIPInputStream(compressed).use { input ->
                 JsonReader(InputStreamReader(input, Charsets.UTF_8)).use { reader ->
                     reader.beginArray()
                     while (reader.hasNext()) {
@@ -107,6 +109,7 @@ object QuranSearchEngine {
                         }
                     }
                     reader.endArray()
+                }
                 }
             }
             best.sortedByDescending { it.score }

@@ -2,6 +2,7 @@ package com.jannahos
 
 import android.content.Context
 import org.json.JSONArray
+import java.util.zip.GZIPInputStream
 
 object HadithStore {
     data class Hadith(val collection: String, val number: Int, val arabic: String, val english: String)
@@ -12,7 +13,9 @@ object HadithStore {
         cache?.let { return it }
         val list = mutableListOf<Hadith>()
         try {
-            val json = ctx.assets.open("hadiths_merged.json").bufferedReader().use { it.readText() }
+            val json = ctx.assets.open("hadiths_merged.json.gz").use { compressed ->
+                GZIPInputStream(compressed).bufferedReader().use { it.readText() }
+            }
             val arr = JSONArray(json)
             for (i in 0 until arr.length()) {
                 val obj = arr.getJSONObject(i)

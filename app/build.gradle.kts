@@ -4,6 +4,23 @@ plugins {
     id("org.jetbrains.kotlin.plugin.compose")
 }
 
+val compressedHadithAssets = layout.buildDirectory.dir("generated/hadith-assets")
+val compressHadithAsset by tasks.registering {
+    val source = layout.projectDirectory.file("src/main/assets/hadiths_merged.json")
+    val destination = compressedHadithAssets.map { it.file("hadiths_merged.json.gz") }
+    inputs.file(source)
+    outputs.file(destination)
+    doLast {
+        val output = destination.get().asFile
+        output.parentFile.mkdirs()
+        source.asFile.inputStream().use { input ->
+            java.util.zip.GZIPOutputStream(output.outputStream().buffered()).use { gzip ->
+                input.copyTo(gzip)
+            }
+        }
+    }
+}
+
 android {
     namespace = "com.jannahos"
     compileSdk = 36
@@ -16,12 +33,21 @@ android {
         versionName = "1.0.1"
     }
 
+    sourceSets {
+        getByName("main") {
+            assets {
+                exclude("hadiths_merged.json")
+                srcDir(compressedHadithAssets)
+            }
+        }
+    }
+
     buildTypes {
         release {
             // Release signing is intentionally not configured in source control.
             // Configure it locally or through protected CI secrets before distribution.
-            isMinifyEnabled = false
-            isShrinkResources = false
+            isMinifyEnabled = true
+            isShrinkResources = true
             proguardFiles(
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro"
@@ -64,4 +90,9 @@ dependencies {
     implementation("androidx.exifinterface:exifinterface:1.3.7")
 
     testImplementation("junit:junit:4.13.2")
+}
+
+
+tasks.named("preBuild").configure {
+    dependsOn(compressHadithAsset)
 }

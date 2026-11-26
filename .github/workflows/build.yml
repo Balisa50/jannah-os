@@ -40,23 +40,29 @@ jobs:
       - name: Assemble debug APK
         run: ./gradlew assembleDebug
 
-      - name: Assemble unsigned release APK and Android App Bundle
-        run: ./gradlew assembleRelease bundleRelease
+      - name: Report APK contents and size
+        shell: bash
+        run: |
+          echo "=== APK file size ==="
+          du -h app/build/outputs/apk/debug/*.apk
+          echo "=== Largest packaged files ==="
+          unzip -l app/build/outputs/apk/debug/*.apk | sort -nr | head -20
+
+      - name: Build optimized release bundle
+        run: ./gradlew bundleRelease
+
+      - name: Upload release Android App Bundle
+        uses: actions/upload-artifact@v4
+        with:
+          name: siraj-release-aab
+          path: app/build/outputs/bundle/release/*.aab
+          if-no-files-found: error
+          retention-days: 14
 
       - name: Upload debug APK
         uses: actions/upload-artifact@v4
         with:
           name: siraj-debug-apk
           path: app/build/outputs/apk/debug/*.apk
-          if-no-files-found: error
-          retention-days: 14
-
-      - name: Upload unsigned release candidates
-        uses: actions/upload-artifact@v4
-        with:
-          name: siraj-release-candidates
-          path: |
-            app/build/outputs/apk/release/*.apk
-            app/build/outputs/bundle/release/*.aab
           if-no-files-found: error
           retention-days: 14
