@@ -6,7 +6,7 @@ plugins {
     id("org.jetbrains.kotlin.plugin.compose")
 }
 
-val hadithSource = layout.projectDirectory.file("src/main/hadiths/hadiths_merged.json")
+val hadithSource = layout.projectDirectory.file("../data/hadiths_merged.json")
 val compressedHadithAssets = layout.buildDirectory.dir("generated/hadith-assets")
 val compressHadithAsset by tasks.registering {
     val compressedOutput = compressedHadithAssets.map { it.file("hadiths_merged.json.gz") }
