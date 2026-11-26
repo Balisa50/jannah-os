@@ -28,10 +28,12 @@ object TafsirEvidenceRetriever {
     ): EvidenceExcerpt? {
         if (surah !in 1..114 || ayah < 1 || text.isBlank()) return null
         return EvidenceExcerpt(
-            reference = IslamicReference.ScholarlyWork(
+            reference = IslamicReference.Tafsir(
                 sourceId = SOURCE_ID,
                 author = "Hafiz Ibn Kathir",
-                title = "Tafsir Ibn Kathir"
+                title = "Tafsir Ibn Kathir",
+                surah = surah,
+                ayah = ayah
             ),
             text = text.trim(),
             language = "en"

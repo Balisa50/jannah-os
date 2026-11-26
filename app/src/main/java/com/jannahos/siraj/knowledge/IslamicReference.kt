@@ -35,6 +35,16 @@ sealed interface IslamicReference {
         val page: String? = null,
         val publisher: String? = null
     ) : IslamicReference
+
+    data class Tafsir(
+        override val sourceId: String,
+        val author: String,
+        val title: String,
+        val surah: Int,
+        val ayah: Int,
+        val edition: String? = null,
+        val translator: String? = null
+    ) : IslamicReference
 }
 
 data class EvidenceExcerpt(
