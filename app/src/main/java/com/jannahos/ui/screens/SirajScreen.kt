@@ -77,6 +77,7 @@ fun SirajScreen(onNavigate: (String) -> Unit = {}) {
     var pendingActionPrompt by remember { mutableStateOf("") }
     var pendingPermissionAction by remember { mutableStateOf<SirajDeviceAction?>(null) }
     var pendingPermissionReason by remember { mutableStateOf("") }
+    var showHistoryClearConfirmation by remember { mutableStateOf(false) }
     val messages = remember {
         mutableStateListOf(
             SirajMessage(
@@ -92,6 +93,11 @@ fun SirajScreen(onNavigate: (String) -> Unit = {}) {
         messages.add(SirajMessage(request, true))
         input = ""
 
+        if (request.lowercase() in setOf("clear action history", "delete action history")) {
+            showHistoryClearConfirmation = true
+            return
+        }
+
         if (request.lowercase() in setOf(
                 "action history", "show action history", "recent actions", "show recent actions"
             )
@@ -99,7 +105,7 @@ fun SirajScreen(onNavigate: (String) -> Unit = {}) {
             val history = runCatching { SirajActionHistoryStore(context).recent(8) }
                 .getOrElse { emptyList() }
             val reply = if (history.isEmpty()) {
-                "No approved SIRAJ device actions have been recorded on this device yet."
+                "No SIRAJ device actions have been recorded on this device yet."
             } else {
                 val formatter = SimpleDateFormat("MMM d, HH:mm", Locale.getDefault())
                 "Recent device actions:\n" + history.joinToString("\n") { entry ->
@@ -346,6 +352,49 @@ fun SirajScreen(onNavigate: (String) -> Unit = {}) {
                     )
                 )
             }
+    }
+
+    if (showHistoryClearConfirmation) {
+        AlertDialog(
+            onDismissRequest = { showHistoryClearConfirmation = false },
+            title = {
+                Text(
+                    "Clear action history?",
+                    fontFamily = FontFamily.Serif,
+                    fontWeight = FontWeight.Bold,
+                    color = JannahColors.Ink
+                )
+            },
+            text = {
+                Text(
+                    "This permanently clears the encrypted on-device record of SIRAJ actions. It does not change device settings or cancel reminders.",
+                    color = JannahColors.Body
+                )
+            },
+            confirmButton = {
+                TextButton(
+                    onClick = {
+                        val cleared = runCatching {
+                            SirajActionHistoryStore(context).clear()
+                        }.isSuccess
+                        messages.add(
+                            SirajMessage(
+                                if (cleared) "Action history cleared. Device settings and reminders were not changed."
+                                else "I couldn't clear the action history. No device settings were changed.",
+                                false
+                            )
+                        )
+                        showHistoryClearConfirmation = false
+                    }
+                ) { Text("Clear history", color = JannahColors.Danger) }
+            },
+            dismissButton = {
+                TextButton(onClick = { showHistoryClearConfirmation = false }) {
+                    Text("Cancel", color = JannahColors.Muted)
+                }
+            },
+            containerColor = JannahColors.Surface
+        )
     }
 
     val actionToConfirm = pendingDeviceAction

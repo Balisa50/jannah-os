@@ -104,13 +104,17 @@ object BackupManager {
             }
             root.put("bookmarks", bmArr)
 
+            val backupBytes = root.toString(2).toByteArray(Charsets.UTF_8)
+            if (backupBytes.size.toLong() > MAX_BACKUP_BYTES) {
+                return Result(false, "Backup exceeds the 25 MB limit and was not written.")
+            }
             val destination = outputFile.absoluteFile
             val parent = destination.parentFile ?: error("Backup destination has no parent directory.")
             if (!parent.exists() && !parent.mkdirs()) error("Could not create the backup directory.")
             val temporary = File(parent, destination.name + ".siraj-tmp")
             try {
                 FileOutputStream(temporary).use { stream ->
-                    stream.write(root.toString(2).toByteArray())
+                    stream.write(backupBytes)
                     stream.fd.sync()
                 }
                 try {
@@ -122,7 +126,7 @@ object BackupManager {
                 if (temporary.exists()) temporary.delete()
             }
 
-            Result(true, "Partial backup created: ${wakeArr.length()} wake events, ${strArr.length()} struggle entries, ${fastArr.length()} fasts, ${sleepArr.length()} sleeps and ${bmArr.length()} bookmarks. Other SIRAJ data is not included.")
+            Result(true, "Partial, unencrypted JSON backup created: ${wakeArr.length()} wake events, ${strArr.length()} struggle entries, ${fastArr.length()} fasts, ${sleepArr.length()} sleeps and ${bmArr.length()} bookmarks. Other SIRAJ data is not included. Keep this file private; it is not encrypted.")
         } catch (e: Exception) {
             Result(false, "Export failed: ${e.message}")
         }
