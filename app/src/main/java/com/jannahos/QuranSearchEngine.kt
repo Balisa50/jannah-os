@@ -76,7 +76,7 @@ object QuranSearchEngine {
         val best = PriorityQueue<HadithResult>(50, compareBy { it.score })
 
         return try {
-            ctx.applicationContext.assets.open("hadiths_merged.json.gz").use { compressed ->
+            ctx.applicationContext.assets.open("hadiths_merged.bin").use { compressed ->
                 GZIPInputStream(compressed).use { input ->
                 JsonReader(InputStreamReader(input, Charsets.UTF_8)).use { reader ->
                     reader.beginArray()
