@@ -100,6 +100,16 @@ fun MushafPageScreen(startPage: Int, endPage: Int = 604, isKhatm: Boolean = fals
                                 modifier = Modifier.fillMaxSize(),
                                 contentScale = ContentScale.Fit
                             )
+                        } else {
+                            Column(
+                                Modifier.fillMaxSize().padding(24.dp),
+                                horizontalAlignment = Alignment.CenterHorizontally,
+                                verticalArrangement = Arrangement.Center
+                            ) {
+                                Text("Page unavailable", fontFamily = FontFamily.Serif, fontSize = 22.sp, fontWeight = FontWeight.Bold, color = JannahColors.Ink)
+                                Spacer(Modifier.height(8.dp))
+                                Text("Page $realPageNum could not be loaded from the offline Quran pages.", style = JannahType.bodySmall, color = JannahColors.Muted, textAlign = androidx.compose.ui.text.style.TextAlign.Center)
+                            }
                         }
                     }
                 }

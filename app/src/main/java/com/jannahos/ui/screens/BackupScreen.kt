@@ -274,6 +274,14 @@ fun BackupScreen(onBack: () -> Unit) {
                 }
             }
 
+            Spacer(Modifier.height(JannahSpacing.s))
+            Text(
+                "This is a partial backup, not a full device backup. Notes, Diary entries and some other SIRAJ data are not included yet.",
+                style = JannahType.bodySmall,
+                color = JannahColors.Danger,
+                lineHeight = 20.sp
+            )
+
             Spacer(Modifier.height(JannahSpacing.l))
             Box(
                 Modifier.fillMaxWidth().height(56.dp)

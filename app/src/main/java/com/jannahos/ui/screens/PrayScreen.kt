@@ -29,8 +29,12 @@ import java.util.Locale
 @Composable
 fun PrayScreen() {
     val ctx = LocalContext.current
+    var citySelected by remember { mutableStateOf(CityStore.useCity(ctx)) }
     var times by remember {
-        mutableStateOf(SalahScheduler.todayTimes(ctx, Settings.lat(ctx), Settings.lon(ctx)))
+        mutableStateOf(
+            if (citySelected) SalahScheduler.todayTimes(ctx, Settings.lat(ctx), Settings.lon(ctx))
+            else emptyMap()
+        )
     }
     var dateKey by remember { mutableStateOf(SimpleDateFormat("yyyy-MM-dd", Locale.US).format(Date())) }
     var savedLat by remember { mutableDoubleStateOf(Settings.lat(ctx)) }
@@ -45,11 +49,22 @@ fun PrayScreen() {
             val freshKey = SimpleDateFormat("yyyy-MM-dd", Locale.US).format(Date(fresh))
             val currentLat = Settings.lat(ctx)
             val currentLon = Settings.lon(ctx)
-            if (freshKey != dateKey || currentLat != savedLat || currentLon != savedLon) {
+            val currentCitySelected = CityStore.useCity(ctx)
+            if (
+                freshKey != dateKey ||
+                currentLat != savedLat ||
+                currentLon != savedLon ||
+                currentCitySelected != citySelected
+            ) {
                 dateKey = freshKey
                 savedLat = currentLat
                 savedLon = currentLon
-                times = SalahScheduler.todayTimes(ctx, currentLat, currentLon)
+                citySelected = currentCitySelected
+                times = if (currentCitySelected) {
+                    SalahScheduler.todayTimes(ctx, currentLat, currentLon)
+                } else {
+                    emptyMap()
+                }
             }
         }
     }
@@ -64,7 +79,7 @@ fun PrayScreen() {
     val countdown = String.format(Locale.US, "%02d:%02d:%02d", diffMs / 3600000, (diffMs / 60000) % 60, (diffMs / 1000) % 60)
 
     Column(modifier = Modifier.fillMaxSize().verticalScroll(rememberScrollState()).background(JannahColors.Cream)) {
-        if (times.isEmpty()) {
+        if (!citySelected || times.isEmpty()) {
             Column(
                 Modifier.fillMaxWidth()
                     .padding(horizontal = JannahSpacing.gutter)
@@ -74,7 +89,7 @@ fun PrayScreen() {
                 Text("PRAYER TIMES", style = JannahType.eyebrow, color = JannahColors.OrangeDeep)
                 Spacer(Modifier.height(12.dp))
                 Text(
-                    "Choose your city first.",
+                    if (citySelected) "Prayer times unavailable." else "Choose your city first.",
                     fontFamily = FontFamily.Serif,
                     fontSize = 30.sp,
                     fontWeight = FontWeight.Bold,
@@ -83,7 +98,7 @@ fun PrayScreen() {
                 )
                 Spacer(Modifier.height(10.dp))
                 Text(
-                    "SIRAJ needs a saved city to calculate today's prayer times. Your selection is used for calculations; continuous location access is not required.",
+                    if (citySelected) "SIRAJ couldn't calculate today's schedule. Check your saved city and prayer calculation method in Settings." else "SIRAJ needs a saved city to calculate today's prayer times. Your selection is used for calculations; continuous location access is not required.",
                     style = JannahType.body,
                     color = JannahColors.Muted,
                     lineHeight = 24.sp
@@ -98,7 +113,7 @@ fun PrayScreen() {
                         .padding(horizontal = 20.dp, vertical = 17.dp),
                     verticalAlignment = Alignment.CenterVertically
                 ) {
-                    Text("Choose city in Settings", style = JannahType.button, color = JannahColors.OnOrange, modifier = Modifier.weight(1f))
+                    Text(if (citySelected) "Open Settings" else "Choose city in Settings", style = JannahType.button, color = JannahColors.OnOrange, modifier = Modifier.weight(1f))
                     Text("→", style = JannahType.title, color = JannahColors.OnOrange)
                 }
             }

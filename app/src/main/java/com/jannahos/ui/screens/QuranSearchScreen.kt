@@ -25,6 +25,7 @@ import com.jannahos.ui.pressClickable
 import com.jannahos.ui.theme.JannahColors
 import com.jannahos.ui.theme.JannahSpacing
 import com.jannahos.ui.theme.JannahType
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.withContext
@@ -43,35 +44,48 @@ fun QuranSearchScreen(onBack: () -> Unit, onNavigateToPage: (Int) -> Unit) {
     var hadithHits by remember { mutableStateOf<List<QuranSearchEngine.HadithResult>>(emptyList()) }
     var loading by remember { mutableStateOf(false) }
     var searched by remember { mutableStateOf(false) }
+    var searchError by remember { mutableStateOf<String?>(null) }
 
     LaunchedEffect(query, searchMode) {
         val q = query.trim()
         if (q.length < 2) {
             quranHits = emptyList()
             hadithHits = emptyList()
+            searchError = null
+            loading = false
             searched = false
             return@LaunchedEffect
         }
-        loading = true
-        delay(400) // Debounce
 
-        withContext(Dispatchers.IO) {
+        loading = true
+        searchError = null
+        delay(400)
+
+        try {
             if (searchMode == "hadith") {
-                val res = QuranSearchEngine.searchHadith(ctx, q)
-                withContext(Dispatchers.Main) {
-                    hadithHits = res
-                    quranHits = emptyList()
+                val results = withContext(Dispatchers.IO) {
+                    QuranSearchEngine.searchHadith(ctx, q)
                 }
+                hadithHits = results
+                quranHits = emptyList()
             } else {
-                val res = QuranSearchEngine.searchQuran(ctx, q)
-                withContext(Dispatchers.Main) {
-                    quranHits = res
-                    hadithHits = emptyList()
+                val results = withContext(Dispatchers.IO) {
+                    QuranSearchEngine.searchQuran(ctx, q)
                 }
+                quranHits = results
+                hadithHits = emptyList()
             }
+            searched = true
+            loading = false
+        } catch (cancelled: CancellationException) {
+            throw cancelled
+        } catch (_: Exception) {
+            quranHits = emptyList()
+            hadithHits = emptyList()
+            searchError = "Search could not be completed. Try again in a moment."
+            searched = true
+            loading = false
         }
-        loading = false
-        searched = true
     }
 
     Column(modifier = Modifier.fillMaxSize().background(JannahColors.Cream)) {
@@ -98,6 +112,10 @@ fun QuranSearchScreen(onBack: () -> Unit, onNavigateToPage: (Int) -> Unit) {
         LazyColumn(state = listState, modifier = Modifier.weight(1f).fillMaxWidth(), contentPadding = PaddingValues(bottom = JannahSpacing.xxl)) {
             if (loading) {
                 item { Text("Searching the local collection…", style = JannahType.bodySmall, color = JannahColors.Muted, modifier = Modifier.padding(JannahSpacing.gutter)) }
+            } else if (searchError != null) {
+                item {
+                    Text(searchError!!, style = JannahType.bodySmall, color = JannahColors.Danger, modifier = Modifier.padding(JannahSpacing.gutter))
+                }
             } else if (searched && quranHits.isEmpty() && hadithHits.isEmpty()) {
                 item {
                     Column(Modifier.fillMaxWidth().padding(horizontal = JannahSpacing.gutter, vertical = JannahSpacing.xl), horizontalAlignment = Alignment.CenterHorizontally) {

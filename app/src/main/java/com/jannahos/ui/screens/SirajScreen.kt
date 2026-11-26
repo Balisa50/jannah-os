@@ -1180,7 +1180,7 @@ fun SirajScreen(onNavigate: (String) -> Unit = {}) {
                     Text("Listen", color = JannahColors.Ink, fontWeight = FontWeight.Medium)
                 }
                 Spacer(Modifier.weight(1f))
-                Text("Voice input · Offline read-aloud", style = JannahType.micro, color = JannahColors.Muted)
+                Text("Android speech · Offline read-aloud", style = JannahType.micro, color = JannahColors.Muted)
             }
         }
     }

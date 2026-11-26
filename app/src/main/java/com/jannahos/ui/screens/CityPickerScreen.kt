@@ -28,6 +28,7 @@ import com.jannahos.ui.pressClickable
 import com.jannahos.ui.theme.JannahColors
 import com.jannahos.ui.theme.JannahSpacing
 import com.jannahos.ui.theme.JannahType
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.withContext
@@ -40,17 +41,28 @@ fun CityPickerScreen(onBack: () -> Unit, onPicked: (String, String) -> Unit) {
     var query by remember { mutableStateOf("") }
     var results by remember { mutableStateOf<List<CitySearchApi.Result>>(emptyList()) }
     var loading by remember { mutableStateOf(false) }
+    var searchError by remember { mutableStateOf<String?>(null) }
 
     LaunchedEffect(query) {
         if (query.length < 2) {
             results = emptyList()
+            searchError = null
             loading = false
             return@LaunchedEffect
         }
         loading = true
+        searchError = null
         delay(400)
-        results = withContext(Dispatchers.IO) { CitySearchApi.search(query) }
-        loading = false
+        try {
+            results = withContext(Dispatchers.IO) { CitySearchApi.search(query) }
+            loading = false
+        } catch (cancelled: CancellationException) {
+            throw cancelled
+        } catch (_: Exception) {
+            results = emptyList()
+            searchError = "City search is unavailable right now. Check your connection or clear the search to browse suggested cities."
+            loading = false
+        }
     }
 
     Column(Modifier.fillMaxSize().background(JannahColors.Cream)) {
@@ -73,6 +85,10 @@ fun CityPickerScreen(onBack: () -> Unit, onPicked: (String, String) -> Unit) {
                     Box(Modifier.fillMaxWidth().padding(JannahSpacing.l), contentAlignment = Alignment.Center) {
                         CircularProgressIndicator(color = JannahColors.Orange)
                     }
+                }
+            } else if (searchError != null) {
+                item {
+                    Text(searchError!!, style = JannahType.bodySmall, color = JannahColors.Danger, modifier = Modifier.padding(vertical = JannahSpacing.m))
                 }
             } else if (query.length >= 2 && results.isEmpty()) {
                 item {

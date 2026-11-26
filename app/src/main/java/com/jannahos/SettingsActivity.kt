@@ -62,7 +62,7 @@ private fun SettingsScreen(onBack: () -> Unit) {
         return
     }
     if (showPermissions) {
-        PermissionSetupScreen(onAllSet = { showPermissions = false })
+        PermissionSetupScreen(onAllSet = { showPermissions = false }, onBack = { showPermissions = false })
         return
     }
 
