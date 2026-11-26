@@ -12,8 +12,8 @@ import androidx.core.app.NotificationCompat
 class FridayKahfReceiver : BroadcastReceiver() {
     override fun onReceive(ctx: Context, intent: Intent) {
         val index = intent.getIntExtra("reminder_index", 0)
-        // Re-arm first so a notification failure cannot stop future Fridays.
-        runCatching { FridayKahfScheduler.scheduleAll(ctx) }
+        // Re-arm only this reminder; the other Friday check-ins must remain armed.
+        runCatching { FridayKahfScheduler.scheduleNext(ctx, index) }
         showNotification(ctx, index)
     }
 
