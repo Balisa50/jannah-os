@@ -6,6 +6,10 @@ import org.json.JSONObject
 import java.io.File
 import java.io.FileInputStream
 import java.io.FileOutputStream
+import java.nio.file.Files
+import java.nio.file.StandardCopyOption.ATOMIC_MOVE
+import java.nio.file.StandardCopyOption.REPLACE_EXISTING
+import java.nio.file.AtomicMoveNotSupportedException
 
 // Partial data export/import. This currently covers preferences, wake events,
 // struggle entries, fasts, sleep records and Quran bookmarks only. Do not
@@ -100,8 +104,22 @@ object BackupManager {
             }
             root.put("bookmarks", bmArr)
 
-            FileOutputStream(outputFile).use { fos ->
-                fos.write(root.toString(2).toByteArray())
+            val destination = outputFile.absoluteFile
+            val parent = destination.parentFile ?: error("Backup destination has no parent directory.")
+            if (!parent.exists() && !parent.mkdirs()) error("Could not create the backup directory.")
+            val temporary = File(parent, destination.name + ".siraj-tmp")
+            try {
+                FileOutputStream(temporary).use { stream ->
+                    stream.write(root.toString(2).toByteArray())
+                    stream.fd.sync()
+                }
+                try {
+                    Files.move(temporary.toPath(), destination.toPath(), ATOMIC_MOVE, REPLACE_EXISTING)
+                } catch (_: AtomicMoveNotSupportedException) {
+                    Files.move(temporary.toPath(), destination.toPath(), REPLACE_EXISTING)
+                }
+            } finally {
+                if (temporary.exists()) temporary.delete()
             }
 
             Result(true, "Partial backup created: ${wakeArr.length()} wake events, ${strArr.length()} struggle entries, ${fastArr.length()} fasts, ${sleepArr.length()} sleeps and ${bmArr.length()} bookmarks. Other SIRAJ data is not included.")
@@ -314,7 +332,10 @@ object BackupManager {
 
             Result(true, "Partial backup restored. Preferences, wake events, struggle entries, fasts, sleep records and Quran bookmarks were restored. Other SIRAJ data is not included.")
         } catch (e: Exception) {
-            Result(false, "Import failed: ${e.message}")
+            Result(
+                false,
+                "Import failed: ${e.message ?: "unknown error"}. Restore is atomic per table, not across all tables; earlier tables may already have been restored."
+            )
         }
     }
 }
