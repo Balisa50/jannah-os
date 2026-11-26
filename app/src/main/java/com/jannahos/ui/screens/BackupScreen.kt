@@ -78,8 +78,7 @@ fun BackupScreen(onBack: () -> Unit) {
                                 BackupManager.Result(
                                     true,
                                     backup.message
-                                        .replace("Partial, unencrypted JSON backup created", "Encrypted partial backup created")
-                                        .replace("Keep this file private; it is not encrypted.", "This file is protected by your passphrase.")
+                                        .replace("Backup payload prepared", "Encrypted backup created")
                                 )
                             }
                         }
@@ -238,7 +237,7 @@ fun BackupScreen(onBack: () -> Unit) {
             onDismissRequest = { showImportConfirmation = false },
             title = { Text("Replace backed-up data?") },
             text = {
-                Text("Import replaces the prayer, sleep, fasting, struggle and bookmark records covered by this backup. Export a copy of your current data first.")
+                Text("Import replaces the prayer, sleep, fasting, struggle, bookmark, Notes and Diary records covered by this backup. Export a copy of your current data first.")
             },
             confirmButton = {
                 TextButton(onClick = {
@@ -265,7 +264,8 @@ fun BackupScreen(onBack: () -> Unit) {
                 "Tahajjud and Adhan preferences",
                 "Wake history and struggle log",
                 "Fasting and sleep records",
-                "Quran bookmarks and bookmark notes"
+                "Quran bookmarks and bookmark notes",
+                "Notes and Diary entries"
             )
             items.forEachIndexed { index, item ->
                 Text(item, style = JannahType.body, color = JannahColors.Ink, modifier = Modifier.padding(vertical = 11.dp))
@@ -276,7 +276,7 @@ fun BackupScreen(onBack: () -> Unit) {
 
             Spacer(Modifier.height(JannahSpacing.s))
             Text(
-                "This is a partial backup, not a full device backup. Notes, Diary entries and some other SIRAJ data are not included yet.",
+                "This is a partial backup, not a full device backup. Letters, private memory, action history, finance, adhkar counters and some other SIRAJ data are not included yet.",
                 style = JannahType.bodySmall,
                 color = JannahColors.Danger,
                 lineHeight = 20.sp
@@ -312,7 +312,7 @@ fun BackupScreen(onBack: () -> Unit) {
             Text("IMPORTANT", style = JannahType.eyebrow, color = JannahColors.OrangeDeep)
             Spacer(Modifier.height(4.dp))
             Text(
-                "This is a partial backup encrypted with your passphrase. Keep that passphrase safe; SIRAJ cannot recover it. Diary entries, letters, private memory, action history, finance and some other app data are not included yet.",
+                "This is a partial backup encrypted with your passphrase. Keep that passphrase safe; SIRAJ cannot recover it. Letters, private memory, action history, finance, adhkar counters and some other app data are not included yet.",
                 style = JannahType.bodySmall,
                 color = JannahColors.Muted,
                 lineHeight = 20.sp

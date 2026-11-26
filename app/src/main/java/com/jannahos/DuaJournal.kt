@@ -34,8 +34,18 @@ class DuaJournalStore(context: Context) : SQLiteOpenHelper(
     }
 
     override fun onUpgrade(db: SQLiteDatabase, oldV: Int, newV: Int) {
-        db.execSQL("DROP TABLE IF EXISTS duas")
-        onCreate(db)
+        // Never discard the user's Dua Journal during a schema upgrade.
+        db.execSQL("""
+            CREATE TABLE IF NOT EXISTS duas (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                created INTEGER NOT NULL,
+                category TEXT NOT NULL,
+                ask TEXT NOT NULL,
+                answered INTEGER NOT NULL DEFAULT 0,
+                answered_at INTEGER,
+                answer_note TEXT
+            )
+        """.trimIndent())
     }
 
     data class Dua(

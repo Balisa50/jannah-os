@@ -23,7 +23,7 @@ object BackupManager {
     fun export(context: Context, outputFile: File): Result {
         return try {
             val root = JSONObject()
-            root.put("schema", 1)
+            root.put("schema", 2)
             root.put("exportedAt", System.currentTimeMillis())
 
             // Preferences
@@ -104,6 +104,19 @@ object BackupManager {
             }
             root.put("bookmarks", bmArr)
 
+            val diaryArr = JSONArray()
+            DiaryStore(context).allForBackup().forEach { entry ->
+                val o = JSONObject()
+                o.put("id", entry.id)
+                o.put("ts", entry.ts)
+                o.put("text", entry.text)
+                o.put("tag", entry.tag)
+                o.put("reaction", entry.reaction ?: JSONObject.NULL)
+                o.put("celebrated", entry.celebrated)
+                diaryArr.put(o)
+            }
+            root.put("diary_entries", diaryArr)
+
             val backupBytes = root.toString(2).toByteArray(Charsets.UTF_8)
             if (backupBytes.size.toLong() > MAX_BACKUP_BYTES) {
                 return Result(false, "Backup exceeds the 25 MB limit and was not written.")
@@ -126,7 +139,7 @@ object BackupManager {
                 if (temporary.exists()) temporary.delete()
             }
 
-            Result(true, "Partial, unencrypted JSON backup created: ${wakeArr.length()} wake events, ${strArr.length()} struggle entries, ${fastArr.length()} fasts, ${sleepArr.length()} sleeps and ${bmArr.length()} bookmarks. Other SIRAJ data is not included. Keep this file private; it is not encrypted.")
+            Result(true, "Backup payload prepared: ${wakeArr.length()} wake events, ${strArr.length()} struggle entries, ${fastArr.length()} fasts, ${sleepArr.length()} sleeps, ${bmArr.length()} bookmarks and ${diaryArr.length()} Notes/Diary entries. Other SIRAJ data is not included.")
         } catch (e: Exception) {
             Result(false, "Export failed: ${e.message}")
         }
@@ -138,13 +151,19 @@ object BackupManager {
      * it prevents malformed/oversized files from causing partial restores.
      */
     private fun validateBackup(root: JSONObject): String? {
-        if (root.optInt("schema", -1) != 1) return "Unsupported backup version."
+        val schema = root.optInt("schema", -1)
+        if (schema !in 1..2) return "Unsupported backup version."
         val arrays = listOf("wake_events", "struggle", "fasts", "sleeps", "bookmarks")
         val records = mutableMapOf<String, JSONArray>()
         for (name in arrays) {
             val array = root.optJSONArray(name) ?: return "Backup is incomplete: missing $name."
             if (array.length() > MAX_RECORDS_PER_TABLE) return "Backup contains too many $name records."
             records[name] = array
+        }
+        if (schema >= 2) {
+            val diary = root.optJSONArray("diary_entries") ?: return "Backup is incomplete: missing diary_entries."
+            if (diary.length() > MAX_RECORDS_PER_TABLE) return "Backup contains too many Notes/Diary entries."
+            records["diary_entries"] = diary
         }
         val prefs = root.optJSONObject("prefs")
         if (prefs != null) {
@@ -191,6 +210,18 @@ object BackupManager {
                     val o = a.getJSONObject(i)
                     require(o.getInt("surah") in 1..114)
                     require(o.getInt("ayah") > 0)
+                }
+            }
+            if (schema >= 2) {
+                records.getValue("diary_entries").let { a ->
+                    for (i in 0 until a.length()) {
+                        val o = a.getJSONObject(i)
+                        require(o.getLong("id") > 0)
+                        o.getLong("ts")
+                        require(o.getString("text").isNotBlank())
+                        require(o.getString("tag").isNotBlank())
+                        require(o.opt("celebrated") is Boolean)
+                    }
                 }
             }
             null
@@ -311,6 +342,22 @@ object BackupManager {
                 }
             )
 
+            // Schema 1 backups predate Notes/Diary coverage, so leave that database untouched.
+            if (root.optInt("schema", 1) >= 2) {
+                val diaryEntries = root.getJSONArray("diary_entries")
+                DiaryStore(context).replaceAll((0 until diaryEntries.length()).map { index ->
+                    val o = diaryEntries.getJSONObject(index)
+                    DiaryStore.Entry(
+                        id = o.getLong("id"),
+                        ts = o.getLong("ts"),
+                        text = o.getString("text"),
+                        tag = o.getString("tag"),
+                        reaction = if (o.isNull("reaction")) null else o.getString("reaction"),
+                        celebrated = o.optBoolean("celebrated", false)
+                    )
+                })
+            }
+
             // Apply preferences last so a failed table restore does not leave
             // the user's settings changed while the data restore failed.
             val prefs = root.optJSONObject("prefs")
@@ -334,7 +381,11 @@ object BackupManager {
                     ?.let { Reciters.set(context, it) }
             }
 
-            Result(true, "Partial backup restored. Preferences, wake events, struggle entries, fasts, sleep records and Quran bookmarks were restored. Other SIRAJ data is not included.")
+            Result(true, if (root.optInt("schema", 1) >= 2) {
+                "Partial backup restored. Preferences, wake events, struggle entries, fasts, sleep records, Quran bookmarks, Notes and Diary entries were restored. Other SIRAJ data is not included."
+            } else {
+                "Older partial backup restored. Preferences, wake events, struggle entries, fasts, sleep records and Quran bookmarks were restored. Notes and Diary were left unchanged."
+            })
         } catch (e: Exception) {
             Result(
                 false,

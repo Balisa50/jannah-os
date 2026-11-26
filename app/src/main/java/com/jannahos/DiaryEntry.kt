@@ -128,6 +128,43 @@ class DiaryStore(context: Context) : SQLiteOpenHelper(
         return null
     }
 
+    /** Complete diary + notes snapshot for the encrypted backup format. */
+    fun allForBackup(): List<Entry> {
+        val out = mutableListOf<Entry>()
+        readableDatabase.rawQuery(
+            "SELECT id, ts, text, tag, reaction, celebrated FROM entries ORDER BY ts ASC, id ASC",
+            null
+        ).use { c ->
+            while (c.moveToNext()) {
+                out += Entry(c.getLong(0), c.getLong(1), c.getString(2), c.getString(3), c.getString(4), c.getInt(5) == 1)
+            }
+        }
+        return out
+    }
+
+    /** Replaces diary and notes together in one database transaction. */
+    fun replaceAll(entries: List<Entry>) {
+        val db = writableDatabase
+        db.beginTransaction()
+        try {
+            db.delete("entries", null, null)
+            entries.forEach { entry ->
+                val values = ContentValues().apply {
+                    put("id", entry.id)
+                    put("ts", entry.ts)
+                    put("text", entry.text)
+                    put("tag", entry.tag)
+                    if (entry.reaction == null) putNull("reaction") else put("reaction", entry.reaction)
+                    put("celebrated", if (entry.celebrated) 1 else 0)
+                }
+                db.insertOrThrow("entries", null, values)
+            }
+            db.setTransactionSuccessful()
+        } finally {
+            db.endTransaction()
+        }
+    }
+
     fun delete(id: Long) {
         writableDatabase.delete("entries", "id = ?", arrayOf(id.toString()))
     }
