@@ -14,6 +14,7 @@ class QuranEvidenceRetrieverTest {
         )!!
 
         val reference = evidence.reference as IslamicReference.Quran
+        assertEquals("bundled-quran-arabic-unattributed", reference.sourceId)
         assertEquals(18, reference.surah)
         assertEquals(10, reference.ayah)
         assertEquals("ar", evidence.language)

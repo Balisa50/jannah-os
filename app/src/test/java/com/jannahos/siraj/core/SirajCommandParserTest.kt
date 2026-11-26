@@ -71,4 +71,41 @@ class SirajCommandParserTest {
         val result = SirajCommandParser.parse("open Quran page 18", surahs)
         assertEquals(SirajAction.OpenQuran, result.action)
     }
+
+    @Test
+    fun resolvesNamedSurahAndAyahExactly() {
+        val result = SirajCommandParser.parse("read Surah Al-Kahf verse 10", surahs)
+        assertEquals(SirajAction.ShowAyah(18, 10, "Al-Kahf"), result.action)
+    }
+
+    @Test
+    fun resolvesNumericSurahAyahReference() {
+        val result = SirajCommandParser.parse("18:10", surahs)
+        assertEquals(SirajAction.ShowAyah(18, 10, "Al-Kahf"), result.action)
+    }
+
+    @Test
+    fun rejectsAyahZeroAndUnknownSurah() {
+        assertEquals(null, SirajCommandParser.parse("18:0", surahs).action)
+        assertEquals(null, SirajCommandParser.parse("115:1", surahs).action)
+    }
+
+    @Test
+    fun rejectsUnlabelledNumberAsAyah() {
+        assertEquals(null, SirajCommandParser.parse("open Quran page 18", surahs).action?.let {
+            if (it is SirajAction.ShowAyah) it else null
+        })
+    }
+
+    @Test
+    fun acceptsExplicitReadPrefixForNumericAyahReference() {
+        val result = SirajCommandParser.parse("read 18:10", surahs)
+        assertEquals(SirajAction.ShowAyah(18, 10, "Al-Kahf"), result.action)
+    }
+
+    @Test
+    fun doesNotExtractAyahReferenceFromAnUnrelatedSentence() {
+        val result = SirajCommandParser.parse("I have a question about 18:10", surahs)
+        assertEquals(null, result.action)
+    }
 }

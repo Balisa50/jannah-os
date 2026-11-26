@@ -18,6 +18,7 @@ import androidx.compose.ui.unit.sp
 import com.jannahos.KhatmStore
 import com.jannahos.QuranBookmarks
 import com.jannahos.QuranCache
+import com.jannahos.ui.ScreenTitle
 import com.jannahos.ui.pressClickable
 import com.jannahos.ui.theme.JannahColors
 import com.jannahos.ui.theme.JannahSpacing
@@ -35,11 +36,11 @@ fun QuranTabScreen(
 
     LazyColumn(modifier = Modifier.fillMaxSize().background(JannahColors.Cream)) {
         item {
-            Column(Modifier.padding(horizontal = JannahSpacing.gutter).padding(top = 64.dp, bottom = 24.dp)) {
-                Text("Quran", fontFamily = FontFamily.Serif, fontSize = 36.sp, fontWeight = FontWeight.Bold, color = JannahColors.Ink)
-                Spacer(Modifier.height(4.dp))
-                Text("114 Surahs", style = JannahType.caption, color = JannahColors.Muted)
-            }
+            ScreenTitle(
+                title = "Quran",
+                eyebrow = "YOUR READING",
+                subtitle = "114 Surahs · 604 pages"
+            )
         }
 
         item {

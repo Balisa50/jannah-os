@@ -1,31 +1,73 @@
 package com.jannahos
 
 import android.content.Context
-import org.json.JSONArray
+import android.util.JsonReader
+import android.util.JsonToken
+import java.io.InputStreamReader
+import java.util.zip.GZIPInputStream
 
 object HadithStore {
     data class Hadith(val collection: String, val number: Int, val arabic: String, val english: String)
 
     private var cache: List<Hadith>? = null
 
+    /**
+     * Compatibility list loader. It streams the compressed asset rather than
+     * materialising a second full JSON string/JSONArray in memory.
+     * Prefer searchAsync for normal search UI.
+     */
     fun load(ctx: Context): List<Hadith> {
         cache?.let { return it }
         val list = mutableListOf<Hadith>()
         try {
-            val json = ctx.assets.open("hadiths_merged.json").bufferedReader().use { it.readText() }
-            val arr = JSONArray(json)
-            for (i in 0 until arr.length()) {
-                val obj = arr.getJSONObject(i)
-                list.add(Hadith(obj.getString("collection"), obj.getInt("number"), obj.getString("arabic"), obj.getString("english")))
+            ctx.applicationContext.assets.open("hadiths_merged.bin").use { compressed ->
+                GZIPInputStream(compressed).use { input ->
+                    JsonReader(InputStreamReader(input, Charsets.UTF_8)).use { reader ->
+                        reader.beginArray()
+                        while (reader.hasNext()) {
+                            var collection = ""
+                            var number = 0
+                            var arabic = ""
+                            var english = ""
+                            reader.beginObject()
+                            while (reader.hasNext()) {
+                                when (reader.nextName()) {
+                                    "collection" -> collection = reader.readStringOrEmpty()
+                                    "number" -> number = reader.readStringOrEmpty().toIntOrNull() ?: 0
+                                    "arabic" -> arabic = reader.readStringOrEmpty()
+                                    "english" -> english = reader.readStringOrEmpty()
+                                    else -> reader.skipValue()
+                                }
+                            }
+                            reader.endObject()
+                            if (collection.isNotBlank() && number > 0) {
+                                list += Hadith(collection, number, arabic, english)
+                            }
+                        }
+                        reader.endArray()
+                    }
+                }
             }
-        } catch (e: Exception) { e.printStackTrace() }
+        } catch (error: Exception) {
+            android.util.Log.e("HadithStore", "Could not stream bundled Hadith data", error)
+        }
         cache = list
         return list
     }
 
-    suspend fun searchAsync(ctx: Context, query: String): List<Hadith> = kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.IO) {
-        val q = query.trim()
-        if (q.isEmpty()) return@withContext emptyList()
-        load(ctx).filter { it.english.contains(q, ignoreCase = true) || it.arabic.contains(q) }.take(50)
-    }
+    private fun JsonReader.readStringOrEmpty(): String =
+        if (peek() == JsonToken.NULL) {
+            nextNull()
+            ""
+        } else {
+            nextString()
+        }
+
+    suspend fun searchAsync(ctx: Context, query: String): List<Hadith> =
+        kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.IO) {
+            if (query.isBlank()) return@withContext emptyList()
+            QuranSearchEngine.searchHadith(ctx.applicationContext, query).map { hit ->
+                Hadith(hit.collection, hit.number, hit.arabic, hit.english)
+            }
+        }
 }

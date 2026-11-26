@@ -41,9 +41,25 @@ class StruggleTracker(context: Context) : SQLiteOpenHelper(
     }
 
     override fun onUpgrade(db: SQLiteDatabase, oldV: Int, newV: Int) {
-        db.execSQL("DROP TABLE IF EXISTS habits")
-        db.execSQL("DROP TABLE IF EXISTS slips")
-        onCreate(db)
+        // Habit history is private user data; never drop it during an upgrade.
+        db.execSQL("""
+            CREATE TABLE IF NOT EXISTS habits (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                label TEXT NOT NULL,
+                started INTEGER NOT NULL,
+                last_reset INTEGER NOT NULL,
+                best_streak INTEGER NOT NULL DEFAULT 0,
+                current_streak INTEGER NOT NULL DEFAULT 0
+            )
+        """.trimIndent())
+        db.execSQL("""
+            CREATE TABLE IF NOT EXISTS slips (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                habit_id INTEGER NOT NULL,
+                ts INTEGER NOT NULL,
+                reason TEXT
+            )
+        """.trimIndent())
     }
 
     data class Habit(
@@ -101,13 +117,14 @@ class StruggleTracker(context: Context) : SQLiteOpenHelper(
 
         // Update streaks: current best preserved, current resets to 0, last_reset moves.
         readableDatabase.rawQuery(
-            "SELECT current_streak, best_streak FROM habits WHERE id = ?",
+            "SELECT last_reset, best_streak FROM habits WHERE id = ?",
             arrayOf(habitId.toString())
         ).use { c ->
             if (c.moveToFirst()) {
-                val current = c.getInt(0)
+                val lastReset = c.getLong(0)
                 val best = c.getInt(1)
-                val newBest = maxOf(best, current)
+                val currentDays = ((now - lastReset).coerceAtLeast(0L) / (24L * 60 * 60 * 1000)).toInt()
+                val newBest = maxOf(best, currentDays)
                 val upd = ContentValues().apply {
                     put("last_reset", now)
                     put("current_streak", 0)

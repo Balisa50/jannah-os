@@ -17,6 +17,18 @@ object SirajCommandParser {
             return SirajCommandResult("Tell me what you want to open or find.")
         }
 
+        val requestedAyah = resolveAyah(input, surahs)
+        if (requestedAyah != null) {
+            return SirajCommandResult(
+                "Opening " + requestedAyah.third + ", ayah " + requestedAyah.second + ".",
+                SirajAction.ShowAyah(
+                    surah = requestedAyah.first,
+                    ayah = requestedAyah.second,
+                    surahName = requestedAyah.third
+                )
+            )
+        }
+
         val surah = resolveSurah(input, surahs)
         if (surah != null) {
             return SirajCommandResult(
@@ -90,6 +102,38 @@ object SirajCommandParser {
             candidate == catalogName ||
                 candidate.removePrefix("al") == catalogName.removePrefix("al")
         }
+    }
+
+
+    private fun resolveAyah(
+        input: String,
+        surahs: List<Pair<Int, String>>
+    ): Triple<Int, Int, String>? {
+        val numeric = Regex("""(?:(?:open|read|show)\s+)?(?:surah\s+)?(\d{1,3})[:/](\d{1,3})""")
+            .matchEntire(input)
+        if (numeric != null) {
+            val surahNumber = numeric.groupValues[1].toIntOrNull() ?: return null
+            val ayahNumber = numeric.groupValues[2].toIntOrNull() ?: return null
+            val surah = surahs.firstOrNull { it.first == surahNumber } ?: return null
+            if (ayahNumber < 1) return null
+            return Triple(surah.first, ayahNumber, surah.second)
+        }
+
+        val named = Regex("""(?:(?:open|read|show|find)\s+)?(?:surah\s+)?(.+?)\s+(?:ayah|verse)\s+(\d{1,3})""")
+            .matchEntire(input) ?: return null
+        val requestedName = named.groupValues[1]
+            .trim()
+            .filter(Char::isLetterOrDigit)
+        val ayahNumber = named.groupValues[2].toIntOrNull() ?: return null
+        if (requestedName.isBlank() || ayahNumber < 1) return null
+
+        val surah = surahs.firstOrNull { (_, name) ->
+            val catalogName = name.lowercase().filter(Char::isLetterOrDigit)
+            requestedName == catalogName ||
+                requestedName.removePrefix("al") == catalogName.removePrefix("al")
+        } ?: return null
+
+        return Triple(surah.first, ayahNumber, surah.second)
     }
 
     private fun normalize(value: String): String =

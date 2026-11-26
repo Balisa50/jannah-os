@@ -51,13 +51,18 @@ private fun SettingsScreen(onBack: () -> Unit) {
     val ctx = LocalContext.current
     var showCityPicker by remember { mutableStateOf(false) }
     var showPermissions by remember { mutableStateOf(false) }
+    var cityName by remember { mutableStateOf(CityStore.name(ctx)) }
 
     if (showCityPicker) {
-        CityPickerScreen(onBack = { showCityPicker = false }, onPicked = { c, cn -> CityStore.set(ctx, c, cn); showCityPicker = false })
+        CityPickerScreen(onBack = { showCityPicker = false }, onPicked = { c, cn ->
+            CityStore.set(ctx, c, cn)
+            cityName = c
+            showCityPicker = false
+        })
         return
     }
     if (showPermissions) {
-        PermissionSetupScreen(onAllSet = { showPermissions = false })
+        PermissionSetupScreen(onAllSet = { showPermissions = false }, onBack = { showPermissions = false })
         return
     }
 
@@ -66,7 +71,6 @@ private fun SettingsScreen(onBack: () -> Unit) {
     var bedtimeLockOn by remember { mutableStateOf(Settings.isBedtimeLockEnabled(ctx)) }
     var silentTahajjud by remember { mutableStateOf(Settings.isTahajjudSilent(ctx)) }
     var faceDownOn by remember { mutableStateOf(Settings.isFaceDownEnabled(ctx)) }
-    var cityName by remember { mutableStateOf(CityStore.name(ctx)) }
     var calculationMethod by remember { mutableStateOf(Settings.method(ctx)) }
     var showCalculationMethods by remember { mutableStateOf(false) }
 
@@ -113,8 +117,12 @@ private fun SettingsScreen(onBack: () -> Unit) {
 
     Column(Modifier.fillMaxSize().verticalScroll(rememberScrollState()).background(JannahColors.Cream)) {
         TopBar("Settings", onBack = onBack)
-
-        Spacer(Modifier.height(JannahSpacing.l))
+        Column(Modifier.padding(horizontal = JannahSpacing.gutter).padding(top = JannahSpacing.s, bottom = JannahSpacing.m)) {
+            Text("Make SIRAJ work the way you do.", fontFamily = FontFamily.Serif, fontSize = 23.sp, fontWeight = FontWeight.Bold, color = JannahColors.Ink)
+            Spacer(Modifier.height(4.dp))
+            Text("Location, permissions, focus controls and prayer preferences.", style = JannahType.bodySmall, color = JannahColors.Muted)
+        }
+        Spacer(Modifier.height(JannahSpacing.s))
         SectionHeader("System")
         ListRow("Permissions & Alarms", "Fix battery, DND, or accessibility") { showPermissions = true }
         Divider()

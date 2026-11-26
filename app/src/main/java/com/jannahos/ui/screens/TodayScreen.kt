@@ -36,16 +36,60 @@ import java.util.Locale
 fun TodayScreen(onNavigate: (String) -> Unit = {}) {
     val ctx = LocalContext.current
     val userName = remember { runCatching { Settings.displayName(ctx) }.getOrDefault("") }
-    val lat = runCatching { Settings.lat(ctx) }.getOrDefault(0.0)
-    val lon = runCatching { Settings.lon(ctx) }.getOrDefault(0.0)
-    
-    val prayerTimes = runCatching { SalahScheduler.todayTimes(ctx, lat, lon) }.getOrDefault(emptyMap())
+    var citySelected by remember { mutableStateOf(CityStore.useCity(ctx)) }
+    var prayerTimes by remember {
+        mutableStateOf(
+            if (citySelected) {
+                runCatching {
+                    SalahScheduler.todayTimes(ctx, Settings.lat(ctx), Settings.lon(ctx))
+                }.getOrDefault(emptyMap())
+            } else {
+                emptyMap()
+            }
+        )
+    }
+    var savedLat by remember { mutableDoubleStateOf(Settings.lat(ctx)) }
+    var savedLon by remember { mutableDoubleStateOf(Settings.lon(ctx)) }
+    var savedMethod by remember { mutableStateOf(Settings.method(ctx)) }
+    var dateKey by remember { mutableStateOf(SimpleDateFormat("yyyy-MM-dd", Locale.US).format(Date())) }
+    var now by remember { mutableLongStateOf(System.currentTimeMillis()) }
+
+    LaunchedEffect(Unit) {
+        while (true) {
+            val freshNow = System.currentTimeMillis()
+            now = freshNow
+            val currentLat = Settings.lat(ctx)
+            val currentLon = Settings.lon(ctx)
+            val currentMethod = Settings.method(ctx)
+            val currentCitySelected = CityStore.useCity(ctx)
+            val currentDateKey = SimpleDateFormat("yyyy-MM-dd", Locale.US).format(Date(freshNow))
+            if (
+                currentLat != savedLat ||
+                currentLon != savedLon ||
+                currentMethod != savedMethod ||
+                currentCitySelected != citySelected ||
+                currentDateKey != dateKey
+            ) {
+                savedLat = currentLat
+                savedLon = currentLon
+                savedMethod = currentMethod
+                citySelected = currentCitySelected
+                dateKey = currentDateKey
+                prayerTimes = if (currentCitySelected) {
+                    runCatching {
+                        SalahScheduler.todayTimes(ctx, currentLat, currentLon)
+                    }.getOrDefault(emptyMap())
+                } else {
+                    emptyMap()
+                }
+            }
+            delay(15_000)
+        }
+    }
+
     val isLocationSet = prayerTimes.isNotEmpty()
-    
-    val hadith = remember { runCatching { DailyHadith.today() }.getOrNull() }
-    val hijri = remember { runCatching { HijriDate.today() }.getOrDefault("") }
-    
-    val now = System.currentTimeMillis()
+    val hadith = runCatching { DailyHadith.today() }.getOrNull()
+    val hijri = runCatching { HijriDate.today() }.getOrDefault("")
     val ordered = listOf("fajr", "dhuhr", "asr", "maghrib", "isha")
     val nextKey = ordered.firstOrNull { (prayerTimes[it] ?: 0L) > now }
     val displayLabel = runCatching { nextKey?.let { SalahTracker.label(it) } ?: "Fajr" }.getOrDefault("Fajr")
@@ -83,7 +127,9 @@ fun TodayScreen(onNavigate: (String) -> Unit = {}) {
             }
         }
 
-        Column(Modifier.fillMaxWidth().padding(horizontal = 22.dp).padding(top = 64.dp, bottom = 32.dp)) {
+        Column(Modifier.fillMaxWidth().padding(horizontal = 22.dp).padding(top = 40.dp, bottom = 28.dp)) {
+            Text("YOUR DAY", style = JannahType.eyebrow, color = OrangeDeep)
+            Spacer(Modifier.height(8.dp))
             Text(greeting, fontFamily = FontFamily.Serif, fontSize = 36.sp, fontWeight = FontWeight.Bold, color = Ink)
             if (userName.isNotBlank()) {
                 Text("$userName.", fontFamily = FontFamily.Serif, fontSize = 36.sp, fontWeight = FontWeight.Bold, color = Ink)
@@ -96,13 +142,22 @@ fun TodayScreen(onNavigate: (String) -> Unit = {}) {
         Column(Modifier.padding(horizontal = 22.dp)) {
             Text("NEXT PRAYER", style = JannahType.eyebrow, color = OrangeDeep)
             Spacer(Modifier.height(8.dp))
-            Row(verticalAlignment = Alignment.Bottom) {
-                Text(displayLabel, fontFamily = FontFamily.Serif, fontSize = 32.sp, fontWeight = FontWeight.Bold, color = Orange)
-                Spacer(Modifier.width(8.dp))
-                Text("in", fontFamily = FontFamily.Serif, fontStyle = FontStyle.Italic, fontSize = 22.sp, color = Orange)
+            if (isLocationSet) {
+                Row(verticalAlignment = Alignment.Bottom) {
+                    Text(displayLabel, fontFamily = FontFamily.Serif, fontSize = 32.sp, fontWeight = FontWeight.Bold, color = Orange)
+                    Spacer(Modifier.width(8.dp))
+                    Text("in", fontFamily = FontFamily.Serif, fontStyle = FontStyle.Italic, fontSize = 22.sp, color = Orange)
+                }
+                Spacer(Modifier.height(4.dp))
+                AnimatedCountdown(displayTime)
+            } else {
+                Text(
+                    "Choose your city to see accurate prayer times.",
+                    style = JannahType.body,
+                    color = Muted,
+                    lineHeight = 24.sp
+                )
             }
-            Spacer(Modifier.height(4.dp))
-            AnimatedCountdown(displayTime)
             
             Spacer(Modifier.height(32.dp))
             Box(Modifier.fillMaxWidth().height(1.dp).background(JannahColors.Divider))
@@ -125,6 +180,15 @@ fun TodayScreen(onNavigate: (String) -> Unit = {}) {
                 Spacer(Modifier.height(32.dp))
             }
             
+            Row(Modifier.fillMaxWidth().pressClickable { onNavigate("siraj") }.padding(vertical = 16.dp), verticalAlignment = Alignment.CenterVertically) {
+                Column(Modifier.weight(1f)) {
+                    Text("Ask SIRAJ", fontFamily = FontFamily.Serif, fontSize = 20.sp, fontWeight = FontWeight.Bold, color = OrangeDeep)
+                    Text("Talk, search or request an action", style = JannahType.caption, color = Muted)
+                }
+                Text("→", style = JannahType.title, color = Orange)
+            }
+            Box(Modifier.fillMaxWidth().height(1.dp).background(JannahColors.Divider))
+
             Row(Modifier.fillMaxWidth().pressClickable { onNavigate("sanctuary") }.padding(vertical = 16.dp), verticalAlignment = Alignment.CenterVertically) {
                 Text("Enter Sanctuary", fontFamily = FontFamily.Serif, fontSize = 20.sp, fontWeight = FontWeight.Bold, color = Ink, modifier = Modifier.weight(1f))
                 Text("→", style = JannahType.title, color = Orange)

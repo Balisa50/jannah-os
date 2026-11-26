@@ -21,7 +21,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.jannahos.KhatmStore
 import com.jannahos.AdaptivePacing
-import com.jannahos.ui.TopBar
+import com.jannahos.ui.ScreenHeader
 import com.jannahos.ui.pressClickable
 import com.jannahos.ui.theme.JannahColors
 import com.jannahos.ui.theme.JannahSpacing
@@ -38,10 +38,10 @@ fun KhatmScreen(onBack: () -> Unit, onOpenRange: (Int, Int) -> Unit) {
     var pendingReset by remember { mutableStateOf<Int?>(null) }
 
     Column(Modifier.fillMaxSize().background(JannahColors.Cream)) {
-        TopBar("Reading Plan", onBack = onBack)
+        ScreenHeader(title = "Reading plan", eyebrow = "YOUR QURAN ROUTINE", subtitle = "A steady path through all 604 pages", onBack = onBack)
 
         Column(Modifier.padding(horizontal = JannahSpacing.gutter)) {
-            Spacer(Modifier.height(16.dp))
+            Spacer(Modifier.height(JannahSpacing.m))
             
             // ADAPTIVE PACING ALGORITHM
             val daysElapsed = KhatmStore.getDaysElapsed(ctx)
@@ -85,7 +85,7 @@ fun KhatmScreen(onBack: () -> Unit, onOpenRange: (Int, Int) -> Unit) {
                 }
             }
             Spacer(Modifier.height(8.dp))
-            Text("Progress: $completed of $target days", style = JannahType.caption, color = JannahColors.Muted)
+            Text("DAY $completed OF $target", style = JannahType.eyebrow, color = JannahColors.OrangeDeep)
             Spacer(Modifier.height(4.dp))
             Box(Modifier.fillMaxWidth().height(4.dp).clip(RoundedCornerShape(2.dp)).background(JannahColors.Border)) {
                 Box(Modifier.fillMaxWidth(if (target == 0) 0f else completed.toFloat() / target).height(4.dp).clip(RoundedCornerShape(2.dp)).background(JannahColors.Orange))

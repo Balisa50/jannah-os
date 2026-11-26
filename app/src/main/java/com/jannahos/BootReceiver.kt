@@ -13,36 +13,9 @@ class BootReceiver : BroadcastReceiver() {
             Intent.ACTION_TIME_CHANGED,
             Intent.ACTION_TIMEZONE_CHANGED,
             Intent.ACTION_DATE_CHANGED,
-            AlarmManager.ACTION_SCHEDULE_EXACT_ALARM_PERMISSION_STATE_CHANGED -> restoreSchedules(context.applicationContext)
+            AlarmManager.ACTION_SCHEDULE_EXACT_ALARM_PERMISSION_STATE_CHANGED ->
+                ScheduleRestorer.restore(context.applicationContext)
             else -> return
         }
-    }
-
-    private fun restoreSchedules(context: Context) {
-        // Isolate schedules so a missing optional permission cannot block
-        // restoration of unrelated reminders.
-        runCatching { PrayerReminderScheduler.scheduleAllForToday(context) }
-
-        if (Settings.isBedtimeLockEnabled(context)) {
-            runCatching { BedtimeScheduler.schedule(context) }
-        }
-
-        if (Settings.isTahajjudEnabled(context)) {
-            runCatching {
-                TahajjudScheduler.scheduleAlarm(context, Settings.getTahajjudOffset(context))
-            }
-        }
-
-        if (QuranReadingLock.enabled(context)) {
-            runCatching {
-                if (QuranReadingLock.isDoneToday(context) || QuranReadingLock.isActiveToday(context)) {
-                    QuranLockScheduler.scheduleNextDay(context)
-                } else {
-                    QuranLockScheduler.scheduleRandomLock(context)
-                }
-            }
-        }
-
-        runCatching { FridayKahfScheduler.scheduleAll(context) }
     }
 }

@@ -1,14 +1,20 @@
+<?xml version="1.0" encoding="utf-8"?>
 <vector xmlns:android="http://schemas.android.com/apk/res/android"
     android:width="108dp"
     android:height="108dp"
     android:viewportWidth="108"
     android:viewportHeight="108">
-    <!-- Cream Mihrab Arch -->
+    <!-- SIRAJ: a quiet, luminous flame above a simple lamp bowl. -->
     <path
-        android:fillColor="#FBF6EE"
-        android:pathData="M54,24 C38,24 28,36 28,52 L28,84 L38,84 L38,52 C38,42 44,34 54,34 C64,34 70,42 70,52 L70,84 L80,84 L80,52 C80,36 70,24 54,24 Z" />
-    <!-- Inner Orange Star -->
+        android:fillColor="#FFF8F0"
+        android:pathData="M54,18 C48,27 42,34 42,44 C42,54 47,61 54,64 C61,61 66,54 66,44 C66,34 60,27 54,18 Z" />
     <path
-        android:fillColor="#C86B35"
-        android:pathData="M54,48 L57,56 L65,56 L59,61 L61,69 L54,64 L47,69 L49,61 L43,56 L51,56 Z" />
+        android:fillColor="#C65A24"
+        android:pathData="M54,35 C50,41 48,45 49,50 C50,54 52,56 54,57 C58,54 60,50 59,46 C58,42 56,39 54,35 Z" />
+    <path
+        android:fillColor="#FFF8F0"
+        android:pathData="M34,68 C37,78 44,84 54,84 C64,84 71,78 74,68 L66,68 C64,73 60,76 54,76 C48,76 44,73 42,68 Z" />
+    <path
+        android:fillColor="#FFF8F0"
+        android:pathData="M28,49 L37,49 L37,53 L28,53 Z M71,49 L80,49 L80,53 L71,53 Z M52,10 L56,10 L56,18 L52,18 Z" />
 </vector>

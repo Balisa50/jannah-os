@@ -12,9 +12,10 @@ import androidx.core.app.NotificationCompat
 class BedtimeReceiver : BroadcastReceiver() {
     override fun onReceive(context: Context, intent: Intent) {
         if (!Settings.isBedtimeLockEnabled(context)) return
-        activate(context, 8 * 60 * 60 * 1000L)
-        // The next scheduled bedtime is armed immediately; the alarm receiver
-        // never attempts to launch an Activity directly from the background.
+        // A lock is armed only when its notification can be posted, because
+        // the notification is the supported entry point into the lock screen.
+        // The recurring bedtime alarm is re-armed independently below.
+        runCatching { activate(context, 8 * 60 * 60 * 1000L) }
         runCatching { BedtimeScheduler.schedule(context) }
     }
 
@@ -23,6 +24,7 @@ class BedtimeReceiver : BroadcastReceiver() {
         private const val NOTIFICATION_ID = 7788
 
         fun activate(context: Context, durationMs: Long) {
+            if (!NotificationAccess.canPost(context)) return
             BedtimeStore.arm(context, durationMs)
 
             val manager = context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
@@ -59,7 +61,8 @@ class BedtimeReceiver : BroadcastReceiver() {
                 .setContentIntent(pendingIntent)
                 .build()
 
-            manager.notify(NOTIFICATION_ID, notification)
+            runCatching { manager.notify(NOTIFICATION_ID, notification) }
+                .onFailure { BedtimeStore.release(context) }
         }
     }
 }

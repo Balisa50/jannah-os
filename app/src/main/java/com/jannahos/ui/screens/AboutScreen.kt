@@ -14,7 +14,7 @@ import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.jannahos.ui.TopBar
+import com.jannahos.ui.ScreenHeader
 import com.jannahos.ui.theme.JannahColors
 import com.jannahos.ui.theme.JannahSpacing
 import com.jannahos.ui.theme.JannahType
@@ -24,13 +24,12 @@ fun AboutScreen(onBack: () -> Unit) {
     BackHandler(onBack = onBack)
 
     Column(Modifier.fillMaxSize().background(JannahColors.Cream)) {
-        TopBar("About", onBack = onBack)
+        ScreenHeader(title = "About SIRAJ", eyebrow = "THE PRODUCT", subtitle = "A digital companion built around useful tools and user control.", onBack = onBack)
 
         Column(Modifier.weight(1f).verticalScroll(rememberScrollState()).padding(horizontal = JannahSpacing.gutter)) {
             Spacer(Modifier.height(JannahSpacing.l))
 
-            Text("SIRAJ", fontFamily = FontFamily.Serif, fontSize = 28.sp, fontWeight = FontWeight.Bold, color = JannahColors.Ink)
-            Spacer(Modifier.height(JannahSpacing.xl))
+            Spacer(Modifier.height(JannahSpacing.s))
 
             Text("PURPOSE", style = JannahType.eyebrow, color = JannahColors.OrangeDeep)
             Spacer(Modifier.height(JannahSpacing.s))

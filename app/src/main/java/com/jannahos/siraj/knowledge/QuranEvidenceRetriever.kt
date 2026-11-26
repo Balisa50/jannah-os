@@ -2,6 +2,7 @@ package com.jannahos.siraj.knowledge
 
 import android.content.Context
 import com.jannahos.QuranSearchEngine
+import com.jannahos.QuranTextStore
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 
@@ -21,6 +22,17 @@ object QuranEvidenceRetriever {
         }
     }
 
+    suspend fun getAyah(
+        context: Context,
+        surah: Int,
+        ayah: Int
+    ): EvidenceExcerpt? = withContext(Dispatchers.IO) {
+        if (surah !in 1..114 || ayah < 1) return@withContext null
+        val stored = QuranTextStore.getAyah(context.applicationContext, surah, ayah)
+            ?: return@withContext null
+        fromArabicAyah(stored.surah, stored.ayah, stored.arabic)
+    }
+
     fun fromArabicAyah(
         surah: Int,
         ayah: Int,
@@ -30,7 +42,7 @@ object QuranEvidenceRetriever {
 
         return EvidenceExcerpt(
             reference = IslamicReference.Quran(
-                sourceId = "quran-uthmani",
+                sourceId = "bundled-quran-arabic-unattributed",
                 surah = surah,
                 ayah = ayah
             ),

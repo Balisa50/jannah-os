@@ -20,11 +20,12 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.jannahos.QuranSearchEngine
-import com.jannahos.ui.TopBar
+import com.jannahos.ui.ScreenHeader
 import com.jannahos.ui.pressClickable
 import com.jannahos.ui.theme.JannahColors
 import com.jannahos.ui.theme.JannahSpacing
 import com.jannahos.ui.theme.JannahType
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.withContext
@@ -43,49 +44,64 @@ fun QuranSearchScreen(onBack: () -> Unit, onNavigateToPage: (Int) -> Unit) {
     var hadithHits by remember { mutableStateOf<List<QuranSearchEngine.HadithResult>>(emptyList()) }
     var loading by remember { mutableStateOf(false) }
     var searched by remember { mutableStateOf(false) }
+    var searchError by remember { mutableStateOf<String?>(null) }
 
     LaunchedEffect(query, searchMode) {
         val q = query.trim()
         if (q.length < 2) {
             quranHits = emptyList()
             hadithHits = emptyList()
+            searchError = null
+            loading = false
             searched = false
             return@LaunchedEffect
         }
-        loading = true
-        delay(400) // Debounce
 
-        withContext(Dispatchers.IO) {
+        loading = true
+        searchError = null
+        delay(400)
+
+        try {
             if (searchMode == "hadith") {
-                val res = QuranSearchEngine.searchHadith(ctx, q)
-                withContext(Dispatchers.Main) {
-                    hadithHits = res
-                    quranHits = emptyList()
+                val results = withContext(Dispatchers.IO) {
+                    QuranSearchEngine.searchHadith(ctx, q)
                 }
+                hadithHits = results
+                quranHits = emptyList()
             } else {
-                val res = QuranSearchEngine.searchQuran(ctx, q)
-                withContext(Dispatchers.Main) {
-                    quranHits = res
-                    hadithHits = emptyList()
+                val results = withContext(Dispatchers.IO) {
+                    QuranSearchEngine.searchQuran(ctx, q)
                 }
+                quranHits = results
+                hadithHits = emptyList()
             }
+            searched = true
+            loading = false
+        } catch (cancelled: CancellationException) {
+            throw cancelled
+        } catch (_: Exception) {
+            quranHits = emptyList()
+            hadithHits = emptyList()
+            searchError = "Search could not be completed. Try again in a moment."
+            searched = true
+            loading = false
         }
-        loading = false
-        searched = true
     }
 
     Column(modifier = Modifier.fillMaxSize().background(JannahColors.Cream)) {
-        TopBar("Search", onBack = onBack)
+        ScreenHeader(title = "Search", eyebrow = "QURAN & HADITH", subtitle = "Find a passage or a reported narration", onBack = onBack)
 
         Column(Modifier.padding(horizontal = JannahSpacing.gutter)) {
             Spacer(Modifier.height(JannahSpacing.m))
             OutlinedTextField(
                 value = query, onValueChange = { query = it },
                 modifier = Modifier.fillMaxWidth(),
-                label = { Text("Search Quran or Hadith", fontSize = 12.sp) },
+                label = { Text(if (searchMode == "quran") "Search Quran" else "Search Hadith", fontSize = 12.sp) },
                 shape = RoundedCornerShape(12.dp)
             )
-            Spacer(Modifier.height(JannahSpacing.m))
+            Spacer(Modifier.height(JannahSpacing.s))
+            Text("SEARCH IN", style = JannahType.eyebrow, color = JannahColors.Muted)
+            Spacer(Modifier.height(JannahSpacing.s))
             Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                 Box(Modifier.weight(1f).height(40.dp).clip(RoundedCornerShape(50)).background(if (searchMode == "quran") JannahColors.Orange else JannahColors.Card).pressClickable { searchMode = "quran" }, contentAlignment = Alignment.Center) { Text("Quran", color = if (searchMode == "quran") JannahColors.OnOrange else JannahColors.Ink, fontWeight = FontWeight.Bold) }
                 Box(Modifier.weight(1f).height(40.dp).clip(RoundedCornerShape(50)).background(if (searchMode == "hadith") JannahColors.Orange else JannahColors.Card).pressClickable { searchMode = "hadith" }, contentAlignment = Alignment.Center) { Text("Hadith", color = if (searchMode == "hadith") JannahColors.OnOrange else JannahColors.Ink, fontWeight = FontWeight.Bold) }
@@ -95,9 +111,19 @@ fun QuranSearchScreen(onBack: () -> Unit, onNavigateToPage: (Int) -> Unit) {
 
         LazyColumn(state = listState, modifier = Modifier.weight(1f).fillMaxWidth(), contentPadding = PaddingValues(bottom = JannahSpacing.xxl)) {
             if (loading) {
-                item { Text("Searching...", style = JannahType.bodySmall, color = JannahColors.Muted, modifier = Modifier.padding(JannahSpacing.gutter)) }
+                item { Text("Searching the local collection…", style = JannahType.bodySmall, color = JannahColors.Muted, modifier = Modifier.padding(JannahSpacing.gutter)) }
+            } else if (searchError != null) {
+                item {
+                    Text(searchError!!, style = JannahType.bodySmall, color = JannahColors.Danger, modifier = Modifier.padding(JannahSpacing.gutter))
+                }
             } else if (searched && quranHits.isEmpty() && hadithHits.isEmpty()) {
-                item { Text("No matches found.", style = JannahType.bodySmall, color = JannahColors.Muted, textAlign = TextAlign.Center, modifier = Modifier.fillMaxWidth().padding(JannahSpacing.l)) }
+                item {
+                    Column(Modifier.fillMaxWidth().padding(horizontal = JannahSpacing.gutter, vertical = JannahSpacing.xl), horizontalAlignment = Alignment.CenterHorizontally) {
+                        Text("No matches yet", fontFamily = FontFamily.Serif, fontSize = 22.sp, fontWeight = FontWeight.Bold, color = JannahColors.Ink)
+                        Spacer(Modifier.height(6.dp))
+                        Text("Try a shorter phrase or a different spelling.", style = JannahType.bodySmall, color = JannahColors.Muted, textAlign = TextAlign.Center)
+                    }
+                }
             } else if (searchMode == "hadith" && hadithHits.isNotEmpty()) {
                 items(hadithHits.size) { i ->
                     val h = hadithHits[i]
@@ -108,6 +134,13 @@ fun QuranSearchScreen(onBack: () -> Unit, onNavigateToPage: (Int) -> Unit) {
                             Text(stripAllArabicMarks(h.arabic), fontFamily = UthmanicHafs, fontSize = 22.sp, color = JannahColors.Ink, textAlign = TextAlign.End, lineHeight = 36.sp, modifier = Modifier.fillMaxWidth())
                             Spacer(Modifier.height(8.dp))
                         }
+                        Text(
+                            "BUNDLED HADITH EXCERPT · EDITION AND GRADING NOT VERIFIED",
+                            style = JannahType.micro,
+                            color = JannahColors.OrangeDeep,
+                            fontWeight = FontWeight.Bold
+                        )
+                        Spacer(Modifier.height(4.dp))
                         Text(h.english, style = JannahType.bodySmall, color = JannahColors.Body, lineHeight = 22.sp)
                     }
                     Box(Modifier.fillMaxWidth().padding(horizontal = JannahSpacing.gutter).height(1.dp).background(JannahColors.Border))
@@ -120,6 +153,13 @@ fun QuranSearchScreen(onBack: () -> Unit, onNavigateToPage: (Int) -> Unit) {
                         Spacer(Modifier.height(8.dp))
                         Text(stripAllArabicMarks(a.arabic), fontFamily = UthmanicHafs, fontSize = 24.sp, color = JannahColors.Ink, textAlign = TextAlign.End, lineHeight = 40.sp, modifier = Modifier.fillMaxWidth())
                         Spacer(Modifier.height(8.dp))
+                        Text(
+                            "BUNDLED ENGLISH TRANSLATION · TRANSLATOR AND EDITION NOT IDENTIFIED",
+                            style = JannahType.micro,
+                            color = JannahColors.OrangeDeep,
+                            fontWeight = FontWeight.Bold
+                        )
+                        Spacer(Modifier.height(4.dp))
                         Text(a.english, style = JannahType.bodySmall, color = JannahColors.Body, lineHeight = 22.sp)
                     }
                     Box(Modifier.fillMaxWidth().padding(horizontal = JannahSpacing.gutter).height(1.dp).background(JannahColors.Border))

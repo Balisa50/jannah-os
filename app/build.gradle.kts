@@ -1,27 +1,52 @@
+import java.util.zip.GZIPOutputStream
+
 plugins {
     id("com.android.application")
     id("org.jetbrains.kotlin.android")
     id("org.jetbrains.kotlin.plugin.compose")
 }
 
+val hadithSource = layout.projectDirectory.file("../data/hadiths_merged.json")
+val compressedHadithAssets = layout.buildDirectory.dir("generated/hadith-assets")
+val compressHadithAsset by tasks.registering {
+    val compressedOutput = compressedHadithAssets.map { it.file("hadiths_merged.bin") }
+    inputs.file(hadithSource)
+    outputs.file(compressedOutput)
+    doLast {
+        val output = compressedOutput.get().asFile
+        output.parentFile.mkdirs()
+        hadithSource.asFile.inputStream().use { input ->
+            GZIPOutputStream(output.outputStream().buffered()).use { gzip ->
+                input.copyTo(gzip)
+            }
+        }
+    }
+}
+
 android {
     namespace = "com.jannahos"
-    compileSdk = 34
+    compileSdk = 36
 
     defaultConfig {
         applicationId = "com.jannah.ramadan"
         minSdk = 26
-        targetSdk = 34
+        targetSdk = 36
         versionCode = 2
         versionName = "1.0.1"
+    }
+
+    sourceSets {
+        getByName("main") {
+            assets.srcDir(compressedHadithAssets)
+        }
     }
 
     buildTypes {
         release {
             // Release signing is intentionally not configured in source control.
             // Configure it locally or through protected CI secrets before distribution.
-            isMinifyEnabled = false
-            isShrinkResources = false
+            isMinifyEnabled = true
+            isShrinkResources = true
             proguardFiles(
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro"
@@ -60,6 +85,13 @@ dependencies {
     implementation("net.zetetic:sqlcipher-android:4.5.4")
     implementation("androidx.sqlite:sqlite-ktx:2.4.0")
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.8.0")
+    implementation("com.google.mlkit:text-recognition:16.0.1")
+    implementation("androidx.exifinterface:exifinterface:1.3.7")
 
     testImplementation("junit:junit:4.13.2")
+}
+
+
+tasks.named("preBuild").configure {
+    dependsOn(compressHadithAsset)
 }

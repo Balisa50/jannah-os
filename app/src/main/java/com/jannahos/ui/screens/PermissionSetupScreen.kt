@@ -29,13 +29,14 @@ import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
 import androidx.lifecycle.compose.LocalLifecycleOwner
 import com.jannahos.FocusAccessibilityService
+import com.jannahos.ui.TopBar
 import com.jannahos.ui.pressClickable
 import com.jannahos.ui.theme.JannahColors
 import com.jannahos.ui.theme.JannahSpacing
 import com.jannahos.ui.theme.JannahType
 
 @Composable
-fun PermissionSetupScreen(onAllSet: () -> Unit) {
+fun PermissionSetupScreen(onAllSet: () -> Unit, onBack: (() -> Unit)? = null) {
     val ctx = LocalContext.current
     val lifecycleOwner = LocalLifecycleOwner.current
 
@@ -65,12 +66,16 @@ fun PermissionSetupScreen(onAllSet: () -> Unit) {
         onDispose { lifecycleOwner.lifecycle.removeObserver(observer) }
     }
 
-    Column(Modifier.fillMaxSize().background(JannahColors.Cream).verticalScroll(rememberScrollState()).padding(JannahSpacing.gutter)) {
-        Spacer(Modifier.height(JannahSpacing.xxl))
-
-        Text("Final steps.", fontFamily = FontFamily.Serif, fontSize = 32.sp, fontWeight = FontWeight.Bold, color = JannahColors.Ink)
-        Spacer(Modifier.height(8.dp))
-        Text("Notifications are needed for reminders. App protection, exact timing and quiet-mode controls are optional capabilities you can enable when you want them.", style = JannahType.body, color = JannahColors.Body, lineHeight = 24.sp)
+    Column(Modifier.fillMaxSize().background(JannahColors.Cream).verticalScroll(rememberScrollState())) {
+        if (onBack != null) TopBar("Permissions", onBack = onBack)
+        Column(Modifier.fillMaxWidth().padding(horizontal = JannahSpacing.gutter).padding(top = 44.dp, bottom = JannahSpacing.l)) {
+            Text("SIRAJ", style = JannahType.eyebrow, color = JannahColors.OrangeDeep)
+            Spacer(Modifier.height(JannahSpacing.s))
+            Text(if (onBack == null) "Set up your essentials." else "Manage permissions.", fontFamily = FontFamily.Serif, fontSize = 32.sp, fontWeight = FontWeight.Bold, color = JannahColors.Ink, lineHeight = 38.sp)
+            Spacer(Modifier.height(8.dp))
+            Text(if (onBack == null) "Start with notifications. Everything else is optional and can be enabled later." else "Choose which SIRAJ capabilities can use Android permissions. You can leave this screen at any time.", style = JannahType.body, color = JannahColors.Body, lineHeight = 24.sp)
+        }
+        Column(Modifier.padding(horizontal = JannahSpacing.gutter)) {
 
         Spacer(Modifier.height(JannahSpacing.xl))
 
@@ -149,14 +154,15 @@ fun PermissionSetupScreen(onAllSet: () -> Unit) {
 
         Spacer(Modifier.height(JannahSpacing.xxl))
 
-        val allRequiredGranted = notificationsOn
+        val allRequiredGranted = notificationsOn || onBack != null
         Box(
             Modifier.fillMaxWidth().height(56.dp).clip(RoundedCornerShape(JannahSpacing.pillRadius))
                 .background(if (allRequiredGranted) JannahColors.Ink else JannahColors.Border)
                 .pressClickable(enabled = allRequiredGranted) { onAllSet() },
             contentAlignment = Alignment.Center
         ) {
-            Text(if (allRequiredGranted) "Finish Setup" else "Enable notifications to continue", style = JannahType.button, color = JannahColors.OnOrange, fontSize = 15.sp, textAlign = androidx.compose.ui.text.style.TextAlign.Center)
+            Text(if (onBack != null) "Done" else if (allRequiredGranted) "Finish Setup" else "Enable notifications to continue", style = JannahType.button, color = JannahColors.OnOrange, fontSize = 15.sp, textAlign = androidx.compose.ui.text.style.TextAlign.Center)
+        }
         }
     }
 }

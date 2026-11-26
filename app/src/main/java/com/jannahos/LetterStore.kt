@@ -31,8 +31,17 @@ class LetterStore(context: Context) : SQLiteOpenHelper(
     }
 
     override fun onUpgrade(db: SQLiteDatabase, oldV: Int, newV: Int) {
-        db.execSQL("DROP TABLE IF EXISTS letters")
-        onCreate(db)
+        // Never discard sealed letters during a schema upgrade.
+        db.execSQL("""
+            CREATE TABLE IF NOT EXISTS letters (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                created INTEGER NOT NULL,
+                opens_at INTEGER NOT NULL,
+                title TEXT NOT NULL,
+                body TEXT NOT NULL,
+                opened INTEGER NOT NULL DEFAULT 0
+            )
+        """.trimIndent())
     }
 
     data class Letter(

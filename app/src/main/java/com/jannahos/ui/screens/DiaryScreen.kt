@@ -67,27 +67,49 @@ private val COMMANDS = listOf(
 
 @Composable
 fun DiaryScreen(onBack: () -> Unit) {
-    BackHandler(onBack = onBack)
     val ctx = LocalContext.current
     val haptics = LocalHapticFeedback.current
-    val store = remember { DiaryStore(ctx) }
+    val store = remember { runCatching { DiaryStore(ctx) }.getOrNull() }
     var refresh by remember { mutableStateOf(0) }
     val ignore = refresh
-    val entries = store.recent(30)
+    val entriesResult = remember(refresh) { runCatching { store?.recent(30, excludeTag = "note") ?: emptyList() } }
+    val entries = entriesResult.getOrDefault(emptyList())
+    val storeAvailable = store != null && entriesResult.isSuccess
     var writing by remember { mutableStateOf(false) }
     var text by remember { mutableStateOf("") }
+    var saveError by remember { mutableStateOf<String?>(null) }
     var showSlashMenu by remember { mutableStateOf(false) }
+
+    BackHandler {
+        if (writing) {
+            writing = false
+            text = ""
+            showSlashMenu = false
+            saveError = null
+        } else {
+            onBack()
+        }
+    }
     val dayFmt = SimpleDateFormat("EEE d MMM · HH:mm", Locale.getDefault())
 
     Column(modifier = Modifier.fillMaxSize().background(JannahColors.Cream)) {
-        ScreenHeader(title = "Diary", eyebrow = "PRIVATE", subtitle = "Tell it anything.", onBack = onBack)
+        ScreenHeader(title = "Diary", eyebrow = "PRIVATE", subtitle = "Tell it anything.", onBack = {
+            if (writing) {
+                writing = false
+                text = ""
+                showSlashMenu = false
+                saveError = null
+            } else {
+                onBack()
+            }
+        })
 
         Column(modifier = Modifier.weight(1f).verticalScroll(rememberScrollState())) {
             Column(Modifier.padding(horizontal = JannahSpacing.gutter)) {
                 Spacer(Modifier.height(JannahSpacing.l))
                 
                 if (!writing) {
-                    Box(Modifier.fillMaxWidth().height(56.dp).clip(RoundedCornerShape(JannahSpacing.pillRadius)).background(JannahColors.Ink).clickable { writing = true }, contentAlignment = Alignment.Center) { 
+                    Box(Modifier.fillMaxWidth().height(56.dp).clip(RoundedCornerShape(JannahSpacing.pillRadius)).background(JannahColors.Ink).clickable { saveError = null; writing = true }, contentAlignment = Alignment.Center) { 
                         Text("Write today", style = JannahType.button, color = JannahColors.OnOrange) 
                     }
                     Spacer(Modifier.height(JannahSpacing.l))
@@ -98,6 +120,7 @@ fun DiaryScreen(onBack: () -> Unit) {
                             value = text,
                             onValueChange = { newText ->
                                 text = newText
+                                saveError = null
                                 // Detect if the user just typed "/"
                                 if (newText.endsWith("/")) {
                                     showSlashMenu = true
@@ -138,21 +161,39 @@ fun DiaryScreen(onBack: () -> Unit) {
                         }
                     }
 
+                    if (saveError != null) {
+                        Text(saveError!!, style = JannahType.bodySmall, color = JannahColors.Danger)
+                        Spacer(Modifier.height(JannahSpacing.xs))
+                    }
                     Spacer(Modifier.height(JannahSpacing.s))
                     Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(JannahSpacing.s)) {
-                        Box(Modifier.weight(1f).height(52.dp).clip(RoundedCornerShape(JannahSpacing.pillRadius)).background(JannahColors.Card).clickable { writing = false; text = "" }, contentAlignment = Alignment.Center) { Text("Cancel", style = JannahType.button, color = JannahColors.Muted) }
+                        Box(Modifier.weight(1f).height(52.dp).clip(RoundedCornerShape(JannahSpacing.pillRadius)).background(JannahColors.Card).clickable { writing = false; text = ""; saveError = null }, contentAlignment = Alignment.Center) { Text("Cancel", style = JannahType.button, color = JannahColors.Muted) }
                         Box(Modifier.weight(1f).height(52.dp).clip(RoundedCornerShape(JannahSpacing.pillRadius)).background(if (text.isBlank()) JannahColors.Border else JannahColors.Orange).clickable {
                             if (text.isNotBlank()) {
-                                val result = DiaryClassifier.classify(text)
-                                store.add(text.trim(), result.tag, result.reactionTitle)
-                                haptics.performHapticFeedback(HapticFeedbackType.LongPress)
-                                text = ""; writing = false; refresh++ 
+                                val saved = runCatching {
+                                    val activeStore = store ?: error("Diary storage is unavailable.")
+                                    val result = DiaryClassifier.classify(text)
+                                    check(activeStore.add(text.trim(), result.tag, result.reactionTitle) > 0)
+                                }
+                                if (saved.isSuccess) {
+                                    haptics.performHapticFeedback(HapticFeedbackType.LongPress)
+                                    text = ""
+                                    writing = false
+                                    saveError = null
+                                    refresh++
+                                } else {
+                                    saveError = "Your entry wasn't saved. Your writing is still here; try again."
+                                }
                             }
                         }, contentAlignment = Alignment.Center) { Text("Save", style = JannahType.button, color = if (text.isBlank()) JannahColors.Faint else JannahColors.OnOrange) }
                     }
                     Spacer(Modifier.height(JannahSpacing.l))
                 }
 
+                if (saveError != null && !writing) {
+                    Text(saveError!!, style = JannahType.bodySmall, color = JannahColors.Danger)
+                    Spacer(Modifier.height(JannahSpacing.s))
+                }
                 if (entries.isNotEmpty()) {
                     Text("RECENT", style = JannahType.eyebrow, color = JannahColors.OrangeDeep)
                     Spacer(Modifier.height(JannahSpacing.s))
@@ -165,10 +206,15 @@ fun DiaryScreen(onBack: () -> Unit) {
                                 Spacer(Modifier.height(4.dp))
                                 Text(e.text, style = JannahType.body, color = JannahColors.Ink, lineHeight = 22.sp)
                             }
-                            Box(Modifier.clip(RoundedCornerShape(JannahSpacing.pillRadius)).clickable { store.delete(e.id); refresh++ }.padding(6.dp)) { Text("×", style = JannahType.body, color = JannahColors.Muted) }
+                            Box(Modifier.clip(RoundedCornerShape(JannahSpacing.pillRadius)).clickable {
+                                val deleted = runCatching { store?.delete(e.id) }
+                                if (deleted.isSuccess) refresh++ else saveError = "This diary entry couldn't be deleted. Try again."
+                            }.padding(6.dp)) { Text("×", style = JannahType.body, color = JannahColors.Muted) }
                         }
                         if (i < entries.size - 1) Box(Modifier.fillMaxWidth().height(1.dp).background(JannahColors.Divider))
                     }
+                } else if (!storeAvailable) {
+                    Text("Diary storage couldn't be opened. Your existing entries have not been changed.", style = JannahType.bodySmall, color = JannahColors.Danger, textAlign = TextAlign.Center, modifier = Modifier.fillMaxWidth().padding(vertical = JannahSpacing.xl))
                 } else {
                     Text("Nothing written yet.", style = JannahType.bodySmall, color = JannahColors.Muted, textAlign = TextAlign.Center, modifier = Modifier.fillMaxWidth().padding(vertical = JannahSpacing.xl))
                 }

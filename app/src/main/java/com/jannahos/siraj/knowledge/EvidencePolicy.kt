@@ -57,6 +57,18 @@ object EvidencePolicy {
                         reasons += "$label has incomplete scholarly work details."
                     }
                 }
+
+                is IslamicReference.Tafsir -> {
+                    if (reference.sourceId.isBlank() ||
+                        reference.author.isBlank() ||
+                        reference.title.isBlank()
+                    ) {
+                        reasons += "$label has incomplete tafsir source details."
+                    }
+                    if (reference.surah !in 1..114 || reference.ayah < 1) {
+                        reasons += "$label has an invalid tafsir verse reference."
+                    }
+                }
             }
         }
 
@@ -67,8 +79,26 @@ object EvidencePolicy {
                 if (evidence.none { it.reference is IslamicReference.Quran }) {
                     reasons += "A Quran explanation needs an exact Surah and ayah reference."
                 }
-                if (evidence.none { it.reference is IslamicReference.ScholarlyWork }) {
+                if (evidence.none {
+                        it.reference is IslamicReference.ScholarlyWork ||
+                            it.reference is IslamicReference.Tafsir
+                    }
+                ) {
                     reasons += "Interpretive claims need an identifiable tafsir or scholarly source."
+                }
+                val quranReferences = evidence.mapNotNull {
+                    it.reference as? IslamicReference.Quran
+                }
+                val tafsirReferences = evidence.mapNotNull {
+                    it.reference as? IslamicReference.Tafsir
+                }
+                if (tafsirReferences.any { tafsir ->
+                        quranReferences.none {
+                            it.surah == tafsir.surah && it.ayah == tafsir.ayah
+                        }
+                    }
+                ) {
+                    reasons += "A tafsir excerpt must identify the same Surah and ayah as its Quran evidence."
                 }
             }
 
@@ -77,10 +107,12 @@ object EvidencePolicy {
                 if (hadithSources.isEmpty()) {
                     reasons += "An authenticity claim needs a specific hadith collection and reference."
                 } else if (hadithSources.any {
-                        it.grade.isNullOrBlank() || it.gradingAuthority.isNullOrBlank()
+                        it.edition.isNullOrBlank() ||
+                            it.grade.isNullOrBlank() ||
+                            it.gradingAuthority.isNullOrBlank()
                     }
                 ) {
-                    reasons += "Every cited hadith needs both a grading and the authority that assigned it."
+                    reasons += "Every cited hadith needs an identified edition, grading and the authority that assigned it."
                 }
             }
 
@@ -99,10 +131,12 @@ object EvidencePolicy {
 
                 val hadithSources = evidence.mapNotNull { it.reference as? IslamicReference.Hadith }
                 if (hadithSources.any {
-                        it.grade.isNullOrBlank() || it.gradingAuthority.isNullOrBlank()
+                        it.edition.isNullOrBlank() ||
+                            it.grade.isNullOrBlank() ||
+                            it.gradingAuthority.isNullOrBlank()
                     }
                 ) {
-                    reasons += "A hadith used in a ruling has no complete grading provenance."
+                    reasons += "A hadith used in a ruling has no complete edition and grading provenance."
                 }
             }
         }

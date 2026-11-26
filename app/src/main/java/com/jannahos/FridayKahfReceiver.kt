@@ -12,12 +12,13 @@ import androidx.core.app.NotificationCompat
 class FridayKahfReceiver : BroadcastReceiver() {
     override fun onReceive(ctx: Context, intent: Intent) {
         val index = intent.getIntExtra("reminder_index", 0)
+        // Re-arm only this reminder; the other Friday check-ins must remain armed.
+        runCatching { FridayKahfScheduler.scheduleNext(ctx, index) }
         showNotification(ctx, index)
-        // Re-arm next Friday's reminders after this week's sequence begins.
-        runCatching { FridayKahfScheduler.scheduleAll(ctx) }
     }
 
     private fun showNotification(ctx: Context, index: Int) {
+        if (!NotificationAccess.canPost(ctx)) return
         val channelId = "friday_kahf_channel"
         val nm = ctx.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
 
@@ -52,6 +53,6 @@ class FridayKahfReceiver : BroadcastReceiver() {
             .setContentIntent(pendingIntent)
             .build()
 
-        nm.notify(8000 + index, notif)
+        runCatching { nm.notify(8000 + index, notif) }
     }
 }

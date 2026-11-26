@@ -14,6 +14,15 @@ object CityStore {
     fun useCity(context: Context): Boolean =
         context.getSharedPreferences(PREFS, Context.MODE_PRIVATE).getBoolean("use_city", false)
 
+    fun clear(context: Context) {
+        context.getSharedPreferences(PREFS, Context.MODE_PRIVATE)
+            .edit()
+            .remove("name")
+            .remove("country")
+            .putBoolean("use_city", false)
+            .apply()
+    }
+
     fun set(context: Context, name: String, country: String) {
         context.getSharedPreferences(PREFS, Context.MODE_PRIVATE)
             .edit()
