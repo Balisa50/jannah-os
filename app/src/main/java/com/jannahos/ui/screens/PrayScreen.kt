@@ -30,7 +30,7 @@ import java.util.Locale
 @Composable
 fun PrayScreen() {
     val ctx = LocalContext.current
-    var citySelected by remember { mutableStateOf(CityStore.useCity(ctx)) }
+    var citySelected by remember { mutableStateOf(CityStore.useCity(ctx) || Settings.lat(ctx) != 0.0 || Settings.lon(ctx) != 0.0) }
     var times by remember {
         mutableStateOf(
             if (citySelected) SalahScheduler.todayTimes(ctx, Settings.lat(ctx), Settings.lon(ctx))
@@ -40,6 +40,7 @@ fun PrayScreen() {
     var dateKey by remember { mutableStateOf(SimpleDateFormat("yyyy-MM-dd", Locale.US).format(Date())) }
     var savedLat by remember { mutableDoubleStateOf(Settings.lat(ctx)) }
     var savedLon by remember { mutableDoubleStateOf(Settings.lon(ctx)) }
+    var savedMethod by remember { mutableStateOf(Settings.method(ctx)) }
     var now by remember { mutableLongStateOf(System.currentTimeMillis()) }
 
     LaunchedEffect(Unit) {
@@ -50,16 +51,19 @@ fun PrayScreen() {
             val freshKey = SimpleDateFormat("yyyy-MM-dd", Locale.US).format(Date(fresh))
             val currentLat = Settings.lat(ctx)
             val currentLon = Settings.lon(ctx)
-            val currentCitySelected = CityStore.useCity(ctx)
+            val currentMethod = Settings.method(ctx)
+            val currentCitySelected = CityStore.useCity(ctx) || currentLat != 0.0 || currentLon != 0.0
             if (
                 freshKey != dateKey ||
                 currentLat != savedLat ||
                 currentLon != savedLon ||
+                currentMethod != savedMethod ||
                 currentCitySelected != citySelected
             ) {
                 dateKey = freshKey
                 savedLat = currentLat
                 savedLon = currentLon
+                savedMethod = currentMethod
                 citySelected = currentCitySelected
                 times = if (currentCitySelected) {
                     SalahScheduler.todayTimes(ctx, currentLat, currentLon)
@@ -126,7 +130,7 @@ fun PrayScreen() {
                 }
             }
         } else {
-Prayer old title            Column(Modifier.padding(horizontal = JannahSpacing.gutter)) {
+            Column(Modifier.padding(horizontal = JannahSpacing.gutter)) {
                 Text(if (isTomorrow) "TOMORROW" else "NEXT", style = JannahType.eyebrow, color = JannahColors.OrangeDeep)
                 Spacer(Modifier.height(8.dp))
                 Text(nextLabel, fontFamily = FontFamily.Serif, fontSize = 32.sp, fontWeight = FontWeight.Bold, color = JannahColors.Orange)
