@@ -81,11 +81,25 @@ class DiaryStore(context: Context) : SQLiteOpenHelper(
         writableDatabase.update("entries", v, "id = ?", arrayOf(id.toString()))
     }
 
-    fun recent(n: Int = 30): List<Entry> {
+    fun recent(
+        n: Int = 30,
+        tag: String? = null,
+        excludeTag: String? = null
+    ): List<Entry> {
         val out = mutableListOf<Entry>()
+        val selection = when {
+            tag != null -> "WHERE tag = ?"
+            excludeTag != null -> "WHERE tag != ?"
+            else -> ""
+        }
+        val args = when {
+            tag != null -> arrayOf(tag, n.toString())
+            excludeTag != null -> arrayOf(excludeTag, n.toString())
+            else -> arrayOf(n.toString())
+        }
         readableDatabase.rawQuery(
-            "SELECT id, ts, text, tag, reaction, celebrated FROM entries ORDER BY ts DESC LIMIT ?",
-            arrayOf(n.toString())
+            "SELECT id, ts, text, tag, reaction, celebrated FROM entries $selection ORDER BY ts DESC LIMIT ?",
+            args
         ).use { c ->
             while (c.moveToNext()) {
                 out.add(Entry(
@@ -101,7 +115,7 @@ class DiaryStore(context: Context) : SQLiteOpenHelper(
     fun latestTagIn24h(): Entry? {
         val cutoff = System.currentTimeMillis() - 24L * 60 * 60 * 1000
         readableDatabase.rawQuery(
-            "SELECT id, ts, text, tag, reaction, celebrated FROM entries WHERE ts > ? ORDER BY ts DESC LIMIT 1",
+            "SELECT id, ts, text, tag, reaction, celebrated FROM entries WHERE ts > ? AND tag != 'note' ORDER BY ts DESC LIMIT 1",
             arrayOf(cutoff.toString())
         ).use { c ->
             if (c.moveToFirst()) {
