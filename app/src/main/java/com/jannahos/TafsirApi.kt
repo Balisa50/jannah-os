@@ -4,7 +4,7 @@ import org.json.JSONObject
 import java.net.HttpURLConnection
 import java.net.URL
 
-// Tafsir via quran.com API. Ibn Kathir (abridged, English), edition 169.
+// Tafsir via Quran.com API: Tafsir Ibn Kathir (English), resource ID 169.
 object TafsirApi {
 
     private const val TAFSIR_ID = 169
