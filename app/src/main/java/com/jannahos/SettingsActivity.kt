@@ -53,7 +53,11 @@ private fun SettingsScreen(onBack: () -> Unit) {
     var showPermissions by remember { mutableStateOf(false) }
 
     if (showCityPicker) {
-        CityPickerScreen(onBack = { showCityPicker = false }, onPicked = { c, cn -> CityStore.set(ctx, c, cn); showCityPicker = false })
+        CityPickerScreen(onBack = { showCityPicker = false }, onPicked = { c, cn ->
+            CityStore.set(ctx, c, cn)
+            cityName = c
+            showCityPicker = false
+        })
         return
     }
     if (showPermissions) {
