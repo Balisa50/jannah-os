@@ -1,20 +1,34 @@
+import java.util.zip.GZIPOutputStream
+
 plugins {
     id("com.android.application")
     id("org.jetbrains.kotlin.android")
     id("org.jetbrains.kotlin.plugin.compose")
 }
 
-val compressedHadithAssets = layout.buildDirectory.dir("generated/hadith-assets")
+val sourceAssets = layout.projectDirectory.dir("src/main/assets")
+val compressedHadithAssets = layout.buildDirectory.dir("generated/siraj-assets")
 val compressHadithAsset by tasks.registering {
-    val source = layout.projectDirectory.file("src/main/assets/hadiths_merged.json")
-    val destination = compressedHadithAssets.map { it.file("hadiths_merged.json.gz") }
-    inputs.file(source)
-    outputs.file(destination)
+    inputs.dir(sourceAssets)
+    outputs.dir(compressedHadithAssets)
     doLast {
-        val output = destination.get().asFile
-        output.parentFile.mkdirs()
-        source.asFile.inputStream().use { input ->
-            java.util.zip.GZIPOutputStream(output.outputStream().buffered()).use { gzip ->
+        val sourceDirectory = sourceAssets.asFile
+        val outputDirectory = compressedHadithAssets.get().asFile
+        outputDirectory.deleteRecursively()
+        outputDirectory.mkdirs()
+
+        sourceDirectory.walkTopDown()
+            .filter { it.isFile && it.name != "hadiths_merged.json" }
+            .forEach { sourceFile ->
+                val target = outputDirectory.resolve(sourceFile.relativeTo(sourceDirectory).path)
+                target.parentFile.mkdirs()
+                sourceFile.copyTo(target, overwrite = true)
+            }
+
+        val sourceHadith = sourceDirectory.resolve("hadiths_merged.json")
+        val compressedHadith = outputDirectory.resolve("hadiths_merged.json.gz")
+        sourceHadith.inputStream().use { input ->
+            GZIPOutputStream(compressedHadith.outputStream().buffered()).use { gzip ->
                 input.copyTo(gzip)
             }
         }
@@ -35,10 +49,7 @@ android {
 
     sourceSets {
         getByName("main") {
-            assets {
-                exclude("hadiths_merged.json")
-                srcDir(compressedHadithAssets)
-            }
+            assets.setSrcDirs(listOf(compressedHadithAssets))
         }
     }
 
