@@ -38,6 +38,8 @@ android {
     sourceSets {
         getByName("main") {
             assets.srcDir(compressedHadithAssets)
+            // Never ship an uncompressed copy alongside the streamed asset.
+            assets.exclude("hadiths_merged.json")
         }
     }
 
