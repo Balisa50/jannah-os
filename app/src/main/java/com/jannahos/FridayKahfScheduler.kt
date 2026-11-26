@@ -8,50 +8,61 @@ import android.os.Build
 import java.util.Calendar
 
 object FridayKahfScheduler {
-    
-    // 5 distinct times during Friday (24hr format)
+    // Five optional check-ins. Each alarm is re-armed independently.
     private val reminderHours = intArrayOf(9, 12, 15, 18, 21)
 
     fun scheduleAll(ctx: Context) {
+        reminderHours.indices.forEach { scheduleNext(ctx, it) }
+    }
+
+    /**
+     * Re-arm only the reminder that just fired. Re-arming all five from the
+     * first callback would replace the remaining four alarms for this Friday.
+     */
+    fun scheduleNext(ctx: Context, reminderIndex: Int) {
+        if (reminderIndex !in reminderHours.indices) return
         val alarmManager = ctx.getSystemService(Context.ALARM_SERVICE) as AlarmManager
-        
-        for (i in reminderHours.indices) {
-            val hour = reminderHours[i]
-            val triggerTime = getNextFridayAt(hour)
+        val triggerTime = nextFridayAt(reminderHours[reminderIndex], System.currentTimeMillis())
+        val intent = Intent(ctx, FridayKahfReceiver::class.java).apply {
+            putExtra("reminder_index", reminderIndex)
+        }
+        val pendingIntent = PendingIntent.getBroadcast(
+            ctx, 8000 + reminderIndex, intent,
+            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+        )
 
-            val intent = Intent(ctx, FridayKahfReceiver::class.java).apply {
-                putExtra("reminder_index", i)
-            }
-            val pendingIntent = PendingIntent.getBroadcast(
-                ctx, 8000 + i, intent, PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
-            )
-
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
-                if (alarmManager.canScheduleExactAlarms()) {
-                    alarmManager.setExactAndAllowWhileIdle(AlarmManager.RTC_WAKEUP, triggerTime, pendingIntent)
-                } else {
-                    alarmManager.setAndAllowWhileIdle(AlarmManager.RTC_WAKEUP, triggerTime, pendingIntent)
-                }
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+            if (alarmManager.canScheduleExactAlarms()) {
+                alarmManager.setExactAndAllowWhileIdle(
+                    AlarmManager.RTC_WAKEUP, triggerTime, pendingIntent
+                )
             } else {
-                alarmManager.setExactAndAllowWhileIdle(AlarmManager.RTC_WAKEUP, triggerTime, pendingIntent)
+                alarmManager.setAndAllowWhileIdle(
+                    AlarmManager.RTC_WAKEUP, triggerTime, pendingIntent
+                )
             }
+        } else {
+            alarmManager.setExactAndAllowWhileIdle(
+                AlarmManager.RTC_WAKEUP, triggerTime, pendingIntent
+            )
         }
     }
 
-    private fun getNextFridayAt(hour: Int): Long {
-        val cal = Calendar.getInstance()
-        cal.set(Calendar.HOUR_OF_DAY, hour)
-        cal.set(Calendar.MINUTE, 0)
-        cal.set(Calendar.SECOND, 0)
+    internal fun nextFridayAt(hour: Int, nowMillis: Long): Long {
+        require(hour in 0..23)
+        val cal = Calendar.getInstance().apply {
+            timeInMillis = nowMillis
+            set(Calendar.HOUR_OF_DAY, hour)
+            set(Calendar.MINUTE, 0)
+            set(Calendar.SECOND, 0)
+            set(Calendar.MILLISECOND, 0)
+        }
 
-        // If the time has already passed today, or today isn't Friday, move to next Friday
-        if (cal.timeInMillis <= System.currentTimeMillis() || cal.get(Calendar.DAY_OF_WEEK) != Calendar.FRIDAY) {
-            while (cal.get(Calendar.DAY_OF_WEEK) != Calendar.FRIDAY) {
-                cal.add(Calendar.DAY_OF_YEAR, 1)
-            }
-            if (cal.timeInMillis <= System.currentTimeMillis()) {
-                cal.add(Calendar.DAY_OF_YEAR, 7)
-            }
+        if (cal.get(Calendar.DAY_OF_WEEK) != Calendar.FRIDAY ||
+            cal.timeInMillis <= nowMillis
+        ) {
+            val daysUntilFriday = (Calendar.FRIDAY - cal.get(Calendar.DAY_OF_WEEK) + 7) % 7
+            cal.add(Calendar.DAY_OF_YEAR, if (daysUntilFriday == 0) 7 else daysUntilFriday)
         }
         return cal.timeInMillis
     }
