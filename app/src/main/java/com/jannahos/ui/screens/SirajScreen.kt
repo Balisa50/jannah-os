@@ -63,6 +63,10 @@ import com.jannahos.siraj.ai.SirajConversationContext
 import com.jannahos.siraj.core.SirajAction
 import com.jannahos.siraj.knowledge.IslamicReference
 import com.jannahos.siraj.knowledge.QuranEvidenceRetriever
+import com.jannahos.siraj.knowledge.TafsirEvidenceRetriever
+import com.jannahos.siraj.knowledge.EvidencePolicy
+import com.jannahos.siraj.knowledge.ClaimCategory
+import com.jannahos.siraj.knowledge.EvidenceDecision
 import com.jannahos.ui.theme.JannahColors
 import com.jannahos.ui.theme.JannahType
 import kotlinx.coroutines.Dispatchers
@@ -423,12 +427,35 @@ fun SirajScreen(onNavigate: (String) -> Unit = {}) {
         when (val action = (route as? com.jannahos.siraj.core.SirajRoute.AppAction)?.action) {
             is SirajAction.ShowAyah -> {
                 scope.launch {
-                    val evidence = withContext(Dispatchers.IO) {
-                        QuranEvidenceRetriever.getAyah(context, action.surah, action.ayah)
+                    val evidence = QuranEvidenceRetriever.getAyah(
+                        context,
+                        action.surah,
+                        action.ayah
+                    )
+                    val tafsir = if (evidence != null) {
+                        TafsirEvidenceRetriever.getAyah(action.surah, action.ayah)
+                    } else {
+                        null
                     }
                     val reference = evidence?.reference as? IslamicReference.Quran
+                    val tafsirReview = if (evidence != null && tafsir != null) {
+                        EvidencePolicy.review(
+                            ClaimCategory.QURAN_EXPLANATION,
+                            listOf(evidence, tafsir)
+                        )
+                    } else {
+                        null
+                    }
+                    val tafsirSection = when {
+                        tafsir == null ->
+                            "Tafsir retrieval is unavailable right now. I am showing the exact Arabic ayah only, without guessing its meaning."
+                        tafsirReview?.decision == EvidenceDecision.ACCEPTED ->
+                            "Tafsir Ibn Kathir (English text; source identifies Hafiz Ibn Kathir):\n${tafsir.text}\n\nSource: Quran.com Tafsir resource 169. The current integration does not identify the English translator or edition. This is one tafsir source, not a fatwa or a statement of scholarly consensus."
+                        else ->
+                            "The tafsir excerpt did not pass SIRAJ's source checks, so I have not displayed it as an explanation."
+                    }
                     val response = if (evidence != null && reference != null) {
-                        "${evidence.text}\n\nSurah ${action.surahName} · Ayah ${reference.ayah}\nArabic text from the bundled Quran asset. Its edition/provenance is not yet recorded, and no English translation is shown because its translator and edition are unidentified."
+                        "${evidence.text}\n\nSurah ${action.surahName} · Ayah ${reference.ayah}\nArabic text from the bundled Quran asset; its edition/provenance is not yet recorded.\n\n${tafsirSection}"
                     } else {
                         "I couldn't verify that ayah in the bundled Quran text. Check the Surah and ayah number; I haven't substituted a nearby verse."
                     }
