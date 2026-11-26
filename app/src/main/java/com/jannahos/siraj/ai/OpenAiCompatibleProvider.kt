@@ -2,6 +2,7 @@ package com.jannahos.siraj.ai
 
 import android.content.Context
 import android.util.Log
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import org.json.JSONArray
@@ -106,6 +107,8 @@ class OpenAiCompatibleProvider(private val context: Context) {
             if (responseText.isBlank()) SirajInferenceResult.Failure(
                 "The AI provider returned an empty response."
             ) else SirajInferenceResult.Success(responseText.take(12_000))
+        } catch (cancelled: CancellationException) {
+            throw cancelled
         } catch (_: java.net.SocketTimeoutException) {
             SirajInferenceResult.Failure("The AI provider took too long to respond.")
         } catch (_: java.net.UnknownHostException) {

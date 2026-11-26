@@ -66,6 +66,7 @@ import com.jannahos.siraj.knowledge.QuranEvidenceRetriever
 import com.jannahos.ui.theme.JannahColors
 import com.jannahos.ui.theme.JannahType
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.withContext
@@ -93,6 +94,9 @@ fun SirajScreen(onNavigate: (String) -> Unit = {}) {
     }
     val listState = rememberLazyListState()
     val scope = rememberCoroutineScope()
+    var aiRequestJob by remember { mutableStateOf<Job?>(null) }
+    var isAiRequestRunning by remember { mutableStateOf(false) }
+    var activeAiResponseIndex by remember { mutableIntStateOf(-1) }
     var input by remember { mutableStateOf("") }
     var pendingDeviceAction by remember { mutableStateOf<SirajDeviceAction?>(null) }
     var pendingActionPlan by remember { mutableStateOf<SirajActionPlan?>(null) }
@@ -355,37 +359,63 @@ fun SirajScreen(onNavigate: (String) -> Unit = {}) {
                     pendingImageText = null
                     imageTextConsentGranted = false
                 }
+                if (isAiRequestRunning) {
+                    messages.add(
+                        SirajMessage(
+                            "An AI request is already running. Cancel it before sending another AI question.",
+                            false
+                        )
+                    )
+                    return
+                }
                 messages.add(SirajMessage("Thinking…", false))
                 val responseIndex = messages.lastIndex
-                scope.launch {
-                    val conversation = messages
-                        .filterNot { it.text == "Thinking…" || it.localOnly }
-                        .dropLast(1)
-                        .map { message ->
-                            SirajChatMessage(
-                                role = if (message.fromUser) "user" else "assistant",
-                                content = message.text
+                activeAiResponseIndex = responseIndex
+                isAiRequestRunning = true
+                aiRequestJob = scope.launch {
+                    try {
+                        val conversation = messages
+                            .filterNot { it.text == "Thinking…" || it.localOnly }
+                            .dropLast(1)
+                            .map { message ->
+                                SirajChatMessage(
+                                    role = if (message.fromUser) "user" else "assistant",
+                                    content = message.text
+                                )
+                            }
+                        val response = OpenAiCompatibleProvider(context).complete(
+                            listOf(
+                                SirajChatMessage(
+                                    role = "system",
+                                    content = SirajConversationPolicy.GENERAL_ASSISTANT_SYSTEM_PROMPT
+                                )
+                            ) + SirajConversationContext.build(conversation, providerPrompt)
+                        )
+                        val reply = when (response) {
+                            is SirajInferenceResult.Success ->
+                                if (SirajConversationPolicy.isReligiousRequest(response.text)) {
+                                    "I blocked that response because it appears to make a religious claim. SIRAJ's verified Islamic research workflow is not ready yet, so I won't present it as guidance."
+                                } else response.text
+                            is SirajInferenceResult.Failure -> response.message
+                        }
+                        if (responseIndex in messages.indices) {
+                            messages[responseIndex] = SirajMessage(reply, false)
+                        }
+                        if (messages.isNotEmpty()) listState.animateScrollToItem(messages.lastIndex)
+                    } catch (cancelled: CancellationException) {
+                        throw cancelled
+                    } catch (_: Exception) {
+                        if (responseIndex in messages.indices) {
+                            messages[responseIndex] = SirajMessage(
+                                "The AI request failed unexpectedly. Check the provider settings and try again.",
+                                false
                             )
                         }
-                    val response = OpenAiCompatibleProvider(context).complete(
-                        listOf(
-                            SirajChatMessage(
-                                role = "system",
-                                content = SirajConversationPolicy.GENERAL_ASSISTANT_SYSTEM_PROMPT
-                            )
-                        ) + SirajConversationContext.build(conversation, providerPrompt)
-                    )
-                    val reply = when (response) {
-                        is SirajInferenceResult.Success ->
-                            if (SirajConversationPolicy.isReligiousRequest(response.text)) {
-                                "I blocked that response because it appears to make a religious claim. SIRAJ's verified Islamic research workflow is not ready yet, so I won't present it as guidance."
-                            } else response.text
-                        is SirajInferenceResult.Failure -> response.message
+                    } finally {
+                        isAiRequestRunning = false
+                        aiRequestJob = null
+                        activeAiResponseIndex = -1
                     }
-                    if (responseIndex in messages.indices) {
-                        messages[responseIndex] = SirajMessage(reply, false)
-                    }
-                    if (messages.isNotEmpty()) listState.animateScrollToItem(messages.lastIndex)
                 }
             }
         }
@@ -1152,6 +1182,19 @@ fun SirajScreen(onNavigate: (String) -> Unit = {}) {
                         .background(if (input.isNotBlank()) JannahColors.Orange else JannahColors.Border)
                 ) {
                     Text("Send", color = if (input.isNotBlank()) JannahColors.OnOrange else JannahColors.Muted, fontWeight = FontWeight.Bold)
+                }
+                if (isAiRequestRunning) {
+                    TextButton(
+                        onClick = {
+                            val index = activeAiResponseIndex
+                            if (index in messages.indices && messages[index].text == "Thinking…") {
+                                messages[index] = SirajMessage("Request cancelled.", false)
+                            }
+                            aiRequestJob?.cancel()
+                        }
+                    ) {
+                        Text("Cancel", color = JannahColors.Ink, fontWeight = FontWeight.Medium)
+                    }
                 }
             }
             Row(
