@@ -8,6 +8,7 @@ import android.speech.tts.TextToSpeech
 import android.provider.Settings
 import android.net.Uri
 import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.PickVisualMediaRequest
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -47,6 +48,8 @@ import com.jannahos.siraj.actions.ActionApproval
 import com.jannahos.siraj.actions.SirajActionHistoryStore
 import com.jannahos.siraj.memory.SirajMemoryCommandParser
 import com.jannahos.siraj.memory.SirajMemoryStore
+import com.jannahos.siraj.media.SirajImageTextExtractor
+import com.jannahos.siraj.media.SirajImageContentPolicy
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
@@ -62,11 +65,13 @@ import com.jannahos.ui.theme.JannahColors
 import com.jannahos.ui.theme.JannahType
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.withContext
 
 private data class SirajMessage(
     val text: String,
-    val fromUser: Boolean
+    val fromUser: Boolean,
+    val localOnly: Boolean = false
 )
 
 @Composable
@@ -99,10 +104,13 @@ fun SirajScreen(onNavigate: (String) -> Unit = {}) {
     var showMemoryClearConfirmation by remember { mutableStateOf(false) }
     var pendingMemoryDeleteId by remember { mutableStateOf<Long?>(null) }
     var pendingMemoryDeleteContent by remember { mutableStateOf("") }
+    var pendingImageText by remember { mutableStateOf<String?>(null) }
+    var imageTextConsentGranted by remember { mutableStateOf(false) }
+    var showImageTextConsent by remember { mutableStateOf(false) }
     val messages = remember {
         mutableStateListOf(
             SirajMessage(
-                "I can open a Surah, show prayer times, find the Qibla, take supported device actions, and keep private memories on this device. I won't invent religious answers or claim a source I haven't checked.",
+                "I can open a Surah, show prayer times, find the Qibla, read text from images on-device, take supported device actions, and keep private memories here. I won't invent religious answers or claim a source I haven't checked.",
                 false
             )
         )
@@ -138,6 +146,13 @@ fun SirajScreen(onNavigate: (String) -> Unit = {}) {
         )
     }
 
+    fun markLastUserMessageLocalOnly() {
+        val index = messages.lastIndex
+        if (index >= 0 && messages[index].fromUser) {
+            messages[index] = messages[index].copy(localOnly = true)
+        }
+    }
+
     fun prepareDeviceAction(action: SirajDeviceAction, prompt: String) {
         val plan = SirajActionPlanner.prepare(
             action = action,
@@ -171,15 +186,18 @@ fun SirajScreen(onNavigate: (String) -> Unit = {}) {
 
         val rememberContent = SirajMemoryCommandParser.rememberContent(request)
         if (rememberContent != null) {
+            markLastUserMessageLocalOnly()
             pendingMemoryContent = rememberContent
             showMemorySaveConfirmation = true
             return
         }
         if (request.trim().lowercase().startsWith("remember:")) {
+            markLastUserMessageLocalOnly()
             messages.add(SirajMessage("Add the text after 'remember:' so I know exactly what to save.", false))
             return
         }
         if (request.trim().lowercase().startsWith("remember ")) {
+            markLastUserMessageLocalOnly()
             messages.add(
                 SirajMessage(
                     "I won't guess what to save. Use 'remember: ...' or 'remember that ...' to propose a private memory.",
@@ -189,6 +207,7 @@ fun SirajScreen(onNavigate: (String) -> Unit = {}) {
             return
         }
         if (SirajMemoryCommandParser.isShowMemoryRequest(request)) {
+            markLastUserMessageLocalOnly()
             val entries = runCatching { SirajMemoryStore(context).recent(20) }
                 .getOrElse { emptyList() }
             val reply = if (entries.isEmpty()) {
@@ -201,15 +220,18 @@ fun SirajScreen(onNavigate: (String) -> Unit = {}) {
             return
         }
         if (SirajMemoryCommandParser.isClearMemoryRequest(request)) {
+            markLastUserMessageLocalOnly()
             showMemoryClearConfirmation = true
             return
         }
         val forgetQuery = SirajMemoryCommandParser.forgetQuery(request)
         if (request.trim().lowercase().startsWith("forget:") && forgetQuery == null) {
+            markLastUserMessageLocalOnly()
             messages.add(SirajMessage("Add a specific phrase after 'forget:' so I know which memory to find.", false))
             return
         }
         if (forgetQuery != null) {
+            markLastUserMessageLocalOnly()
             val matches = runCatching { SirajMemoryStore(context).search(forgetQuery) }
                 .getOrElse { emptyList() }
             when (matches.size) {
@@ -229,6 +251,7 @@ fun SirajScreen(onNavigate: (String) -> Unit = {}) {
         }
 
         if (request.lowercase() in setOf("clear action history", "delete action history")) {
+            markLastUserMessageLocalOnly()
             showHistoryClearConfirmation = true
             return
         }
@@ -237,6 +260,7 @@ fun SirajScreen(onNavigate: (String) -> Unit = {}) {
                 "action history", "show action history", "recent actions", "show recent actions"
             )
         ) {
+            markLastUserMessageLocalOnly()
             val history = runCatching { SirajActionHistoryStore(context).recent(8) }
                 .getOrElse { emptyList() }
             val reply = if (history.isEmpty()) {
@@ -256,6 +280,7 @@ fun SirajScreen(onNavigate: (String) -> Unit = {}) {
 
         val actionSegments = request.split(Regex("\\s+then\\s+", RegexOption.IGNORE_CASE))
         if (actionSegments.size > 1 && actionSegments.any { parseDeviceAction(it) != null }) {
+            markLastUserMessageLocalOnly()
             val sequence = parseDeviceActionSequence(request)
             if (sequence == null) {
                 pendingActionQueue = emptyList()
@@ -275,6 +300,7 @@ fun SirajScreen(onNavigate: (String) -> Unit = {}) {
 
         val requestedDeviceAction = parseDeviceAction(request)
         if (requestedDeviceAction != null) {
+            markLastUserMessageLocalOnly()
             pendingActionQueue = emptyList()
             prepareDeviceAction(requestedDeviceAction.first, requestedDeviceAction.second)
             return
@@ -291,20 +317,43 @@ fun SirajScreen(onNavigate: (String) -> Unit = {}) {
             is com.jannahos.siraj.core.SirajRoute.LocalReply ->
                 messages.add(SirajMessage(route.message, false))
 
-            is com.jannahos.siraj.core.SirajRoute.IslamicKnowledgeUnavailable ->
+            is com.jannahos.siraj.core.SirajRoute.IslamicKnowledgeUnavailable -> {
+                pendingImageText = null
+                imageTextConsentGranted = false
                 messages.add(
                     SirajMessage(
                         "I won't generate a religious answer from a general-purpose model. SIRAJ's verified Islamic research workflow is not ready yet, so I won't guess or invent a source. I can still retrieve exact Arabic Quran references from the bundled text.",
                         false
                     )
                 )
+            }
 
             is com.jannahos.siraj.core.SirajRoute.GeneralConversation -> {
+                val imageText = pendingImageText.takeIf { imageTextConsentGranted }
+                if (imageText != null && SirajImageContentPolicy.requiresIslamicReview(imageText)) {
+                    messages.add(
+                        SirajMessage(
+                            "This image text contains Arabic or Islamic references. I won't send it to a general-purpose AI. SIRAJ's verified Islamic research workflow is not ready yet.",
+                            false,
+                            localOnly = true
+                        )
+                    )
+                    pendingImageText = null
+                    imageTextConsentGranted = false
+                    return
+                }
+                val providerPrompt = if (imageText != null) {
+                    "${route.prompt}\n\nText extracted on-device from your selected image (OCR; not independently verified):\n$imageText"
+                } else route.prompt
+                if (imageText != null) {
+                    pendingImageText = null
+                    imageTextConsentGranted = false
+                }
                 messages.add(SirajMessage("Thinking…", false))
                 val responseIndex = messages.lastIndex
                 scope.launch {
                     val conversation = messages
-                        .filterNot { it.text == "Thinking…" }
+                        .filterNot { it.text == "Thinking…" || it.localOnly }
                         .dropLast(1)
                         .map { message ->
                             SirajChatMessage(
@@ -318,7 +367,7 @@ fun SirajScreen(onNavigate: (String) -> Unit = {}) {
                                 role = "system",
                                 content = SirajConversationPolicy.GENERAL_ASSISTANT_SYSTEM_PROMPT
                             )
-                        ) + SirajConversationContext.build(conversation, route.prompt)
+                        ) + SirajConversationContext.build(conversation, providerPrompt)
                     )
                     val reply = when (response) {
                         is SirajInferenceResult.Success ->
@@ -395,6 +444,63 @@ fun SirajScreen(onNavigate: (String) -> Unit = {}) {
             }
         } else if (!granted) {
             pendingPermissionReason = "Notification permission was not granted. No action was taken."
+        }
+    }
+
+    val imagePickerLauncher = rememberLauncherForActivityResult(
+        ActivityResultContracts.PickVisualMedia()
+    ) { uri ->
+        if (uri != null) {
+            pendingImageText = null
+            imageTextConsentGranted = false
+            messages.add(SirajMessage("Reading image on this device…", false, localOnly = true))
+            scope.launch {
+                val extracted = try {
+                    Result.success(SirajImageTextExtractor.extractText(context, uri))
+                } catch (cancelled: CancellationException) {
+                    throw cancelled
+                } catch (error: Exception) {
+                    Result.failure(error)
+                }
+                if (extracted.isFailure) {
+                    messages.add(
+                        SirajMessage(
+                            "I couldn't read that image: ${extracted.exceptionOrNull()?.message ?: "unknown error"}",
+                            false,
+                            localOnly = true
+                        )
+                    )
+                } else {
+                    val text = extracted.getOrDefault("").trim()
+                    if (text.isBlank()) {
+                        messages.add(
+                            SirajMessage("I couldn't find readable text in that image.", false, localOnly = true)
+                        )
+                    } else {
+                        pendingImageText = text
+                        val restricted = SirajImageContentPolicy.requiresIslamicReview(text)
+                        messages.add(
+                            SirajMessage(
+                                "Text extracted on-device (the image was not uploaded):\n${text.take(1400)}${if (text.length > 1400) "…" else ""}",
+                                false,
+                                localOnly = true
+                            )
+                        )
+                        if (restricted) {
+                            messages.add(
+                                SirajMessage(
+                                    "This text contains Arabic or Islamic references. I can show the extracted text, but I won't send it to a general AI provider.",
+                                    false,
+                                    localOnly = true
+                                )
+                            )
+                        } else {
+                            showImageTextConsent = true
+                        }
+                    }
+                }
+                if (messages.isNotEmpty()) listState.animateScrollToItem(messages.lastIndex)
+            }
         }
     }
 
@@ -485,6 +591,47 @@ fun SirajScreen(onNavigate: (String) -> Unit = {}) {
                     )
                 )
             }
+    }
+
+    if (showImageTextConsent && pendingImageText != null) {
+        AlertDialog(
+            onDismissRequest = {
+                showImageTextConsent = false
+                pendingImageText = null
+                imageTextConsentGranted = false
+            },
+            title = { Text("Use extracted text with AI?") },
+            text = {
+                Text(
+                    "Only the text extracted on this device will be sent to your configured AI provider when you ask a question. The original image stays on this device. Continue only if the text is safe to share.",
+                    color = JannahColors.Body
+                )
+            },
+            confirmButton = {
+                TextButton(onClick = {
+                    imageTextConsentGranted = true
+                    showImageTextConsent = false
+                    messages.add(
+                        SirajMessage(
+                            "Consent granted. Ask your question; only the extracted text will be sent, not the image.",
+                            false,
+                            localOnly = true
+                        )
+                    )
+                }) { Text("Allow extracted text", color = JannahColors.OrangeDeep) }
+            },
+            dismissButton = {
+                TextButton(onClick = {
+                    showImageTextConsent = false
+                    pendingImageText = null
+                    imageTextConsentGranted = false
+                    messages.add(
+                        SirajMessage("Image text discarded. Nothing was sent to an AI provider.", false, localOnly = true)
+                    )
+                }) { Text("Discard", color = JannahColors.Muted) }
+            },
+            containerColor = JannahColors.Surface
+        )
     }
 
     if (showMemorySaveConfirmation && pendingMemoryContent != null) {
@@ -855,6 +1002,11 @@ fun SirajScreen(onNavigate: (String) -> Unit = {}) {
             Suggestion("Al-Kahf") { submit("Open Surah Al-Kahf") }
             Suggestion("Prayer times") { submit("Show prayer times") }
             Suggestion("Qibla") { submit("Find Qibla") }
+            Suggestion("Image text") {
+                imagePickerLauncher.launch(
+                    PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly)
+                )
+            }
         }
 
         Spacer(Modifier.height(18.dp))
