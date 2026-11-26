@@ -7,8 +7,9 @@ import java.io.File
 import java.io.FileInputStream
 import java.io.FileOutputStream
 
-// Backs up all user data to a single JSON file the user chooses.
-// On import, all local tables and preferences are restored.
+// Partial data export/import. This currently covers preferences, wake events,
+// struggle entries, fasts, sleep records and Quran bookmarks only. Do not
+// describe this as a complete device backup.
 object BackupManager {
     private const val MAX_BACKUP_BYTES = 25L * 1024L * 1024L
     private const val MAX_RECORDS_PER_TABLE = 20_000
@@ -103,7 +104,7 @@ object BackupManager {
                 fos.write(root.toString(2).toByteArray())
             }
 
-            Result(true, "Exported ${wakeArr.length()} nights, ${fastArr.length()} fasts, ${sleepArr.length()} sleeps.")
+            Result(true, "Partial backup created: ${wakeArr.length()} wake events, ${strArr.length()} struggle entries, ${fastArr.length()} fasts, ${sleepArr.length()} sleeps and ${bmArr.length()} bookmarks. Other SIRAJ data is not included.")
         } catch (e: Exception) {
             Result(false, "Export failed: ${e.message}")
         }
@@ -176,6 +177,25 @@ object BackupManager {
         }
     }
 
+    private fun restoreTable(
+        database: android.database.sqlite.SQLiteDatabase,
+        table: String,
+        rows: JSONArray,
+        valuesFor: (JSONObject) -> android.content.ContentValues
+    ) {
+        database.beginTransaction()
+        try {
+            database.delete(table, null, null)
+            for (index in 0 until rows.length()) {
+                val values = valuesFor(rows.getJSONObject(index))
+                database.insertOrThrow(table, null, values)
+            }
+            database.setTransactionSuccessful()
+        } finally {
+            database.endTransaction()
+        }
+    }
+
     fun import(context: Context, inputFile: File): Result {
         return try {
             if (!inputFile.isFile || inputFile.length() !in 1..MAX_BACKUP_BYTES) {
@@ -197,108 +217,82 @@ object BackupManager {
             val root = JSONObject(text)
             validateBackup(root)?.let { reason -> return Result(false, reason) }
 
-            // Preferences
+            // Restore each SQLite table atomically. A failure rolls back the
+            // current table rather than leaving it half-deleted/half-imported.
+            val wakeDb = WakeLog(context).writableDatabase
+            restoreTable(wakeDb, "events", root.getJSONArray("wake_events")) { o ->
+                android.content.ContentValues().apply {
+                    put("ts", o.getLong("ts"))
+                    put("outcome", o.getString("outcome"))
+                    if (!o.isNull("reason")) put("reason", o.getString("reason"))
+                    if (!o.isNull("voice")) put("voice_path", o.getString("voice"))
+                    put("verified", 0)
+                }
+            }
+
+            val stDb = StruggleLog(context).writableDatabase
+            restoreTable(stDb, "entries", root.getJSONArray("struggle")) { o ->
+                android.content.ContentValues().apply {
+                    put("ts", o.getLong("ts"))
+                    put("kind", o.getString("kind"))
+                    if (!o.isNull("note")) put("note", o.getString("note"))
+                }
+            }
+
+            val fDb = FastLog(context).writableDatabase
+            restoreTable(fDb, "fasts", root.getJSONArray("fasts")) { o ->
+                android.content.ContentValues().apply {
+                    put("day", o.getString("day"))
+                    put("kind", o.getString("kind"))
+                    put("created", o.getLong("created"))
+                }
+            }
+
+            val slDb = SleepLog(context).writableDatabase
+            restoreTable(slDb, "sleeps", root.getJSONArray("sleeps")) { o ->
+                android.content.ContentValues().apply {
+                    put("day", o.getString("day"))
+                    put("bedtime", o.getLong("bedtime"))
+                    put("waketime", o.getLong("waketime"))
+                    put("quality", o.getInt("quality"))
+                    put("created", System.currentTimeMillis())
+                }
+            }
+
+            val bmDb = QuranBookmarkStore(context).writableDatabase
+            restoreTable(bmDb, "bookmarks", root.getJSONArray("bookmarks")) { o ->
+                android.content.ContentValues().apply {
+                    put("surah", o.getInt("surah"))
+                    put("ayah", o.getInt("ayah"))
+                    if (!o.isNull("note")) put("note", o.getString("note"))
+                    put("created", o.optLong("created", System.currentTimeMillis()))
+                }
+            }
+
+            // Apply preferences last so a failed table restore does not leave
+            // the user's settings changed while the data restore failed.
             val prefs = root.optJSONObject("prefs")
             if (prefs != null) {
-                val lat = prefs.optDouble("lat", 13.4549)
-                val lon = prefs.optDouble("lon", -16.5790)
-                val method = prefs.optString("method", "MWL")
-                Settings.set(context, lat, lon, method)
+                Settings.set(
+                    context,
+                    prefs.optDouble("lat", 13.4549),
+                    prefs.optDouble("lon", -16.5790),
+                    prefs.optString("method", "MWL")
+                )
                 if (prefs.optBoolean("onboarded", false)) Settings.setOnboardingComplete(context)
-                val lvl = prefs.optInt("tahajjud_level", 1)
-                TahajjudPlan.setLevel(context, lvl)
+                TahajjudPlan.setLevel(context, prefs.optInt("tahajjud_level", 1).coerceIn(1, 5))
                 TahajjudPlan.setBedtimeReminder(context, prefs.optBoolean("bedtime_rem", true))
-                BedtimeStore.set(context, prefs.optInt("bedtime_h", 22), prefs.optInt("bedtime_m", 30))
+                BedtimeStore.set(
+                    context,
+                    prefs.optInt("bedtime_h", 22).coerceIn(0, 23),
+                    prefs.optInt("bedtime_m", 30).coerceIn(0, 59)
+                )
                 AdhanSettings.set(context, prefs.optString("adhan", "adhan_short"))
-                val recId = prefs.optString("reciter", "alafasy")
-                Reciters.all.firstOrNull { it.id == recId }?.let { Reciters.set(context, it) }
+                Reciters.all.firstOrNull { it.id == prefs.optString("reciter", "alafasy") }
+                    ?.let { Reciters.set(context, it) }
             }
 
-            // Wake events, recreate table then insert
-            val wakeDb = WakeLog(context).writableDatabase
-            wakeDb.delete("events", null, null)
-            root.optJSONArray("wake_events")?.let { arr ->
-                for (i in 0 until arr.length()) {
-                    val o = arr.getJSONObject(i)
-                    val values = android.content.ContentValues().apply {
-                        put("ts", o.getLong("ts"))
-                        put("outcome", o.getString("outcome"))
-                        if (!o.isNull("reason")) put("reason", o.getString("reason"))
-                        if (!o.isNull("voice")) put("voice_path", o.getString("voice"))
-                        put("verified", 0)
-                    }
-                    wakeDb.insert("events", null, values)
-                }
-            }
-
-            // Struggle, recreate
-            val stDb = StruggleLog(context).writableDatabase
-            stDb.delete("entries", null, null)
-            root.optJSONArray("struggle")?.let { arr ->
-                for (i in 0 until arr.length()) {
-                    val o = arr.getJSONObject(i)
-                    val values = android.content.ContentValues().apply {
-                        put("ts", o.getLong("ts"))
-                        put("kind", o.getString("kind"))
-                        if (!o.isNull("note")) put("note", o.getString("note"))
-                    }
-                    stDb.insert("entries", null, values)
-                }
-            }
-
-            // Fasts
-            val fDb = FastLog(context).writableDatabase
-            fDb.delete("fasts", null, null)
-            root.optJSONArray("fasts")?.let { arr ->
-                for (i in 0 until arr.length()) {
-                    val o = arr.getJSONObject(i)
-                    val values = android.content.ContentValues().apply {
-                        put("day", o.getString("day"))
-                        put("kind", o.getString("kind"))
-                        put("created", o.getLong("created"))
-                    }
-                    fDb.insertWithOnConflict(
-                        "fasts", null, values, android.database.sqlite.SQLiteDatabase.CONFLICT_REPLACE
-                    )
-                }
-            }
-
-            // Sleeps
-            val slDb = SleepLog(context).writableDatabase
-            slDb.delete("sleeps", null, null)
-            root.optJSONArray("sleeps")?.let { arr ->
-                for (i in 0 until arr.length()) {
-                    val o = arr.getJSONObject(i)
-                    val values = android.content.ContentValues().apply {
-                        put("day", o.getString("day"))
-                        put("bedtime", o.getLong("bedtime"))
-                        put("waketime", o.getLong("waketime"))
-                        put("quality", o.getInt("quality"))
-                        put("created", System.currentTimeMillis())
-                    }
-                    slDb.insertWithOnConflict(
-                        "sleeps", null, values, android.database.sqlite.SQLiteDatabase.CONFLICT_REPLACE
-                    )
-                }
-            }
-
-            // Bookmarks
-            val bmDb = QuranBookmarkStore(context).writableDatabase
-            bmDb.delete("bookmarks", null, null)
-            root.optJSONArray("bookmarks")?.let { arr ->
-                for (i in 0 until arr.length()) {
-                    val o = arr.getJSONObject(i)
-                    val values = android.content.ContentValues().apply {
-                        put("surah", o.getInt("surah"))
-                        put("ayah", o.getInt("ayah"))
-                        if (!o.isNull("note")) put("note", o.getString("note"))
-                        put("created", o.optLong("created", System.currentTimeMillis()))
-                    }
-                    bmDb.insert("bookmarks", null, values)
-                }
-            }
-
-            Result(true, "Restored. Reopen the app to see all your data.")
+            Result(true, "Partial backup restored. Preferences, wake events, struggle entries, fasts, sleep records and Quran bookmarks were restored. Other SIRAJ data is not included.")
         } catch (e: Exception) {
             Result(false, "Import failed: ${e.message}")
         }
