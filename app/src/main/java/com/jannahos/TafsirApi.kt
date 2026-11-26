@@ -12,21 +12,25 @@ object TafsirApi {
 
     fun fetch(surah: Int, ayah: Int): String? {
         val url = "$BASE/$TAFSIR_ID/by_ayah/$surah:$ayah"
+        var connection: HttpURLConnection? = null
         return try {
-            val conn = URL(url).openConnection() as HttpURLConnection
-            conn.requestMethod = "GET"
-            conn.connectTimeout = 15000
-            conn.readTimeout = 15000
-            conn.setRequestProperty("User-Agent", "JannahOS/1.0")
-            conn.setRequestProperty("Accept", "application/json")
-            val body = conn.inputStream.bufferedReader().use { it.readText() }
-            conn.disconnect()
+            val activeConnection = URL(url).openConnection() as HttpURLConnection
+            connection = activeConnection
+            activeConnection.requestMethod = "GET"
+            activeConnection.connectTimeout = 15000
+            activeConnection.readTimeout = 15000
+            activeConnection.setRequestProperty("User-Agent", "JannahOS/1.0")
+            activeConnection.setRequestProperty("Accept", "application/json")
+            if (activeConnection.responseCode !in 200..299) return null
+            val body = activeConnection.inputStream.bufferedReader().use { it.readText() }
             val root = JSONObject(body)
             val tafsir = root.optJSONObject("tafsir") ?: return null
             val raw = tafsir.optString("text", null) ?: return null
             stripHtml(raw)
-        } catch (e: Exception) {
+        } catch (_: Exception) {
             null
+        } finally {
+            connection?.disconnect()
         }
     }
 
