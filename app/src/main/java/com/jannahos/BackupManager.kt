@@ -196,11 +196,11 @@ object BackupManager {
     }
 
     private fun restoreTable(
-        database: android.database.sqlite.SQLiteDatabase,
+        database: net.zetetic.database.sqlcipher.SQLiteDatabase,
         table: String,
         rows: JSONArray,
         valuesFor: (JSONObject) -> android.content.ContentValues,
-        conflictAlgorithm: Int = android.database.sqlite.SQLiteDatabase.CONFLICT_ABORT
+        conflictAlgorithm: Int = net.zetetic.database.sqlcipher.SQLiteDatabase.CONFLICT_ABORT
     ) {
         database.beginTransaction()
         try {
@@ -276,7 +276,7 @@ object BackupManager {
                         put("created", o.getLong("created"))
                     }
                 },
-                conflictAlgorithm = android.database.sqlite.SQLiteDatabase.CONFLICT_REPLACE
+                conflictAlgorithm = net.zetetic.database.sqlcipher.SQLiteDatabase.CONFLICT_REPLACE
             )
 
             val slDb = SleepLog(context).writableDatabase
@@ -291,7 +291,7 @@ object BackupManager {
                         put("created", System.currentTimeMillis())
                     }
                 },
-                conflictAlgorithm = android.database.sqlite.SQLiteDatabase.CONFLICT_REPLACE
+                conflictAlgorithm = net.zetetic.database.sqlcipher.SQLiteDatabase.CONFLICT_REPLACE
             )
 
             val bmDb = QuranBookmarkStore(context).writableDatabase
