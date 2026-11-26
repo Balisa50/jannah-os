@@ -65,12 +65,15 @@ fun PermissionSetupScreen(onAllSet: () -> Unit) {
         onDispose { lifecycleOwner.lifecycle.removeObserver(observer) }
     }
 
-    Column(Modifier.fillMaxSize().background(JannahColors.Cream).verticalScroll(rememberScrollState()).padding(JannahSpacing.gutter)) {
-        Spacer(Modifier.height(JannahSpacing.xxl))
-
-        Text("Final steps.", fontFamily = FontFamily.Serif, fontSize = 32.sp, fontWeight = FontWeight.Bold, color = JannahColors.Ink)
-        Spacer(Modifier.height(8.dp))
-        Text("Notifications are needed for reminders. App protection, exact timing and quiet-mode controls are optional capabilities you can enable when you want them.", style = JannahType.body, color = JannahColors.Body, lineHeight = 24.sp)
+    Column(Modifier.fillMaxSize().background(JannahColors.Cream).verticalScroll(rememberScrollState())) {
+        Column(Modifier.fillMaxWidth().padding(horizontal = JannahSpacing.gutter).padding(top = 44.dp, bottom = JannahSpacing.l)) {
+            Text("SIRAJ", style = JannahType.eyebrow, color = JannahColors.OrangeDeep)
+            Spacer(Modifier.height(JannahSpacing.s))
+            Text("Set up your essentials.", fontFamily = FontFamily.Serif, fontSize = 32.sp, fontWeight = FontWeight.Bold, color = JannahColors.Ink, lineHeight = 38.sp)
+            Spacer(Modifier.height(8.dp))
+            Text("Start with notifications. Everything else is optional and can be enabled later from settings.", style = JannahType.body, color = JannahColors.Body, lineHeight = 24.sp)
+        }
+        Column(Modifier.padding(horizontal = JannahSpacing.gutter)) {
 
         Spacer(Modifier.height(JannahSpacing.xl))
 
@@ -157,6 +160,7 @@ fun PermissionSetupScreen(onAllSet: () -> Unit) {
             contentAlignment = Alignment.Center
         ) {
             Text(if (allRequiredGranted) "Finish Setup" else "Enable notifications to continue", style = JannahType.button, color = JannahColors.OnOrange, fontSize = 15.sp, textAlign = androidx.compose.ui.text.style.TextAlign.Center)
+        }
         }
     }
 }
