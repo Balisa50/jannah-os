@@ -36,11 +36,16 @@ import java.util.Locale
 fun TodayScreen(onNavigate: (String) -> Unit = {}) {
     val ctx = LocalContext.current
     val userName = remember { runCatching { Settings.displayName(ctx) }.getOrDefault("") }
+    var citySelected by remember { mutableStateOf(CityStore.useCity(ctx)) }
     var prayerTimes by remember {
         mutableStateOf(
-            runCatching {
-                SalahScheduler.todayTimes(ctx, Settings.lat(ctx), Settings.lon(ctx))
-            }.getOrDefault(emptyMap())
+            if (citySelected) {
+                runCatching {
+                    SalahScheduler.todayTimes(ctx, Settings.lat(ctx), Settings.lon(ctx))
+                }.getOrDefault(emptyMap())
+            } else {
+                emptyMap()
+            }
         )
     }
     var savedLat by remember { mutableDoubleStateOf(Settings.lat(ctx)) }
@@ -56,20 +61,27 @@ fun TodayScreen(onNavigate: (String) -> Unit = {}) {
             val currentLat = Settings.lat(ctx)
             val currentLon = Settings.lon(ctx)
             val currentMethod = Settings.method(ctx)
+            val currentCitySelected = CityStore.useCity(ctx)
             val currentDateKey = SimpleDateFormat("yyyy-MM-dd", Locale.US).format(Date(freshNow))
             if (
                 currentLat != savedLat ||
                 currentLon != savedLon ||
                 currentMethod != savedMethod ||
+                currentCitySelected != citySelected ||
                 currentDateKey != dateKey
             ) {
                 savedLat = currentLat
                 savedLon = currentLon
                 savedMethod = currentMethod
+                citySelected = currentCitySelected
                 dateKey = currentDateKey
-                prayerTimes = runCatching {
-                    SalahScheduler.todayTimes(ctx, currentLat, currentLon)
-                }.getOrDefault(emptyMap())
+                prayerTimes = if (currentCitySelected) {
+                    runCatching {
+                        SalahScheduler.todayTimes(ctx, currentLat, currentLon)
+                    }.getOrDefault(emptyMap())
+                } else {
+                    emptyMap()
+                }
             }
             delay(15_000)
         }
