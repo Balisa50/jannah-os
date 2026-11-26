@@ -38,7 +38,8 @@ fun YouScreen(onNavigate: (String) -> Unit = {}) {
 
         Column(Modifier.padding(horizontal = JannahSpacing.gutter)) {
             SectionLabel("YOUR PRACTICE")
-            ListRow("Notes & Diary") { onNavigate("notes") }
+            ListRow("Notes") { onNavigate("notes") }
+            ListRow("Diary") { onNavigate("diary") }
             ListRow("Tonight's plan") { ctx.startActivity(Intent(ctx, BedtimeActivity::class.java)) }
             ListRow("Letters to future self") { onNavigate("letters") }
 
