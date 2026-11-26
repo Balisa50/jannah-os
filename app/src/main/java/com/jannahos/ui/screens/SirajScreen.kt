@@ -43,6 +43,10 @@ import com.jannahos.siraj.actions.SirajDeviceAction
 import com.jannahos.siraj.actions.SirajActionPlan
 import com.jannahos.siraj.actions.SirajActionPlanner
 import com.jannahos.siraj.actions.ActionApproval
+import com.jannahos.siraj.actions.SirajActionHistoryStore
+import java.text.SimpleDateFormat
+import java.util.Date
+import java.util.Locale
 import com.jannahos.siraj.ai.OpenAiCompatibleProvider
 import com.jannahos.siraj.ai.SirajChatMessage
 import com.jannahos.siraj.ai.SirajInferenceResult
@@ -87,6 +91,27 @@ fun SirajScreen(onNavigate: (String) -> Unit = {}) {
         if (request.isBlank()) return
         messages.add(SirajMessage(request, true))
         input = ""
+
+        if (request.lowercase() in setOf(
+                "action history", "show action history", "recent actions", "show recent actions"
+            )
+        ) {
+            val history = runCatching { SirajActionHistoryStore(context).recent(8) }
+                .getOrElse { emptyList() }
+            val reply = if (history.isEmpty()) {
+                "No approved SIRAJ device actions have been recorded on this device yet."
+            } else {
+                val formatter = SimpleDateFormat("MMM d, HH:mm", Locale.getDefault())
+                "Recent device actions:\n" + history.joinToString("\n") { entry ->
+                    "${formatter.format(Date(entry.createdAt))} · ${entry.summary} — ${entry.status}"
+                }
+            }
+            messages.add(SirajMessage(reply, false))
+            scope.launch {
+                if (messages.isNotEmpty()) listState.animateScrollToItem(messages.lastIndex)
+            }
+            return
+        }
 
         val requestedDeviceAction = parseDeviceAction(request)
         if (requestedDeviceAction != null) {
@@ -372,6 +397,11 @@ fun SirajScreen(onNavigate: (String) -> Unit = {}) {
                             is ActionApproval.Cancelled, null ->
                                 ActionExecutionResult.Blocked("This action was not approved.")
                         }
+                        runCatching {
+                            SirajActionHistoryStore(context).record(
+                                actionToConfirm, pendingActionPrompt, result
+                            )
+                        }
                         val response = when (result) {
                             ActionExecutionResult.Completed -> "Done. Android accepted the action."
                             ActionExecutionResult.NeedsConfirmation -> "This action still needs confirmation."
@@ -393,6 +423,11 @@ fun SirajScreen(onNavigate: (String) -> Unit = {}) {
             dismissButton = {
                 TextButton(
                     onClick = {
+                        runCatching {
+                            SirajActionHistoryStore(context).recordCancelled(
+                                actionToConfirm, pendingActionPrompt
+                            )
+                        }
                         messages.add(SirajMessage("No action was taken.", false))
                         pendingDeviceAction = null
                         pendingActionPrompt = ""
