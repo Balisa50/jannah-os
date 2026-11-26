@@ -125,7 +125,7 @@ private fun Philosophy() {
         Text("SIRAJ brings conversation, personal context and useful tools into one place. You decide what leaves your device and which actions are allowed.", style = JannahType.body, color = JannahColors.Body, lineHeight = 24.sp)
         Spacer(Modifier.height(JannahSpacing.l))
         Column(verticalArrangement = Arrangement.spacedBy(20.dp)) {
-            PhilosophyItem("Talk naturally", "Use text, speech and supported image text extraction.")
+            PhilosophyItem("Talk naturally", "Use text, speech and supported image or PDF text extraction.")
             PhilosophyItem("Act with your approval", "Supported device actions are checked and confirmed before they run.")
             PhilosophyItem("Keep control", "Personal memories stay on this device. Connecting an AI provider is optional.")
         }

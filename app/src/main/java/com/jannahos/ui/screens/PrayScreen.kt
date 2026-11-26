@@ -17,6 +17,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.jannahos.*
+import com.jannahos.ui.ScreenTitle
 import com.jannahos.ui.pressClickable
 import com.jannahos.ui.theme.JannahColors
 import com.jannahos.ui.theme.JannahSpacing
@@ -79,15 +80,22 @@ fun PrayScreen() {
     val countdown = String.format(Locale.US, "%02d:%02d:%02d", diffMs / 3600000, (diffMs / 60000) % 60, (diffMs / 1000) % 60)
 
     Column(modifier = Modifier.fillMaxSize().verticalScroll(rememberScrollState()).background(JannahColors.Cream)) {
+        ScreenTitle(
+            title = "Prayer",
+            eyebrow = "PRAYER TIMES",
+            subtitle = when {
+                !citySelected -> "Choose a saved city to calculate prayer times"
+                times.isEmpty() -> "Today's prayer times could not be calculated"
+                else -> "Today for your saved city"
+            }
+        )
         if (!citySelected || times.isEmpty()) {
             Column(
                 Modifier.fillMaxWidth()
                     .padding(horizontal = JannahSpacing.gutter)
-                    .padding(top = 64.dp, bottom = 48.dp),
+                    .padding(top = 24.dp, bottom = 48.dp),
                 horizontalAlignment = Alignment.Start
             ) {
-                Text("PRAYER TIMES", style = JannahType.eyebrow, color = JannahColors.OrangeDeep)
-                Spacer(Modifier.height(12.dp))
                 Text(
                     if (citySelected) "Prayer times unavailable." else "Choose your city first.",
                     fontFamily = FontFamily.Serif,
@@ -118,15 +126,7 @@ fun PrayScreen() {
                 }
             }
         } else {
-            Column(Modifier.padding(horizontal = JannahSpacing.gutter).padding(top = 40.dp, bottom = 28.dp)) {
-                Text("PRAYER TIMES", style = JannahType.eyebrow, color = JannahColors.OrangeDeep)
-                Spacer(Modifier.height(8.dp))
-                Text("Prayer", fontFamily = FontFamily.Serif, fontSize = 36.sp, fontWeight = FontWeight.Bold, color = JannahColors.Ink)
-                Spacer(Modifier.height(4.dp))
-                Text("Today for your location", style = JannahType.caption, color = JannahColors.Muted)
-            }
-
-            Column(Modifier.padding(horizontal = JannahSpacing.gutter)) {
+Prayer old title            Column(Modifier.padding(horizontal = JannahSpacing.gutter)) {
                 Text(if (isTomorrow) "TOMORROW" else "NEXT", style = JannahType.eyebrow, color = JannahColors.OrangeDeep)
                 Spacer(Modifier.height(8.dp))
                 Text(nextLabel, fontFamily = FontFamily.Serif, fontSize = 32.sp, fontWeight = FontWeight.Bold, color = JannahColors.Orange)

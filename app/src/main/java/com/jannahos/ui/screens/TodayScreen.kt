@@ -180,6 +180,15 @@ fun TodayScreen(onNavigate: (String) -> Unit = {}) {
                 Spacer(Modifier.height(32.dp))
             }
             
+            Row(Modifier.fillMaxWidth().pressClickable { onNavigate("siraj") }.padding(vertical = 16.dp), verticalAlignment = Alignment.CenterVertically) {
+                Column(Modifier.weight(1f)) {
+                    Text("Ask SIRAJ", fontFamily = FontFamily.Serif, fontSize = 20.sp, fontWeight = FontWeight.Bold, color = OrangeDeep)
+                    Text("Talk, search or request an action", style = JannahType.caption, color = Muted)
+                }
+                Text("→", style = JannahType.title, color = Orange)
+            }
+            Box(Modifier.fillMaxWidth().height(1.dp).background(JannahColors.Divider))
+
             Row(Modifier.fillMaxWidth().pressClickable { onNavigate("sanctuary") }.padding(vertical = 16.dp), verticalAlignment = Alignment.CenterVertically) {
                 Text("Enter Sanctuary", fontFamily = FontFamily.Serif, fontSize = 20.sp, fontWeight = FontWeight.Bold, color = Ink, modifier = Modifier.weight(1f))
                 Text("→", style = JannahType.title, color = Orange)

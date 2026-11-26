@@ -17,6 +17,7 @@ import androidx.compose.ui.unit.sp
 import com.jannahos.BedtimeActivity
 import com.jannahos.Settings
 import com.jannahos.SettingsActivity
+import com.jannahos.ui.ScreenTitle
 import com.jannahos.ui.pressClickable
 import com.jannahos.ui.theme.JannahColors
 import com.jannahos.ui.theme.JannahSpacing
@@ -28,13 +29,11 @@ fun YouScreen(onNavigate: (String) -> Unit = {}) {
     val name = Settings.displayName(ctx)
 
     Column(modifier = Modifier.fillMaxSize().verticalScroll(rememberScrollState()).background(JannahColors.Cream)) {
-        Column(Modifier.padding(horizontal = JannahSpacing.gutter).padding(top = 40.dp, bottom = 24.dp)) {
-            Text("YOUR SPACE", style = JannahType.eyebrow, color = JannahColors.OrangeDeep)
-            Spacer(Modifier.height(8.dp))
-            Text(if (name.isBlank()) "You" else name, fontFamily = FontFamily.Serif, fontSize = 36.sp, fontWeight = FontWeight.Bold, color = JannahColors.Ink)
-            Spacer(Modifier.height(6.dp))
-            Text("Your private space for routines, reflection and settings.", style = JannahType.bodySmall, color = JannahColors.Muted, lineHeight = 20.sp)
-        }
+        ScreenTitle(
+            title = if (name.isBlank()) "Your space" else name,
+            eyebrow = "YOUR SPACE",
+            subtitle = "Routines, reflection and personal settings"
+        )
 
         Column(Modifier.padding(horizontal = JannahSpacing.gutter)) {
             SectionLabel("YOUR PRACTICE")
@@ -42,6 +41,7 @@ fun YouScreen(onNavigate: (String) -> Unit = {}) {
             ListRow("Diary") { onNavigate("diary") }
             ListRow("Tonight's plan") { ctx.startActivity(Intent(ctx, BedtimeActivity::class.java)) }
             ListRow("Letters to future self") { onNavigate("letters") }
+            ListRow("Commitments") { onNavigate("struggle") }
 
             Spacer(Modifier.height(JannahSpacing.xl))
 
@@ -57,7 +57,6 @@ fun YouScreen(onNavigate: (String) -> Unit = {}) {
 
             SectionLabel("SETTINGS")
             ListRow("App Settings") { ctx.startActivity(Intent(ctx, SettingsActivity::class.java)) }
-            ListRow("Sound Profiles") { onNavigate("sound_profile") }
             ListRow("Backup & restore") { onNavigate("backup") }
             ListRow("About SIRAJ") { onNavigate("about") }
 

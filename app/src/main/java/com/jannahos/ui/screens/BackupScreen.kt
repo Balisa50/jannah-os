@@ -312,7 +312,7 @@ fun BackupScreen(onBack: () -> Unit) {
             Text("IMPORTANT", style = JannahType.eyebrow, color = JannahColors.OrangeDeep)
             Spacer(Modifier.height(4.dp))
             Text(
-                "This is a partial backup encrypted with your passphrase. Keep that passphrase safe; SIRAJ cannot recover it. Letters, private memory, action history, finance, adhkar counters and some other app data are not included yet.",
+                "This is a partial backup encrypted with your passphrase. Keep that passphrase safe; SIRAJ cannot recover it. Letters, Commitments, private memory, action history, finance, adhkar counters and some other app data are not included yet.",
                 style = JannahType.bodySmall,
                 color = JannahColors.Muted,
                 lineHeight = 20.sp

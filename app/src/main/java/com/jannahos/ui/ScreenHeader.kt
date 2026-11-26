@@ -57,3 +57,36 @@ fun ScreenHeader(
     }
     Box(Modifier.fillMaxWidth().height(1.dp).background(JannahColors.Divider))
 }
+
+
+@Composable
+fun ScreenTitle(
+    title: String,
+    eyebrow: String,
+    subtitle: String? = null
+) {
+    Column(
+        Modifier
+            .fillMaxWidth()
+            .background(JannahColors.Cream)
+            .statusBarsPadding()
+            .padding(horizontal = JannahSpacing.gutter)
+            .padding(top = 22.dp, bottom = 20.dp)
+    ) {
+        Text(eyebrow.uppercase(), style = JannahType.eyebrow, color = JannahColors.OrangeDeep)
+        Spacer(Modifier.height(6.dp))
+        Text(
+            title,
+            fontFamily = FontFamily.Serif,
+            fontSize = 34.sp,
+            fontWeight = FontWeight.Bold,
+            color = JannahColors.Ink,
+            lineHeight = 40.sp
+        )
+        if (!subtitle.isNullOrBlank()) {
+            Spacer(Modifier.height(6.dp))
+            Text(subtitle, style = JannahType.bodySmall, color = JannahColors.Muted, lineHeight = 20.sp)
+        }
+    }
+    Box(Modifier.fillMaxWidth().height(1.dp).background(JannahColors.Divider))
+}
