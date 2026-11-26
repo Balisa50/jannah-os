@@ -14,7 +14,7 @@ import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.jannahos.ui.TopBar
+import com.jannahos.ui.ScreenHeader
 import com.jannahos.ui.theme.JannahColors
 import com.jannahos.ui.theme.JannahSpacing
 import com.jannahos.ui.theme.JannahType
@@ -24,7 +24,7 @@ fun WeeklyReviewScreen(onBack: () -> Unit) {
     BackHandler(onBack = onBack)
 
     Column(Modifier.fillMaxSize().background(JannahColors.Cream)) {
-        TopBar("Focus Setup", onBack = onBack)
+        ScreenHeader(title = "Focus setup", eyebrow = "SYSTEM STATUS", subtitle = "See what SIRAJ is currently managing.", onBack = onBack)
 
         Column(Modifier.weight(1f).verticalScroll(rememberScrollState()).padding(horizontal = JannahSpacing.gutter)) {
             Spacer(Modifier.height(JannahSpacing.l))

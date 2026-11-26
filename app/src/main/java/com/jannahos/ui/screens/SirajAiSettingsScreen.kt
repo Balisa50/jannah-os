@@ -15,11 +15,11 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.compose.ui.text.font.FontFamily
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.platform.LocalContext
 import com.jannahos.siraj.ai.SirajProviderSettings
+import com.jannahos.ui.ScreenHeader
 import com.jannahos.ui.theme.JannahColors
+import com.jannahos.ui.theme.JannahType
 
 @Composable
 fun SirajAiSettingsScreen(onBack: () -> Unit = {}) {
@@ -32,27 +32,24 @@ fun SirajAiSettingsScreen(onBack: () -> Unit = {}) {
     var message by remember { mutableStateOf("") }
     var hasSavedKey by remember { mutableStateOf(!saved?.apiKey.isNullOrBlank()) }
 
-    Column(
-        Modifier.fillMaxSize()
-            .background(JannahColors.Cream)
-            .verticalScroll(rememberScrollState())
-            .padding(horizontal = 22.dp, vertical = 28.dp)
-    ) {
-        TextButton(onClick = onBack) { Text("← Back", color = JannahColors.OrangeDeep) }
-        Spacer(Modifier.height(12.dp))
-        Text(
-            "SIRAJ intelligence",
-            fontFamily = FontFamily.Serif,
-            fontWeight = FontWeight.Bold,
-            fontSize = 30.sp,
-            color = JannahColors.Ink
+    Column(Modifier.fillMaxSize().background(JannahColors.Cream)) {
+        ScreenHeader(
+            title = "AI provider",
+            eyebrow = "SIRAJ INTELLIGENCE",
+            subtitle = "Connect an optional model provider",
+            onBack = onBack
         )
-        Spacer(Modifier.height(8.dp))
-        Text(
-            "Connect an OpenAI-compatible provider. This is optional: Quran navigation and other offline features continue to work without an AI connection.",
-            color = JannahColors.Body
-        )
-        Spacer(Modifier.height(24.dp))
+        Column(
+            Modifier.weight(1f).verticalScroll(rememberScrollState())
+                .padding(horizontal = 22.dp).padding(top = 16.dp, bottom = 28.dp)
+        ) {
+            Text(
+                "Connect an OpenAI-compatible provider. This is optional. Local navigation and supported device actions work without a connection. Requests sent to your provider leave this device; SIRAJ discloses this before sending.",
+                style = JannahType.bodySmall,
+                color = JannahColors.Body,
+                lineHeight = 20.sp
+            )
+            Spacer(Modifier.height(24.dp))
         OutlinedTextField(
             value = endpoint,
             onValueChange = { endpoint = it },
@@ -126,5 +123,6 @@ fun SirajAiSettingsScreen(onBack: () -> Unit = {}) {
             color = JannahColors.Muted,
             fontSize = 13.sp
         )
+        }
     }
 }

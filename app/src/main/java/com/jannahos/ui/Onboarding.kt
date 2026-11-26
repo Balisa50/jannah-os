@@ -109,25 +109,25 @@ fun OnboardingFlow(onDone: () -> Unit) {
 @Composable
 private fun Welcome() {
     Column(Modifier.fillMaxSize(), horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.Center) {
-        Text("Jannah", fontFamily = FontFamily.Serif, fontSize = 56.sp, fontWeight = FontWeight.Bold, color = JannahColors.Ink)
-        Spacer(Modifier.height(JannahSpacing.s))
-        Text("A quiet space for worship.\nBuilt to be used less.", fontFamily = FontFamily.Serif, fontStyle = FontStyle.Italic, fontSize = 20.sp, color = JannahColors.Orange, textAlign = TextAlign.Center, lineHeight = 28.sp)
+        Text("SIRAJ", fontFamily = FontFamily.Serif, fontSize = 56.sp, fontWeight = FontWeight.Bold, color = JannahColors.Ink, letterSpacing = 2.sp)
+        Spacer(Modifier.height(JannahSpacing.xs))
+        Text("سِرَاج", fontSize = 22.sp, color = JannahColors.OrangeDeep)
+        Spacer(Modifier.height(JannahSpacing.l))
+        Text("An intelligent companion\nfor the things that matter.", fontFamily = FontFamily.Serif, fontStyle = FontStyle.Italic, fontSize = 20.sp, color = JannahColors.OrangeDeep, textAlign = TextAlign.Center, lineHeight = 29.sp)
     }
 }
 
 @Composable
 private fun Philosophy() {
     Column(Modifier.fillMaxSize().verticalScroll(rememberScrollState()), verticalArrangement = Arrangement.Center) {
-        Text("Quiet by design.", fontFamily = FontFamily.Serif, fontSize = 36.sp, fontWeight = FontWeight.Bold, color = JannahColors.Ink, lineHeight = 42.sp)
+        Text("Ask. Understand. Act.", fontFamily = FontFamily.Serif, fontSize = 34.sp, fontWeight = FontWeight.Bold, color = JannahColors.Ink, lineHeight = 40.sp)
         Spacer(Modifier.height(JannahSpacing.l))
-        
-        Text("Jannah is not meant to be opened every day. It runs silently in the background to protect your focus and build habits.", style = JannahType.body, color = JannahColors.Body, lineHeight = 24.sp)
+        Text("SIRAJ brings conversation, personal context and useful tools into one place. You decide what leaves your device and which actions are allowed.", style = JannahType.body, color = JannahColors.Body, lineHeight = 24.sp)
         Spacer(Modifier.height(JannahSpacing.l))
-        
         Column(verticalArrangement = Arrangement.spacedBy(20.dp)) {
-            PhilosophyItem("Prayer Locks", "Screen locks during Fard prayers.")
-            PhilosophyItem("Adhan Alarms", "Reminders before every prayer.")
-            PhilosophyItem("Quran Guide", "A fixed daily reading session.")
+            PhilosophyItem("Talk naturally", "Use text, speech and supported image text extraction.")
+            PhilosophyItem("Act with your approval", "Supported device actions are checked and confirmed before they run.")
+            PhilosophyItem("Keep control", "Personal memories stay on this device. Connecting an AI provider is optional.")
         }
     }
 }
@@ -158,7 +158,7 @@ private fun AskLocation(onPick: () -> Unit) {
     Column(Modifier.fillMaxSize(), verticalArrangement = Arrangement.Center) {
         Text("Where are you?", fontFamily = FontFamily.Serif, fontSize = 32.sp, fontWeight = FontWeight.Bold, color = JannahColors.Ink)
         Spacer(Modifier.height(JannahSpacing.s))
-        Text("Used strictly for accurate prayer times. No location tracking.", style = JannahType.body, color = JannahColors.Body)
+        Text("SIRAJ saves the city you choose for prayer-time calculations. It does not need continuous location access.", style = JannahType.body, color = JannahColors.Body, lineHeight = 24.sp)
         Spacer(Modifier.height(JannahSpacing.l))
         Box(Modifier.fillMaxWidth().height(56.dp).clip(RoundedCornerShape(JannahSpacing.pillRadius)).background(JannahColors.Card).pressClickable { onPick() }, contentAlignment = Alignment.Center) {
             Text("Open City Picker", style = JannahType.button, color = JannahColors.Ink)

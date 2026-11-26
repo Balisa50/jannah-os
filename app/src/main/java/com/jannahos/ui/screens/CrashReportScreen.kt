@@ -14,6 +14,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.foundation.text.selection.SelectionContainer
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
@@ -38,7 +39,10 @@ fun CrashReportScreen(trace: String, onDismiss: () -> Unit) {
     ) {
         Spacer(Modifier.height(JannahSpacing.xl))
 
-        Text("A crash was logged",
+        Text("SIRAJ · DIAGNOSTICS", style = JannahType.eyebrow, color = JannahColors.OrangeDeep)
+        Spacer(Modifier.height(JannahSpacing.s))
+
+        Text("We hit a problem",
             fontFamily = FontFamily.Serif,
             fontSize = 22.sp,
             fontWeight = FontWeight.Bold,
@@ -46,7 +50,7 @@ fun CrashReportScreen(trace: String, onDismiss: () -> Unit) {
 
         Spacer(Modifier.height(JannahSpacing.s))
 
-        Text("The app closed unexpectedly. The trace is below. Copy it and send it to the developer.",
+        Text("The app closed unexpectedly. Select the diagnostic trace below to copy it when reporting the issue.",
             style = JannahType.bodySmall,
             color = JannahColors.Muted,
             lineHeight = 20.sp)
@@ -60,13 +64,15 @@ fun CrashReportScreen(trace: String, onDismiss: () -> Unit) {
                 .background(JannahColors.Card)
                 .padding(JannahSpacing.l)
         ) {
-            Text(
-                trace,
-                fontFamily = FontFamily.Monospace,
-                fontSize = 11.sp,
-                color = JannahColors.Ink,
-                lineHeight = 16.sp
-            )
+            SelectionContainer {
+                Text(
+                    trace,
+                    fontFamily = FontFamily.Monospace,
+                    fontSize = 11.sp,
+                    color = JannahColors.Ink,
+                    lineHeight = 16.sp
+                )
+            }
         }
 
         Spacer(Modifier.height(JannahSpacing.l))

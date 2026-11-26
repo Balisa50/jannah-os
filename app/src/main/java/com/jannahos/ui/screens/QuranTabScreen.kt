@@ -35,10 +35,12 @@ fun QuranTabScreen(
 
     LazyColumn(modifier = Modifier.fillMaxSize().background(JannahColors.Cream)) {
         item {
-            Column(Modifier.padding(horizontal = JannahSpacing.gutter).padding(top = 64.dp, bottom = 24.dp)) {
+            Column(Modifier.padding(horizontal = JannahSpacing.gutter).padding(top = 40.dp, bottom = 24.dp)) {
+                Text("YOUR READING", style = JannahType.eyebrow, color = JannahColors.OrangeDeep)
+                Spacer(Modifier.height(8.dp))
                 Text("Quran", fontFamily = FontFamily.Serif, fontSize = 36.sp, fontWeight = FontWeight.Bold, color = JannahColors.Ink)
                 Spacer(Modifier.height(4.dp))
-                Text("114 Surahs", style = JannahType.caption, color = JannahColors.Muted)
+                Text("114 Surahs · 604 pages", style = JannahType.caption, color = JannahColors.Muted)
             }
         }
 

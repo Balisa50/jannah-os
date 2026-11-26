@@ -112,7 +112,7 @@ fun SirajScreen(onNavigate: (String) -> Unit = {}) {
     val messages = remember {
         mutableStateListOf(
             SirajMessage(
-                "I can open a Surah, show prayer times, find the Qibla, read text from images on-device, take supported device actions, and keep private memories here. I won't invent religious answers or claim a source I haven't checked.",
+                "I can help with general questions when an AI provider is connected, navigate Quran and prayer tools, extract text from supported images and PDFs on-device, and take supported device actions after you approve them. Religious answers require verified sources.",
                 false
             )
         )
@@ -1038,7 +1038,7 @@ fun SirajScreen(onNavigate: (String) -> Unit = {}) {
                 )
             }
             Text(
-                "LOCAL COMMANDS",
+                "AI OPTIONAL",
                 style = JannahType.micro,
                 color = JannahColors.OrangeDeep,
                 modifier = Modifier
@@ -1056,7 +1056,7 @@ fun SirajScreen(onNavigate: (String) -> Unit = {}) {
             color = JannahColors.Ink
         )
         Text(
-            "Make a clear request. SIRAJ will take you there.",
+            "Ask a question or request a supported action. Device changes need your approval.",
             style = JannahType.bodySmall,
             color = JannahColors.Muted,
             modifier = Modifier.padding(top = 7.dp, bottom = 18.dp)
@@ -1123,57 +1123,64 @@ fun SirajScreen(onNavigate: (String) -> Unit = {}) {
             }
         }
 
-        Text(
-            "Speech input uses Android recognition. Read-aloud uses an installed offline voice.",
-            style = JannahType.micro,
-            color = JannahColors.Muted,
-            modifier = Modifier.padding(bottom = 7.dp)
-        )
-        Row(
+        Column(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(top = 10.dp, bottom = 16.dp),
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(9.dp)
+                .padding(top = 8.dp, bottom = 12.dp),
+            verticalArrangement = Arrangement.spacedBy(6.dp)
         ) {
-            OutlinedTextField(
-                value = input,
-                onValueChange = { input = it },
-                modifier = Modifier.weight(1f),
-                placeholder = { Text("Ask SIRAJ to open…", color = JannahColors.Muted) },
-                shape = RoundedCornerShape(18.dp),
-                singleLine = true,
-                keyboardOptions = KeyboardOptions(imeAction = ImeAction.Send),
-                keyboardActions = KeyboardActions(onSend = { submit(input) })
-            )
-            TextButton(
-                onClick = { startVoiceInput() },
-                modifier = Modifier
-                    .clip(RoundedCornerShape(16.dp))
-                    .border(1.dp, JannahColors.Border, RoundedCornerShape(16.dp))
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(8.dp)
             ) {
-                Text("Speak", color = JannahColors.Ink, fontWeight = FontWeight.Medium)
+                OutlinedTextField(
+                    value = input,
+                    onValueChange = { input = it },
+                    modifier = Modifier.weight(1f),
+                    placeholder = { Text("Ask SIRAJ anything…", color = JannahColors.Muted) },
+                    shape = RoundedCornerShape(18.dp),
+                    singleLine = true,
+                    keyboardOptions = KeyboardOptions(imeAction = ImeAction.Send),
+                    keyboardActions = KeyboardActions(onSend = { submit(input) })
+                )
+                TextButton(
+                    onClick = { submit(input) },
+                    enabled = input.isNotBlank(),
+                    modifier = Modifier
+                        .clip(RoundedCornerShape(16.dp))
+                        .background(if (input.isNotBlank()) JannahColors.Orange else JannahColors.Border)
+                ) {
+                    Text("Send", color = JannahColors.OnOrange, fontWeight = FontWeight.Bold)
+                }
             }
-            TextButton(
-                onClick = {
-                    if (textToSpeech.isSpeaking) textToSpeech.stop()
-                    else speakLatestResponse()
-                },
-                enabled = ttsReady && messages.any { !it.fromUser },
-                modifier = Modifier
-                    .clip(RoundedCornerShape(16.dp))
-                    .border(1.dp, JannahColors.Border, RoundedCornerShape(16.dp))
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(8.dp)
             ) {
-                Text("Listen", color = JannahColors.Ink, fontWeight = FontWeight.Medium)
-            }
-            TextButton(
-                onClick = { submit(input) },
-                enabled = input.isNotBlank(),
-                modifier = Modifier
-                    .clip(RoundedCornerShape(16.dp))
-                    .background(if (input.isNotBlank()) JannahColors.Orange else JannahColors.Border)
-            ) {
-                Text("Go", color = JannahColors.OnOrange, fontWeight = FontWeight.Bold)
+                TextButton(
+                    onClick = { startVoiceInput() },
+                    modifier = Modifier
+                        .clip(RoundedCornerShape(16.dp))
+                        .border(1.dp, JannahColors.Border, RoundedCornerShape(16.dp))
+                ) {
+                    Text("Speak", color = JannahColors.Ink, fontWeight = FontWeight.Medium)
+                }
+                TextButton(
+                    onClick = {
+                        if (textToSpeech.isSpeaking) textToSpeech.stop()
+                        else speakLatestResponse()
+                    },
+                    enabled = ttsReady && messages.any { !it.fromUser },
+                    modifier = Modifier
+                        .clip(RoundedCornerShape(16.dp))
+                        .border(1.dp, JannahColors.Border, RoundedCornerShape(16.dp))
+                ) {
+                    Text("Listen", color = JannahColors.Ink, fontWeight = FontWeight.Medium)
+                }
+                Spacer(Modifier.weight(1f))
+                Text("Voice input · Offline read-aloud", style = JannahType.micro, color = JannahColors.Muted)
             }
         }
     }
