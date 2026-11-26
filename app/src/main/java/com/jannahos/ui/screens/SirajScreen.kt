@@ -45,6 +45,8 @@ import com.jannahos.siraj.actions.SirajActionPlan
 import com.jannahos.siraj.actions.SirajActionPlanner
 import com.jannahos.siraj.actions.ActionApproval
 import com.jannahos.siraj.actions.SirajActionHistoryStore
+import com.jannahos.siraj.memory.SirajMemoryCommandParser
+import com.jannahos.siraj.memory.SirajMemoryStore
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
@@ -92,10 +94,15 @@ fun SirajScreen(onNavigate: (String) -> Unit = {}) {
     var pendingPermissionReason by remember { mutableStateOf("") }
     var pendingActionQueue by remember { mutableStateOf<List<Pair<SirajDeviceAction, String>>>(emptyList()) }
     var showHistoryClearConfirmation by remember { mutableStateOf(false) }
+    var pendingMemoryContent by remember { mutableStateOf<String?>(null) }
+    var showMemorySaveConfirmation by remember { mutableStateOf(false) }
+    var showMemoryClearConfirmation by remember { mutableStateOf(false) }
+    var pendingMemoryDeleteId by remember { mutableStateOf<Long?>(null) }
+    var pendingMemoryDeleteContent by remember { mutableStateOf("") }
     val messages = remember {
         mutableStateListOf(
             SirajMessage(
-                "I can open a Surah, show prayer times, find the Qibla, start Quran search, or take you to adhkar, notes and settings. I won't invent religious answers or claim a source I haven't checked.",
+                "I can open a Surah, show prayer times, find the Qibla, take supported device actions, and keep private memories on this device. I won't invent religious answers or claim a source I haven't checked.",
                 false
             )
         )
@@ -161,6 +168,65 @@ fun SirajScreen(onNavigate: (String) -> Unit = {}) {
         if (request.isBlank()) return
         messages.add(SirajMessage(request, true))
         input = ""
+
+        val rememberContent = SirajMemoryCommandParser.rememberContent(request)
+        if (rememberContent != null) {
+            pendingMemoryContent = rememberContent
+            showMemorySaveConfirmation = true
+            return
+        }
+        if (request.trim().lowercase().startsWith("remember:")) {
+            messages.add(SirajMessage("Add the text after 'remember:' so I know exactly what to save.", false))
+            return
+        }
+        if (request.trim().lowercase().startsWith("remember ")) {
+            messages.add(
+                SirajMessage(
+                    "I won't guess what to save. Use 'remember: ...' or 'remember that ...' to propose a private memory.",
+                    false
+                )
+            )
+            return
+        }
+        if (SirajMemoryCommandParser.isShowMemoryRequest(request)) {
+            val entries = runCatching { SirajMemoryStore(context).recent(20) }
+                .getOrElse { emptyList() }
+            val reply = if (entries.isEmpty()) {
+                "Your private SIRAJ memory is empty."
+            } else {
+                "Your private memory (stored encrypted on this device):\n" +
+                    entries.joinToString("\n") { "• ${it.content}" }
+            }
+            messages.add(SirajMessage(reply, false))
+            return
+        }
+        if (SirajMemoryCommandParser.isClearMemoryRequest(request)) {
+            showMemoryClearConfirmation = true
+            return
+        }
+        val forgetQuery = SirajMemoryCommandParser.forgetQuery(request)
+        if (request.trim().lowercase().startsWith("forget:") && forgetQuery == null) {
+            messages.add(SirajMessage("Add a specific phrase after 'forget:' so I know which memory to find.", false))
+            return
+        }
+        if (forgetQuery != null) {
+            val matches = runCatching { SirajMemoryStore(context).search(forgetQuery) }
+                .getOrElse { emptyList() }
+            when (matches.size) {
+                0 -> messages.add(SirajMessage("I couldn't find a saved memory matching that phrase.", false))
+                1 -> {
+                    pendingMemoryDeleteId = matches.first().id
+                    pendingMemoryDeleteContent = matches.first().content
+                }
+                else -> messages.add(
+                    SirajMessage(
+                        "More than one memory matches. Use a more specific 'forget: ...' phrase so I don't delete the wrong one.",
+                        false
+                    )
+                )
+            }
+            return
+        }
 
         if (request.lowercase() in setOf("clear action history", "delete action history")) {
             showHistoryClearConfirmation = true
@@ -419,6 +485,112 @@ fun SirajScreen(onNavigate: (String) -> Unit = {}) {
                     )
                 )
             }
+    }
+
+    if (showMemorySaveConfirmation && pendingMemoryContent != null) {
+        AlertDialog(
+            onDismissRequest = {
+                showMemorySaveConfirmation = false
+                pendingMemoryContent = null
+            },
+            title = { Text("Save private memory?", fontFamily = FontFamily.Serif, fontWeight = FontWeight.Bold) },
+            text = {
+                Text(
+                    "${pendingMemoryContent}\n\nThis will be stored encrypted on this device only. It will not be added to AI provider prompts or the current partial backup.",
+                    color = JannahColors.Body
+                )
+            },
+            confirmButton = {
+                TextButton(onClick = {
+                    val saved = runCatching {
+                        SirajMemoryStore(context).add(pendingMemoryContent.orEmpty())
+                    }.getOrDefault(false)
+                    messages.add(
+                        SirajMessage(
+                            if (saved) "Saved to your encrypted private memory on this device."
+                            else "I couldn't save that memory. It may already exist or local storage may be unavailable.",
+                            false
+                        )
+                    )
+                    showMemorySaveConfirmation = false
+                    pendingMemoryContent = null
+                }) { Text("Save memory", color = JannahColors.OrangeDeep) }
+            },
+            dismissButton = {
+                TextButton(onClick = {
+                    showMemorySaveConfirmation = false
+                    pendingMemoryContent = null
+                }) { Text("Cancel", color = JannahColors.Muted) }
+            },
+            containerColor = JannahColors.Surface
+        )
+    }
+
+    if (showMemoryClearConfirmation) {
+        AlertDialog(
+            onDismissRequest = { showMemoryClearConfirmation = false },
+            title = { Text("Clear private memory?", fontFamily = FontFamily.Serif, fontWeight = FontWeight.Bold) },
+            text = {
+                Text(
+                    "This permanently deletes your encrypted SIRAJ memory entries from this device. It does not change device settings, reminders or action history.",
+                    color = JannahColors.Body
+                )
+            },
+            confirmButton = {
+                TextButton(onClick = {
+                    val cleared = runCatching { SirajMemoryStore(context).clear() }.isSuccess
+                    messages.add(
+                        SirajMessage(
+                            if (cleared) "Private memory cleared."
+                            else "I couldn't clear private memory. No device settings were changed.",
+                            false
+                        )
+                    )
+                    showMemoryClearConfirmation = false
+                }) { Text("Clear memory", color = JannahColors.Danger) }
+            },
+            dismissButton = {
+                TextButton(onClick = { showMemoryClearConfirmation = false }) {
+                    Text("Cancel", color = JannahColors.Muted)
+                }
+            },
+            containerColor = JannahColors.Surface
+        )
+    }
+
+    val memoryIdToDelete = pendingMemoryDeleteId
+    if (memoryIdToDelete != null) {
+        AlertDialog(
+            onDismissRequest = {
+                pendingMemoryDeleteId = null
+                pendingMemoryDeleteContent = ""
+            },
+            title = { Text("Forget this memory?", fontFamily = FontFamily.Serif, fontWeight = FontWeight.Bold) },
+            text = { Text(pendingMemoryDeleteContent, color = JannahColors.Body) },
+            confirmButton = {
+                TextButton(onClick = {
+                    val deleted = runCatching {
+                        SirajMemoryStore(context).delete(memoryIdToDelete)
+                    }.getOrDefault(false)
+                    messages.add(
+                        SirajMessage(
+                            if (deleted) "That private memory was deleted."
+                            else "I couldn't delete that memory.",
+                            false
+                        )
+                    )
+                    pendingMemoryDeleteId = null
+                    pendingMemoryDeleteContent = ""
+                }) { Text("Forget", color = JannahColors.Danger) }
+            },
+            dismissButton = {
+                TextButton(onClick = {
+                    pendingMemoryDeleteId = null
+                    pendingMemoryDeleteContent = ""
+                }) { Text("Cancel", color = JannahColors.Muted) }
+            },
+            containerColor = JannahColors.Surface
+        )
     }
 
     if (showHistoryClearConfirmation) {
