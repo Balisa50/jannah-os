@@ -20,7 +20,7 @@ object HadithStore {
         cache?.let { return it }
         val list = mutableListOf<Hadith>()
         try {
-            ctx.applicationContext.assets.open("hadiths_merged.json.gz").use { compressed ->
+            ctx.applicationContext.assets.open("hadiths_merged.bin").use { compressed ->
                 GZIPInputStream(compressed).use { input ->
                     JsonReader(InputStreamReader(input, Charsets.UTF_8)).use { reader ->
                         reader.beginArray()
