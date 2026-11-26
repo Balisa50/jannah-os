@@ -78,6 +78,7 @@ fun DiaryScreen(onBack: () -> Unit) {
     var writing by remember { mutableStateOf(false) }
     var text by remember { mutableStateOf("") }
     var saveError by remember { mutableStateOf<String?>(null) }
+    var showSlashMenu by remember { mutableStateOf(false) }
 
     BackHandler {
         if (writing) {
@@ -89,7 +90,6 @@ fun DiaryScreen(onBack: () -> Unit) {
             onBack()
         }
     }
-    var showSlashMenu by remember { mutableStateOf(false) }
     val dayFmt = SimpleDateFormat("EEE d MMM · HH:mm", Locale.getDefault())
 
     Column(modifier = Modifier.fillMaxSize().background(JannahColors.Cream)) {
