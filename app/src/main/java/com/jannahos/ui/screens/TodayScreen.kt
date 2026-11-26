@@ -130,13 +130,22 @@ fun TodayScreen(onNavigate: (String) -> Unit = {}) {
         Column(Modifier.padding(horizontal = 22.dp)) {
             Text("NEXT PRAYER", style = JannahType.eyebrow, color = OrangeDeep)
             Spacer(Modifier.height(8.dp))
-            Row(verticalAlignment = Alignment.Bottom) {
-                Text(displayLabel, fontFamily = FontFamily.Serif, fontSize = 32.sp, fontWeight = FontWeight.Bold, color = Orange)
-                Spacer(Modifier.width(8.dp))
-                Text("in", fontFamily = FontFamily.Serif, fontStyle = FontStyle.Italic, fontSize = 22.sp, color = Orange)
+            if (isLocationSet) {
+                Row(verticalAlignment = Alignment.Bottom) {
+                    Text(displayLabel, fontFamily = FontFamily.Serif, fontSize = 32.sp, fontWeight = FontWeight.Bold, color = Orange)
+                    Spacer(Modifier.width(8.dp))
+                    Text("in", fontFamily = FontFamily.Serif, fontStyle = FontStyle.Italic, fontSize = 22.sp, color = Orange)
+                }
+                Spacer(Modifier.height(4.dp))
+                AnimatedCountdown(displayTime)
+            } else {
+                Text(
+                    "Choose your city to see accurate prayer times.",
+                    style = JannahType.body,
+                    color = Muted,
+                    lineHeight = 24.sp
+                )
             }
-            Spacer(Modifier.height(4.dp))
-            AnimatedCountdown(displayTime)
             
             Spacer(Modifier.height(32.dp))
             Box(Modifier.fillMaxWidth().height(1.dp).background(JannahColors.Divider))
