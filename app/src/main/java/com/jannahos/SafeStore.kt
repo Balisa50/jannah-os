@@ -1,14 +1,26 @@
 package com.jannahos
 
 import android.content.Context
+import android.util.Log
 
 // All encrypted-database reads from UI go through here. If SQLCipher fails
 // to open (rare but real on some devices), we return safe fallbacks instead
 // of crashing the composition. Failure surfaces as an empty state, not an exit.
 object SafeStore {
+    private const val TAG = "SafeStore"
 
+    /**
+     * Fail-soft reads must not fail-silent. Keep the UI alive, but emit a
+     * privacy-conscious diagnostic so an encrypted database failure is
+     * discoverable during support and testing. Never log user records/values.
+     */
     fun <T> read(default: T, block: () -> T): T =
-        try { block() } catch (e: Exception) { default }
+        try {
+            block()
+        } catch (error: Exception) {
+            Log.e(TAG, "Local data read failed (${error.javaClass.simpleName}); fallback used.")
+            default
+        }
 
     fun stats30(context: Context): WakeLog.FormationStats =
         read(WakeLog.FormationStats(0, 0, 0, 0, 0f)) {
