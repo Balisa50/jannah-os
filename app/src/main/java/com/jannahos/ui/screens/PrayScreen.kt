@@ -29,11 +29,12 @@ import java.util.Locale
 @Composable
 fun PrayScreen() {
     val ctx = LocalContext.current
-    val lat = Settings.lat(ctx)
-    val lon = Settings.lon(ctx)
-
-    var times by remember { mutableStateOf(SalahScheduler.todayTimes(ctx, lat, lon)) }
+    var times by remember {
+        mutableStateOf(SalahScheduler.todayTimes(ctx, Settings.lat(ctx), Settings.lon(ctx)))
+    }
     var dateKey by remember { mutableStateOf(SimpleDateFormat("yyyy-MM-dd", Locale.US).format(Date())) }
+    var savedLat by remember { mutableDoubleStateOf(Settings.lat(ctx)) }
+    var savedLon by remember { mutableDoubleStateOf(Settings.lon(ctx)) }
     var now by remember { mutableLongStateOf(System.currentTimeMillis()) }
 
     LaunchedEffect(Unit) {
@@ -42,9 +43,13 @@ fun PrayScreen() {
             val fresh = System.currentTimeMillis()
             now = fresh
             val freshKey = SimpleDateFormat("yyyy-MM-dd", Locale.US).format(Date(fresh))
-            if (freshKey != dateKey) {
+            val currentLat = Settings.lat(ctx)
+            val currentLon = Settings.lon(ctx)
+            if (freshKey != dateKey || currentLat != savedLat || currentLon != savedLon) {
                 dateKey = freshKey
-                times = SalahScheduler.todayTimes(ctx, lat, lon)
+                savedLat = currentLat
+                savedLon = currentLon
+                times = SalahScheduler.todayTimes(ctx, currentLat, currentLon)
             }
         }
     }
@@ -59,48 +64,88 @@ fun PrayScreen() {
     val countdown = String.format(Locale.US, "%02d:%02d:%02d", diffMs / 3600000, (diffMs / 60000) % 60, (diffMs / 1000) % 60)
 
     Column(modifier = Modifier.fillMaxSize().verticalScroll(rememberScrollState()).background(JannahColors.Cream)) {
-        Column(Modifier.padding(horizontal = JannahSpacing.gutter).padding(top = 40.dp, bottom = 28.dp)) {
-            Text("PRAYER TIMES", style = JannahType.eyebrow, color = JannahColors.OrangeDeep)
-            Spacer(Modifier.height(8.dp))
-            Text("Prayer", fontFamily = FontFamily.Serif, fontSize = 36.sp, fontWeight = FontWeight.Bold, color = JannahColors.Ink)
-            Spacer(Modifier.height(4.dp))
-            Text("Today for your location", style = JannahType.caption, color = JannahColors.Muted)
-        }
-
-        Column(Modifier.padding(horizontal = JannahSpacing.gutter)) {
-            Text(if (isTomorrow) "TOMORROW" else "NEXT", style = JannahType.eyebrow, color = JannahColors.OrangeDeep)
-            Spacer(Modifier.height(8.dp))
-            Text(nextLabel, fontFamily = FontFamily.Serif, fontSize = 32.sp, fontWeight = FontWeight.Bold, color = JannahColors.Orange)
-            Spacer(Modifier.height(4.dp))
-            Row(verticalAlignment = Alignment.Bottom) {
-                Text(countdown, fontFamily = FontFamily.Serif, fontSize = 24.sp, fontWeight = FontWeight.Bold, color = JannahColors.Orange)
-                Spacer(Modifier.width(8.dp))
-                Text("· " + hhmm.format(Date(nextTime)), fontFamily = FontFamily.Serif, fontStyle = FontStyle.Italic, fontSize = 18.sp, color = JannahColors.Muted, modifier = Modifier.padding(bottom = 3.dp))
-            }
-
-            Spacer(Modifier.height(32.dp))
-            Box(Modifier.fillMaxWidth().height(1.dp).background(JannahColors.Divider))
-            Spacer(Modifier.height(32.dp))
-
-            ordered.forEachIndexed { i, key ->
-                val t = times[key]
-                val isNext = key == nextKey
-                Row(Modifier.fillMaxWidth().padding(vertical = 16.dp), verticalAlignment = Alignment.CenterVertically) {
-                    Text(SalahTracker.label(key), fontFamily = FontFamily.Serif, fontSize = 20.sp, fontWeight = if (isNext) FontWeight.Bold else FontWeight.Normal, color = if (isNext) JannahColors.Orange else JannahColors.Ink, modifier = Modifier.weight(1f))
-                    Text(t?.let { hhmm.format(Date(it)) } ?: "—", fontFamily = FontFamily.Serif, fontSize = 18.sp, color = if (isNext) JannahColors.Orange else JannahColors.Muted)
+        if (times.isEmpty()) {
+            Column(
+                Modifier.fillMaxWidth()
+                    .padding(horizontal = JannahSpacing.gutter)
+                    .padding(top = 64.dp, bottom = 48.dp),
+                horizontalAlignment = Alignment.Start
+            ) {
+                Text("PRAYER TIMES", style = JannahType.eyebrow, color = JannahColors.OrangeDeep)
+                Spacer(Modifier.height(12.dp))
+                Text(
+                    "Choose your city first.",
+                    fontFamily = FontFamily.Serif,
+                    fontSize = 30.sp,
+                    fontWeight = FontWeight.Bold,
+                    color = JannahColors.Ink,
+                    lineHeight = 36.sp
+                )
+                Spacer(Modifier.height(10.dp))
+                Text(
+                    "SIRAJ needs a saved city to calculate today's prayer times. Your selection is used for calculations; continuous location access is not required.",
+                    style = JannahType.body,
+                    color = JannahColors.Muted,
+                    lineHeight = 24.sp
+                )
+                Spacer(Modifier.height(24.dp))
+                Row(
+                    Modifier.fillMaxWidth()
+                        .background(JannahColors.Ink, androidx.compose.foundation.shape.RoundedCornerShape(JannahSpacing.pillRadius))
+                        .pressClickable {
+                            ctx.startActivity(Intent(ctx, SettingsActivity::class.java))
+                        }
+                        .padding(horizontal = 20.dp, vertical = 17.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Text("Choose city in Settings", style = JannahType.button, color = JannahColors.OnOrange, modifier = Modifier.weight(1f))
+                    Text("→", style = JannahType.title, color = JannahColors.OnOrange)
                 }
-                if (i < ordered.size - 1) Box(Modifier.fillMaxWidth().height(1.dp).background(JannahColors.Divider))
+            }
+        } else {
+            Column(Modifier.padding(horizontal = JannahSpacing.gutter).padding(top = 40.dp, bottom = 28.dp)) {
+                Text("PRAYER TIMES", style = JannahType.eyebrow, color = JannahColors.OrangeDeep)
+                Spacer(Modifier.height(8.dp))
+                Text("Prayer", fontFamily = FontFamily.Serif, fontSize = 36.sp, fontWeight = FontWeight.Bold, color = JannahColors.Ink)
+                Spacer(Modifier.height(4.dp))
+                Text("Today for your location", style = JannahType.caption, color = JannahColors.Muted)
             }
 
-            Spacer(Modifier.height(32.dp))
+            Column(Modifier.padding(horizontal = JannahSpacing.gutter)) {
+                Text(if (isTomorrow) "TOMORROW" else "NEXT", style = JannahType.eyebrow, color = JannahColors.OrangeDeep)
+                Spacer(Modifier.height(8.dp))
+                Text(nextLabel, fontFamily = FontFamily.Serif, fontSize = 32.sp, fontWeight = FontWeight.Bold, color = JannahColors.Orange)
+                Spacer(Modifier.height(4.dp))
+                Row(verticalAlignment = Alignment.Bottom) {
+                    Text(countdown, fontFamily = FontFamily.Serif, fontSize = 24.sp, fontWeight = FontWeight.Bold, color = JannahColors.Orange)
+                    Spacer(Modifier.width(8.dp))
+                    Text("· " + hhmm.format(Date(nextTime)), fontFamily = FontFamily.Serif, fontStyle = FontStyle.Italic, fontSize = 18.sp, color = JannahColors.Muted, modifier = Modifier.padding(bottom = 3.dp))
+                }
 
-            Row(Modifier.fillMaxWidth().pressClickable { ctx.startActivity(Intent(ctx, QiblaActivity::class.java)) }.padding(vertical = 16.dp), verticalAlignment = Alignment.CenterVertically) {
-                Text("Qibla direction", fontFamily = FontFamily.Serif, fontSize = 20.sp, fontWeight = FontWeight.Bold, color = JannahColors.Ink, modifier = Modifier.weight(1f))
-                Text("→", style = JannahType.title, color = JannahColors.Orange)
+                Spacer(Modifier.height(32.dp))
+                Box(Modifier.fillMaxWidth().height(1.dp).background(JannahColors.Divider))
+                Spacer(Modifier.height(32.dp))
+
+                ordered.forEachIndexed { i, key ->
+                    val t = times[key]
+                    val isNext = key == nextKey
+                    Row(Modifier.fillMaxWidth().padding(vertical = 16.dp), verticalAlignment = Alignment.CenterVertically) {
+                        Text(SalahTracker.label(key), fontFamily = FontFamily.Serif, fontSize = 20.sp, fontWeight = if (isNext) FontWeight.Bold else FontWeight.Normal, color = if (isNext) JannahColors.Orange else JannahColors.Ink, modifier = Modifier.weight(1f))
+                        Text(t?.let { hhmm.format(Date(it)) } ?: "—", fontFamily = FontFamily.Serif, fontSize = 18.sp, color = if (isNext) JannahColors.Orange else JannahColors.Muted)
+                    }
+                    if (i < ordered.size - 1) Box(Modifier.fillMaxWidth().height(1.dp).background(JannahColors.Divider))
+                }
+
+                Spacer(Modifier.height(32.dp))
+
+                Row(Modifier.fillMaxWidth().pressClickable { ctx.startActivity(Intent(ctx, QiblaActivity::class.java)) }.padding(vertical = 16.dp), verticalAlignment = Alignment.CenterVertically) {
+                    Text("Qibla direction", fontFamily = FontFamily.Serif, fontSize = 20.sp, fontWeight = FontWeight.Bold, color = JannahColors.Ink, modifier = Modifier.weight(1f))
+                    Text("→", style = JannahType.title, color = JannahColors.Orange)
+                }
+                Box(Modifier.fillMaxWidth().height(1.dp).background(JannahColors.Divider))
+                Spacer(Modifier.height(JannahSpacing.xxl))
             }
-            Box(Modifier.fillMaxWidth().height(1.dp).background(JannahColors.Divider))
-
-            Spacer(Modifier.height(JannahSpacing.xxl))
         }
     }
+}
 }
