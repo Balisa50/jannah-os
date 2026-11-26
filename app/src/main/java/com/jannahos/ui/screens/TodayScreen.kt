@@ -36,16 +36,47 @@ import java.util.Locale
 fun TodayScreen(onNavigate: (String) -> Unit = {}) {
     val ctx = LocalContext.current
     val userName = remember { runCatching { Settings.displayName(ctx) }.getOrDefault("") }
-    val lat = runCatching { Settings.lat(ctx) }.getOrDefault(0.0)
-    val lon = runCatching { Settings.lon(ctx) }.getOrDefault(0.0)
-    
-    val prayerTimes = runCatching { SalahScheduler.todayTimes(ctx, lat, lon) }.getOrDefault(emptyMap())
+    var prayerTimes by remember {
+        mutableStateOf(
+            runCatching {
+                SalahScheduler.todayTimes(ctx, Settings.lat(ctx), Settings.lon(ctx))
+            }.getOrDefault(emptyMap())
+        )
+    }
+    var savedLat by remember { mutableDoubleStateOf(Settings.lat(ctx)) }
+    var savedLon by remember { mutableDoubleStateOf(Settings.lon(ctx)) }
+    var savedMethod by remember { mutableStateOf(Settings.method(ctx)) }
+    var dateKey by remember { mutableStateOf(SimpleDateFormat("yyyy-MM-dd", Locale.US).format(Date())) }
+    var now by remember { mutableLongStateOf(System.currentTimeMillis()) }
+
+    LaunchedEffect(Unit) {
+        while (true) {
+            delay(15_000)
+            now = System.currentTimeMillis()
+            val currentLat = Settings.lat(ctx)
+            val currentLon = Settings.lon(ctx)
+            val currentMethod = Settings.method(ctx)
+            val currentDateKey = SimpleDateFormat("yyyy-MM-dd", Locale.US).format(Date(now))
+            if (
+                currentLat != savedLat ||
+                currentLon != savedLon ||
+                currentMethod != savedMethod ||
+                currentDateKey != dateKey
+            ) {
+                savedLat = currentLat
+                savedLon = currentLon
+                savedMethod = currentMethod
+                dateKey = currentDateKey
+                prayerTimes = runCatching {
+                    SalahScheduler.todayTimes(ctx, currentLat, currentLon)
+                }.getOrDefault(emptyMap())
+            }
+        }
+    }
+
     val isLocationSet = prayerTimes.isNotEmpty()
-    
-    val hadith = remember { runCatching { DailyHadith.today() }.getOrNull() }
-    val hijri = remember { runCatching { HijriDate.today() }.getOrDefault("") }
-    
-    val now = System.currentTimeMillis()
+    val hadith = runCatching { DailyHadith.today() }.getOrNull()
+    val hijri = runCatching { HijriDate.today() }.getOrDefault("")
     val ordered = listOf("fajr", "dhuhr", "asr", "maghrib", "isha")
     val nextKey = ordered.firstOrNull { (prayerTimes[it] ?: 0L) > now }
     val displayLabel = runCatching { nextKey?.let { SalahTracker.label(it) } ?: "Fajr" }.getOrDefault("Fajr")
