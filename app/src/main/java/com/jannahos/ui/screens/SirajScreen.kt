@@ -77,6 +77,7 @@ fun SirajScreen(onNavigate: (String) -> Unit = {}) {
     var pendingActionPrompt by remember { mutableStateOf("") }
     var pendingPermissionAction by remember { mutableStateOf<SirajDeviceAction?>(null) }
     var pendingPermissionReason by remember { mutableStateOf("") }
+    var pendingActionQueue by remember { mutableStateOf<List<Pair<SirajDeviceAction, String>>>(emptyList()) }
     var showHistoryClearConfirmation by remember { mutableStateOf(false) }
     val messages = remember {
         mutableStateListOf(
@@ -85,6 +86,31 @@ fun SirajScreen(onNavigate: (String) -> Unit = {}) {
                 false
             )
         )
+    }
+
+    fun prepareDeviceAction(action: SirajDeviceAction, prompt: String) {
+        val plan = SirajActionPlanner.prepare(
+            action = action,
+            summary = prompt,
+            capabilities = AndroidDeviceActionExecutor.readCapabilities(context),
+            nowMillis = System.currentTimeMillis()
+        )
+        when (plan.state) {
+            SirajActionPlan.State.BLOCKED -> {
+                pendingPermissionAction = action
+                pendingActionPrompt = prompt
+                pendingPermissionReason = plan.blockedReason.orEmpty()
+            }
+            SirajActionPlan.State.AWAITING_CONFIRMATION -> {
+                pendingActionPlan = plan
+                pendingDeviceAction = action
+                pendingActionPrompt = prompt
+            }
+            else -> Unit
+        }
+        scope.launch {
+            if (messages.isNotEmpty()) listState.animateScrollToItem(messages.lastIndex)
+        }
     }
 
     fun submit(raw: String) {
@@ -119,31 +145,29 @@ fun SirajScreen(onNavigate: (String) -> Unit = {}) {
             return
         }
 
+        val actionSegments = request.split(Regex("\\s+then\\s+", RegexOption.IGNORE_CASE))
+        if (actionSegments.size > 1 && actionSegments.any { parseDeviceAction(it) != null }) {
+            val sequence = parseDeviceActionSequence(request)
+            if (sequence == null) {
+                pendingActionQueue = emptyList()
+                messages.add(
+                    SirajMessage(
+                        "I couldn't safely parse every step in that action sequence. No device action was taken. Separate supported actions with the word 'then'.",
+                        false
+                    )
+                )
+                return
+            }
+            pendingActionQueue = sequence.drop(1)
+            val first = sequence.first()
+            prepareDeviceAction(first.first, first.second)
+            return
+        }
+
         val requestedDeviceAction = parseDeviceAction(request)
         if (requestedDeviceAction != null) {
-            val (deviceAction, prompt) = requestedDeviceAction
-            val plan = SirajActionPlanner.prepare(
-                action = deviceAction,
-                summary = prompt,
-                capabilities = AndroidDeviceActionExecutor.readCapabilities(context),
-                nowMillis = System.currentTimeMillis()
-            )
-            when (plan.state) {
-                SirajActionPlan.State.BLOCKED -> {
-                    pendingPermissionAction = deviceAction
-                    pendingActionPrompt = prompt
-                    pendingPermissionReason = plan.blockedReason.orEmpty()
-                }
-                SirajActionPlan.State.AWAITING_CONFIRMATION -> {
-                    pendingActionPlan = plan
-                    pendingDeviceAction = deviceAction
-                    pendingActionPrompt = prompt
-                }
-                else -> Unit
-            }
-            scope.launch {
-                if (messages.isNotEmpty()) listState.animateScrollToItem(messages.lastIndex)
-            }
+            pendingActionQueue = emptyList()
+            prepareDeviceAction(requestedDeviceAction.first, requestedDeviceAction.second)
             return
         }
 
@@ -404,6 +428,7 @@ fun SirajScreen(onNavigate: (String) -> Unit = {}) {
                 pendingDeviceAction = null
                 pendingActionPlan = null
                 pendingActionPrompt = ""
+                pendingActionQueue = emptyList()
             },
             title = {
                 Text(
@@ -458,9 +483,43 @@ fun SirajScreen(onNavigate: (String) -> Unit = {}) {
                             is ActionExecutionResult.Failed -> "Android could not complete it: ${result.reason}"
                         }
                         messages.add(SirajMessage(response, false))
-                        pendingDeviceAction = null
-                        pendingActionPlan = null
-                        pendingActionPrompt = ""
+
+                        val nextStep = if (result == ActionExecutionResult.Completed) {
+                            pendingActionQueue.firstOrNull()
+                        } else null
+                        if (nextStep != null) {
+                            pendingActionQueue = pendingActionQueue.drop(1)
+                            pendingDeviceAction = null
+                            pendingActionPlan = null
+                            pendingActionPrompt = nextStep.second
+                            val nextPlan = SirajActionPlanner.prepare(
+                                action = nextStep.first,
+                                summary = nextStep.second,
+                                capabilities = AndroidDeviceActionExecutor.readCapabilities(context),
+                                nowMillis = System.currentTimeMillis()
+                            )
+                            when (nextPlan.state) {
+                                SirajActionPlan.State.AWAITING_CONFIRMATION -> {
+                                    pendingDeviceAction = nextStep.first
+                                    pendingActionPlan = nextPlan
+                                    pendingPermissionAction = null
+                                    pendingPermissionReason = ""
+                                }
+                                SirajActionPlan.State.BLOCKED -> {
+                                    pendingPermissionAction = nextStep.first
+                                    pendingPermissionReason = nextPlan.blockedReason.orEmpty()
+                                }
+                                else -> {
+                                    pendingActionQueue = emptyList()
+                                    pendingActionPrompt = ""
+                                }
+                            }
+                        } else {
+                            pendingActionQueue = emptyList()
+                            pendingDeviceAction = null
+                            pendingActionPlan = null
+                            pendingActionPrompt = ""
+                        }
                         scope.launch {
                             if (messages.isNotEmpty()) listState.animateScrollToItem(messages.lastIndex)
                         }
@@ -477,9 +536,11 @@ fun SirajScreen(onNavigate: (String) -> Unit = {}) {
                                 actionToConfirm, pendingActionPrompt
                             )
                         }
-                        messages.add(SirajMessage("No action was taken.", false))
+                        messages.add(SirajMessage("No action was taken. Remaining steps were cancelled.", false))
                         pendingDeviceAction = null
+                        pendingActionPlan = null
                         pendingActionPrompt = ""
+                        pendingActionQueue = emptyList()
                     }
                 ) {
                     Text("Cancel", color = JannahColors.Muted)
@@ -496,6 +557,7 @@ fun SirajScreen(onNavigate: (String) -> Unit = {}) {
                 pendingPermissionAction = null
                 pendingPermissionReason = ""
                 pendingActionPrompt = ""
+                pendingActionQueue = emptyList()
             },
             title = { Text("Permission needed", fontFamily = FontFamily.Serif, fontWeight = FontWeight.Bold) },
             text = { Text(pendingPermissionReason, color = JannahColors.Body) },
@@ -509,6 +571,7 @@ fun SirajScreen(onNavigate: (String) -> Unit = {}) {
                     pendingPermissionAction = null
                     pendingPermissionReason = ""
                     pendingActionPrompt = ""
+                    pendingActionQueue = emptyList()
                 }) {
                     Text("Not now", color = JannahColors.Muted)
                 }
@@ -728,3 +791,15 @@ internal fun parseDeviceAction(request: String): Pair<SirajDeviceAction, String>
         }
     }
 }
+internal fun parseDeviceActionSequence(
+    request: String
+): List<Pair<SirajDeviceAction, String>>? {
+    val segments = request.trim().split(
+        Regex("\\s+then\\s+", RegexOption.IGNORE_CASE)
+    )
+    if (segments.size < 2) return null
+    val parsed = segments.map { segment -> parseDeviceAction(segment.trim()) }
+    if (parsed.any { it == null }) return null
+    return parsed.filterNotNull()
+}
+
