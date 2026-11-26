@@ -1,6 +1,10 @@
 package com.jannahos
 
 import android.content.Context
+import android.util.JsonReader
+import android.util.JsonToken
+import java.io.InputStreamReader
+import java.util.PriorityQueue
 
 object QuranSearchEngine {
     data class AyahResult(val surah: Int, val ayah: Int, val arabic: String, val english: String, val score: Int)
@@ -62,52 +66,109 @@ object QuranSearchEngine {
         return results.sortedByDescending { it.score }.take(50)
     }
 
+    /**
+     * Stream the large bundled dataset instead of materialising the entire
+     * 50 MB JSON file and every record in memory. Keep only the best 50 hits.
+     */
     fun searchHadith(ctx: Context, query: String): List<HadithResult> {
-        val q = query.lowercase().trim()
-        if (q.isEmpty()) return emptyList()
-        val arabicQuery = ArabicTextNormalizer.normalize(query)
-        val tokens = q.split(Regex("\\s+")).filter { it.isNotBlank() }
-        val arabicTokens = arabicQuery.split(Regex("\\s+")).filter { it.isNotBlank() }
-        val results = mutableListOf<HadithResult>()
-        val allHadiths = HadithStore.load(ctx)
+        if (query.isBlank()) return emptyList()
+        val best = PriorityQueue<HadithResult>(50, compareBy { it.score })
 
-        for (h in allHadiths) {
-            var score = 0
-            val engLower = h.english.lowercase()
-            val araText = ArabicTextNormalizer.normalize(h.arabic)
-
-            // 1. Exact Matches (Fast)
-            for (token in tokens) {
-                if (engLower.contains(token)) score += 10
-            }
-            for (token in arabicTokens) {
-                if (token.isNotBlank() && araText.contains(token)) score += 10
-            }
-
-            // 2. Synonym Matches
-            for (token in tokens) {
-                val syn = synonyms[token]
-                if (syn != null && engLower.contains(syn)) score += 5
-            }
-
-            // 3. Fuzzy Match (Only if exact match failed)
-            if (score == 0) {
-                for (token in tokens) {
-                    if (token.length > 4) {
-                        val words = engLower.split(Regex("\\W+"))
-                        for (w in words) {
-                            if (w.length > 4 && levenshtein(token, w) <= 1) {
-                                score += 2
-                                break
+        return try {
+            ctx.applicationContext.assets.open("hadiths_merged.json").use { input ->
+                JsonReader(InputStreamReader(input, Charsets.UTF_8)).use { reader ->
+                    reader.beginArray()
+                    while (reader.hasNext()) {
+                        var collection = ""
+                        var number = 0
+                        var arabic = ""
+                        var english = ""
+                        reader.beginObject()
+                        while (reader.hasNext()) {
+                            when (reader.nextName()) {
+                                "collection" -> collection = readJsonString(reader)
+                                "number" -> number = readJsonInt(reader)
+                                "arabic" -> arabic = readJsonString(reader)
+                                "english" -> english = readJsonString(reader)
+                                else -> reader.skipValue()
                             }
+                        }
+                        reader.endObject()
+
+                        if (collection.isBlank() || number <= 0 || arabic.isBlank()) continue
+                        val score = scoreHadithRecord(query, english, arabic)
+                        if (score <= 0) continue
+                        val hit = HadithResult(collection, number, arabic, english, score)
+                        if (best.size < 50) {
+                            best.add(hit)
+                        } else if (score > best.peek().score) {
+                            best.poll()
+                            best.add(hit)
+                        }
+                    }
+                    reader.endArray()
+                }
+            }
+            best.sortedByDescending { it.score }
+        } catch (_: Exception) {
+            emptyList()
+        }
+    }
+
+    internal fun scoreHadithRecord(query: String, english: String, arabic: String): Int {
+        val q = query.lowercase().trim()
+        if (q.isEmpty()) return 0
+        val tokens = q.split(Regex("\\s+")).filter { it.isNotBlank() }
+        val arabicTokens = ArabicTextNormalizer.normalize(query)
+            .split(Regex("\\s+")).filter { it.isNotBlank() }
+        val engLower = english.lowercase()
+        val araText = ArabicTextNormalizer.normalize(arabic)
+        var score = 0
+
+        for (token in tokens) if (engLower.contains(token)) score += 10
+        for (token in arabicTokens) if (araText.contains(token)) score += 10
+        for (token in tokens) {
+            val synonym = synonyms[token]
+            if (synonym != null && engLower.contains(synonym)) score += 5
+        }
+
+        if (score == 0) {
+            for (token in tokens) {
+                if (token.length > 4) {
+                    for (word in engLower.split(Regex("\\W+"))) {
+                        if (word.length > 4 && levenshtein(token, word) <= 1) {
+                            score += 2
+                            break
                         }
                     }
                 }
             }
-
-            if (score > 0) results.add(HadithResult(h.collection, h.number, h.arabic, h.english, score))
         }
-        return results.sortedByDescending { it.score }.take(50)
+        return score
+    }
+
+    private fun readJsonString(reader: JsonReader): String = when (reader.peek()) {
+        JsonToken.NULL -> {
+            reader.nextNull()
+            ""
+        }
+        JsonToken.STRING, JsonToken.NUMBER -> reader.nextString()
+        else -> {
+            reader.skipValue()
+            ""
+        }
+    }
+
+    private fun readJsonInt(reader: JsonReader): Int = when (reader.peek()) {
+        JsonToken.NULL -> {
+            reader.nextNull()
+            0
+        }
+        JsonToken.NUMBER, JsonToken.STRING -> reader.nextString().toIntOrNull() ?: 0
+        else -> {
+            reader.skipValue()
+            0
+        }
     }
 
     private fun levenshtein(a: String, b: String): Int {

@@ -23,9 +23,11 @@ object HadithStore {
         return list
     }
 
-    suspend fun searchAsync(ctx: Context, query: String): List<Hadith> = kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.IO) {
-        val q = query.trim()
-        if (q.isEmpty()) return@withContext emptyList()
-        load(ctx).filter { it.english.contains(q, ignoreCase = true) || it.arabic.contains(q) }.take(50)
-    }
+    suspend fun searchAsync(ctx: Context, query: String): List<Hadith> =
+        kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.IO) {
+            if (query.isBlank()) return@withContext emptyList()
+            QuranSearchEngine.searchHadith(ctx.applicationContext, query).map { hit ->
+                Hadith(hit.collection, hit.number, hit.arabic, hit.english)
+            }
+        }
 }
