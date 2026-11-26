@@ -223,54 +223,71 @@ object BackupManager {
             // Restore each SQLite table atomically. A failure rolls back the
             // current table rather than leaving it half-deleted/half-imported.
             val wakeDb = WakeLog(context).writableDatabase
-            restoreTable(wakeDb, "events", root.getJSONArray("wake_events")) { o ->
-                android.content.ContentValues().apply {
-                    put("ts", o.getLong("ts"))
-                    put("outcome", o.getString("outcome"))
-                    if (!o.isNull("reason")) put("reason", o.getString("reason"))
-                    if (!o.isNull("voice")) put("voice_path", o.getString("voice"))
-                    put("verified", 0)
+            restoreTable(
+                wakeDb, "events", root.getJSONArray("wake_events"),
+                valuesFor = { o ->
+                    android.content.ContentValues().apply {
+                        put("ts", o.getLong("ts"))
+                        put("outcome", o.getString("outcome"))
+                        if (!o.isNull("reason")) put("reason", o.getString("reason"))
+                        if (!o.isNull("voice")) put("voice_path", o.getString("voice"))
+                        put("verified", 0)
+                    }
                 }
-            }
+            )
 
             val stDb = StruggleLog(context).writableDatabase
-            restoreTable(stDb, "entries", root.getJSONArray("struggle")) { o ->
-                android.content.ContentValues().apply {
-                    put("ts", o.getLong("ts"))
-                    put("kind", o.getString("kind"))
-                    if (!o.isNull("note")) put("note", o.getString("note"))
+            restoreTable(
+                stDb, "entries", root.getJSONArray("struggle"),
+                valuesFor = { o ->
+                    android.content.ContentValues().apply {
+                        put("ts", o.getLong("ts"))
+                        put("kind", o.getString("kind"))
+                        if (!o.isNull("note")) put("note", o.getString("note"))
+                    }
                 }
-            }
+            )
 
             val fDb = FastLog(context).writableDatabase
-            restoreTable(fDb, "fasts", root.getJSONArray("fasts")) { o ->
-                android.content.ContentValues().apply {
-                    put("day", o.getString("day"))
-                    put("kind", o.getString("kind"))
-                    put("created", o.getLong("created"))
-                }
-            }, android.database.sqlite.SQLiteDatabase.CONFLICT_REPLACE)
+            restoreTable(
+                fDb, "fasts", root.getJSONArray("fasts"),
+                valuesFor = { o ->
+                    android.content.ContentValues().apply {
+                        put("day", o.getString("day"))
+                        put("kind", o.getString("kind"))
+                        put("created", o.getLong("created"))
+                    }
+                },
+                conflictAlgorithm = android.database.sqlite.SQLiteDatabase.CONFLICT_REPLACE
+            )
 
             val slDb = SleepLog(context).writableDatabase
-            restoreTable(slDb, "sleeps", root.getJSONArray("sleeps")) { o ->
-                android.content.ContentValues().apply {
-                    put("day", o.getString("day"))
-                    put("bedtime", o.getLong("bedtime"))
-                    put("waketime", o.getLong("waketime"))
-                    put("quality", o.getInt("quality"))
-                    put("created", System.currentTimeMillis())
-                }
-            }, android.database.sqlite.SQLiteDatabase.CONFLICT_REPLACE)
+            restoreTable(
+                slDb, "sleeps", root.getJSONArray("sleeps"),
+                valuesFor = { o ->
+                    android.content.ContentValues().apply {
+                        put("day", o.getString("day"))
+                        put("bedtime", o.getLong("bedtime"))
+                        put("waketime", o.getLong("waketime"))
+                        put("quality", o.getInt("quality"))
+                        put("created", System.currentTimeMillis())
+                    }
+                },
+                conflictAlgorithm = android.database.sqlite.SQLiteDatabase.CONFLICT_REPLACE
+            )
 
             val bmDb = QuranBookmarkStore(context).writableDatabase
-            restoreTable(bmDb, "bookmarks", root.getJSONArray("bookmarks")) { o ->
-                android.content.ContentValues().apply {
-                    put("surah", o.getInt("surah"))
-                    put("ayah", o.getInt("ayah"))
-                    if (!o.isNull("note")) put("note", o.getString("note"))
-                    put("created", o.optLong("created", System.currentTimeMillis()))
+            restoreTable(
+                bmDb, "bookmarks", root.getJSONArray("bookmarks"),
+                valuesFor = { o ->
+                    android.content.ContentValues().apply {
+                        put("surah", o.getInt("surah"))
+                        put("ayah", o.getInt("ayah"))
+                        if (!o.isNull("note")) put("note", o.getString("note"))
+                        put("created", o.optLong("created", System.currentTimeMillis()))
+                    }
                 }
-            }
+            )
 
             // Apply preferences last so a failed table restore does not leave
             // the user's settings changed while the data restore failed.
