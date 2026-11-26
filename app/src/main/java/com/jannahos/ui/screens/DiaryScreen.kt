@@ -73,7 +73,7 @@ fun DiaryScreen(onBack: () -> Unit) {
     val store = remember { DiaryStore(ctx) }
     var refresh by remember { mutableStateOf(0) }
     val ignore = refresh
-    val entries = store.recent(30)
+    val entries = store.recent(30, excludeTag = "note")
     var writing by remember { mutableStateOf(false) }
     var text by remember { mutableStateOf("") }
     var showSlashMenu by remember { mutableStateOf(false) }
