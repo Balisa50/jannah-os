@@ -4,7 +4,9 @@ import android.content.Context
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
 import android.graphics.Matrix
+import android.graphics.pdf.PdfRenderer
 import android.net.Uri
+import android.os.ParcelFileDescriptor
 import androidx.exifinterface.media.ExifInterface
 import com.google.android.gms.tasks.Tasks
 import com.google.mlkit.vision.common.InputImage
@@ -22,6 +24,69 @@ object SirajImageTextExtractor {
     private const val MAX_PIXELS = 100_000_000L
     private const val MAX_DIMENSION = 2400
     private const val MAX_TEXT_CHARS = 6000
+
+    /**
+     * OCR the first 20 pages of a PDF locally. Pages are rendered one at a time
+     * at a bounded resolution; neither the PDF nor its extracted text is
+     * uploaded by this function.
+     */
+    suspend fun extractPdfText(context: Context, uri: Uri): String = withContext(Dispatchers.IO) {
+        val resolver = context.applicationContext.contentResolver
+        val descriptor = resolver.openFileDescriptor(uri, "r")
+            ?: error("Android could not open the selected PDF.")
+        val fileSize = descriptor.statSize
+        require(fileSize <= MAX_FILE_BYTES) { "PDF exceeds the 25 MB processing limit." }
+
+        val renderer = try {
+            PdfRenderer(descriptor)
+        } catch (error: Exception) {
+            descriptor.close()
+            throw error
+        }
+        var recognizer: com.google.mlkit.vision.text.TextRecognizer? = null
+        try {
+            val activeRecognizer = TextRecognition.getClient(TextRecognizerOptions.DEFAULT_OPTIONS)
+            recognizer = activeRecognizer
+            require(renderer.pageCount > 0) { "The selected PDF has no readable pages." }
+            val pagesToRead = minOf(renderer.pageCount, 20)
+            val output = StringBuilder()
+            for (pageIndex in 0 until pagesToRead) {
+                val page = renderer.openPage(pageIndex)
+                try {
+                    val scale = minOf(
+                        1f,
+                        MAX_DIMENSION.toFloat() / maxOf(page.width, page.height).toFloat()
+                    )
+                    val width = (page.width * scale).toInt().coerceAtLeast(1)
+                    val height = (page.height * scale).toInt().coerceAtLeast(1)
+                    val bitmap = Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888)
+                    try {
+                        page.render(bitmap, null, null, PdfRenderer.Page.RENDER_MODE_FOR_DISPLAY)
+                        val text = Tasks.await(
+                            activeRecognizer.process(InputImage.fromBitmap(bitmap, 0))
+                        ).text.trim()
+                        if (text.isNotBlank()) {
+                            output.append("\n[Page ${pageIndex + 1}]\n")
+                            output.append(text)
+                        }
+                    } finally {
+                        bitmap.recycle()
+                    }
+                } finally {
+                    page.close()
+                }
+                if (output.length >= MAX_TEXT_CHARS) break
+            }
+            if (renderer.pageCount > pagesToRead && output.length < MAX_TEXT_CHARS) {
+                output.append("\n[Only the first 20 pages were processed.]")
+            }
+            output.toString().trim().take(MAX_TEXT_CHARS)
+        } finally {
+            recognizer?.close()
+            renderer.close()
+            descriptor.close()
+        }
+    }
 
     suspend fun extractText(context: Context, uri: Uri): String = withContext(Dispatchers.IO) {
         val resolver = context.applicationContext.contentResolver

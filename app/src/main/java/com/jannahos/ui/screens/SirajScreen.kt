@@ -14,6 +14,8 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.horizontalScroll
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.lazy.rememberLazyListState
@@ -448,6 +450,67 @@ fun SirajScreen(onNavigate: (String) -> Unit = {}) {
             }
         } else if (!granted) {
             pendingPermissionReason = "Notification permission was not granted. No action was taken."
+        }
+    }
+
+    val documentPickerLauncher = rememberLauncherForActivityResult(
+        ActivityResultContracts.OpenDocument()
+    ) { uri ->
+        if (uri != null) {
+            pendingImageText = null
+            imageTextConsentGranted = false
+            messages.add(SirajMessage("Reading PDF pages on this device…", false, localOnly = true))
+            scope.launch {
+                val extracted = try {
+                    Result.success(SirajImageTextExtractor.extractPdfText(context, uri))
+                } catch (cancelled: CancellationException) {
+                    throw cancelled
+                } catch (error: Exception) {
+                    Result.failure(error)
+                }
+                if (extracted.isFailure) {
+                    messages.add(
+                        SirajMessage(
+                            "I couldn't read that PDF: ${extracted.exceptionOrNull()?.message ?: "unknown error"}",
+                            false,
+                            localOnly = true
+                        )
+                    )
+                } else {
+                    val text = extracted.getOrDefault("").trim()
+                    if (text.isBlank()) {
+                        messages.add(
+                            SirajMessage(
+                                "I couldn't find readable Latin-script text in that PDF. Arabic-script OCR is not supported yet.",
+                                false,
+                                localOnly = true
+                            )
+                        )
+                    } else {
+                        pendingImageText = text
+                        val restricted = SirajImageContentPolicy.requiresIslamicReview(text)
+                        messages.add(
+                            SirajMessage(
+                                "Text extracted on-device from the PDF (the document was not uploaded):\n${text.take(1400)}${if (text.length > 1400) "…" else ""}",
+                                false,
+                                localOnly = true
+                            )
+                        )
+                        if (restricted) {
+                            messages.add(
+                                SirajMessage(
+                                    "This text contains Arabic or Islamic references. I can show the extracted text, but I won't send it to a general AI provider.",
+                                    false,
+                                    localOnly = true
+                                )
+                            )
+                        } else {
+                            showImageTextConsent = true
+                        }
+                    }
+                }
+                if (messages.isNotEmpty()) listState.animateScrollToItem(messages.lastIndex)
+            }
         }
     }
 
@@ -1000,12 +1063,15 @@ fun SirajScreen(onNavigate: (String) -> Unit = {}) {
         )
 
         Row(
-            modifier = Modifier.fillMaxWidth(),
+            modifier = Modifier
+                .fillMaxWidth()
+                .horizontalScroll(rememberScrollState()),
             horizontalArrangement = Arrangement.spacedBy(8.dp)
         ) {
             Suggestion("Al-Kahf") { submit("Open Surah Al-Kahf") }
             Suggestion("Prayer times") { submit("Show prayer times") }
             Suggestion("Qibla") { submit("Find Qibla") }
+            Suggestion("PDF text") { documentPickerLauncher.launch(arrayOf("application/pdf")) }
             Suggestion("Image text") {
                 imagePickerLauncher.launch(
                     PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly)
