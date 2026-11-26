@@ -40,10 +40,23 @@ jobs:
       - name: Assemble debug APK
         run: ./gradlew assembleDebug
 
+      - name: Assemble unsigned release APK and Android App Bundle
+        run: ./gradlew assembleRelease bundleRelease
+
       - name: Upload debug APK
         uses: actions/upload-artifact@v4
         with:
           name: siraj-debug-apk
           path: app/build/outputs/apk/debug/*.apk
+          if-no-files-found: error
+          retention-days: 14
+
+      - name: Upload unsigned release candidates
+        uses: actions/upload-artifact@v4
+        with:
+          name: siraj-release-candidates
+          path: |
+            app/build/outputs/apk/release/*.apk
+            app/build/outputs/bundle/release/*.aab
           if-no-files-found: error
           retention-days: 14

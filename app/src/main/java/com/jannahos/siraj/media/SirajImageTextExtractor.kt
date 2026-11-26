@@ -34,8 +34,10 @@ object SirajImageTextExtractor {
         val resolver = context.applicationContext.contentResolver
         val descriptor = resolver.openFileDescriptor(uri, "r")
             ?: error("Android could not open the selected PDF.")
-        val fileSize = descriptor.statSize
-        require(fileSize <= MAX_FILE_BYTES) { "PDF exceeds the 25 MB processing limit." }
+        if (descriptor.statSize > MAX_FILE_BYTES) {
+            descriptor.close()
+            error("PDF exceeds the 25 MB processing limit.")
+        }
 
         val renderer = try {
             PdfRenderer(descriptor)
@@ -77,7 +79,7 @@ object SirajImageTextExtractor {
                 }
                 if (output.length >= MAX_TEXT_CHARS) break
             }
-            if (renderer.pageCount > pagesToRead && output.length < MAX_TEXT_CHARS) {
+            if (output.isNotBlank() && renderer.pageCount > pagesToRead && output.length < MAX_TEXT_CHARS) {
                 output.append("\n[Only the first 20 pages were processed.]")
             }
             output.toString().trim().take(MAX_TEXT_CHARS)
