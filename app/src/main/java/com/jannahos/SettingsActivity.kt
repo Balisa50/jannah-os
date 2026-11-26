@@ -51,6 +51,7 @@ private fun SettingsScreen(onBack: () -> Unit) {
     val ctx = LocalContext.current
     var showCityPicker by remember { mutableStateOf(false) }
     var showPermissions by remember { mutableStateOf(false) }
+    var cityName by remember { mutableStateOf(CityStore.name(ctx)) }
 
     if (showCityPicker) {
         CityPickerScreen(onBack = { showCityPicker = false }, onPicked = { c, cn ->
@@ -70,7 +71,6 @@ private fun SettingsScreen(onBack: () -> Unit) {
     var bedtimeLockOn by remember { mutableStateOf(Settings.isBedtimeLockEnabled(ctx)) }
     var silentTahajjud by remember { mutableStateOf(Settings.isTahajjudSilent(ctx)) }
     var faceDownOn by remember { mutableStateOf(Settings.isFaceDownEnabled(ctx)) }
-    var cityName by remember { mutableStateOf(CityStore.name(ctx)) }
     var calculationMethod by remember { mutableStateOf(Settings.method(ctx)) }
     var showCalculationMethods by remember { mutableStateOf(false) }
 
