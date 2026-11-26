@@ -51,12 +51,12 @@ fun TodayScreen(onNavigate: (String) -> Unit = {}) {
 
     LaunchedEffect(Unit) {
         while (true) {
-            delay(15_000)
-            now = System.currentTimeMillis()
+            val freshNow = System.currentTimeMillis()
+            now = freshNow
             val currentLat = Settings.lat(ctx)
             val currentLon = Settings.lon(ctx)
             val currentMethod = Settings.method(ctx)
-            val currentDateKey = SimpleDateFormat("yyyy-MM-dd", Locale.US).format(Date(now))
+            val currentDateKey = SimpleDateFormat("yyyy-MM-dd", Locale.US).format(Date(freshNow))
             if (
                 currentLat != savedLat ||
                 currentLon != savedLon ||
@@ -71,6 +71,7 @@ fun TodayScreen(onNavigate: (String) -> Unit = {}) {
                     SalahScheduler.todayTimes(ctx, currentLat, currentLon)
                 }.getOrDefault(emptyMap())
             }
+            delay(15_000)
         }
     }
 
