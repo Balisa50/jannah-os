@@ -4,6 +4,7 @@ import android.Manifest
 import android.app.Activity
 import android.content.Intent
 import android.speech.RecognizerIntent
+import android.speech.tts.TextToSpeech
 import android.provider.Settings
 import android.net.Uri
 import androidx.activity.compose.rememberLauncherForActivityResult
@@ -69,6 +70,18 @@ private data class SirajMessage(
 @Composable
 fun SirajScreen(onNavigate: (String) -> Unit = {}) {
     val context = LocalContext.current
+    var ttsReady by remember { mutableStateOf(false) }
+    val textToSpeech = remember(context) {
+        TextToSpeech(context.applicationContext) { status ->
+            ttsReady = status == TextToSpeech.SUCCESS
+        }
+    }
+    DisposableEffect(textToSpeech) {
+        onDispose {
+            textToSpeech.stop()
+            textToSpeech.shutdown()
+        }
+    }
     val listState = rememberLazyListState()
     val scope = rememberCoroutineScope()
     var input by remember { mutableStateOf("") }
@@ -85,6 +98,36 @@ fun SirajScreen(onNavigate: (String) -> Unit = {}) {
                 "I can open a Surah, show prayer times, find the Qibla, start Quran search, or take you to adhkar, notes and settings. I won't invent religious answers or claim a source I haven't checked.",
                 false
             )
+        )
+    }
+
+    fun speakLatestResponse() {
+        val latest = messages.lastOrNull { !it.fromUser }?.text
+            ?.take(4000)
+            ?.takeIf { it.isNotBlank() }
+            ?: return
+        val hasArabic = latest.any {
+            Character.UnicodeScript.of(it.code) == Character.UnicodeScript.ARABIC
+        }
+        val locale = if (hasArabic) Locale.forLanguageTag("ar") else Locale.getDefault()
+        val offlineVoice = textToSpeech.voices.orEmpty().firstOrNull { voice ->
+            voice.locale.language == locale.language && !voice.isNetworkConnectionRequired
+        }
+        if (offlineVoice == null) {
+            messages.add(
+                SirajMessage(
+                    "No offline voice is installed for this response language. Install offline voice data in Android settings; SIRAJ will not switch to a network voice.",
+                    false
+                )
+            )
+            return
+        }
+        textToSpeech.voice = offlineVoice
+        textToSpeech.speak(
+            latest,
+            TextToSpeech.QUEUE_FLUSH,
+            null,
+            "siraj-last-response"
         )
     }
 
@@ -687,7 +730,7 @@ fun SirajScreen(onNavigate: (String) -> Unit = {}) {
         }
 
         Text(
-            "Voice recognition is provided by your Android speech service.",
+            "Speech input uses Android recognition. Read-aloud uses an installed offline voice.",
             style = JannahType.micro,
             color = JannahColors.Muted,
             modifier = Modifier.padding(bottom = 7.dp)
@@ -716,6 +759,18 @@ fun SirajScreen(onNavigate: (String) -> Unit = {}) {
                     .border(1.dp, JannahColors.Border, RoundedCornerShape(16.dp))
             ) {
                 Text("Speak", color = JannahColors.Ink, fontWeight = FontWeight.Medium)
+            }
+            TextButton(
+                onClick = {
+                    if (textToSpeech.isSpeaking) textToSpeech.stop()
+                    else speakLatestResponse()
+                },
+                enabled = ttsReady && messages.any { !it.fromUser },
+                modifier = Modifier
+                    .clip(RoundedCornerShape(16.dp))
+                    .border(1.dp, JannahColors.Border, RoundedCornerShape(16.dp))
+            ) {
+                Text("Listen", color = JannahColors.Ink, fontWeight = FontWeight.Medium)
             }
             TextButton(
                 onClick = { submit(input) },
