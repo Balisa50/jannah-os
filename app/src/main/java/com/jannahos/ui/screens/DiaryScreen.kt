@@ -67,7 +67,6 @@ private val COMMANDS = listOf(
 
 @Composable
 fun DiaryScreen(onBack: () -> Unit) {
-    BackHandler(onBack = onBack)
     val ctx = LocalContext.current
     val haptics = LocalHapticFeedback.current
     val store = remember { runCatching { DiaryStore(ctx) }.getOrNull() }
@@ -79,11 +78,31 @@ fun DiaryScreen(onBack: () -> Unit) {
     var writing by remember { mutableStateOf(false) }
     var text by remember { mutableStateOf("") }
     var saveError by remember { mutableStateOf<String?>(null) }
+
+    BackHandler {
+        if (writing) {
+            writing = false
+            text = ""
+            showSlashMenu = false
+            saveError = null
+        } else {
+            onBack()
+        }
+    }
     var showSlashMenu by remember { mutableStateOf(false) }
     val dayFmt = SimpleDateFormat("EEE d MMM · HH:mm", Locale.getDefault())
 
     Column(modifier = Modifier.fillMaxSize().background(JannahColors.Cream)) {
-        ScreenHeader(title = "Diary", eyebrow = "PRIVATE", subtitle = "Tell it anything.", onBack = onBack)
+        ScreenHeader(title = "Diary", eyebrow = "PRIVATE", subtitle = "Tell it anything.", onBack = {
+            if (writing) {
+                writing = false
+                text = ""
+                showSlashMenu = false
+                saveError = null
+            } else {
+                onBack()
+            }
+        })
 
         Column(modifier = Modifier.weight(1f).verticalScroll(rememberScrollState())) {
             Column(Modifier.padding(horizontal = JannahSpacing.gutter)) {

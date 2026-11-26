@@ -39,6 +39,7 @@ fun YouScreen(onNavigate: (String) -> Unit = {}) {
             SectionLabel("YOUR PRACTICE")
             ListRow("Notes") { onNavigate("notes") }
             ListRow("Diary") { onNavigate("diary") }
+            ListRow("Weekly review") { onNavigate("weekly") }
             ListRow("Tonight's plan") { ctx.startActivity(Intent(ctx, BedtimeActivity::class.java)) }
             ListRow("Letters to future self") { onNavigate("letters") }
             ListRow("Commitments") { onNavigate("struggle") }

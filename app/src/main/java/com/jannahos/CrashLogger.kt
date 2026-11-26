@@ -43,8 +43,18 @@ object CrashLogger {
                 ?.filter { it.isFile && it.name.startsWith("crash_") }
                 ?.maxByOrNull { it.lastModified() }
                 ?.readText()
+                ?.takeLast(100_000)
         } catch (_: Exception) {
             null
+        }
+    }
+
+    fun clearAll(context: Context) {
+        runCatching {
+            File(context.applicationContext.filesDir, DIRECTORY)
+                .listFiles()
+                ?.filter { it.isFile && it.name.startsWith("crash_") }
+                ?.forEach { it.delete() }
         }
     }
 }

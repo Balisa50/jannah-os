@@ -17,6 +17,7 @@ import androidx.compose.runtime.key
 import androidx.compose.ui.Modifier
 import com.jannahos.ui.JannahApp
 import com.jannahos.ui.OnboardingFlow
+import com.jannahos.ui.screens.CrashReportScreen
 import com.jannahos.ui.theme.JannahTheme
 
 class MainActivity : ComponentActivity() {
@@ -51,8 +52,14 @@ class MainActivity : ComponentActivity() {
                             .imePadding()
                     ) {
                         var onboarded by remember { mutableStateOf(Settings.onboardingComplete(this@MainActivity)) }
+                        var pendingCrash by remember { mutableStateOf(CrashLogger.latest(this@MainActivity)) }
 
-                        if (onboarded) {
+                        if (pendingCrash != null) {
+                            CrashReportScreen(trace = pendingCrash!!, onDismiss = {
+                                CrashLogger.clearAll(this@MainActivity)
+                                pendingCrash = null
+                            })
+                        } else if (onboarded) {
                             key(requestedStartDestination) {
                                 JannahApp(startDestination = requestedStartDestination)
                             }

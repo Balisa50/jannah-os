@@ -11,9 +11,9 @@ import java.nio.file.StandardCopyOption.ATOMIC_MOVE
 import java.nio.file.StandardCopyOption.REPLACE_EXISTING
 import java.nio.file.AtomicMoveNotSupportedException
 
-// Partial data export/import. This currently covers preferences, wake events,
-// struggle entries, fasts, sleep records and Quran bookmarks only. Do not
-// describe this as a complete device backup.
+// Partial encrypted data export/import. This covers preferences, wake events,
+// struggle entries, fasts, sleep records, Quran bookmarks, Notes and Diary.
+// Letters, private memory, action history, finance and other SIRAJ data remain excluded.
 object BackupManager {
     private const val MAX_BACKUP_BYTES = 25L * 1024L * 1024L
     private const val MAX_RECORDS_PER_TABLE = 20_000
@@ -30,6 +30,9 @@ object BackupManager {
             val prefs = JSONObject()
             prefs.put("lat", Settings.lat(context))
             prefs.put("lon", Settings.lon(context))
+            prefs.put("city_name", CityStore.name(context))
+            prefs.put("city_country", CityStore.country(context))
+            prefs.put("use_city", CityStore.useCity(context))
             prefs.put("method", Settings.method(context))
             prefs.put("onboarded", Settings.onboardingComplete(context))
             prefs.put("tahajjud_level", TahajjudPlan.level(context))
@@ -172,6 +175,14 @@ object BackupManager {
             if (!lat.isFinite() || lat !in -90.0..90.0 ||
                 !lon.isFinite() || lon !in -180.0..180.0
             ) return "Backup contains invalid location preferences."
+            val cityName = prefs.optString("city_name", "")
+            val cityCountry = prefs.optString("city_country", "")
+            if (cityName.length > 128 || cityCountry.length > 128) {
+                return "Backup contains invalid city preferences."
+            }
+            if (prefs.optBoolean("use_city", cityName.isNotBlank()) && cityName.isBlank()) {
+                return "Backup contains incomplete city preferences."
+            }
         }
         return try {
             records.getValue("wake_events").let { a ->
@@ -368,6 +379,15 @@ object BackupManager {
                     prefs.optDouble("lon", -16.5790),
                     prefs.optString("method", "MWL")
                 )
+                if (prefs.has("city_name") || prefs.has("use_city")) {
+                    val cityName = prefs.optString("city_name", "")
+                    val cityCountry = prefs.optString("city_country", "")
+                    if (prefs.optBoolean("use_city", cityName.isNotBlank()) && cityName.isNotBlank()) {
+                        CityStore.set(context, cityName, cityCountry)
+                    } else {
+                        CityStore.clear(context)
+                    }
+                }
                 if (prefs.optBoolean("onboarded", false)) Settings.setOnboardingComplete(context)
                 TahajjudPlan.setLevel(context, prefs.optInt("tahajjud_level", 1).coerceIn(1, 5))
                 TahajjudPlan.setBedtimeReminder(context, prefs.optBoolean("bedtime_rem", true))

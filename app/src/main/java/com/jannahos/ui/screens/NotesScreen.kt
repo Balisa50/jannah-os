@@ -29,7 +29,6 @@ import java.util.Locale
 
 @Composable
 fun NotesScreen(onBack: () -> Unit) {
-    BackHandler(onBack = onBack)
     val ctx = LocalContext.current
     val store = remember { runCatching { DiaryStore(ctx) }.getOrNull() }
     val storeAvailable = store != null
@@ -38,6 +37,17 @@ fun NotesScreen(onBack: () -> Unit) {
     var editingId by remember { mutableStateOf<Long?>(null) }
     var text by remember { mutableStateOf("") }
     var saveError by remember { mutableStateOf<String?>(null) }
+
+    BackHandler {
+        if (writing) {
+            writing = false
+            editingId = null
+            text = ""
+            saveError = null
+        } else {
+            onBack()
+        }
+    }
     var refresh by remember { mutableStateOf(0) }
     val ignore = refresh
     val entries = remember(refresh) { runCatching { store?.recent(50, tag = "note") ?: emptyList() }.getOrDefault(emptyList()) }

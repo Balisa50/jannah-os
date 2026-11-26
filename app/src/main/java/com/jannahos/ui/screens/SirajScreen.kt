@@ -1151,7 +1151,7 @@ fun SirajScreen(onNavigate: (String) -> Unit = {}) {
                         .clip(RoundedCornerShape(16.dp))
                         .background(if (input.isNotBlank()) JannahColors.Orange else JannahColors.Border)
                 ) {
-                    Text("Send", color = JannahColors.OnOrange, fontWeight = FontWeight.Bold)
+                    Text("Send", color = if (input.isNotBlank()) JannahColors.OnOrange else JannahColors.Muted, fontWeight = FontWeight.Bold)
                 }
             }
             Row(
